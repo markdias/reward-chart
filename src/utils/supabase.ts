@@ -5,8 +5,10 @@ let currentInitializedUrl = '';
 let currentInitializedKey = '';
 
 export function getSupabaseConfig() {
-  const url = (localStorage.getItem('SB_URL') || '').trim();
-  const key = (localStorage.getItem('SB_KEY') || '').trim();
+  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const url = (envUrl || localStorage.getItem('SB_URL') || '').trim();
+  const key = (envKey || localStorage.getItem('SB_KEY') || '').trim();
   return { url, key };
 }
 
