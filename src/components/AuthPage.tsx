@@ -261,7 +261,18 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
           }
           const session = data?.session;
           if (!session) {
-            setRealAuthError('Sign up successful! Please check your email for verification link or sign in.');
+            // Attempt immediate sign-in in case "Prevent email enumeration" masked an existing user
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            if (!signInError && signInData?.session) {
+              playSound.pinSuccess();
+              onLoginReal(email);
+              return;
+            }
+
+            setRealAuthError('Sign up processed! If you still cannot log in, please try signing up with a NEW email (your first attempt might have gotten stuck in Supabase).');
             setIsSignUp(false); // Switch to sign in tab
             playSound.success();
             return;
