@@ -22,7 +22,7 @@ export interface Child {
 export interface Task {
   id: string;
   parent_id: string;
-  child_id: string;
+  child_ids: string[];
   title: string;
   points: number;
   category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
@@ -44,11 +44,12 @@ export interface TaskCompletion {
 export interface Reward {
   id: string;
   parent_id: string;
-  child_id: string;
+  child_ids: string[];
   title: string;
   cost_points: number;
   is_available: boolean;
   icon_name: string;
+  limit_type: 'unlimited' | 'daily' | 'twice_daily' | 'one_time';
   created_at: string;
 }
 
@@ -56,8 +57,9 @@ export interface RewardRedemption {
   id: string;
   reward_id: string;
   child_id: string;
+  parent_id: string;
   redeemed_at: string;
-  status: 'requested' | 'approved' | 'delivered';
+  status: 'requested' | 'delivered';
 }
 
 export interface CharacterEvolutionStage {

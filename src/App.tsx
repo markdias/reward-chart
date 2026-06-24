@@ -7,9 +7,9 @@ import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, 
-  INITIAL_COMPLETIONS, INITIAL_REWARDS 
+  INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS 
 } from './data/mockData';
-import { Child, Task, TaskCompletion, Reward } from './types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import ThemeSelector from './components/ThemeSelector';
@@ -44,6 +44,7 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
 
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
@@ -55,11 +56,13 @@ export default function App() {
     const keyTasks = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
     const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
     const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
+    const keyRedemptions = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
 
     const savedChildren = localStorage.getItem(keyChildren);
     const savedTasks = localStorage.getItem(keyTasks);
     const savedCompletions = localStorage.getItem(keyCompletions);
     const savedRewards = localStorage.getItem(keyRewards);
+    const savedRedemptions = localStorage.getItem(keyRedemptions);
 
     if (savedChildren) {
       setChildren(JSON.parse(savedChildren));
@@ -91,6 +94,14 @@ export default function App() {
       const initial = isDemo ? INITIAL_REWARDS : [];
       setRewards(initial);
       localStorage.setItem(keyRewards, JSON.stringify(initial));
+    }
+
+    if (savedRedemptions) {
+      setRedemptions(JSON.parse(savedRedemptions));
+    } else {
+      const initial = isDemo ? INITIAL_REDEMPTIONS : [];
+      setRedemptions(initial);
+      localStorage.setItem(keyRedemptions, JSON.stringify(initial));
     }
   };
 
@@ -161,6 +172,18 @@ export default function App() {
             localStorage.setItem(keyRewards, JSON.stringify(dbRewards || []));
           }
 
+          // Fetch redemptions
+          const keyRedemptions = `RCH_REDEMPTIONS_${parentEmail}`;
+          const { data: dbRedemptions, error: errRedemptions } = await supabase
+            .from('reward_redemptions')
+            .select('*')
+            .eq('parent_id', parentEmail);
+            
+          if (!errRedemptions) {
+            setRedemptions(dbRedemptions || []);
+            localStorage.setItem(keyRedemptions, JSON.stringify(dbRedemptions || []));
+          }
+
         } catch (err) {
           console.warn('Error loading Supabase data:', err);
           loadLocalStorageFallback(isDemo);
@@ -196,6 +219,12 @@ export default function App() {
   const syncRewards = (newList: Reward[]) => {
     setRewards(newList);
     const key = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
+  const syncRedemptions = (newList: RewardRedemption[]) => {
+    setRedemptions(newList);
+    const key = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
@@ -260,6 +289,7 @@ export default function App() {
     localStorage.removeItem('RCH_TASKS');
     localStorage.removeItem('RCH_COMPLETIONS');
     localStorage.removeItem('RCH_REWARDS');
+    localStorage.removeItem('RCH_REDEMPTIONS');
     window.location.reload();
   };
 
@@ -302,18 +332,40 @@ export default function App() {
     }
   };
 
+  const handleEditChild = async (id: string, updates: Partial<Child>) => {
+    let updatedChild: Child | null = null;
+    const updatedChildren = children.map(c => {
+      if (c.id === id) {
+        updatedChild = { ...c, ...updates };
+        // Update avatar if name changes
+        if (updates.name) {
+          updatedChild.avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(updates.name)}`;
+        }
+        return updatedChild;
+      }
+      return c;
+    });
+    syncChildren(updatedChildren);
+
+    const supabase = getSupabaseClient();
+    if (supabase && updatedChild && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('children').update(updatedChild).eq('id', id);
+      if (error) console.warn('Failed to update child in Supabase:', error.message);
+    }
+  };
+
   // Operations: Tasks
   const handleAddTask = async (
     title: string, 
     points: number, 
     category: any, 
     recurrence: any, 
-    childId: string
+    childIds: string[]
   ) => {
     const newTask: Task = {
       id: `task_${Date.now()}`,
       parent_id: parentEmail || 'parent_demo',
-      child_id: childId,
+      child_ids: childIds,
       title,
       points,
       category,
@@ -327,6 +379,24 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('tasks').insert(newTask);
       if (error) console.warn('Failed to sync task to Supabase:', error.message);
+    }
+  };
+
+  const handleEditTask = async (id: string, updates: Partial<Task>) => {
+    let updatedTask: Task | null = null;
+    const updatedTasks = tasks.map(t => {
+      if (t.id === id) {
+        updatedTask = { ...t, ...updates };
+        return updatedTask;
+      }
+      return t;
+    });
+    syncTasks(updatedTasks);
+
+    const supabase = getSupabaseClient();
+    if (supabase && updatedTask && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('tasks').update(updatedTask).eq('id', id);
+      if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
   };
 
@@ -344,17 +414,19 @@ export default function App() {
   const handleAddReward = async (
     title: string, 
     cost: number, 
-    childId: string, 
-    iconName: string
+    childIds: string[], 
+    iconName: string,
+    limitType: any
   ) => {
     const newReward: Reward = {
       id: `rew_${Date.now()}`,
       parent_id: parentEmail || 'parent_demo',
-      child_id: childId,
+      child_ids: childIds,
       title,
       cost_points: cost,
       is_available: true,
       icon_name: iconName,
+      limit_type: limitType,
       created_at: new Date().toISOString()
     };
     syncRewards([...rewards, newReward]);
@@ -363,6 +435,24 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('rewards').insert(newReward);
       if (error) console.warn('Failed to sync reward to Supabase:', error.message);
+    }
+  };
+
+  const handleEditReward = async (id: string, updates: Partial<Reward>) => {
+    let updatedReward: Reward | null = null;
+    const updatedRewards = rewards.map(r => {
+      if (r.id === id) {
+        updatedReward = { ...r, ...updates };
+        return updatedReward;
+      }
+      return r;
+    });
+    syncRewards(updatedRewards);
+
+    const supabase = getSupabaseClient();
+    if (supabase && updatedReward && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('rewards').update(updatedReward).eq('id', id);
+      if (error) console.warn('Failed to update reward in Supabase:', error.message);
     }
   };
 
@@ -402,7 +492,28 @@ export default function App() {
   const handleClaimReward = async (rewardId: string, childId: string) => {
     const reward = rewards.find(r => r.id === rewardId);
     const child = children.find(c => c.id === childId);
-    if (!reward || !child || child.points < reward.cost_points) return;
+    if (!reward || !child || child.points < reward.cost_points || !reward.is_available) return;
+
+    // --- Limit Checks ---
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const childRedemptions = redemptions.filter(r => r.child_id === childId && r.reward_id === rewardId);
+    
+    if (reward.limit_type === 'daily') {
+      const todayRedemptions = childRedemptions.filter(r => r.redeemed_at.startsWith(todayStr));
+      if (todayRedemptions.length >= 1) return; // Limit reached
+    } 
+    else if (reward.limit_type === 'twice_daily') {
+      const todayRedemptions = childRedemptions.filter(r => r.redeemed_at.startsWith(todayStr));
+      if (todayRedemptions.length >= 2) return; // Limit reached
+      
+      // Wait at least 6 hours between redemptions
+      if (todayRedemptions.length === 1) {
+        const lastRedeem = new Date(todayRedemptions[0].redeemed_at).getTime();
+        const hrsSinceLast = (now.getTime() - lastRedeem) / (1000 * 60 * 60);
+        if (hrsSinceLast < 6) return;
+      }
+    }
 
     // Deduct points from child
     const targetChild = {
@@ -415,8 +526,44 @@ export default function App() {
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
     setCelebrationActive(true);
-
     updateChildInSupabase(targetChild);
+
+    // Create Redemption Request
+    const newRedemption: RewardRedemption = {
+      id: `red_${Date.now()}`,
+      reward_id: reward.id,
+      child_id: child.id,
+      parent_id: parentEmail || 'parent_demo',
+      redeemed_at: now.toISOString(),
+      status: 'requested'
+    };
+    syncRedemptions([...redemptions, newRedemption]);
+
+    // Handle one-time disappearing
+    if (reward.limit_type === 'one_time') {
+      handleEditReward(reward.id, { is_available: false });
+    }
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('reward_redemptions').insert(newRedemption);
+      if (error) console.warn('Failed to sync redemption to Supabase:', error.message);
+    }
+  };
+
+  const handleDeliverReward = async (redemptionId: string) => {
+    const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
+    syncRedemptions(updated);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('reward_redemptions').update({ status: 'delivered' }).eq('id', redemptionId);
+      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+    }
+  };
+
+  const handleRestoreReward = async (rewardId: string) => {
+    handleEditReward(rewardId, { is_available: true });
   };
 
   const handleApproveCompletion = async (completionId: string) => {
@@ -516,13 +663,19 @@ export default function App() {
               tasks={tasks}
               completions={completions}
               rewards={rewards}
+              redemptions={redemptions}
               onAddChild={handleAddChild}
+              onEditChild={handleEditChild}
               onAddTask={handleAddTask}
+              onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
               onAddReward={handleAddReward}
+              onEditReward={handleEditReward}
               onDeleteReward={handleDeleteReward}
               onApproveCompletion={handleApproveCompletion}
               onRejectCompletion={handleRejectCompletion}
+              onDeliverReward={handleDeliverReward}
+              onRestoreReward={handleRestoreReward}
               onExitParentMode={handleExitParentMode}
               parentEmail={parentEmail}
               theme={activeTheme}
@@ -541,6 +694,7 @@ export default function App() {
               tasks={tasks}
               completions={completions}
               rewards={rewards}
+              redemptions={redemptions}
               onCompleteTask={handleCompleteTask}
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}

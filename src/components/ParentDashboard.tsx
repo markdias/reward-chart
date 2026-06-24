@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2
+  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2
 } from 'lucide-react';
-import { Child, Task, TaskCompletion, Reward } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
@@ -15,13 +15,19 @@ interface ParentDashboardProps {
   tasks: Task[];
   completions: TaskCompletion[];
   rewards: Reward[];
+  redemptions: RewardRedemption[];
   onAddChild: (name: string, characterId: string) => void;
-  onAddTask: (title: string, points: number, category: string, recurrence: string, childId: string) => void;
+  onEditChild: (id: string, updates: Partial<Child>) => void;
+  onAddTask: (title: string, points: number, category: string, recurrence: string, childIds: string[]) => void;
+  onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
-  onAddReward: (title: string, cost: number, childId: string, icon: string) => void;
+  onAddReward: (title: string, cost: number, childIds: string[], icon: string, limitType: any) => void;
+  onEditReward: (id: string, updates: Partial<Reward>) => void;
   onDeleteReward: (id: string) => void;
   onApproveCompletion: (id: string) => void;
   onRejectCompletion: (id: string) => void;
+  onDeliverReward: (id: string) => void;
+  onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
   theme: ThemeId;
@@ -32,13 +38,19 @@ export default function ParentDashboard({
   tasks,
   completions,
   rewards,
+  redemptions,
   onAddChild,
+  onEditChild,
   onAddTask,
+  onEditTask,
   onDeleteTask,
   onAddReward,
+  onEditReward,
   onDeleteReward,
   onApproveCompletion,
   onRejectCompletion,
+  onDeliverReward,
+  onRestoreReward,
   onExitParentMode,
   parentEmail,
   theme
@@ -47,42 +59,49 @@ export default function ParentDashboard({
   
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
+  const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
 
   const [showAddTask, setShowAddTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPoints, setTaskPoints] = useState(15);
   const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
   const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time'>('daily');
-  const [taskChildId, setTaskChildId] = useState(children[0]?.id || '');
+  const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
 
   const [showAddReward, setShowAddReward] = useState(false);
+  const [editingRewardId, setEditingRewardId] = useState<string | null>(null);
   const [rewardTitle, setRewardTitle] = useState('');
   const [rewardCost, setRewardCost] = useState(50);
-  const [rewardChildId, setRewardChildId] = useState(children[0]?.id || '');
+  const [rewardChildIds, setRewardChildIds] = useState<string[]>([]);
   const [rewardIcon, setRewardIcon] = useState('Gamepad2');
+  const [rewardLimit, setRewardLimit] = useState<'unlimited' | 'daily' | 'twice_daily' | 'one_time'>('unlimited');
 
   const [showNotifications, setShowNotifications] = useState(false);
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
+  const pendingDeliveries = redemptions.filter(r => r.status === 'requested');
+  const totalPending = pendingApprovals.length + pendingDeliveries.length;
+  
   const approvedCompletionsCount = completions.filter(c => c.status === 'approved').length;
   const styles = THEME_PRESETS[theme];
 
   // Auto-sync selected child IDs in forms when children list updates
   React.useEffect(() => {
     if (children && children.length > 0) {
-      if (!taskChildId || !children.some(c => c.id === taskChildId)) {
-        setTaskChildId(children[0].id);
+      if (taskChildIds.length === 0) {
+        setTaskChildIds([children[0].id]);
       }
-      if (!rewardChildId || !children.some(c => c.id === rewardChildId)) {
-        setRewardChildId(children[0].id);
+      if (rewardChildIds.length === 0) {
+        setRewardChildIds([children[0].id]);
       }
     } else {
-      setTaskChildId('');
-      setRewardChildId('');
+      setTaskChildIds([]);
+      setRewardChildIds([]);
     }
-  }, [children, taskChildId, rewardChildId]);
+  }, [children, taskChildIds.length, rewardChildIds.length]);
 
   const handleApprove = (id: string) => {
     playSound.success();
@@ -98,27 +117,83 @@ export default function ParentDashboard({
     e.preventDefault();
     if (!newChildName) return;
     playSound.success();
-    onAddChild(newChildName, newChildChar);
+    if (editingChildId) {
+      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar });
+    } else {
+      onAddChild(newChildName, newChildChar);
+    }
     setNewChildName('');
+    setEditingChildId(null);
     setShowAddChild(false);
   };
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle || !taskChildId) return;
+    if (!taskTitle || taskChildIds.length === 0) return;
     playSound.click();
-    onAddTask(taskTitle, taskPoints, taskCategory, taskRecurrence, taskChildId);
+    if (editingTaskId) {
+      onEditTask(editingTaskId, {
+        title: taskTitle,
+        points: taskPoints,
+        category: taskCategory,
+        recurrence: taskRecurrence,
+        child_ids: taskChildIds
+      });
+    } else {
+      onAddTask(taskTitle, taskPoints, taskCategory, taskRecurrence, taskChildIds);
+    }
     setTaskTitle('');
+    setEditingTaskId(null);
     setShowAddTask(false);
   };
 
   const handleRewardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rewardTitle || !rewardChildId) return;
+    if (!rewardTitle || rewardChildIds.length === 0) return;
     playSound.click();
-    onAddReward(rewardTitle, rewardCost, rewardChildId, rewardIcon);
+    if (editingRewardId) {
+      onEditReward(editingRewardId, {
+        title: rewardTitle,
+        cost_points: rewardCost,
+        child_ids: rewardChildIds,
+        icon_name: rewardIcon,
+        limit_type: rewardLimit
+      });
+    } else {
+      onAddReward(rewardTitle, rewardCost, rewardChildIds, rewardIcon, rewardLimit);
+    }
     setRewardTitle('');
+    setEditingRewardId(null);
+    setRewardLimit('unlimited');
     setShowAddReward(false);
+  };
+  
+  // Edit Handlers
+  const openEditChild = (child: Child) => {
+    setEditingChildId(child.id);
+    setNewChildName(child.name);
+    setNewChildChar(child.character_id);
+    setShowAddChild(true);
+  };
+
+  const openEditTask = (task: Task) => {
+    setEditingTaskId(task.id);
+    setTaskTitle(task.title);
+    setTaskPoints(task.points);
+    setTaskCategory(task.category as any);
+    setTaskRecurrence(task.recurrence as any);
+    setTaskChildIds(task.child_ids || []);
+    setShowAddTask(true);
+  };
+
+  const openEditReward = (reward: Reward) => {
+    setEditingRewardId(reward.id);
+    setRewardTitle(reward.title);
+    setRewardCost(reward.cost_points);
+    setRewardChildIds(reward.child_ids || []);
+    setRewardIcon(reward.icon_name);
+    setRewardLimit(reward.limit_type || 'unlimited');
+    setShowAddReward(true);
   };
 
   return (
@@ -232,7 +307,7 @@ export default function ParentDashboard({
 
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
-              { id: 'approvals', label: 'QUEST APPROVALS', icon: CheckSquare, badge: pendingApprovals.length, badgeColor: 'bg-rose-500' },
+              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
               { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.length },
@@ -312,7 +387,7 @@ export default function ParentDashboard({
               </div>
               <div>
                 <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>AWAITING REVIEW</span>
-                <span className={`text-xl font-black ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-600'} font-mono`}>{pendingApprovals.length} PENDING</span>
+                <span className={`text-xl font-black ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-600'} font-mono`}>{totalPending} PENDING</span>
               </div>
             </div>
           </div>
@@ -331,33 +406,40 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>QUEST APPROVALS QUEUE</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Authorize finished duties to dispense gold points instantly.</p>
+                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>INBOX & APPROVALS</h2>
+                    <p className={`text-xs ${styles.textMuted}`}>Authorize finished duties and deliver claimed prizes.</p>
                   </div>
                   <span className={`px-3 py-1 ${theme === 'cosmic_dark' ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400' : 'bg-rose-50 border border-rose-200 text-rose-700'} rounded-full text-xs font-bold font-mono`}>
-                    {pendingApprovals.length} STANDBY
+                    {totalPending} STANDBY
                   </span>
                 </div>
 
-                {pendingApprovals.length === 0 ? (
+                {totalPending === 0 ? (
                   <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
                     <span className="text-5xl inline-block animate-bounce-slow">🚀</span>
                     <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
                     <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
-                      Whenever kids execute "Claim Complete" on their dashboard, their chores will cascade here for parent authorization.
+                      Whenever kids finish chores or claim prizes, they will cascade here for parent authorization.
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {pendingApprovals.map((appr) => {
-                      const child = children.find(c => c.id === appr.child_id);
-                      const task = tasks.find(t => t.id === appr.task_id);
-                      const character = CHARACTER_PACKS.find(cp => cp.id === child?.character_id);
-                      return (
-                        <div
-                          key={appr.id}
-                          className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                        >
+                  <div className="space-y-8">
+                    {/* Chores Section */}
+                    {pendingApprovals.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
+                          🧹 Pending Chores ({pendingApprovals.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {pendingApprovals.map((appr) => {
+                            const child = children.find(c => c.id === appr.child_id);
+                            const task = tasks.find(t => t.id === appr.task_id);
+                            const character = CHARACTER_PACKS.find(cp => cp.id === child?.character_id);
+                            return (
+                              <div
+                                key={appr.id}
+                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                              >
                           <div className="flex gap-4 items-start">
                             <img
                               src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
@@ -404,6 +486,59 @@ export default function ParentDashboard({
                       );
                     })}
                   </div>
+                </div>
+              )}
+              
+              {/* Pending Deliveries Section */}
+                {pendingDeliveries.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2 pt-4`}>
+                      🎁 Pending Prize Deliveries ({pendingDeliveries.length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {pendingDeliveries.map((delivery) => {
+                        const child = children.find(c => c.id === delivery.child_id);
+                        const reward = rewards.find(r => r.id === delivery.reward_id);
+                        return (
+                          <div
+                            key={delivery.id}
+                            className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                          >
+                            <div className="flex gap-4 items-start">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}>
+                                🎁
+                              </div>
+                              <div>
+                                <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} claimed:</span>
+                                <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
+                                  {reward?.title || 'Unknown Reward'}
+                                </h3>
+                                <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
+                                  CLAIMED AT: {new Date(delivery.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
+                              <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
+                                <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  playSound.success();
+                                  onDeliverReward(delivery.id);
+                                }}
+                                className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                              >
+                                <Check className="w-4 h-4 stroke-[3px]" /> MARK DELIVERED
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                  </div>
                 )}
               </motion.div>
             )}
@@ -440,7 +575,9 @@ export default function ParentDashboard({
                     className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
                     id="add-child-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>👶 Register Family Child</h3>
+                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                      {editingChildId ? '✏️ Edit Pilot' : '👶 Register Family Child'}
+                    </h3>
                     <form onSubmit={handleChildSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -475,11 +612,16 @@ export default function ParentDashboard({
                           type="submit"
                           className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
                         >
-                          SPAWN PILOT & HATCH EGG
+                          {editingChildId ? 'SAVE CHANGES' : 'SPAWN PILOT & HATCH EGG'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setShowAddChild(false)}
+                          onClick={() => {
+                            setShowAddChild(false);
+                            setEditingChildId(null);
+                            setNewChildName('');
+                            setNewChildChar('unicorn');
+                          }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
                           CANCEL
@@ -508,7 +650,7 @@ export default function ParentDashboard({
                             className={`w-16 h-16 rounded-2xl p-1 border object-cover ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/60' : 'bg-stone-100 border-stone-200'}`}
                             referrerPolicy="no-referrer"
                           />
-                          <div>
+                          <div className="flex-1">
                             <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display`}>{child.name}</h3>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className={`text-xs ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-mono font-bold`}>LVL {child.level}</span>
@@ -516,6 +658,12 @@ export default function ParentDashboard({
                               <span className="text-xs text-orange-500 font-mono font-bold">🔥 {child.streak_days} DAYS</span>
                             </div>
                           </div>
+                          <button
+                            onClick={() => openEditChild(child)}
+                            className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                         </div>
 
                         {/* Character Info */}
@@ -581,7 +729,9 @@ export default function ParentDashboard({
                     className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
                     id="add-task-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>🧹 Create Quest Blueprint</h3>
+                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                      {editingTaskId ? '✏️ Edit Quest Blueprint' : '🧹 Create Quest Blueprint'}
+                    </h3>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -638,11 +788,16 @@ export default function ParentDashboard({
                           type="submit"
                           className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
-                          ACTIVATE BLUEPRINT
+                          {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setShowAddTask(false)}
+                          onClick={() => {
+                            setShowAddTask(false);
+                            setEditingTaskId(null);
+                            setTaskTitle('');
+                            setTaskPoints(15);
+                          }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
                           CANCEL
@@ -680,16 +835,24 @@ export default function ParentDashboard({
                           <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
                             +{task.points} GOLD
                           </span>
-                          <button
-                            onClick={() => {
-                              playSound.click();
-                              onDeleteTask(task.id);
-                            }}
-                            className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
-                            id={`delete-task-${task.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditTask(task)}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                onDeleteTask(task.id);
+                              }}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                              id={`delete-task-${task.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -730,7 +893,9 @@ export default function ParentDashboard({
                     className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
                     id="add-reward-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>🎁 Define Reward Token</h3>
+                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                      {editingRewardId ? '✏️ Edit Reward Token' : '🎁 Define Reward Token'}
+                    </h3>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -782,6 +947,19 @@ export default function ParentDashboard({
                             <option value="Sparkles">✨ Special Trip</option>
                           </select>
                         </div>
+                        <div className="md:col-span-2">
+                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
+                          <select
+                            value={rewardLimit}
+                            onChange={(e) => setRewardLimit(e.target.value as any)}
+                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                          >
+                            <option value="unlimited">♾️ Unlimited</option>
+                            <option value="daily">📅 1x Daily</option>
+                            <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
+                            <option value="one_time">🎯 One-Time (Disappears after use)</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div className="flex gap-2">
@@ -789,11 +967,16 @@ export default function ParentDashboard({
                           type="submit"
                           className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
-                          INITIALIZE PRIZE REDEMPTION
+                          {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setShowAddReward(false)}
+                          onClick={() => {
+                            setShowAddReward(false);
+                            setEditingRewardId(null);
+                            setRewardTitle('');
+                            setRewardCost(50);
+                          }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
                           CANCEL
@@ -805,41 +988,101 @@ export default function ParentDashboard({
 
                 {/* Rewards grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rewards.map((rew) => {
-                    const child = children.find(c => c.id === rew.child_id);
+                  {rewards.map((reward) => {
+                    const child = children.find(c => c.id === reward.child_id);
                     return (
                       <div
-                        key={rew.id}
+                        key={reward.id}
                         className={`border p-5 rounded-3xl flex justify-between items-center ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex gap-3.5 items-center">
                           <span className={`text-3xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-100 border border-stone-200'} p-2.5 rounded-2xl`}>🎁</span>
                           <div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>{rew.title}</h3>
+                            <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
+                              {reward.title}
+                              {!reward.is_available && reward.limit_type === 'one_time' && (
+                                <span className="ml-2 text-[9px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase align-middle">
+                                  CLAIMED
+                                </span>
+                              )}
+                            </h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
                               Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{child?.name}</strong>
+                              <span className="mx-2">•</span>
+                              Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
                           </div>
                         </div>
 
                         <div className="flex flex-col items-end gap-3">
-                          <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'}`}>
-                            ⭐ {rew.cost_points} PTS
+                          <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                            {reward.cost_points} GOLD
                           </span>
-                          <button
-                            onClick={() => {
-                              playSound.click();
-                              onDeleteReward(rew.id);
-                            }}
-                            className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
-                            id={`delete-reward-${rew.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditReward(reward)}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                onDeleteReward(reward.id);
+                              }}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                              id={`delete-reward-${reward.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* History Log */}
+                <div className="pt-8 border-t border-slate-800">
+                  <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase pb-4`}>
+                    📜 Dispensation History Log
+                  </h3>
+                  <div className="space-y-3">
+                    {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
+                      <p className={`text-xs ${styles.textMuted}`}>No rewards have been dispensed yet.</p>
+                    ) : (
+                      redemptions
+                        .filter(r => r.status === 'delivered')
+                        .sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime())
+                        .map(delivery => {
+                          const child = children.find(c => c.id === delivery.child_id);
+                          const reward = rewards.find(r => r.id === delivery.reward_id);
+                          const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
+                          
+                          return (
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border ${theme === 'cosmic_dark' ? 'bg-slate-950/50 border-indigo-950/40' : 'bg-stone-50 border-stone-200'} ${styles.textColor}`}>
+                              <div>
+                                <span className="text-xs font-bold">{child?.name}</span> received <strong className={theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'}>{reward?.title}</strong>
+                                <p className={`text-[10px] font-mono mt-1 ${styles.textMuted}`}>
+                                  {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                </p>
+                              </div>
+                              {isOneTimeUsed && (
+                                <button
+                                  onClick={() => {
+                                    playSound.success();
+                                    onRestoreReward(reward.id);
+                                  }}
+                                  className={`px-3 py-1.5 rounded text-[10px] font-mono font-bold uppercase border ${theme === 'cosmic_dark' ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10' : 'border-amber-500/50 text-amber-700 hover:bg-amber-50'}`}
+                                >
+                                  RESTORE ONE-TIME
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}

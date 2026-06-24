@@ -4,7 +4,7 @@ import {
   Trophy, Flame, Play, Star, ChevronRight, Lock, 
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle
 } from 'lucide-react';
-import { Child, Task, TaskCompletion, Reward } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
@@ -14,6 +14,7 @@ interface ChildDashboardProps {
   tasks: Task[];
   completions: TaskCompletion[];
   rewards: Reward[];
+  redemptions: RewardRedemption[];
   onCompleteTask: (taskId: string, childId: string) => void;
   onClaimReward: (rewardId: string, childId: string) => void;
   onEnterParentMode: () => void;
@@ -25,6 +26,7 @@ export default function ChildDashboard({
   tasks,
   completions,
   rewards,
+  redemptions,
   onCompleteTask,
   onClaimReward,
   onEnterParentMode,
@@ -103,6 +105,35 @@ export default function ChildDashboard({
   };
 
   const styles = THEME_PRESETS[theme];
+
+  const getRewardAvailability = (reward: Reward, childRedemptions: RewardRedemption[]) => {
+    if (!reward.is_available) return { available: false, reason: 'CLAIMED' };
+    if (!reward.limit_type || reward.limit_type === 'unlimited') return { available: true };
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    if (reward.limit_type === 'daily') {
+      const todayClaims = childRedemptions.filter(r => 
+        r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
+      );
+      if (todayClaims.length >= 1) return { available: false, reason: 'TOMORROW' };
+    }
+
+    if (reward.limit_type === 'twice_daily') {
+      const todayClaims = childRedemptions.filter(r => 
+        r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
+      );
+      if (todayClaims.length >= 2) return { available: false, reason: 'TOMORROW' };
+      if (todayClaims.length === 1) {
+        const lastClaimTime = new Date(todayClaims[0].redeemed_at).getTime();
+        const hoursSinceLast = (now.getTime() - lastClaimTime) / (1000 * 60 * 60);
+        if (hoursSinceLast < 6) return { available: false, reason: 'COOLDOWN' };
+      }
+    }
+
+    return { available: true };
+  };
 
   return (
     <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-hidden transition-colors duration-300`} id="child-root">
@@ -579,12 +610,20 @@ export default function ChildDashboard({
                             </div>
                           ) : (
                             rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
+                              const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                               const isAffordable = activeChild.points >= rew.cost_points;
+                              const canDispense = isAffordable && availability.available;
+                              
+                              // Hide claimed one_time rewards entirely
+                              if (!rew.is_available && rew.limit_type === 'one_time') {
+                                return null;
+                              }
+
                               return (
                                 <div
                                   key={rew.id}
                                   className={`p-5 rounded-3xl ${styles.cardBg} border transition-all flex items-center justify-between gap-4 ${
-                                    isAffordable 
+                                    canDispense 
                                       ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` 
                                       : 'opacity-60 border-slate-800/30'
                                   }`}
@@ -605,10 +644,10 @@ export default function ChildDashboard({
                                     </span>
 
                                     <button
-                                      disabled={!isAffordable}
+                                      disabled={!canDispense}
                                       onClick={() => handleClaimReward(rew.id, rew.cost_points)}
                                       className={`font-black font-mono py-2 px-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition-all ${
-                                        isAffordable
+                                        canDispense
                                           ? theme === 'cosmic_dark'
                                             ? 'bg-amber-400 hover:bg-amber-300 hover:scale-105 text-slate-950 font-black'
                                             : 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
@@ -616,7 +655,7 @@ export default function ChildDashboard({
                                       }`}
                                       id={`claim-reward-${rew.id}`}
                                     >
-                                      DISPENSE
+                                      {!availability.available ? availability.reason : 'DISPENSE'}
                                     </button>
                                   </div>
                                 </div>
