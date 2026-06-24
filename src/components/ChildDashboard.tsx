@@ -522,7 +522,7 @@ export default function ChildDashboard({
                           className="space-y-4"
                           id="child-tasks-deck"
                         >
-                          {tasks.filter(t => t.child_id === activeChild.id).length === 0 ? (
+                          {tasks.filter(t => t.child_ids?.includes(activeChild.id)).length === 0 ? (
                             <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow">🎉</span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
@@ -531,7 +531,7 @@ export default function ChildDashboard({
                               </p>
                             </div>
                           ) : (
-                            tasks.filter(t => t.child_id === activeChild.id).map((task) => {
+                            tasks.filter(t => t.child_ids?.includes(activeChild.id)).map((task) => {
                               const compl = completions.find(c => c.task_id === task.id);
                               const isPending = compl && compl.status === 'pending';
                               const isApproved = compl && compl.status === 'approved';
@@ -602,14 +602,14 @@ export default function ChildDashboard({
                           className="grid grid-cols-1 md:grid-cols-2 gap-4"
                           id="child-rewards-deck"
                         >
-                          {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
+                          {rewards.filter(r => r.child_ids?.includes(activeChild.id)).length === 0 ? (
                             <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow">🎁</span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>DISPENSER EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>
                           ) : (
-                            rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
+                            rewards.filter(r => r.child_ids?.includes(activeChild.id)).map((rew) => {
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                               const isAffordable = activeChild.points >= rew.cost_points;
                               const canDispense = isAffordable && availability.available;

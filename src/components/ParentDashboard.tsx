@@ -758,16 +758,32 @@ export default function ParentDashboard({
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilot</label>
-                          <select
-                            value={taskChildId}
-                            onChange={(e) => setTaskChildId(e.target.value)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
-                          >
-                            {children.map(child => (
-                              <option key={child.id} value={child.id}>{child.name}</option>
-                            ))}
-                          </select>
+                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {children.map(child => {
+                              const isSelected = taskChildIds.includes(child.id);
+                              return (
+                                <button
+                                  key={child.id}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setTaskChildIds(taskChildIds.filter(id => id !== child.id));
+                                    } else {
+                                      setTaskChildIds([...taskChildIds, child.id]);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
+                                    isSelected 
+                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
+                                  }`}
+                                >
+                                  {child.name}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
@@ -810,7 +826,7 @@ export default function ParentDashboard({
                 {/* Tasks List Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tasks.map((task) => {
-                    const assignedChild = children.find(c => c.id === task.child_id);
+                    const assignedNames = task.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
                     return (
                       <div
                         key={task.id}
@@ -827,7 +843,7 @@ export default function ParentDashboard({
                           </div>
                           <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                           <p className={`text-xs ${styles.textMuted} mt-1`}>
-                            Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChild?.name || 'All Pilots'}</strong>
+                            Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
                           </p>
                         </div>
 
@@ -922,16 +938,32 @@ export default function ParentDashboard({
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Child</label>
-                          <select
-                            value={rewardChildId}
-                            onChange={(e) => setRewardChildId(e.target.value)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
-                          >
-                            {children.map(child => (
-                              <option key={child.id} value={child.id}>{child.name}</option>
-                            ))}
-                          </select>
+                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {children.map(child => {
+                              const isSelected = rewardChildIds.includes(child.id);
+                              return (
+                                <button
+                                  key={child.id}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setRewardChildIds(rewardChildIds.filter(id => id !== child.id));
+                                    } else {
+                                      setRewardChildIds([...rewardChildIds, child.id]);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
+                                    isSelected 
+                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
+                                  }`}
+                                >
+                                  {child.name}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
@@ -989,7 +1021,7 @@ export default function ParentDashboard({
                 {/* Rewards grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rewards.map((reward) => {
-                    const child = children.find(c => c.id === reward.child_id);
+                    const assignedNames = reward.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
                     return (
                       <div
                         key={reward.id}
@@ -1007,7 +1039,7 @@ export default function ParentDashboard({
                               )}
                             </h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{child?.name}</strong>
+                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
                               <span className="mx-2">•</span>
                               Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
