@@ -578,7 +578,7 @@ export default function App() {
 
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
       syncChildren(updatedChildren);
-      updateChildInSupabase(targetChild);
+      await updateChildInSupabase(targetChild);
     }
 
     const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);

@@ -35,7 +35,7 @@ export default function ChildDashboard({
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
-  const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards'>('tasks');
+  const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards' | 'history'>('tasks');
   const [isFeeding, setIsFeeding] = useState(false);
   
   // Character Evolution Special Cinematic State
@@ -545,6 +545,20 @@ export default function ChildDashboard({
                       >
                         <Gift className="w-4 h-4" /> PRIZE DISPENSER
                       </button>
+                      <button
+                        onClick={() => { playSound.click(); setActiveChildTab('history'); }}
+                        className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          activeChildTab === 'history'
+                            ? theme === 'cosmic_dark'
+                              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md'
+                              : 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
+                            : theme === 'cosmic_dark'
+                              ? 'text-slate-400 hover:text-slate-200'
+                              : 'text-stone-600 hover:text-stone-900 font-bold'
+                        }`}
+                      >
+                        📜 HISTORY
+                      </button>
                     </div>
 
                     {/* Active Screen Frame */}
@@ -627,7 +641,7 @@ export default function ChildDashboard({
                             })
                           )}
                         </motion.div>
-                      ) : (
+                      ) : activeChildTab === 'rewards' ? (
                         
                         /* PRIZE CABINET CONTENT */
                         <motion.div
@@ -700,7 +714,51 @@ export default function ChildDashboard({
                             })
                           )}
                         </motion.div>
-                      )}
+                      ) : activeChildTab === 'history' ? (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          key="child-history-tab"
+                          className="space-y-4"
+                        >
+                          {redemptions.filter(r => r.child_id === activeChild.id && r.status === 'delivered').length === 0 ? (
+                            <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
+                              <span className="text-5xl block animate-pulse">🕵️‍♂️</span>
+                              <h4 className={`font-extrabold ${styles.textColor} text-base`}>NO PRIZES YET</h4>
+                              <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                                When you earn and receive a prize, it will appear in this log for you to remember!
+                              </p>
+                            </div>
+                          ) : (
+                            redemptions
+                              .filter(r => r.child_id === activeChild.id && r.status === 'delivered')
+                              .sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime())
+                              .map(delivery => {
+                                const reward = rewards.find(r => r.id === delivery.reward_id);
+                                return (
+                                  <div
+                                    key={delivery.id}
+                                    className={`p-5 rounded-3xl border transition-all flex items-center justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                                  >
+                                    <div className="space-y-1">
+                                      <h4 className={`font-black font-display text-base tracking-wide ${styles.titleColor}`}>
+                                        {reward?.title || "Unknown Prize"}
+                                      </h4>
+                                      <p className={`text-xs font-mono font-bold ${styles.textMuted}`}>
+                                        Delivered on {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                      </p>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'bg-indigo-950/40 border-indigo-500/30 text-indigo-400' : 'bg-stone-100 border-stone-300 text-stone-600'}`}>
+                                      <CheckCircle className="w-4 h-4" />
+                                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider">RECEIVED</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                          )}
+                        </motion.div>
+                      ) : null}
                     </AnimatePresence>
                   </div>
                 )}
