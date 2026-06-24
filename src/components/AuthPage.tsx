@@ -5,7 +5,7 @@ import { playSound } from '../utils/sound';
 import { createClient } from '@supabase/supabase-js';
 
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
-import { getSupabaseClient, SUPABASE_SETUP_SQL } from '../utils/supabase';
+import { getSupabaseClient, SUPABASE_SETUP_SQL, getSupabaseConfig, isSupabaseConfigured } from '../utils/supabase';
 
 interface AuthPageProps {
   onStartDemo: () => void;
@@ -29,13 +29,15 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
   const [realAuthError, setRealAuthError] = useState('');
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'demo' | 'parent'>('demo');
+  
+  const initialConfig = getSupabaseConfig();
   const [connectionMode, setConnectionMode] = useState<'local' | 'supabase'>(
-    (localStorage.getItem('SB_URL') && localStorage.getItem('SB_KEY')) ? 'supabase' : 'local'
+    isSupabaseConfigured() ? 'supabase' : 'local'
   );
 
   const [supabaseConfig, setSupabaseConfig] = useState({
-    url: localStorage.getItem('SB_URL') || '',
-    key: localStorage.getItem('SB_KEY') || ''
+    url: initialConfig.url,
+    key: initialConfig.key
   });
   const [showDbConfig, setShowDbConfig] = useState(false);
   const [showSqlGuide, setShowSqlGuide] = useState(false);
