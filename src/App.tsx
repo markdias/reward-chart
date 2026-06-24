@@ -1,0 +1,586 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import AuthPage from './components/AuthPage';
+import ParentDashboard from './components/ParentDashboard';
+import ChildDashboard from './components/ChildDashboard';
+import LockScreen from './components/LockScreen';
+import Confetti from './components/Confetti';
+import { 
+  INITIAL_CHILDREN, INITIAL_TASKS, 
+  INITIAL_COMPLETIONS, INITIAL_REWARDS 
+} from './data/mockData';
+import { Child, Task, TaskCompletion, Reward } from './types';
+import { playSound } from './utils/sound';
+import { ThemeId, THEME_PRESETS } from './utils/theme';
+import ThemeSelector from './components/ThemeSelector';
+import { getSupabaseClient } from './utils/supabase';
+
+export default function App() {
+  // Active theme style system (default to beautiful Sunny Toybox light)
+  const [activeTheme, setActiveTheme] = useState<ThemeId>(
+    (localStorage.getItem('RCH_THEME') as ThemeId) || 'sunny_toybox'
+  );
+
+  const handleThemeChange = (themeId: ThemeId) => {
+    setActiveTheme(themeId);
+    localStorage.setItem('RCH_THEME', themeId);
+  };
+
+  // Auth state
+  const [parentEmail, setParentEmail] = useState<string | null>(
+    localStorage.getItem('RCH_PARENT_EMAIL')
+  );
+  const [isParentMode, setIsParentMode] = useState<boolean>(
+    localStorage.getItem('RCH_PARENT_MODE') === 'true'
+  );
+  
+  // Security PIN state (default is 1234)
+  const [parentPin, setParentPin] = useState<string>(
+    localStorage.getItem('RCH_PARENT_PIN') || '1234'
+  );
+
+  // Core records lists
+  const [children, setChildren] = useState<Child[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [completions, setCompletions] = useState<TaskCompletion[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+
+  // UI state overlays
+  const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
+  const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
+
+  // Helper fallback to load local storage state or blank state
+  const loadLocalStorageFallback = (isDemo: boolean) => {
+    const keyChildren = parentEmail ? `RCH_CHILDREN_${parentEmail}` : 'RCH_CHILDREN';
+    const keyTasks = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
+    const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
+    const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
+
+    const savedChildren = localStorage.getItem(keyChildren);
+    const savedTasks = localStorage.getItem(keyTasks);
+    const savedCompletions = localStorage.getItem(keyCompletions);
+    const savedRewards = localStorage.getItem(keyRewards);
+
+    if (savedChildren) {
+      setChildren(JSON.parse(savedChildren));
+    } else {
+      const initial = isDemo ? INITIAL_CHILDREN : [];
+      setChildren(initial);
+      localStorage.setItem(keyChildren, JSON.stringify(initial));
+    }
+
+    if (savedTasks) {
+      setTasks(JSON.parse(savedTasks));
+    } else {
+      const initial = isDemo ? INITIAL_TASKS : [];
+      setTasks(initial);
+      localStorage.setItem(keyTasks, JSON.stringify(initial));
+    }
+
+    if (savedCompletions) {
+      setCompletions(JSON.parse(savedCompletions));
+    } else {
+      const initial = isDemo ? INITIAL_COMPLETIONS : [];
+      setCompletions(initial);
+      localStorage.setItem(keyCompletions, JSON.stringify(initial));
+    }
+
+    if (savedRewards) {
+      setRewards(JSON.parse(savedRewards));
+    } else {
+      const initial = isDemo ? INITIAL_REWARDS : [];
+      setRewards(initial);
+      localStorage.setItem(keyRewards, JSON.stringify(initial));
+    }
+  };
+
+  // Load records on start/auth change from localStorage or Supabase
+  useEffect(() => {
+    if (!parentEmail) {
+      return;
+    }
+
+    const isDemo = parentEmail === 'demo_parent@rewardchart.app';
+    const supabase = getSupabaseClient();
+
+    if (supabase && !isDemo) {
+      // Real Supabase backend - fetch live DB rows
+      const fetchSupabaseData = async () => {
+        try {
+          const keyChildren = `RCH_CHILDREN_${parentEmail}`;
+          const keyTasks = `RCH_TASKS_${parentEmail}`;
+          const keyCompletions = `RCH_COMPLETIONS_${parentEmail}`;
+          const keyRewards = `RCH_REWARDS_${parentEmail}`;
+
+          // Fetch children
+          const { data: dbChildren, error: errChildren } = await supabase
+            .from('children')
+            .select('*')
+            .eq('parent_id', parentEmail);
+          
+          if (!errChildren) {
+            setChildren(dbChildren || []);
+            localStorage.setItem(keyChildren, JSON.stringify(dbChildren || []));
+          } else {
+            console.warn('Could not load children from Supabase, using localStorage:', errChildren.message);
+            loadLocalStorageFallback(isDemo);
+            return;
+          }
+
+          // Fetch tasks
+          const { data: dbTasks, error: errTasks } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('parent_id', parentEmail);
+          
+          if (!errTasks) {
+            setTasks(dbTasks || []);
+            localStorage.setItem(keyTasks, JSON.stringify(dbTasks || []));
+          }
+
+          // Fetch completions (filtered client-side if needed, or select all)
+          const { data: dbCompletions, error: errCompletions } = await supabase
+            .from('completions')
+            .select('*');
+          
+          if (!errCompletions) {
+            const childIds = (dbChildren || []).map(c => c.id);
+            const filteredCompletions = (dbCompletions || []).filter(c => childIds.includes(c.child_id));
+            setCompletions(filteredCompletions || []);
+            localStorage.setItem(keyCompletions, JSON.stringify(filteredCompletions || []));
+          }
+
+          // Fetch rewards
+          const { data: dbRewards, error: errRewards } = await supabase
+            .from('rewards')
+            .select('*')
+            .eq('parent_id', parentEmail);
+          
+          if (!errRewards) {
+            setRewards(dbRewards || []);
+            localStorage.setItem(keyRewards, JSON.stringify(dbRewards || []));
+          }
+
+        } catch (err) {
+          console.warn('Error loading Supabase data:', err);
+          loadLocalStorageFallback(isDemo);
+        }
+      };
+
+      fetchSupabaseData();
+    } else {
+      // Local/demo mode - fetch from localStorage or defaults
+      loadLocalStorageFallback(isDemo);
+    }
+  }, [parentEmail]);
+
+  // Sync state helpers to update local storage
+  const syncChildren = (newList: Child[]) => {
+    setChildren(newList);
+    const key = parentEmail ? `RCH_CHILDREN_${parentEmail}` : 'RCH_CHILDREN';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
+  const syncTasks = (newList: Task[]) => {
+    setTasks(newList);
+    const key = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
+  const syncCompletions = (newList: TaskCompletion[]) => {
+    setCompletions(newList);
+    const key = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
+  const syncRewards = (newList: Reward[]) => {
+    setRewards(newList);
+    const key = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
+  // Supabase update helper
+  const updateChildInSupabase = async (updatedChild: Child) => {
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase
+        .from('children')
+        .update({
+          points: updatedChild.points,
+          level: updatedChild.level,
+          xp_in_level: updatedChild.xp_in_level,
+          streak_days: updatedChild.streak_days,
+          last_active_date: updatedChild.last_active_date
+        })
+        .eq('id', updatedChild.id);
+      if (error) console.warn('Failed to sync child update to Supabase:', error.message);
+    }
+  };
+
+  // Auth Handlers
+  const handleStartDemo = () => {
+    // Clear old localStorage to ensure fresh demo mode load
+    localStorage.removeItem('RCH_CHILDREN');
+    localStorage.removeItem('RCH_TASKS');
+    localStorage.removeItem('RCH_COMPLETIONS');
+    localStorage.removeItem('RCH_REWARDS');
+    
+    setParentEmail('demo_parent@rewardchart.app');
+    localStorage.setItem('RCH_PARENT_EMAIL', 'demo_parent@rewardchart.app');
+    setIsParentMode(false); // Kids view by default, let them select child
+    localStorage.setItem('RCH_PARENT_MODE', 'false');
+    setParentPin('1234');
+    localStorage.setItem('RCH_PARENT_PIN', '1234');
+  };
+
+  const handleLoginReal = (email: string) => {
+    // Clear old state to prepare fresh real/blank dashboard loads
+    localStorage.removeItem('RCH_CHILDREN');
+    localStorage.removeItem('RCH_TASKS');
+    localStorage.removeItem('RCH_COMPLETIONS');
+    localStorage.removeItem('RCH_REWARDS');
+
+    setParentEmail(email);
+    localStorage.setItem('RCH_PARENT_EMAIL', email);
+    setIsParentMode(false); // Default to Child scoreboard, parent enters PIN to manage
+    localStorage.setItem('RCH_PARENT_MODE', 'false');
+  };
+
+  const handleLogout = async () => {
+    playSound.click();
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    setParentEmail(null);
+    setIsParentMode(false);
+    localStorage.removeItem('RCH_PARENT_EMAIL');
+    localStorage.removeItem('RCH_PARENT_MODE');
+    localStorage.removeItem('RCH_CHILDREN');
+    localStorage.removeItem('RCH_TASKS');
+    localStorage.removeItem('RCH_COMPLETIONS');
+    localStorage.removeItem('RCH_REWARDS');
+    window.location.reload();
+  };
+
+  // Parent Gating
+  const handleEnterParentModeRequest = () => {
+    setShowLockScreen(true);
+  };
+
+  const handleParentLockSuccess = () => {
+    setShowLockScreen(false);
+    setIsParentMode(true);
+    localStorage.setItem('RCH_PARENT_MODE', 'true');
+  };
+
+  const handleExitParentMode = () => {
+    setIsParentMode(false);
+    localStorage.setItem('RCH_PARENT_MODE', 'false');
+  };
+
+  // Operations: Children
+  const handleAddChild = async (name: string, characterId: string) => {
+    const newChild: Child = {
+      id: `child_${Date.now()}`,
+      parent_id: parentEmail || 'parent_demo',
+      name,
+      avatar_url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
+      character_id: characterId,
+      points: 0,
+      level: 1,
+      xp_in_level: 0,
+      streak_days: 0,
+      created_at: new Date().toISOString()
+    };
+    syncChildren([...children, newChild]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('children').insert(newChild);
+      if (error) console.warn('Failed to sync new child to Supabase:', error.message);
+    }
+  };
+
+  // Operations: Tasks
+  const handleAddTask = async (
+    title: string, 
+    points: number, 
+    category: any, 
+    recurrence: any, 
+    childId: string
+  ) => {
+    const newTask: Task = {
+      id: `task_${Date.now()}`,
+      parent_id: parentEmail || 'parent_demo',
+      child_id: childId,
+      title,
+      points,
+      category,
+      recurrence,
+      is_active: true,
+      created_at: new Date().toISOString()
+    };
+    syncTasks([...tasks, newTask]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('tasks').insert(newTask);
+      if (error) console.warn('Failed to sync task to Supabase:', error.message);
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    syncTasks(tasks.filter(t => t.id !== id));
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      if (error) console.warn('Failed to delete task in Supabase:', error.message);
+    }
+  };
+
+  // Operations: Rewards
+  const handleAddReward = async (
+    title: string, 
+    cost: number, 
+    childId: string, 
+    iconName: string
+  ) => {
+    const newReward: Reward = {
+      id: `rew_${Date.now()}`,
+      parent_id: parentEmail || 'parent_demo',
+      child_id: childId,
+      title,
+      cost_points: cost,
+      is_available: true,
+      icon_name: iconName,
+      created_at: new Date().toISOString()
+    };
+    syncRewards([...rewards, newReward]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('rewards').insert(newReward);
+      if (error) console.warn('Failed to sync reward to Supabase:', error.message);
+    }
+  };
+
+  const handleDeleteReward = async (id: string) => {
+    syncRewards(rewards.filter(r => r.id !== id));
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('rewards').delete().eq('id', id);
+      if (error) console.warn('Failed to delete reward in Supabase:', error.message);
+    }
+  };
+
+  // Operations: Completions
+  const handleCompleteTask = async (taskId: string, childId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Create a pending completion
+    const newCompletion: TaskCompletion = {
+      id: `comp_${Date.now()}`,
+      task_id: taskId,
+      child_id: childId,
+      completed_at: new Date().toISOString(),
+      status: 'pending',
+      points_awarded: task.points
+    };
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('completions').insert(newCompletion);
+      if (error) console.warn('Failed to sync completion to Supabase:', error.message);
+    }
+  };
+
+  const handleClaimReward = async (rewardId: string, childId: string) => {
+    const reward = rewards.find(r => r.id === rewardId);
+    const child = children.find(c => c.id === childId);
+    if (!reward || !child || child.points < reward.cost_points) return;
+
+    // Deduct points from child
+    const targetChild = {
+      ...child,
+      points: child.points - reward.cost_points,
+    };
+    targetChild.level = Math.floor(targetChild.points / 100) + 1;
+    targetChild.xp_in_level = targetChild.points % 100;
+
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    setCelebrationActive(true);
+
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleApproveCompletion = async (completionId: string) => {
+    const comp = completions.find(c => c.id === completionId);
+    if (!comp) return;
+
+    // 1. Update completion status
+    const updatedCompletions = completions.map(c => 
+      c.id === completionId ? { ...c, status: 'approved' as const } : c
+    );
+    syncCompletions(updatedCompletions);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase
+        .from('completions')
+        .update({ status: 'approved' })
+        .eq('id', completionId);
+      if (error) console.warn('Failed to update completion status in Supabase:', error.message);
+    }
+
+    // 2. Award points and update Child stats
+    const child = children.find(c => c.id === comp.child_id);
+    if (child) {
+      const newPoints = child.points + comp.points_awarded;
+      const oldLevel = child.level;
+      const newLevel = Math.floor(newPoints / 100) + 1;
+      
+      // Check for level-up sound trigger
+      if (newLevel > oldLevel) {
+        setTimeout(() => {
+          playSound.levelUp();
+        }, 300);
+      }
+
+      const targetChild = {
+        ...child,
+        points: newPoints,
+        level: newLevel,
+        xp_in_level: newPoints % 100,
+        streak_days: child.streak_days + 1
+      };
+
+      const updatedChildren = children.map(c => c.id === comp.child_id ? targetChild : c);
+      syncChildren(updatedChildren);
+      updateChildInSupabase(targetChild);
+    }
+
+    // 3. Trigger full-screen fireworks!
+    setCelebrationActive(true);
+  };
+
+  const handleRejectCompletion = async (completionId: string) => {
+    // Delete or decline completion
+    const updatedCompletions = completions.filter(c => c.id !== completionId);
+    syncCompletions(updatedCompletions);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('completions').delete().eq('id', completionId);
+      if (error) console.warn('Failed to delete completion in Supabase:', error.message);
+    }
+  };
+
+  return (
+    <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
+      
+      {/* Immersive Confetti Layer */}
+      <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
+
+      {/* Screen Routing */}
+      <AnimatePresence mode="wait">
+        {!parentEmail ? (
+          <motion.div
+            key="auth-page"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <AuthPage 
+              onStartDemo={handleStartDemo}
+              onLoginReal={handleLoginReal}
+              theme={activeTheme}
+            />
+          </motion.div>
+        ) : isParentMode ? (
+          <motion.div
+            key="parent-mode"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <ParentDashboard
+              children={children}
+              tasks={tasks}
+              completions={completions}
+              rewards={rewards}
+              onAddChild={handleAddChild}
+              onAddTask={handleAddTask}
+              onDeleteTask={handleDeleteTask}
+              onAddReward={handleAddReward}
+              onDeleteReward={handleDeleteReward}
+              onApproveCompletion={handleApproveCompletion}
+              onRejectCompletion={handleRejectCompletion}
+              onExitParentMode={handleExitParentMode}
+              parentEmail={parentEmail}
+              theme={activeTheme}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="child-mode"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <ChildDashboard
+              children={children}
+              tasks={tasks}
+              completions={completions}
+              rewards={rewards}
+              onCompleteTask={handleCompleteTask}
+              onClaimReward={handleClaimReward}
+              onEnterParentMode={handleEnterParentModeRequest}
+              theme={activeTheme}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Parental PIN Gate popup lock */}
+      <AnimatePresence>
+        {showLockScreen && (
+          <LockScreen
+            correctPin={parentPin}
+            onSuccess={handleParentLockSuccess}
+            onClose={() => setShowLockScreen(false)}
+            theme={activeTheme}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Theme Selector Widget */}
+      <ThemeSelector currentTheme={activeTheme} onThemeChange={handleThemeChange} />
+
+      {/* Silent Floating Logout button for Parent Mode when in Child Mode to return to Landing */}
+      {parentEmail && !isParentMode && (
+        <button
+          onClick={handleLogout}
+          className={`fixed bottom-4 right-4 p-3 rounded-full transition-all cursor-pointer text-xs z-30 flex items-center gap-1.5 border ${
+            activeTheme === 'cosmic_dark'
+              ? 'bg-slate-900/60 hover:bg-rose-950/40 border-slate-850 text-slate-500 hover:text-rose-400'
+              : activeTheme === 'sunny_toybox'
+                ? 'bg-white border-2 border-stone-300 hover:bg-stone-50 text-stone-600 shadow-sm font-bold'
+                : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm'
+          }`}
+          id="global-logout-btn"
+        >
+          Sign Out App
+        </button>
+      )}
+    </div>
+  );
+}
