@@ -30,79 +30,6 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'demo' | 'parent'>('demo');
   
-  const initialConfig = getSupabaseConfig();
-  const [connectionMode, setConnectionMode] = useState<'local' | 'supabase'>(
-    isSupabaseConfigured() ? 'supabase' : 'local'
-  );
-
-  const [supabaseConfig, setSupabaseConfig] = useState({
-    url: initialConfig.url,
-    key: initialConfig.key
-  });
-  const [showDbConfig, setShowDbConfig] = useState(false);
-  const [showSqlGuide, setShowSqlGuide] = useState(false);
-
-  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'failed' | 'partial'>('idle');
-  const [testError, setTestError] = useState('');
-
-  const testConnection = async () => {
-    playSound.click();
-    setTestStatus('testing');
-    setTestError('');
-    
-    const cleanUrl = supabaseConfig.url.trim() ? (supabaseConfig.url.trim().startsWith('http') ? supabaseConfig.url.trim() : 'https://' + supabaseConfig.url.trim()) : '';
-    const cleanKey = supabaseConfig.key.trim();
-    
-    if (!cleanUrl || !cleanKey) {
-      setTestStatus('failed');
-      setTestError('Please enter both Supabase URL and Anon Key first.');
-      playSound.pinError();
-      return;
-    }
-    
-    try {
-      new URL(cleanUrl);
-      
-      const tempClient = createClient(cleanUrl, cleanKey, {
-        auth: { persistSession: false, autoRefreshToken: false }
-      });
-      
-      // 1. Handshake verification via getSession
-      const { error: authError } = await tempClient.auth.getSession();
-      if (authError) {
-        setTestStatus('failed');
-        setTestError(`Auth Handshake Failed: ${authError.message}`);
-        playSound.pinError();
-        return;
-      }
-      
-      // 2. Query verification (checking schema and policies)
-      const { error: queryError } = await tempClient.from('children').select('id').limit(1);
-      if (queryError) {
-        if (queryError.code === 'PGRST301' || queryError.message.includes('JWT') || queryError.message.includes('API key')) {
-          setTestStatus('failed');
-          setTestError(`API Key / Auth Error: ${queryError.message}`);
-          playSound.pinError();
-        } else if (queryError.message.includes('relation "children" does not exist')) {
-          setTestStatus('partial');
-          setTestError('Connection OK, but "children" table is missing. Run the SQL script below in your Supabase SQL Editor!');
-          playSound.levelUp();
-        } else {
-          setTestStatus('partial');
-          setTestError(`Connection OK, but DB query returned code ${queryError.code}: ${queryError.message}`);
-          playSound.levelUp();
-        }
-        return;
-      }
-      
-      setTestStatus('success');
-      playSound.success();
-    } catch (err: any) {
-      setTestStatus('failed');
-      setTestError(err?.message || 'Failed to connect. Check your network or URL correctness.');
-      playSound.pinError();
-    }
-  };
 
   const handleDemoClick = () => {
     playSound.levelUp();
@@ -186,13 +113,11 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
     if (action === 'signup') {
       creds[trimmedEmail] = passVal;
       localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
-      localStorage.setItem('SB_BYPASS', 'true');
       playSound.pinSuccess();
       onLoginReal(trimmedEmail);
     } else {
       const savedPass = creds[trimmedEmail];
       if (savedPass && savedPass === passVal) {
-        localStorage.setItem('SB_BYPASS', 'true');
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
       } else if (savedPass) {
@@ -202,7 +127,6 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
         // Auto-register to be extremely helpful
         creds[trimmedEmail] = passVal;
         localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
-        localStorage.setItem('SB_BYPASS', 'true');
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
       }
@@ -226,24 +150,11 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
       return;
     }
 
-    // If local mode is active, execute local auth instantly
-    if (connectionMode === 'local') {
+    // If supabase isn't configured with env vars, fallback to local
+    if (!isSupabaseConfigured()) {
       handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
       return;
     }
-    
-    // Format and sanitize Supabase credentials before saving to localStorage
-    const cleanUrl = supabaseConfig.url.trim() ? (supabaseConfig.url.trim().startsWith('http') ? supabaseConfig.url.trim() : 'https://' + supabaseConfig.url.trim()) : '';
-    const cleanKey = supabaseConfig.key.trim();
-
-    if (cleanUrl && cleanKey) {
-      localStorage.setItem('SB_URL', cleanUrl);
-      localStorage.setItem('SB_KEY', cleanKey);
-      setSupabaseConfig({ url: cleanUrl, key: cleanKey });
-    }
-
-    // Force real Supabase connection attempt by clearing bypass mode
-    localStorage.removeItem('SB_BYPASS');
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -305,15 +216,6 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
     onLoginReal(email);
   };
 
-  const saveDbConfig = () => {
-    playSound.success();
-    const cleanUrl = supabaseConfig.url.trim() ? (supabaseConfig.url.trim().startsWith('http') ? supabaseConfig.url.trim() : 'https://' + supabaseConfig.url.trim()) : '';
-    const cleanKey = supabaseConfig.key.trim();
-    localStorage.setItem('SB_URL', cleanUrl);
-    localStorage.setItem('SB_KEY', cleanKey);
-    setSupabaseConfig({ url: cleanUrl, key: cleanKey });
-    setShowDbConfig(false);
-  };
 
   const activeChar = CAROUSEL_CHARACTERS[selectedCharIndex];
   const styles = THEME_PRESETS[theme];
@@ -350,24 +252,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              playSound.click();
-              setShowDbConfig(!showDbConfig);
-            }}
-            className={`text-[10px] font-mono rounded-lg px-3 py-1.5 transition-all cursor-pointer border ${
-              theme === 'cosmic_dark' 
-                ? 'text-cyan-400 border-cyan-800/60 bg-cyan-950/30 hover:bg-cyan-950/80' 
-                : theme === 'sunny_toybox'
-                  ? 'text-stone-700 border-stone-300 bg-stone-50 hover:bg-stone-100 shadow-sm font-bold'
-                  : 'text-slate-600 border-slate-200 bg-slate-50 hover:bg-slate-100 shadow-sm font-bold'
-            }`}
-            id="database-config-toggle"
-          >
-            ⚙️ {supabaseConfig.url ? 'Connected Supabase DB' : 'Use Supabase Server'}
-          </button>
-        </div>
+
       </header>
 
       {/* Main Section */}
@@ -508,121 +393,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
           
           <div className="space-y-6">
             
-            {/* Supabase Pop-out overlay */}
-            {showDbConfig && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`p-5 rounded-2xl ${styles.cardBg} border-2 border-cyan-500 text-white shadow-2xl space-y-4`}
-                id="supabase-config-box"
-              >
-                <h3 className="font-bold font-display text-sm flex items-center gap-2 text-cyan-300">
-                  <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" /> CUSTOM CLOUD CONFIG
-                </h3>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Provide your own Supabase project details to save live database rows. Leave empty to use simulated high-fidelity client storage.
-                </p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-[9px] font-bold font-mono text-cyan-500 uppercase tracking-wider mb-1">Supabase URL</label>
-                    <input
-                      type="text"
-                      value={supabaseConfig.url}
-                      onChange={(e) => setSupabaseConfig({ ...supabaseConfig, url: e.target.value })}
-                      placeholder="https://your-project.supabase.co"
-                      className={`w-full px-3 py-2 text-xs rounded-xl ${styles.inputBg}`}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold font-mono text-cyan-500 uppercase tracking-wider mb-1">Anon Key</label>
-                    <input
-                      type="password"
-                      value={supabaseConfig.key}
-                      onChange={(e) => setSupabaseConfig({ ...supabaseConfig, key: e.target.value })}
-                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX..."
-                      className={`w-full px-3 py-2 text-xs rounded-xl ${styles.inputBg}`}
-                    />
-                  </div>
-                </div>
 
-                {/* Connection diagnostics display */}
-                <div className="pt-2 border-t border-slate-850">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-bold font-mono text-cyan-500 uppercase tracking-wider">Connection Diagnostics</span>
-                    <button
-                      type="button"
-                      onClick={testConnection}
-                      disabled={testStatus === 'testing'}
-                      className={`text-[9px] font-bold font-mono px-2 py-1 rounded-lg border uppercase transition-all ${
-                        testStatus === 'testing'
-                          ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
-                          : 'bg-cyan-950/40 text-cyan-400 border-cyan-800/80 hover:bg-cyan-900/40 cursor-pointer'
-                      }`}
-                    >
-                      {testStatus === 'testing' ? 'Testing...' : 'Test Connection'}
-                    </button>
-                  </div>
-                  
-                  {testStatus !== 'idle' && (
-                    <div className={`p-2.5 rounded-xl border text-[10px] font-mono leading-relaxed ${
-                      testStatus === 'success'
-                        ? 'bg-emerald-950/20 border-emerald-800/60 text-emerald-400'
-                        : testStatus === 'partial'
-                          ? 'bg-amber-950/20 border-amber-800/60 text-amber-400'
-                          : testStatus === 'testing'
-                            ? 'bg-slate-900/60 border-slate-800 text-slate-400 animate-pulse'
-                            : 'bg-red-950/20 border-red-900/60 text-red-400'
-                    }`}>
-                      <div className="flex items-center gap-1.5 font-bold mb-1">
-                        {testStatus === 'success' && <span>🟢 connection successful</span>}
-                        {testStatus === 'partial' && <span>🟡 partial configuration</span>}
-                        {testStatus === 'failed' && <span>🔴 connection failed</span>}
-                        {testStatus === 'testing' && <span>⚡ pinging database...</span>}
-                      </div>
-                      
-                      {testStatus === 'success' && (
-                        <p>Fully connected to Supabase database! Your client is configured and the necessary tables exist.</p>
-                      )}
-                      
-                      {(testStatus === 'failed' || testStatus === 'partial') && (
-                        <p className="whitespace-pre-wrap">{testError}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-2 border-t border-slate-850">
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setShowSqlGuide(!showSqlGuide); }}
-                    className="text-[10px] text-cyan-400 font-mono flex items-center gap-1 hover:underline cursor-pointer"
-                  >
-                    🛠️ {showSqlGuide ? 'Hide' : 'Show'} SQL Table Setup Script
-                  </button>
-                  {showSqlGuide && (
-                    <div className="mt-2 p-2 bg-slate-950 rounded-lg max-h-36 overflow-y-auto font-mono text-[9px] text-slate-400 select-all whitespace-pre-wrap border border-slate-800">
-                      {SUPABASE_SETUP_SQL}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={saveDbConfig}
-                    className="flex-1 bg-cyan-500 hover:bg-cyan-400 py-2 rounded-lg text-xs font-bold font-mono text-slate-950 cursor-pointer transition-all"
-                    id="db-save-btn"
-                  >
-                    SAVE & MOUNT
-                  </button>
-                  <button
-                    onClick={() => setShowDbConfig(false)}
-                    className="px-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 py-2 rounded-lg text-xs text-slate-300 cursor-pointer"
-                  >
-                    CLOSE
-                  </button>
-                </div>
-              </motion.div>
-            )}
 
             {/* Custom Interactive Mode Controller Tab */}
             <div className={`grid grid-cols-2 p-1 rounded-xl ${theme === 'cosmic_dark' ? 'bg-[#090d22] border border-indigo-950/80' : 'bg-stone-100 border border-stone-200'}`}>
@@ -719,30 +490,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
                       Requires parent permission to adjust point allocations
                     </p>
 
-                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-900/40 border border-stone-800/80 rounded-xl mb-1">
-                      <button
-                        type="button"
-                        onClick={() => { playSound.click(); setConnectionMode('local'); }}
-                        className={`py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
-                          connectionMode === 'local'
-                            ? 'bg-amber-500/25 border border-amber-500/50 text-amber-300 font-extrabold shadow-sm'
-                            : 'text-stone-400 hover:text-stone-200 border border-transparent'
-                        }`}
-                      >
-                        💾 Local Storage
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { playSound.click(); setConnectionMode('supabase'); }}
-                        className={`py-1.5 px-2 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
-                          connectionMode === 'supabase'
-                            ? 'bg-indigo-500/25 border border-indigo-500/50 text-indigo-300 font-extrabold shadow-sm'
-                            : 'text-stone-400 hover:text-stone-200 border border-transparent'
-                        }`}
-                      >
-                        ☁️ Supabase Cloud
-                      </button>
-                    </div>
+
                   </div>
 
                   <form onSubmit={handleRealAuthSubmit} className="space-y-3">
@@ -752,34 +500,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
                           <AlertCircle className="w-4 h-4 shrink-0" />
                           <span>{realAuthError}</span>
                         </div>
-                        {(realAuthError.includes('500') || realAuthError.toLowerCase().includes('retryable') || realAuthError.toLowerCase().includes('email') || realAuthError.toLowerCase().includes('mail')) && (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-300 rounded-xl text-[11px] leading-relaxed space-y-1.5">
-                            <span className="font-bold flex items-center gap-1 text-amber-400">💡 Supabase 500 Error Fix:</span>
-                            <p>This is a common issue with new Supabase projects. By default, "Confirm email" is turned on, but their built-in mail server is heavily rate-limited and returns a 500 error.</p>
-                            <ol className="list-decimal list-inside space-y-1 text-amber-200/90 font-mono text-[10px] pb-1.5">
-                              <li>Go to your <a href="https://supabase.com" target="_blank" rel="noreferrer" className="underline hover:text-white">Supabase Dashboard</a></li>
-                              <li>Go to <strong>Authentication</strong> ➔ <strong>Providers</strong> ➔ <strong>Email</strong></li>
-                              <li>Turn <strong>OFF</strong> the "Confirm email" (or "Enable email confirmation") toggle</li>
-                              <li>Click <strong>Save</strong> and try signing up again!</li>
-                            </ol>
-                            <div className="pt-2 border-t border-amber-500/20 flex flex-col gap-1.5">
-                              <p className="text-[10px] text-amber-400/95 font-sans leading-relaxed">
-                                Want to use the app immediately without waiting? You can bypass the auth block and enter Sandbox Mode under this email address. Your data will be saved safely in persistent local storage.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  playSound.success();
-                                  localStorage.setItem('SB_BYPASS', 'true');
-                                  onLoginReal(email.trim() || 'parent_sandbox@rewardchart.app');
-                                }}
-                                className="w-full text-center py-2 px-3 rounded-lg bg-amber-500 text-slate-950 font-extrabold font-mono text-[10px] uppercase hover:bg-amber-400 active:scale-95 transition-all cursor-pointer shadow-lg shadow-amber-950/20"
-                              >
-                                ⚡ Bypass & Run Sandbox Mode
-                              </button>
-                            </div>
-                          </div>
-                        )}
+
                       </div>
                     )}
 
