@@ -18,6 +18,7 @@ interface ChildDashboardProps {
   onCompleteTask: (taskId: string, childId: string) => void;
   onClaimReward: (rewardId: string, childId: string) => void;
   onEnterParentMode: () => void;
+  onFeedPet: (childId: string) => void;
   theme: ThemeId;
 }
 
@@ -30,12 +31,12 @@ export default function ChildDashboard({
   onCompleteTask,
   onClaimReward,
   onEnterParentMode,
+  onFeedPet,
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards'>('tasks');
   const [isFeeding, setIsFeeding] = useState(false);
-  const [feedPowerups, setFeedPowerups] = useState<number>(3);
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -62,7 +63,6 @@ export default function ChildDashboard({
   const handleSelectChild = (id: string) => {
     playSound.click();
     setSelectedChildId(id);
-    setFeedPowerups(3); // Reset powerups for feeding
   };
 
   const handleTaskCheck = (taskId: string) => {
@@ -79,25 +79,20 @@ export default function ChildDashboard({
     }
     playSound.success();
     onClaimReward(rewardId, activeChild.id);
-
-    // Give pet food and trigger a happy animation
-    setFeedPowerups(prev => prev + 1);
-    setIsFeeding(true);
-    setTimeout(() => setIsFeeding(false), 2000);
   };
 
   // Fun interactive "Feed Companion" action with sound & scaling state!
   const handleFeedCompanion = () => {
-    if (feedPowerups <= 0) {
+    if (!activeChild || (activeChild.pet_food || 0) <= 0) {
       playSound.pinError();
       return;
     }
     playSound.evolution();
     setIsFeeding(true);
-    setFeedPowerups(prev => prev - 1);
+    onFeedPet(activeChild.id);
     setTimeout(() => {
       setIsFeeding(false);
-    }, 1200);
+    }, 2500); // give it more time to show the happy animation
   };
 
   // Test Evolution manually to let kids experience the high-quality character milestone!
@@ -393,9 +388,9 @@ export default function ChildDashboard({
                         <div className="absolute h-40 w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
                         
                         <motion.div
-                          animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.1, 1], rotate: [0, 15, -15, 0] } : {}}
-                          transition={{ duration: 0.8 }}
-                          className={`h-32 w-32 rounded-full bg-gradient-to-br ${activeChildStage.color_theme} flex items-center justify-center text-7xl shadow-2xl border-4 border-slate-950 relative z-10 cursor-pointer ${activeChildStage.animation_class}`}
+                          animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
+                          transition={{ duration: 1.2 }}
+                          className={`h-32 w-32 rounded-full bg-gradient-to-br ${activeChildStage.color_theme} flex items-center justify-center text-7xl shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-slate-950'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500`}
                           onClick={handleFeedCompanion}
                         >
                           <span className="drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
@@ -404,12 +399,39 @@ export default function ChildDashboard({
                         </motion.div>
 
                         {/* Sparkle bursts when feeding */}
-                        {isFeeding && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                            <span className="text-4xl animate-ping absolute">✨</span>
-                            <span className="text-5xl animate-bounce absolute text-yellow-300">🍎</span>
-                          </div>
-                        )}
+                        <AnimatePresence>
+                          {isFeeding && (
+                            <>
+                              <motion.div 
+                                initial={{ opacity: 1, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, y: -100, scale: 1.5 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                className="absolute text-5xl pointer-events-none z-20 text-red-500"
+                              >
+                                ❤️
+                              </motion.div>
+                              <motion.div 
+                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, x: -60, y: -80, scale: 2 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                                className="absolute text-4xl pointer-events-none z-20 text-yellow-300"
+                              >
+                                ✨
+                              </motion.div>
+                              <motion.div 
+                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, x: 60, y: -90, scale: 1.8 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.4, ease: "easeOut", delay: 0.4 }}
+                                className="absolute text-4xl pointer-events-none z-20"
+                              >
+                                🍎
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       <div className="space-y-1.5 w-full">
@@ -423,13 +445,13 @@ export default function ChildDashboard({
                       <div className={`w-full mt-5 pt-5 border-t ${styles.divider} space-y-3`}>
                         <div className="flex justify-between items-center text-xs">
                           <span className={`font-mono ${styles.textMuted}`}>FEED ENERGY PILLS:</span>
-                          <span className={`font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'} font-extrabold`}>{feedPowerups} LEFT</span>
+                          <span className={`font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'} font-extrabold`}>{activeChild.pet_food || 0} LEFT</span>
                         </div>
                         <button
                           onClick={handleFeedCompanion}
-                          disabled={feedPowerups <= 0}
+                          disabled={(activeChild.pet_food || 0) <= 0}
                           className={`w-full py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                            feedPowerups > 0
+                            (activeChild.pet_food || 0) > 0
                               ? theme === 'cosmic_dark'
                                 ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-slate-950 hover:from-orange-300 hover:to-amber-400 gamepad-button shadow-lg'
                                 : 'bg-amber-400 border border-stone-950 text-stone-900 shadow-[0_3px_0_0_#1c1917]'

@@ -14,6 +14,7 @@ export interface Child {
   points: number;
   level: number;
   xp_in_level: number; // Progress within the current level (0-100)
+  pet_food: number;
   streak_days: number;
   last_active_date?: string;
   created_at: string;

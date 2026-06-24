@@ -571,6 +571,7 @@ export default function App() {
       const targetChild = {
         ...child,
         points: Math.max(0, child.points - reward.cost_points),
+        pet_food: (child.pet_food || 0) + 1,
       };
       targetChild.level = Math.floor(targetChild.points / 100) + 1;
       targetChild.xp_in_level = targetChild.points % 100;
@@ -588,6 +589,19 @@ export default function App() {
       const { error } = await supabase.from('reward_redemptions').update({ status: 'delivered' }).eq('id', redemptionId);
       if (error) console.warn('Failed to update redemption in Supabase:', error.message);
     }
+  };
+
+  const handleFeedPet = (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.pet_food || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      pet_food: child.pet_food - 1,
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
   };
 
   const handleRestoreReward = async (rewardId: string) => {
@@ -726,6 +740,7 @@ export default function App() {
               onCompleteTask={handleCompleteTask}
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
+              onFeedPet={handleFeedPet}
               theme={activeTheme}
             />
           </motion.div>
