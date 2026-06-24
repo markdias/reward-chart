@@ -191,6 +191,23 @@ export default function App() {
       };
 
       fetchSupabaseData();
+
+      // Subscribe to Realtime changes across all public tables
+      const channel = supabase.channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public' },
+          (payload) => {
+            console.log('Realtime event received! Refreshing data...', payload);
+            fetchSupabaseData();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount or parentEmail change
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } else {
       // Local/demo mode - fetch from localStorage or defaults
       loadLocalStorageFallback(isDemo);
