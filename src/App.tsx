@@ -532,18 +532,9 @@ export default function App() {
       }
     }
 
-    // Deduct points from child
-    const targetChild = {
-      ...child,
-      points: child.points - reward.cost_points,
-    };
-    targetChild.level = Math.floor(targetChild.points / 100) + 1;
-    targetChild.xp_in_level = targetChild.points % 100;
-
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
+    // Wait to deduct points until parent delivers it!
+    // Just trigger celebration here for the request.
     setCelebrationActive(true);
-    updateChildInSupabase(targetChild);
 
     // Create Redemption Request
     const newRedemption: RewardRedemption = {
@@ -569,6 +560,26 @@ export default function App() {
   };
 
   const handleDeliverReward = async (redemptionId: string) => {
+    const redemption = redemptions.find(r => r.id === redemptionId);
+    if (!redemption) return;
+    
+    // Look up reward cost to deduct it now
+    const reward = rewards.find(r => r.id === redemption.reward_id);
+    const child = children.find(c => c.id === redemption.child_id);
+
+    if (reward && child) {
+      const targetChild = {
+        ...child,
+        points: Math.max(0, child.points - reward.cost_points),
+      };
+      targetChild.level = Math.floor(targetChild.points / 100) + 1;
+      targetChild.xp_in_level = targetChild.points % 100;
+
+      const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+      syncChildren(updatedChildren);
+      updateChildInSupabase(targetChild);
+    }
+
     const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
     syncRedemptions(updated);
 

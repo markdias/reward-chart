@@ -50,6 +50,15 @@ export default function ChildDashboard({
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.points) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
+  const pendingRedemptionsCost = activeChild ? redemptions
+    .filter(r => r.child_id === activeChild.id && r.status === 'requested')
+    .reduce((total, r) => {
+      const rew = rewards.find(rw => rw.id === r.reward_id);
+      return total + (rew ? rew.cost_points : 0);
+    }, 0) : 0;
+
+  const availablePoints = activeChild ? activeChild.points - pendingRedemptionsCost : 0;
+
   const handleSelectChild = (id: string) => {
     playSound.click();
     setSelectedChildId(id);
@@ -64,12 +73,17 @@ export default function ChildDashboard({
 
   const handleClaimReward = (rewardId: string, cost: number) => {
     if (!activeChild) return;
-    if (activeChild.points < cost) {
+    if (availablePoints < cost) {
       playSound.pinError();
       return;
     }
     playSound.success();
     onClaimReward(rewardId, activeChild.id);
+
+    // Give pet food and trigger a happy animation
+    setFeedPowerups(prev => prev + 1);
+    setIsFeeding(true);
+    setTimeout(() => setIsFeeding(false), 2000);
   };
 
   // Fun interactive "Feed Companion" action with sound & scaling state!
@@ -611,8 +625,9 @@ export default function ChildDashboard({
                           ) : (
                             rewards.filter(r => r.child_ids?.includes(activeChild.id)).map((rew) => {
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
-                              const isAffordable = activeChild.points >= rew.cost_points;
-                              const canDispense = isAffordable && availability.available;
+                              const isAffordable = availablePoints >= rew.cost_points;
+                              const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
+                              const canDispense = isAffordable && availability.available && !hasPendingRequest;
                               
                               // Hide claimed one_time rewards entirely
                               if (!rew.is_available && rew.limit_type === 'one_time') {
@@ -655,7 +670,7 @@ export default function ChildDashboard({
                                       }`}
                                       id={`claim-reward-${rew.id}`}
                                     >
-                                      {!availability.available ? availability.reason : 'DISPENSE'}
+                                      {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'DISPENSE'}
                                     </button>
                                   </div>
                                 </div>
