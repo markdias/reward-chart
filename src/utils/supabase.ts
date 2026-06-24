@@ -7,9 +7,7 @@ let currentInitializedKey = '';
 export function getSupabaseConfig() {
   const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  const url = (envUrl || localStorage.getItem('SB_URL') || '').trim();
-  const key = (envKey || localStorage.getItem('SB_KEY') || '').trim();
-  return { url, key };
+  return { url: envUrl.trim(), key: envKey.trim() };
 }
 
 export function isSupabaseConfigured(): boolean {
@@ -18,9 +16,6 @@ export function isSupabaseConfigured(): boolean {
 }
 
 export function getSupabaseClient(): SupabaseClient | null {
-  if (localStorage.getItem('SB_BYPASS') === 'true') {
-    return null;
-  }
   if (!isSupabaseConfigured()) {
     supabaseInstance = null;
     currentInitializedUrl = '';
