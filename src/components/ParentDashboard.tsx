@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2
+  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -18,7 +18,7 @@ interface ParentDashboardProps {
   redemptions: RewardRedemption[];
   onAddChild: (name: string, characterId: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
-  onAddTask: (title: string, points: number, category: string, recurrence: string, childIds: string[]) => void;
+  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
   onAddReward: (title: string, cost: number, childIds: string[], icon: string, limitType: any) => void;
@@ -41,6 +41,7 @@ export default function ParentDashboard({
   redemptions,
   onAddChild,
   onEditChild,
+  onUpdateChildStats,
   onAddTask,
   onEditTask,
   onDeleteTask,
@@ -56,6 +57,13 @@ export default function ParentDashboard({
   theme
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance'>('approvals');
+  const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
+
+  // Sort children alphabetically so they don't jump around
+  const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Custom Confirmation Modal State
+  const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'XP' | 'Level' | 'Weekly XP' | 'Monthly XP' | 'Streak'} | null>(null);
   
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -67,6 +75,7 @@ export default function ParentDashboard({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPoints, setTaskPoints] = useState(15);
+  const [taskXp, setTaskXp] = useState(15);
   const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
   const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time'>('daily');
   const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
@@ -135,12 +144,13 @@ export default function ParentDashboard({
       onEditTask(editingTaskId, {
         title: taskTitle,
         points: taskPoints,
+        xp: taskXp,
         category: taskCategory,
         recurrence: taskRecurrence,
         child_ids: taskChildIds
       });
     } else {
-      onAddTask(taskTitle, taskPoints, taskCategory, taskRecurrence, taskChildIds);
+      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskChildIds);
     }
     setTaskTitle('');
     setEditingTaskId(null);
@@ -180,6 +190,7 @@ export default function ParentDashboard({
     setEditingTaskId(task.id);
     setTaskTitle(task.title);
     setTaskPoints(task.points);
+    setTaskXp(task.xp ?? task.points);
     setTaskCategory(task.category as any);
     setTaskRecurrence(task.recurrence as any);
     setTaskChildIds(task.child_ids || []);
@@ -199,7 +210,6 @@ export default function ParentDashboard({
   return (
     <div className={`min-h-screen ${theme === 'cosmic_dark' ? 'bg-[#060814] text-slate-100' : 'bg-[#FCFBF9] text-stone-900'} flex flex-col font-sans relative overflow-hidden`} id="parent-dashboard-root">
       
-      {/* Sci-fi Grids and Glow backdrops */}
       <div className={`absolute inset-0 ${theme === 'cosmic_dark' ? 'scrolling-grid opacity-5' : 'opacity-[0.02] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px]'} pointer-events-none`} />
       {theme === 'cosmic_dark' && (
         <>
@@ -208,7 +218,6 @@ export default function ParentDashboard({
         </>
       )}
 
-      {/* Futuristic Header Console */}
       <header className={`${theme === 'cosmic_dark' ? 'bg-[#070919]/90 border-b border-indigo-950/60' : 'bg-white border-b border-stone-200 shadow-sm'} backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4`}>
         <div className="flex items-center gap-3">
           <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme === 'cosmic_dark' ? 'from-fuchsia-500 to-purple-600 shadow-fuchsia-500/20' : 'from-amber-400 to-amber-500 border border-stone-900 shadow-sm'} flex items-center justify-center text-xl shadow-lg`}>
@@ -222,10 +231,7 @@ export default function ParentDashboard({
           </div>
         </div>
 
-        {/* Action Widgets */}
         <div className="flex items-center gap-4">
-          
-          {/* Notifications Trigger */}
           <div className="relative">
             <button
               onClick={() => {
@@ -243,7 +249,6 @@ export default function ParentDashboard({
               )}
             </button>
 
-            {/* Dropdown Notifications popup */}
             <AnimatePresence>
               {showNotifications && (
                 <motion.div
@@ -281,7 +286,6 @@ export default function ParentDashboard({
             </AnimatePresence>
           </div>
 
-          {/* Quick Exit Locked Mode */}
           <button
             onClick={() => {
               playSound.click();
@@ -295,10 +299,8 @@ export default function ParentDashboard({
         </div>
       </header>
 
-      {/* Main Grid Workspace */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12" id="parent-workspace">
         
-        {/* Left Side: Sidebar Selection Panel */}
         <aside className={`lg:col-span-3 ${theme === 'cosmic_dark' ? 'bg-[#070919]/60 border-r border-indigo-950/60' : 'bg-stone-50 border-r border-stone-200'} p-6 space-y-6`}>
           <div className="space-y-1">
             <span className={`text-[10px] font-bold font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
@@ -347,7 +349,6 @@ export default function ParentDashboard({
             })}
           </nav>
 
-          {/* Quick Info Block */}
           <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col gap-2`}>
             <h4 className={`text-xs font-bold font-display ${styles.textColor} flex items-center gap-1.5`}>
               <Sparkles className="w-4 h-4 text-amber-400" /> EVOLUTION ENGINE ACTIVE
@@ -358,10 +359,8 @@ export default function ParentDashboard({
           </div>
         </aside>
 
-        {/* Right Side: Tab View Content */}
         <main className="lg:col-span-9 p-8">
           
-          {/* Dynamic Statistic Bento Cells */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
               <div className={`p-3 rounded-xl ${theme === 'cosmic_dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
@@ -377,7 +376,7 @@ export default function ParentDashboard({
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold">`}>ACTIVE PILOTS</span>
+                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>ACTIVE PILOTS</span>
                 <span className={`text-xl font-black ${styles.titleColor} font-mono`}>{children.length} ACTIVE</span>
               </div>
             </div>
@@ -394,7 +393,6 @@ export default function ParentDashboard({
 
           <AnimatePresence mode="wait">
             
-            {/* 1. Approvals Tab */}
             {activeTab === 'approvals' && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -424,7 +422,6 @@ export default function ParentDashboard({
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {/* Chores Section */}
                     {pendingApprovals.length > 0 && (
                       <div className="space-y-4">
                         <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
@@ -440,110 +437,115 @@ export default function ParentDashboard({
                                 key={appr.id}
                                 className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                               >
-                          <div className="flex gap-4 items-start">
-                            <img
-                              src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
-                              alt="Child avatar"
-                              className={`w-14 h-14 rounded-2xl p-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}
-                              referrerPolicy="no-referrer"
-                            />
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name}</span>
-                                <span className={`text-[9px] font-mono px-2 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-cyan-900/30' : 'bg-amber-50 text-amber-700 border border-amber-200'} font-bold uppercase`}>
-                                  {character?.name.split(' ')[0]}
-                                </span>
-                              </div>
-                              <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                {task?.title || 'Unknown Task'}
-                              </h3>
-                              <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                COMPLETED AT: {new Date(appr.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                          </div>
+                                <div className="flex gap-4 items-start">
+                                  <img
+                                    src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
+                                    alt="Child avatar"
+                                    className={`w-14 h-14 rounded-2xl p-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name}</span>
+                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-cyan-900/30' : 'bg-amber-50 text-amber-700 border border-amber-200'} font-bold uppercase`}>
+                                        {character?.name.split(' ')[0]}
+                                      </span>
+                                    </div>
+                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
+                                      {task?.title || 'Unknown Task'}
+                                    </h3>
+                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
+                                      COMPLETED AT: {new Date(appr.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
 
-                          <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
-                            <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-100'} px-3 py-1.5 rounded-xl`}>
-                              <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>+{task?.points} XP</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleReject(appr.id)}
-                                className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border-indigo-950' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'}`}
-                              >
-                                <X className="w-4 h-4" /> REJECT
-                              </button>
-                              <button
-                                onClick={() => handleApprove(appr.id)}
-                                className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                              >
-                                <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
-                              </button>
-                            </div>
-                          </div>
+                                <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
+                                  <div className="flex gap-3">
+                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
+                                      <Star className="w-3.5 h-3.5 text-yellow-500" />
+                                      {task?.points || 0} Gold
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
+                                      <TrendingUp className="w-3.5 h-3.5 text-cyan-500" />
+                                      {task?.xp ?? task?.points ?? 0} XP
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleReject(appr.id)}
+                                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border-indigo-950' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'}`}
+                                    >
+                                      <X className="w-4 h-4" /> REJECT
+                                    </button>
+                                    <button
+                                      onClick={() => handleApprove(appr.id)}
+                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                    >
+                                      <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                      </div>
+                    )}
               
-              {/* Pending Deliveries Section */}
-                {pendingDeliveries.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2 pt-4`}>
-                      🎁 Pending Prize Deliveries ({pendingDeliveries.length})
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {pendingDeliveries.map((delivery) => {
-                        const child = children.find(c => c.id === delivery.child_id);
-                        const reward = rewards.find(r => r.id === delivery.reward_id);
-                        return (
-                          <div
-                            key={delivery.id}
-                            className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                          >
-                            <div className="flex gap-4 items-start">
-                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}>
-                                🎁
-                              </div>
-                              <div>
-                                <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} claimed:</span>
-                                <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                  {reward?.title || 'Unknown Reward'}
-                                </h3>
-                                <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                  CLAIMED AT: {new Date(delivery.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                              </div>
-                            </div>
-                            <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
-                              <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
-                                <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  playSound.success();
-                                  onDeliverReward(delivery.id);
-                                }}
-                                className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                    {pendingDeliveries.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2 pt-4`}>
+                          🎁 Pending Prize Deliveries ({pendingDeliveries.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {pendingDeliveries.map((delivery) => {
+                            const child = children.find(c => c.id === delivery.child_id);
+                            const reward = rewards.find(r => r.id === delivery.reward_id);
+                            return (
+                              <div
+                                key={delivery.id}
+                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                               >
-                                <Check className="w-4 h-4 stroke-[3px]" /> MARK DELIVERED
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                                <div className="flex gap-4 items-start">
+                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}>
+                                    🎁
+                                  </div>
+                                  <div>
+                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} claimed:</span>
+                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
+                                      {reward?.title || 'Unknown Reward'}
+                                    </h3>
+                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
+                                      CLAIMED AT: {new Date(delivery.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
+                                  <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
+                                    <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      playSound.success();
+                                      onDeliverReward(delivery.id);
+                                    }}
+                                    className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                  >
+                                    <Check className="w-4 h-4 stroke-[3px]" /> MARK DELIVERED
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {/* 2. Children Profiles Tab */}
             {activeTab === 'children' && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -567,7 +569,6 @@ export default function ParentDashboard({
                   </button>
                 </div>
 
-                {/* Add Child Overlay Form */}
                 {showAddChild && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -631,9 +632,8 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                {/* Kids Grid list */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {children.map((child) => {
+                  {sortedChildren.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.points);
                     const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
                     return (
@@ -643,30 +643,34 @@ export default function ParentDashboard({
                       >
                         <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${stage.color_theme}`} />
 
-                        <div className="flex gap-4 items-center">
+                        <div className="flex gap-4 items-center pr-8">
                           <img
                             src={child.avatar_url}
                             alt="Child avatar"
-                            className={`w-16 h-16 rounded-2xl p-1 border object-cover ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/60' : 'bg-stone-100 border-stone-200'}`}
+                            className={`w-16 h-16 rounded-2xl p-1 border object-cover shrink-0 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/60' : 'bg-stone-100 border-stone-200'}`}
                             referrerPolicy="no-referrer"
                           />
-                          <div className="flex-1">
-                            <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display`}>{child.name}</h3>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className={`text-xs ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-mono font-bold`}>LVL {child.level}</span>
-                              <span className="text-[10px] text-slate-500 font-mono">•</span>
-                              <span className="text-xs text-orange-500 font-mono font-bold">🔥 {child.streak_days} DAYS</span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
+                              <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
+                                <Star className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                                <span>{child.points} Gold</span>
+                              </div>
+                              <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
+                                <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
+                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/100 XP)</span></span>
+                              </div>
                             </div>
                           </div>
                           <button
                             onClick={() => openEditChild(child)}
-                            className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                            className={`p-2 rounded-xl transition-all cursor-pointer border absolute top-4 right-4 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        {/* Character Info */}
                         <div className={`p-3 rounded-2xl border flex items-center justify-between ${theme === 'cosmic_dark' ? 'bg-slate-950/80 border-indigo-950/50' : 'bg-stone-50 border-stone-200'}`}>
                           <div>
                             <p className={`text-[8px] ${styles.textMuted} font-mono font-bold uppercase tracking-wider`}>Species Pack</p>
@@ -676,13 +680,153 @@ export default function ParentDashboard({
                           <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
                         </div>
 
-                        {/* Score stats */}
+                        {onUpdateChildStats && (
+                          <div className={`mt-2 rounded-2xl border overflow-hidden transition-all ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/40' : 'bg-stone-50 border-stone-200'}`}>
+                            <button
+                              onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
+                              className={`w-full p-3 flex items-center justify-between text-left cursor-pointer hover:bg-stone-100 transition-colors ${theme === 'cosmic_dark' ? 'hover:bg-slate-900' : ''}`}
+                            >
+                              <h4 className={`text-xs font-bold font-display ${styles.titleColor}`}>Quick Adjustments</h4>
+                              <ChevronDown className={`w-4 h-4 ${styles.textMuted} transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
+                            </button>
+                            <AnimatePresence>
+                              {expandedAdjustments[child.id] && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  <div className={`p-3 space-y-3 border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/40' : 'border-stone-200'}`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-xs font-mono ${styles.textColor}`}>Gold:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-xs font-mono ${styles.textColor}`}>XP:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'XP'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: Math.max(0, (child.xp_in_level || 0) - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: (child.xp_in_level || 0) + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-xs font-mono ${styles.textColor}`}>Level:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Weekly XP:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Weekly XP'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Weekly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: Math.max(0, (child.weekly_xp || 0) - 50) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 50 Weekly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: (child.weekly_xp || 0) + 50 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 50 Weekly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Monthly XP:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Monthly XP'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Monthly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: Math.max(0, (child.monthly_xp || 0) - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 Monthly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: (child.monthly_xp || 0) + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 Monthly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Streak Days:</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Streak'});
+                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Streak to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: Math.max(0, (child.streak_days || 0) - 1) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 1 Streak Day"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                      </div>
+                                    </div>
+                                    <div className="pt-2 border-t border-slate-200/10 space-y-3">
+                                      <div>
+                                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Level Up Gold Reward</label>
+                                        <input
+                                          type="number"
+                                          value={child.level_up_gold_reward ?? 500}
+                                          onChange={(e) => onUpdateChildStats(child.id, { level_up_gold_reward: Number(e.target.value) })}
+                                          className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Weekly XP Target</label>
+                                          <input
+                                            type="number"
+                                            value={child.weekly_xp_target ?? 300}
+                                            onChange={(e) => onUpdateChildStats(child.id, { weekly_xp_target: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Weekly Gold Bonus</label>
+                                          <input
+                                            type="number"
+                                            value={child.weekly_reward_points ?? 200}
+                                            onChange={(e) => onUpdateChildStats(child.id, { weekly_reward_points: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Monthly XP Target</label>
+                                          <input
+                                            type="number"
+                                            value={child.monthly_xp_target ?? 1200}
+                                            onChange={(e) => onUpdateChildStats(child.id, { monthly_xp_target: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Monthly Gold Bonus</label>
+                                          <input
+                                            type="number"
+                                            value={child.monthly_reward_points ?? 1000}
+                                            onChange={(e) => onUpdateChildStats(child.id, { monthly_reward_points: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
                             <span>TOTAL GOLD BANK</span>
                             <span className={`font-extrabold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{child.points} GOLD</span>
                           </div>
-                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'} mt-2`}>
                             <div 
                               className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
                               style={{ width: `${Math.min(100, child.xp_in_level)}%` }}
@@ -697,7 +841,6 @@ export default function ParentDashboard({
               </motion.div>
             )}
 
-            {/* 3. Chores & Habits Tab */}
             {activeTab === 'tasks' && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -721,7 +864,6 @@ export default function ParentDashboard({
                   </button>
                 </div>
 
-                {/* Add Custom Chore Overlay */}
                 {showAddTask && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -745,22 +887,32 @@ export default function ParentDashboard({
                             required
                           />
                         </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
-                          <input
-                            type="number"
-                            value={taskPoints}
-                            onChange={(e) => setTaskPoints(Number(e.target.value))}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
-                            min="5"
-                            max="100"
-                            required
-                          />
+                        <div className="flex gap-4">
+                          <div className="flex-1">
+                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={taskPoints}
+                              onChange={e => setTaskPoints(Number(e.target.value))}
+                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>XP Reward</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={taskXp}
+                              onChange={e => setTaskXp(Number(e.target.value))}
+                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            />
+                          </div>
                         </div>
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {children.map(child => {
+                            {sortedChildren.map(child => {
                               const isSelected = taskChildIds.includes(child.id);
                               return (
                                 <button
@@ -813,6 +965,7 @@ export default function ParentDashboard({
                             setEditingTaskId(null);
                             setTaskTitle('');
                             setTaskPoints(15);
+                            setTaskXp(15);
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
@@ -823,7 +976,6 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                {/* Tasks List Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tasks.map((task) => {
                     const assignedNames = task.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
@@ -837,9 +989,10 @@ export default function ParentDashboard({
                             <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                               {task.category.toUpperCase()}
                             </span>
-                            <span className={`text-[9px] font-mono ${styles.textMuted} font-bold uppercase`}>
-                              {task.recurrence}
-                            </span>
+                            <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
+                              <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                              <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                            </div>
                           </div>
                           <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                           <p className={`text-xs ${styles.textMuted} mt-1`}>
@@ -940,7 +1093,7 @@ export default function ParentDashboard({
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {children.map(child => {
+                            {sortedChildren.map(child => {
                               const isSelected = rewardChildIds.includes(child.id);
                               return (
                                 <button
@@ -1163,6 +1316,72 @@ export default function ParentDashboard({
 
           </AnimatePresence>
         </main>
+        
+        {/* Reset Confirmation Modal */}
+        <AnimatePresence>
+          {resetConfirmation && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${
+                  theme === 'cosmic_dark' 
+                    ? 'bg-slate-900 border-rose-500/50 shadow-rose-900/20' 
+                    : 'bg-white border-rose-200 shadow-rose-900/10'
+                }`}
+              >
+                <div className="flex justify-center mb-4">
+                  <div className={`p-3 rounded-full ${theme === 'cosmic_dark' ? 'bg-rose-950/50 text-rose-500' : 'bg-rose-100 text-rose-600'}`}>
+                    <RotateCcw className="w-8 h-8" />
+                  </div>
+                </div>
+                <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900'}`}>
+                  Reset {resetConfirmation.type}?
+                </h3>
+                <p className={`text-center text-sm font-mono mb-6 ${theme === 'cosmic_dark' ? 'text-slate-400' : 'text-stone-600'}`}>
+                  Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { playSound.click(); setResetConfirmation(null); }}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${
+                      theme === 'cosmic_dark' 
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' 
+                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                    }`}
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={() => {
+                      playSound.purchase();
+                      if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
+                      if (resetConfirmation.type === 'XP') onUpdateChildStats(resetConfirmation.childId, { xp_in_level: 0 });
+                      if (resetConfirmation.type === 'Level') onUpdateChildStats(resetConfirmation.childId, { level: 1 });
+                      if (resetConfirmation.type === 'Weekly XP') onUpdateChildStats(resetConfirmation.childId, { weekly_xp: 0 });
+                      if (resetConfirmation.type === 'Monthly XP') onUpdateChildStats(resetConfirmation.childId, { monthly_xp: 0 });
+                      if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
+                      setResetConfirmation(null);
+                    }}
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
+                      theme === 'cosmic_dark' 
+                        ? 'bg-gradient-to-r from-rose-600 to-red-600' 
+                        : 'bg-gradient-to-r from-rose-500 to-red-500'
+                    }`}
+                  >
+                    RESET NOW
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Star, ChevronRight, Lock, 
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle
+  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -478,18 +478,6 @@ export default function ChildDashboard({
                         </div>
                         <div className="flex justify-between items-center pt-1">
                           <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / 100</span>
-                          
-                          <button
-                            onClick={triggerManualEvolution}
-                            className={`text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer px-2.5 py-1 rounded-lg border ${
-                              theme === 'cosmic_dark'
-                                ? 'text-pink-400 bg-pink-950/15 border-pink-900/20 hover:text-pink-300'
-                                : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100 font-bold shadow-sm'
-                            }`}
-                            id="evolve-test-btn"
-                          >
-                            ⭐ TEST EVOLVE
-                          </button>
                         </div>
                       </div>
 
@@ -507,6 +495,72 @@ export default function ChildDashboard({
                         </p>
                       </div>
                     </div>
+
+                    {/* Weekly & Monthly Goals */}
+                    {(() => {
+                      const now = new Date();
+                      const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
+                      const isWeeklyReset = !nextWeekly || now >= nextWeekly;
+                      const dispWeeklyXp = isWeeklyReset ? 0 : (activeChild.weekly_xp || 0);
+                      const weeklyPct = Math.min(100, Math.round((dispWeeklyXp / (activeChild.weekly_xp_target || 300)) * 100));
+
+                      const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
+                      const isMonthlyReset = !nextMonthly || now >= nextMonthly;
+                      const dispMonthlyXp = isMonthlyReset ? 0 : (activeChild.monthly_xp || 0);
+                      const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (activeChild.monthly_xp_target || 1000)) * 100));
+
+                      return (
+                        <div className="space-y-4">
+                          {/* Weekly Goal */}
+                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Weekly Target</h4>
+                                {nextWeekly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                              </div>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-cyan-950 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'}`}>
+                                {activeChild.weekly_reward_points || 200} GOLD BONUS
+                              </span>
+                            </div>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${weeklyPct}%` }}
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500"
+                              />
+                            </div>
+                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
+                              <span>{dispWeeklyXp} / {(activeChild.weekly_xp_target || 300)} XP</span>
+                              <span>{weeklyPct}% COMPLETED</span>
+                            </div>
+                          </div>
+
+                          {/* Monthly Goal */}
+                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Monthly Target</h4>
+                                {nextMonthly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                              </div>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-purple-950 text-purple-400' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
+                                {activeChild.monthly_reward_points || 1000} GOLD BONUS
+                              </span>
+                            </div>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${monthlyPct}%` }}
+                                className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500"
+                              />
+                            </div>
+                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
+                              <span>{dispMonthlyXp} / {(activeChild.monthly_xp_target || 1000)} XP</span>
+                              <span>{monthlyPct}% COMPLETED</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 )}
@@ -614,9 +668,14 @@ export default function ChildDashboard({
                                   </div>
 
                                   <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                                    <span className={`font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-emerald-400 bg-emerald-950/40 border-emerald-900/30' : 'text-emerald-700 bg-emerald-50 border-emerald-200'}`}>
-                                      +{task.points} GOLD
-                                    </span>
+                                    <div className="flex gap-2">
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-amber-400 bg-amber-950/40 border-amber-900/30' : 'text-yellow-700 bg-yellow-50 border-yellow-200'}`}>
+                                        <Star className="w-3.5 h-3.5" /> +{task.points}
+                                      </span>
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-cyan-400 bg-cyan-950/40 border-cyan-900/30' : 'text-cyan-700 bg-cyan-50 border-cyan-200'}`}>
+                                        <TrendingUp className="w-3.5 h-3.5" /> +{task.xp ?? task.points}
+                                      </span>
+                                    </div>
 
                                     {isApproved ? (
                                       <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase ${theme === 'cosmic_dark' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>

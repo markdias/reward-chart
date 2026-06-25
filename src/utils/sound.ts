@@ -201,5 +201,32 @@ export const playSound = {
       osc1.stop(now + 1.9);
       osc2.stop(now + 1.9);
     } catch (e) {}
+  },
+
+  purchase: () => {
+    try {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      
+      // Happy high pitched "cha-ching" / double coin clink
+      const freqs = [1200, 1600]; 
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const delay = idx * 0.12;
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + delay + 0.1);
+        
+        gain.gain.setValueAtTime(0.08, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.2);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.25);
+      });
+    } catch (e) {}
   }
 };
