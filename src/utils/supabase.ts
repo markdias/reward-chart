@@ -86,7 +86,24 @@ CREATE TABLE IF NOT EXISTS children (
   points INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
   xp_in_level INTEGER DEFAULT 0,
+  pet_food INTEGER DEFAULT 0,
   streak_days INTEGER DEFAULT 0,
+  level_up_gold_reward INTEGER,
+  level_up_preference TEXT,
+  level_up_bonuses_received INTEGER DEFAULT 0,
+  weekly_xp_target INTEGER,
+  weekly_reward_points INTEGER,
+  monthly_xp_target INTEGER,
+  monthly_reward_points INTEGER,
+  last_weekly_bonus_awarded TEXT,
+  last_monthly_bonus_awarded TEXT,
+  weekly_xp INTEGER DEFAULT 0,
+  monthly_xp INTEGER DEFAULT 0,
+  last_active_week TEXT,
+  last_active_month TEXT,
+  weekly_reset_date TEXT,
+  monthly_reset_date TEXT,
+  last_active_date TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -96,8 +113,12 @@ CREATE TABLE IF NOT EXISTS tasks (
   child_id TEXT NOT NULL,
   title TEXT NOT NULL,
   points INTEGER NOT NULL,
+  xp INTEGER,
   category TEXT NOT NULL,
   recurrence TEXT NOT NULL,
+  cooldown_minutes INTEGER,
+  is_template BOOLEAN DEFAULT FALSE,
+  template_id TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -108,7 +129,9 @@ CREATE TABLE IF NOT EXISTS completions (
   child_id TEXT NOT NULL,
   completed_at TIMESTAMPTZ DEFAULT NOW(),
   status TEXT NOT NULL, -- pending, approved, rejected
-  points_awarded INTEGER NOT NULL
+  points_awarded INTEGER NOT NULL,
+  xp_awarded INTEGER,
+  notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS rewards (
@@ -118,8 +141,20 @@ CREATE TABLE IF NOT EXISTS rewards (
   title TEXT NOT NULL,
   cost_points INTEGER NOT NULL,
   is_available BOOLEAN DEFAULT TRUE,
+  is_template BOOLEAN DEFAULT FALSE,
+  template_id TEXT,
   icon_name TEXT NOT NULL,
+  limit_type TEXT DEFAULT 'unlimited',
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS reward_redemptions (
+  id TEXT PRIMARY KEY,
+  reward_id TEXT NOT NULL,
+  child_id TEXT NOT NULL,
+  parent_id TEXT NOT NULL,
+  redeemed_at TIMESTAMPTZ DEFAULT NOW(),
+  status TEXT NOT NULL -- requested, delivered
 );
 
 -- 3. Enable Row Level Security (RLS)
@@ -127,6 +162,7 @@ ALTER TABLE children ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE completions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reward_redemptions ENABLE ROW LEVEL SECURITY;
 
 -- 4. Create Simple, Non-Recursive, Type-Safe Policies
 -- These policies use simple TRUE checks to avoid recursion and permit smooth operation.
@@ -149,6 +185,11 @@ CREATE POLICY "Allow public select for rewards" ON rewards FOR SELECT USING (tru
 CREATE POLICY "Allow public insert for rewards" ON rewards FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update for rewards" ON rewards FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete for rewards" ON rewards FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select for reward_redemptions" ON reward_redemptions FOR SELECT USING (true);
+CREATE POLICY "Allow public insert for reward_redemptions" ON reward_redemptions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update for reward_redemptions" ON reward_redemptions FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete for reward_redemptions" ON reward_redemptions FOR DELETE USING (true);
 
 -- 💡 SECURE ALTERNATIVE FOR PRODUCTION (Email-based isolation to prevent other parents from seeing your children):
 -- Since 'parent_id' is stored as the parent's email address (TEXT), we compare it directly with the email inside the JWT.

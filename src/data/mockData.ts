@@ -47,7 +47,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_1',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🧹 Clean up bedroom toys',
     points: 15,
     category: 'chores',
@@ -58,7 +59,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_2',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '📚 Read a book for 20 minutes',
     points: 20,
     category: 'homework',
@@ -69,7 +71,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_3',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🥦 Eat all your veggies at dinner',
     points: 10,
     category: 'health',
@@ -82,7 +85,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_4',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🦷 Brush teeth morning & night',
     points: 10,
     category: 'health',
@@ -93,7 +97,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_5',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🎨 Practice drawing/crafting',
     points: 15,
     category: 'creative',
@@ -104,7 +109,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_6',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '✏️ Complete spelling worksheets',
     points: 25,
     category: 'homework',
@@ -117,7 +123,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_7',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🥛 Feed the household pet',
     points: 10,
     category: 'chores',
@@ -128,7 +135,8 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'task_8',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🧘 Practice 10 mins mindfulness',
     points: 15,
     category: 'behavior',
@@ -142,7 +150,8 @@ export const INITIAL_COMPLETIONS: TaskCompletion[] = [
   {
     id: 'comp_1',
     task_id: 'task_1',
-    child_id: 'child_leo',
+    child_id: 'directory',
+    is_template: true,
     completed_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
     status: 'pending',
     points_awarded: 15
@@ -150,7 +159,8 @@ export const INITIAL_COMPLETIONS: TaskCompletion[] = [
   {
     id: 'comp_2',
     task_id: 'task_4',
-    child_id: 'child_lily',
+    child_id: 'directory',
+    is_template: true,
     completed_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
     status: 'pending',
     points_awarded: 10
@@ -158,7 +168,8 @@ export const INITIAL_COMPLETIONS: TaskCompletion[] = [
   {
     id: 'comp_3',
     task_id: 'task_2',
-    child_id: 'child_leo',
+    child_id: 'directory',
+    is_template: true,
     completed_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
     status: 'approved',
     points_awarded: 20
@@ -170,7 +181,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_1',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🎮 30 Minutes of Gaming Time',
     cost_points: 50,
     is_available: true,
@@ -181,7 +193,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_2',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🍦 Family Ice Cream Outing',
     cost_points: 100,
     is_available: true,
@@ -194,7 +207,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_3',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🎨 Brand New Watercolor Set',
     cost_points: 75,
     is_available: true,
@@ -205,7 +219,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_4',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '📖 Pick a bedtime book to buy',
     cost_points: 40,
     is_available: true,
@@ -218,7 +233,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_5',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🍕 Friday Pizza Choice Night',
     cost_points: 80,
     is_available: true,
@@ -229,7 +245,8 @@ export const INITIAL_REWARDS: Reward[] = [
   {
     id: 'rew_6',
     parent_id: 'parent_demo',
-    child_ids: [''],
+    child_id: 'directory',
+    is_template: true,
     title: '🎪 Trip to the Local Amusement Park',
     cost_points: 300,
     is_available: true,
@@ -243,7 +260,8 @@ export const INITIAL_REDEMPTIONS: RewardRedemption[] = [
   {
     id: 'red_1',
     reward_id: 'rew_1',
-    child_id: 'child_leo',
+    child_id: 'directory',
+    is_template: true,
     parent_id: 'parent_demo',
     redeemed_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     status: 'requested'

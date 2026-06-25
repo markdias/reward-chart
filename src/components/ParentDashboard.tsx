@@ -19,15 +19,18 @@ interface ParentDashboardProps {
   onAddChild: (name: string, characterId: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
-  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, childIds: string[]) => void;
+  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
+  onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
-  onAddReward: (title: string, cost: number, childIds: string[], icon: string, limitType: any) => void;
+  onAddReward: (title: string, cost: number, icon: string, limitType: any) => void;
+  onAssignReward: (template: Reward, childIds: string[]) => void;
   onEditReward: (id: string, updates: Partial<Reward>) => void;
   onDeleteReward: (id: string) => void;
   onApproveCompletion: (id: string) => void;
   onRejectCompletion: (id: string) => void;
   onDeliverReward: (id: string) => void;
+  onRejectReward: (id: string) => void;
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
@@ -45,14 +48,17 @@ export default function ParentDashboard({
   onEditChild,
   onUpdateChildStats,
   onAddTask,
+  onAssignTask,
   onEditTask,
   onDeleteTask,
   onAddReward,
+  onAssignReward,
   onEditReward,
   onDeleteReward,
   onApproveCompletion,
   onRejectCompletion,
   onDeliverReward,
+  onRejectReward,
   onRestoreReward,
   onExitParentMode,
   onParentCompleteTask,
@@ -142,8 +148,6 @@ export default function ParentDashboard({
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle || taskChildIds.length === 0) return;
-    playSound.click();
     if (editingTaskId) {
       onEditTask(editingTaskId, {
         title: taskTitle,
@@ -151,35 +155,34 @@ export default function ParentDashboard({
         xp: taskXp,
         category: taskCategory,
         recurrence: taskRecurrence,
-        child_ids: taskChildIds
+        cooldown_minutes: taskCooldownMinutes
       });
     } else {
-      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskChildIds);
+      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
-    setTaskTitle('');
-    setEditingTaskId(null);
     setShowAddTask(false);
+    setEditingTaskId(null);
+    setTaskTitle('');
+    setTaskPoints(15);
+    setTaskXp(15);
   };
 
   const handleRewardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rewardTitle || rewardChildIds.length === 0) return;
-    playSound.click();
     if (editingRewardId) {
       onEditReward(editingRewardId, {
         title: rewardTitle,
         cost_points: rewardCost,
-        child_ids: rewardChildIds,
         icon_name: rewardIcon,
         limit_type: rewardLimit
       });
     } else {
-      onAddReward(rewardTitle, rewardCost, rewardChildIds, rewardIcon, rewardLimit);
+      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit);
     }
-    setRewardTitle('');
-    setEditingRewardId(null);
-    setRewardLimit('unlimited');
     setShowAddReward(false);
+    setEditingRewardId(null);
+    setRewardTitle('');
+    setRewardCost(50);
   };
   
   // Edit Handlers
@@ -529,15 +532,26 @@ export default function ParentDashboard({
                                   <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
                                     <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
                                   </div>
-                                  <button
-                                    onClick={() => {
-                                      playSound.success();
-                                      onDeliverReward(delivery.id);
-                                    }}
-                                    className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                  >
-                                    <Check className="w-4 h-4 stroke-[3px]" /> MARK DELIVERED
-                                  </button>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        playSound.success();
+                                        onDeliverReward(delivery.id);
+                                      }}
+                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-400 hover:bg-emerald-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                    >
+                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        playSound.click();
+                                        onRejectReward(delivery.id);
+                                      }}
+                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-400 hover:text-rose-400 hover:border-rose-900/50' : 'bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
+                                    >
+                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -913,34 +927,7 @@ export default function ParentDashboard({
                             />
                           </div>
                         </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {sortedChildren.map(child => {
-                              const isSelected = taskChildIds.includes(child.id);
-                              return (
-                                <button
-                                  key={child.id}
-                                  type="button"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setTaskChildIds(taskChildIds.filter(id => id !== child.id));
-                                    } else {
-                                      setTaskChildIds([...taskChildIds, child.id]);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                                    isSelected 
-                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
-                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
-                                  }`}
-                                >
-                                  {child.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
                           <select
@@ -980,9 +967,122 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tasks.map((task) => {
-                    const assignedNames = task.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
+                {/* QUEST DIRECTORY */}
+                <div className="mt-8">
+                  <h3 className="text-xl font-black font-display text-white mb-4">QUEST DIRECTORY (BLUEPRINTS)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {tasks.filter(t => t.is_template).map((task) => {
+                      const instances = tasks.filter(t => t.template_id === task.id);
+                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                      
+                      return (
+                        <div key={task.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                  {task.category.toUpperCase()}
+                                </span>
+                                <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
+                                  <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                  <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                                </div>
+                              </div>
+                              <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
+                              <p className={`text-xs ${styles.textMuted} mt-1`}>
+                                Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-3 shrink-0">
+                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                                +{task.points} GOLD
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                  theme === 'cosmic_dark'
+                                    ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
+                                    : 'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917]'
+                                }`}
+                              >
+                                <PlusCircle className="w-4 h-4" /> Assign...
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => openEditTask(task)}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => { playSound.click(); onDeleteTask(task.id); }}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {selectingChildForTaskId === task.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                              >
+                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                  Select pilots to assign this quest:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {children.map(child => {
+                                    const isAssigned = instances.some(i => i.child_id === child.id);
+                                    return (
+                                      <button
+                                        key={child.id}
+                                        onClick={() => {
+                                          playSound.success();
+                                          const currentAssignedIds = instances.map(i => i.child_id);
+                                          const newAssignedIds = isAssigned 
+                                            ? currentAssignedIds.filter(id => id !== child.id)
+                                            : [...currentAssignedIds, child.id];
+                                          onAssignTask(task, newAssignedIds);
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                          isAssigned
+                                            ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950 border-cyan-400' : 'bg-amber-400 border-stone-900 text-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                        }`}
+                                      >
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
+                                        <span>{child.name}</span>
+                                        {isAssigned && <Check className="w-3 h-3" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ACTIVE QUESTS */}
+                <div className="mt-12">
+                  <h3 className="text-xl font-black font-display text-white mb-4">ACTIVE QUESTS (ASSIGNED)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tasks.filter(t => !t.is_template).map((task) => {
+                    const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
                       <div
                         key={task.id}
@@ -1001,7 +1101,7 @@ export default function ParentDashboard({
                             </div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
+                              Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
                             </p>
                           </div>
 
@@ -1010,47 +1110,20 @@ export default function ParentDashboard({
                               +{task.points} GOLD
                             </span>
 
-                            {task.child_ids?.length === 1 ? (
-                              (() => {
-                                const onlyChildId = task.child_ids[0];
-                                const child = children.find(c => c.id === onlyChildId);
-                                return child ? (
-                                  <button
-                                    onClick={() => {
-                                      playSound.success();
-                                      onParentCompleteTask(task.id, onlyChildId);
-                                    }}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                      theme === 'cosmic_dark'
-                                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
-                                        : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
-                                    }`}
-                                    id={`parent-complete-${task.id}`}
-                                  >
-                                    ⚡ Complete for {child.name}
-                                  </button>
-                                ) : null;
-                              })()
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
-                                }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                  selectingChildForTaskId === task.id
-                                    ? theme === 'cosmic_dark'
-                                      ? 'bg-slate-800 text-slate-300 border border-indigo-950'
-                                      : 'bg-stone-200 border border-stone-950 text-stone-900'
-                                    : theme === 'cosmic_dark'
-                                      ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
-                                      : 'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
-                                }`}
-                                id={`parent-select-trigger-${task.id}`}
-                              >
-                                ⚡ Complete Quest...
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                playSound.success();
+                                onParentCompleteTask(task.id, task.child_id);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                theme === 'cosmic_dark'
+                                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                                  : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
+                              }`}
+                              id={`parent-complete-${task.id}`}
+                            >
+                              ⚡ Complete
+                            </button>
 
                             <div className="flex gap-2">
                               <button
@@ -1072,61 +1145,10 @@ export default function ParentDashboard({
                             </div>
                           </div>
                         </div>
-
-                        <AnimatePresence>
-                          {selectingChildForTaskId === task.id && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${
-                                theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'
-                              }`}
-                            >
-                              <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
-                                Who completed this quest?
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {(() => {
-                                  const candidates = (task.child_ids && task.child_ids.length > 0)
-                                    ? children.filter(c => task.child_ids.includes(c.id))
-                                    : children;
-                                  
-                                  if (candidates.length === 0) {
-                                    return <p className="text-xs text-rose-500">No active pilots found to complete this quest.</p>;
-                                  }
-
-                                  return candidates.map(child => (
-                                    <button
-                                      key={child.id}
-                                      onClick={() => {
-                                        playSound.success();
-                                        onParentCompleteTask(task.id, child.id);
-                                        setSelectingChildForTaskId(null);
-                                      }}
-                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
-                                        theme === 'cosmic_dark'
-                                          ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-200 hover:border-indigo-500/80'
-                                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 hover:border-stone-900'
-                                      }`}
-                                      id={`parent-complete-${task.id}-for-${child.id}`}
-                                    >
-                                      <img
-                                        src={child.avatar_url}
-                                        alt={child.name}
-                                        className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover"
-                                      />
-                                      <span>{child.name}</span>
-                                    </button>
-                                  ));
-                                })()}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     );
                   })}
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1191,34 +1213,7 @@ export default function ParentDashboard({
                             required
                           />
                         </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {sortedChildren.map(child => {
-                              const isSelected = rewardChildIds.includes(child.id);
-                              return (
-                                <button
-                                  key={child.id}
-                                  type="button"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setRewardChildIds(rewardChildIds.filter(id => id !== child.id));
-                                    } else {
-                                      setRewardChildIds([...rewardChildIds, child.id]);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                                    isSelected 
-                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
-                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
-                                  }`}
-                                >
-                                  {child.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
                           <select
@@ -1272,10 +1267,119 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                {/* Rewards grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rewards.map((reward) => {
-                    const assignedNames = reward.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
+                {/* REWARD DIRECTORY */}
+                <div className="mt-8">
+                  <h3 className="text-xl font-black font-display text-white mb-4">REWARD DIRECTORY (BLUEPRINTS)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {rewards.filter(r => r.is_template).map((reward) => {
+                      const instances = rewards.filter(r => r.template_id === reward.id);
+                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                      return (
+                        <div key={reward.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-3.5 items-center">
+                              <span className={`text-3xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-100 border border-stone-200'} p-2.5 rounded-2xl`}>🎁</span>
+                              <div>
+                                <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
+                                  {reward.title}
+                                </h3>
+                                <p className={`text-xs ${styles.textMuted} mt-1`}>
+                                  Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                                  <span className="mx-2">•</span>
+                                  Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-3">
+                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                                {reward.cost_points} GOLD
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                  theme === 'cosmic_dark'
+                                    ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white'
+                                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_2.5px_0_0_#1c1917]'
+                                }`}
+                              >
+                                <PlusCircle className="w-4 h-4" /> Assign...
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => openEditReward(reward)}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {selectingChildForTaskId === reward.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                              >
+                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                  Select pilots to assign this reward:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {children.map(child => {
+                                    const isAssigned = instances.some(i => i.child_id === child.id);
+                                    return (
+                                      <button
+                                        key={child.id}
+                                        onClick={() => {
+                                          playSound.success();
+                                          const currentAssignedIds = instances.map(i => i.child_id);
+                                          const newAssignedIds = isAssigned 
+                                            ? currentAssignedIds.filter(id => id !== child.id)
+                                            : [...currentAssignedIds, child.id];
+                                          onAssignReward(reward, newAssignedIds);
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                          isAssigned
+                                            ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white border-fuchsia-500' : 'bg-stone-900 border-stone-900 text-white shadow-[0_2px_0_0_#1c1917]')
+                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                        }`}
+                                      >
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
+                                        <span>{child.name}</span>
+                                        {isAssigned && <Check className="w-3 h-3" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ACTIVE REWARDS */}
+                <div className="mt-12">
+                  <h3 className="text-xl font-black font-display text-white mb-4">ACTIVE REWARDS (ASSIGNED)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rewards.filter(r => !r.is_template).map((reward) => {
+                    const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
                       <div
                         key={reward.id}
@@ -1293,7 +1397,7 @@ export default function ParentDashboard({
                               )}
                             </h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
+                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
                               <span className="mx-2">•</span>
                               Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
@@ -1326,6 +1430,7 @@ export default function ParentDashboard({
                       </div>
                     );
                   })}
+                  </div>
                 </div>
 
                 {/* History Log */}

@@ -289,6 +289,13 @@ export default function App() {
     localStorage.removeItem('RCH_COMPLETIONS');
     localStorage.removeItem('RCH_REWARDS');
     
+    // Clear specific demo keys to reset state on clicking Start Demo
+    localStorage.removeItem('RCH_CHILDREN_demo_parent@rewardchart.app');
+    localStorage.removeItem('RCH_TASKS_demo_parent@rewardchart.app');
+    localStorage.removeItem('RCH_COMPLETIONS_demo_parent@rewardchart.app');
+    localStorage.removeItem('RCH_REWARDS_demo_parent@rewardchart.app');
+    localStorage.removeItem('RCH_REDEMPTIONS_demo_parent@rewardchart.app');
+    
     setParentEmail('demo_parent@rewardchart.app');
     localStorage.setItem('RCH_PARENT_EMAIL', 'demo_parent@rewardchart.app');
     setIsParentMode(false); // Kids view by default, let them select child
@@ -496,17 +503,19 @@ export default function App() {
     xp: number,
     category: any, 
     recurrence: any, 
-    childIds: string[]
+    cooldownMinutes?: number
   ) => {
     const newTask: Task = {
-      id: `task_${Date.now()}`,
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       parent_id: parentEmail || 'parent_demo',
-      child_ids: childIds,
+      child_id: 'directory',
       title,
       points,
       xp,
       category,
       recurrence,
+      cooldown_minutes: cooldownMinutes,
+      is_template: true,
       is_active: true,
       created_at: new Date().toISOString()
     };
@@ -519,30 +528,57 @@ export default function App() {
     }
   };
 
+  const handleAssignTask = async (template: Task, childIds: string[]) => {
+    const existingInstances = tasks.filter(t => t.template_id === template.id);
+    const instancesToDelete = existingInstances.filter(t => !childIds.includes(t.child_id));
+    const existingChildIds = existingInstances.map(t => t.child_id);
+    const childrenToAdd = childIds.filter(id => !existingChildIds.includes(id));
+
+    const newTasks: Task[] = childrenToAdd.map(childId => ({
+      ...template,
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      child_id: childId,
+      is_template: false,
+      template_id: template.id,
+      created_at: new Date().toISOString()
+    }));
+
+    const nextTasks = tasks.filter(t => !instancesToDelete.find(del => del.id === t.id));
+    syncTasks([...nextTasks, ...newTasks]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      if (instancesToDelete.length > 0) {
+        await supabase.from('tasks').delete().in('id', instancesToDelete.map(t => t.id));
+      }
+      if (newTasks.length > 0) {
+        await supabase.from('tasks').insert(newTasks);
+      }
+    }
+  };
+
   const handleEditTask = async (id: string, updates: Partial<Task>) => {
-    let updatedTask: Task | null = null;
     const updatedTasks = tasks.map(t => {
-      if (t.id === id) {
-        updatedTask = { ...t, ...updates };
-        return updatedTask;
+      if (t.id === id || t.template_id === id) {
+        return { ...t, ...updates };
       }
       return t;
     });
     syncTasks(updatedTasks);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app' && updatedTask) {
-      const { error } = await supabase.from('tasks').update(updatedTask).eq('id', id);
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('tasks').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
   };
 
   const handleDeleteTask = async (id: string) => {
-    syncTasks(tasks.filter(t => t.id !== id));
+    syncTasks(tasks.filter(t => t.id !== id && t.template_id !== id));
 
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      const { error } = await supabase.from('tasks').delete().or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to delete task in Supabase:', error.message);
     }
   };
@@ -551,17 +587,17 @@ export default function App() {
   const handleAddReward = async (
     title: string, 
     cost: number, 
-    childIds: string[], 
     iconName: string,
     limitType: any
   ) => {
     const newReward: Reward = {
-      id: `rew_${Date.now()}`,
+      id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       parent_id: parentEmail || 'parent_demo',
-      child_ids: childIds,
+      child_id: 'directory',
       title,
       cost_points: cost,
       is_available: true,
+      is_template: true,
       icon_name: iconName,
       limit_type: limitType,
       created_at: new Date().toISOString()
@@ -575,30 +611,57 @@ export default function App() {
     }
   };
 
+  const handleAssignReward = async (template: Reward, childIds: string[]) => {
+    const existingInstances = rewards.filter(r => r.template_id === template.id);
+    const instancesToDelete = existingInstances.filter(r => !childIds.includes(r.child_id));
+    const existingChildIds = existingInstances.map(r => r.child_id);
+    const childrenToAdd = childIds.filter(id => !existingChildIds.includes(id));
+
+    const newRewards: Reward[] = childrenToAdd.map(childId => ({
+      ...template,
+      id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      child_id: childId,
+      is_template: false,
+      template_id: template.id,
+      created_at: new Date().toISOString()
+    }));
+
+    const nextRewards = rewards.filter(r => !instancesToDelete.find(del => del.id === r.id));
+    syncRewards([...nextRewards, ...newRewards]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      if (instancesToDelete.length > 0) {
+        await supabase.from('rewards').delete().in('id', instancesToDelete.map(r => r.id));
+      }
+      if (newRewards.length > 0) {
+        await supabase.from('rewards').insert(newRewards);
+      }
+    }
+  };
+
   const handleEditReward = async (id: string, updates: Partial<Reward>) => {
-    let updatedReward: Reward | null = null;
     const updatedRewards = rewards.map(r => {
-      if (r.id === id) {
-        updatedReward = { ...r, ...updates };
-        return updatedReward;
+      if (r.id === id || r.template_id === id) {
+        return { ...r, ...updates };
       }
       return r;
     });
     syncRewards(updatedRewards);
 
     const supabase = getSupabaseClient();
-    if (supabase && updatedReward && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('rewards').update(updatedReward).eq('id', id);
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('rewards').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to update reward in Supabase:', error.message);
     }
   };
 
   const handleDeleteReward = async (id: string) => {
-    syncRewards(rewards.filter(r => r.id !== id));
+    syncRewards(rewards.filter(r => r.id !== id && r.template_id !== id));
 
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('rewards').delete().eq('id', id);
+      const { error } = await supabase.from('rewards').delete().or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to delete reward in Supabase:', error.message);
     }
   };
@@ -740,6 +803,30 @@ export default function App() {
       if (error) {
         console.error("Failed to feed pet:", error);
         alert("Database Error: Could not feed pet. " + error.message);
+      }
+    }
+  };
+
+  const handleRejectReward = async (redemptionId: string) => {
+    const redemption = redemptions.find(r => r.id === redemptionId);
+    if (!redemption) return;
+    
+    // Restore one_time reward availability
+    const reward = rewards.find(r => r.id === redemption.reward_id);
+    if (reward && reward.limit_type === 'one_time') {
+      handleEditReward(reward.id, { is_available: true });
+    }
+
+    // Update redemption status to 'rejected'
+    const targetRedemption = { ...redemption, status: 'rejected' as any };
+    const updatedRedemptions = redemptions.map(r => r.id === redemption.id ? targetRedemption : r);
+    syncRedemptions(updatedRedemptions);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('reward_redemptions').update(targetRedemption).eq('id', redemption.id);
+      if (error) {
+        console.error("Failed to update redemption:", error);
       }
     }
   };
@@ -902,14 +989,17 @@ export default function App() {
               onEditChild={handleEditChild}
               onUpdateChildStats={handleUpdateChildStats}
               onAddTask={handleAddTask}
+              onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
               onAddReward={handleAddReward}
+              onAssignReward={handleAssignReward}
               onEditReward={handleEditReward}
               onDeleteReward={handleDeleteReward}
               onApproveCompletion={handleApproveCompletion}
               onRejectCompletion={handleRejectCompletion}
               onDeliverReward={handleDeliverReward}
+              onRejectReward={handleRejectReward}
               onRestoreReward={handleRestoreReward}
               onExitParentMode={handleExitParentMode}
               onParentCompleteTask={handleParentCompleteTask}

@@ -38,12 +38,15 @@ export interface Child {
 export interface Task {
   id: string;
   parent_id: string;
-  child_ids: string[];
+  child_id: string;
   title: string;
   points: number;
   xp?: number;
   category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
-  recurrence: 'daily' | 'weekly' | 'one_time';
+  recurrence: 'daily' | 'weekly' | 'one_time' | 'repeatable';
+  cooldown_minutes?: number;
+  is_template?: boolean;
+  template_id?: string;
   is_active: boolean;
   created_at: string;
 }
@@ -62,10 +65,12 @@ export interface TaskCompletion {
 export interface Reward {
   id: string;
   parent_id: string;
-  child_ids: string[];
+  child_id: string;
   title: string;
   cost_points: number;
   is_available: boolean;
+  is_template?: boolean;
+  template_id?: string;
   icon_name: string;
   limit_type: 'unlimited' | 'daily' | 'twice_daily' | 'one_time';
   created_at: string;
@@ -77,7 +82,7 @@ export interface RewardRedemption {
   child_id: string;
   parent_id: string;
   redeemed_at: string;
-  status: 'requested' | 'delivered';
+  status: 'requested' | 'delivered' | 'rejected';
 }
 
 export interface CharacterEvolutionStage {
