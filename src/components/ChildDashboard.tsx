@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Star, ChevronRight, Lock, 
@@ -47,7 +47,27 @@ export default function ChildDashboard({
     toStage: string;
     emoji: string;
     image_url?: string;
+    fromStageNumber?: number;
+    fromImage?: string;
   } | null>(null);
+
+  // Hatching animation phase state machine
+  const [hatchPhase, setHatchPhase] = useState<'idle' | 'wobble' | 'crack' | 'split' | 'reveal'>('idle');
+  const isHatching = evolvingStage?.fromStageNumber === 1;
+
+  // Drive hatching animation sequence when evolution from egg is triggered
+  useEffect(() => {
+    if (!evolvingStage || !isHatching) {
+      setHatchPhase('idle');
+      return;
+    }
+    // Phase timeline: wobble → crack → split → reveal
+    setHatchPhase('wobble');
+    const t1 = setTimeout(() => setHatchPhase('crack'), 1500);
+    const t2 = setTimeout(() => setHatchPhase('split'), 2800);
+    const t3 = setTimeout(() => setHatchPhase('reveal'), 3800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [evolvingStage, isHatching]);
 
   const activeChild = children.find(c => c.id === selectedChildId);
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
@@ -112,7 +132,9 @@ export default function ChildDashboard({
       fromStage: activeChildStage.name,
       toStage: nextStage.name,
       emoji: nextStage.emoji,
-      image_url: nextStage.image_url
+      image_url: nextStage.image_url,
+      fromStageNumber: activeChildStage.stage_number,
+      fromImage: activeChildStage.image_url
     });
   };
 
@@ -186,40 +208,169 @@ export default function ChildDashboard({
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
               
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
-                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" /> COMPANION UPGRADE
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
 
               <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent neon-glow-cyan">
-                EVOLUTION TRIGGERED!
+                {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
               </h2>
 
               <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Spectacular progress! Companion <strong className="text-white">{evolvingStage.charName}</strong> is transmuting into a more powerful form!
+                {isHatching && hatchPhase !== 'reveal' ? (
+                  <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
+                ) : (
+                  <>Spectacular progress! Companion <strong className="text-white">{evolvingStage.charName}</strong> is transmuting into a more powerful form!</>
+                )}
               </p>
 
-              {/* Evolution Pedestal Card */}
-              <div className="my-8 relative flex items-center justify-center">
-                <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-400 via-pink-500 to-purple-500 blur-md opacity-75 animate-spin duration-[10s]" />
-                <div className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-slate-950'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl animate-bounce-slow overflow-hidden`}>
-                  {evolvingStage.image_url ? (
-                    <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{evolvingStage.emoji}</span>
-                  )}
-                </div>
+              {/* Evolution / Hatching Pedestal */}
+              <div className="my-8 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
+                <div className={`absolute -inset-2 rounded-full bg-gradient-to-r ${
+                  isHatching && hatchPhase !== 'reveal'
+                    ? 'from-amber-400 via-pink-400 to-fuchsia-500'
+                    : 'from-cyan-400 via-pink-500 to-purple-500'
+                } blur-md opacity-75 animate-spin duration-[10s]`} />
+
+                {/* Hatching sparkle particles */}
+                {isHatching && (hatchPhase === 'crack' || hatchPhase === 'split') && (
+                  <>
+                    {[...Array(8)].map((_, i) => (
+                      <motion.div
+                        key={`spark-${i}`}
+                        initial={{ opacity: 0, scale: 0.5, x: 0, y: 0 }}
+                        animate={{
+                          opacity: [0, 1, 0],
+                          scale: [0.5, 1.5, 0],
+                          x: Math.cos((i / 8) * Math.PI * 2) * 120,
+                          y: Math.sin((i / 8) * Math.PI * 2) * 120,
+                        }}
+                        transition={{ duration: 1.5, delay: i * 0.1, ease: 'easeOut' }}
+                        className="absolute text-2xl pointer-events-none z-30"
+                      >
+                        {['✨', '⭐', '💫', '🌟', '✨', '💛', '⭐', '💫'][i]}
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+
+                {/* EGG phase — shows the egg wobbling and cracking */}
+                {isHatching && hatchPhase !== 'reveal' && evolvingStage.fromImage && (
+                  <motion.div
+                    animate={
+                      hatchPhase === 'wobble'
+                        ? { rotate: [0, -8, 8, -12, 12, -6, 6, 0], scale: [1, 1.02, 1, 1.04, 1, 1.02, 1] }
+                        : hatchPhase === 'crack'
+                          ? { rotate: [0, -15, 15, -20, 20, -10, 10, 0], scale: [1, 1.08, 0.96, 1.1, 0.98, 1.06, 1] }
+                          : { scale: [1, 1.3, 0], opacity: [1, 0.8, 0] } // split
+                    }
+                    transition={
+                      hatchPhase === 'wobble'
+                        ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+                        : hatchPhase === 'crack'
+                          ? { duration: 0.8, repeat: Infinity, ease: 'easeInOut' }
+                          : { duration: 1, ease: 'easeOut' }
+                    }
+                    className="relative h-44 w-44 rounded-full bg-white border-4 border-amber-400 flex items-center justify-center shadow-2xl overflow-hidden z-10"
+                  >
+                    <img src={evolvingStage.fromImage} alt="Egg" className="w-full h-full object-cover" />
+                    {/* Crack overlay */}
+                    {(hatchPhase === 'crack' || hatchPhase === 'split') && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0">
+                          <motion.path
+                            d="M50 10 L48 25 L55 35 L45 45 L52 55 L47 65 L50 80"
+                            stroke="#1e1b4b"
+                            strokeWidth="3"
+                            fill="none"
+                            strokeLinecap="round"
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 1 }}
+                            transition={{ duration: 0.8, ease: 'easeOut' }}
+                          />
+                          <motion.path
+                            d="M35 30 L42 38 L38 48 L45 52"
+                            stroke="#1e1b4b"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 1 }}
+                            transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+                          />
+                          <motion.path
+                            d="M65 25 L58 35 L62 48"
+                            stroke="#1e1b4b"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            initial={{ pathLength: 0, opacity: 0 }}
+                            animate={{ pathLength: 1, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.5, ease: 'easeOut' }}
+                          />
+                        </svg>
+                        {/* Golden glow through cracks */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: [0, 0.6, 0.3, 0.8, 0.5] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                          className="absolute inset-0 bg-gradient-to-tr from-amber-400/30 via-yellow-200/20 to-amber-400/30 rounded-full"
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* REVEAL phase — shows the hatched creature */}
+                {(!isHatching || hatchPhase === 'reveal') && (
+                  <motion.div
+                    initial={isHatching ? { scale: 0.3, opacity: 0, y: 30 } : { scale: 1, opacity: 1 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    transition={isHatching ? { type: 'spring', damping: 10, stiffness: 150, duration: 0.8 } : {}}
+                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-slate-950'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
+                  >
+                    {evolvingStage.image_url ? (
+                      <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{evolvingStage.emoji}</span>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Burst effect on reveal */}
+                {isHatching && hatchPhase === 'reveal' && (
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 1 }}
+                    animate={{ scale: 3, opacity: 0 }}
+                    transition={{ duration: 1.2, ease: 'easeOut' }}
+                    className="absolute w-44 h-44 rounded-full bg-gradient-to-r from-amber-300 via-pink-300 to-fuchsia-300 pointer-events-none z-0"
+                  />
+                )}
               </div>
 
               <div>
-                <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">UPGRADED FORM SPEC</p>
-                <h3 className="text-2xl font-black text-white mt-1 uppercase tracking-wide">{evolvingStage.toStage}</h3>
+                <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
+                  {isHatching && hatchPhase !== 'reveal' ? 'HATCHING IN PROGRESS...' : 'UPGRADED FORM SPEC'}
+                </p>
+                <h3 className="text-2xl font-black text-white mt-1 uppercase tracking-wide">
+                  {isHatching && hatchPhase !== 'reveal'
+                    ? ['🥚 Wobbling...', '💥 Cracking!', '✨ Splitting open!'][['wobble', 'crack', 'split'].indexOf(hatchPhase)] || evolvingStage.toStage
+                    : evolvingStage.toStage
+                  }
+                </h3>
               </div>
 
               <button
-                onClick={() => { playSound.success(); setEvolvingStage(null); }}
-                className="w-full gamepad-button py-4 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-600 text-slate-950 font-black rounded-2xl uppercase tracking-widest text-sm cursor-pointer shadow-lg"
+                onClick={() => { playSound.success(); setEvolvingStage(null); setHatchPhase('idle'); }}
+                className={`w-full gamepad-button py-4 bg-gradient-to-r ${
+                  isHatching && hatchPhase !== 'reveal'
+                    ? 'from-amber-400 via-orange-500 to-pink-500 opacity-50 cursor-not-allowed'
+                    : 'from-cyan-400 via-indigo-500 to-purple-600 cursor-pointer'
+                } text-slate-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-lg`}
                 id="evolution-dismiss-btn"
+                disabled={isHatching && hatchPhase !== 'reveal'}
               >
-                HELL YEAH!
+                {isHatching && hatchPhase !== 'reveal' ? 'HATCHING...' : 'HELL YEAH!'}
               </button>
             </motion.div>
           </motion.div>
