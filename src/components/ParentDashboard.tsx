@@ -891,7 +891,7 @@ export default function ParentDashboard({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {sortedChildren.map((child) => {
-                    const stage = getCharacterStage(child.character_id, child.points);
+                    const stage = getCharacterStage(child.character_id, child.level);
                     const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
                     return (
                       <div
@@ -934,7 +934,11 @@ export default function ParentDashboard({
                             <p className={`text-xs font-extrabold ${styles.textColor} mt-0.5`}>{pack?.name.split(' the ')[0] || 'Unknown'}</p>
                             <p className={`text-[10px] font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
                           </div>
-                          <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
+                          {stage.image_url ? (
+                            <img src={stage.image_url} alt={stage.name} className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" />
+                          ) : (
+                            <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
+                          )}
                         </div>
 
                         {onUpdateChildStats && (
