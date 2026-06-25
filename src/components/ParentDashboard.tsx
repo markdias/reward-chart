@@ -18,6 +18,7 @@ interface ParentDashboardProps {
   redemptions: RewardRedemption[];
   onAddChild: (name: string, characterId: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
+  onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
@@ -31,6 +32,7 @@ interface ParentDashboardProps {
   onExitParentMode: () => void;
   parentEmail: string;
   theme: ThemeId;
+  onParentCompleteTask: (taskId: string, childId: string) => void;
 }
 
 export default function ParentDashboard({
@@ -53,11 +55,13 @@ export default function ParentDashboard({
   onDeliverReward,
   onRestoreReward,
   onExitParentMode,
+  onParentCompleteTask,
   parentEmail,
   theme
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance'>('approvals');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
+  const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
 
   // Sort children alphabetically so they don't jump around
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
@@ -982,47 +986,144 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={task.id}
-                        className={`border p-5 rounded-3xl flex justify-between items-center ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                              {task.category.toUpperCase()}
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                {task.category.toUpperCase()}
+                              </span>
+                              <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
+                                <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                              </div>
+                            </div>
+                            <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
+                            <p className={`text-xs ${styles.textMuted} mt-1`}>
+                              Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-3 shrink-0">
+                            <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                              +{task.points} GOLD
                             </span>
-                            <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                              <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
-                              <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+
+                            {task.child_ids?.length === 1 ? (
+                              (() => {
+                                const onlyChildId = task.child_ids[0];
+                                const child = children.find(c => c.id === onlyChildId);
+                                return child ? (
+                                  <button
+                                    onClick={() => {
+                                      playSound.success();
+                                      onParentCompleteTask(task.id, onlyChildId);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                      theme === 'cosmic_dark'
+                                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                                        : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
+                                    }`}
+                                    id={`parent-complete-${task.id}`}
+                                  >
+                                    ⚡ Complete for {child.name}
+                                  </button>
+                                ) : null;
+                              })()
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                  selectingChildForTaskId === task.id
+                                    ? theme === 'cosmic_dark'
+                                      ? 'bg-slate-800 text-slate-300 border border-indigo-950'
+                                      : 'bg-stone-200 border border-stone-950 text-stone-900'
+                                    : theme === 'cosmic_dark'
+                                      ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
+                                      : 'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
+                                }`}
+                                id={`parent-select-trigger-${task.id}`}
+                              >
+                                ⚡ Complete Quest...
+                              </button>
+                            )}
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openEditTask(task)}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  onDeleteTask(task.id);
+                                }}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                id={`delete-task-${task.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
-                          <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
-                          <p className={`text-xs ${styles.textMuted} mt-1`}>
-                            Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
-                          </p>
                         </div>
 
-                        <div className="flex flex-col items-end gap-3 shrink-0">
-                          <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                            +{task.points} GOLD
-                          </span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditTask(task)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                        <AnimatePresence>
+                          {selectingChildForTaskId === task.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${
+                                theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'
+                              }`}
                             >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                playSound.click();
-                                onDeleteTask(task.id);
-                              }}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
-                              id={`delete-task-${task.id}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
+                              <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                Who completed this quest?
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {(() => {
+                                  const candidates = (task.child_ids && task.child_ids.length > 0)
+                                    ? children.filter(c => task.child_ids.includes(c.id))
+                                    : children;
+                                  
+                                  if (candidates.length === 0) {
+                                    return <p className="text-xs text-rose-500">No active pilots found to complete this quest.</p>;
+                                  }
+
+                                  return candidates.map(child => (
+                                    <button
+                                      key={child.id}
+                                      onClick={() => {
+                                        playSound.success();
+                                        onParentCompleteTask(task.id, child.id);
+                                        setSelectingChildForTaskId(null);
+                                      }}
+                                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                        theme === 'cosmic_dark'
+                                          ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-200 hover:border-indigo-500/80'
+                                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 hover:border-stone-900'
+                                      }`}
+                                      id={`parent-complete-${task.id}-for-${child.id}`}
+                                    >
+                                      <img
+                                        src={child.avatar_url}
+                                        alt={child.name}
+                                        className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover"
+                                      />
+                                      <span>{child.name}</span>
+                                    </button>
+                                  ));
+                                })()}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}

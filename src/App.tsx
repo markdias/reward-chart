@@ -748,6 +748,57 @@ export default function App() {
     handleEditReward(rewardId, { is_available: true });
   };
 
+  const handleParentCompleteTask = async (taskId: string, childId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Create a completion directly as 'approved'
+    const newCompletion: TaskCompletion = {
+      id: `comp_${Date.now()}`,
+      task_id: taskId,
+      child_id: childId,
+      points_awarded: task.points,
+      xp_awarded: task.xp ?? task.points,
+      status: 'approved',
+      completed_at: new Date().toISOString()
+    };
+
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('completions').insert(newCompletion);
+      if (error) console.warn('Failed to sync completion to Supabase:', error.message);
+    }
+
+    // Award points and update Child stats
+    const child = children.find(c => c.id === childId);
+    if (child) {
+      let targetChild = processXpGains(child, newCompletion.xp_awarded);
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastActiveStr = targetChild.last_active_date ? targetChild.last_active_date.split('T')[0] : '';
+      
+      let newStreak = targetChild.streak_days || 0;
+      if (lastActiveStr !== todayStr) {
+        newStreak += 1;
+      }
+
+      targetChild = {
+        ...targetChild,
+        points: targetChild.points + newCompletion.points_awarded,
+        streak_days: newStreak,
+        last_active_date: new Date().toISOString()
+      };
+
+      const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+      syncChildren(updatedChildren);
+      updateChildInSupabase(targetChild);
+    }
+
+    setCelebrationActive(true);
+  };
+
   const handleApproveCompletion = async (completionId: string) => {
     const comp = completions.find(c => c.id === completionId);
     if (!comp) return;
@@ -861,6 +912,7 @@ export default function App() {
               onDeliverReward={handleDeliverReward}
               onRestoreReward={handleRestoreReward}
               onExitParentMode={handleExitParentMode}
+              onParentCompleteTask={handleParentCompleteTask}
               parentEmail={parentEmail}
               theme={activeTheme}
             />
