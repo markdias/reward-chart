@@ -200,9 +200,9 @@ export default function ChildDashboard({
               {/* Evolution Pedestal Card */}
               <div className="my-8 relative flex items-center justify-center">
                 <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-cyan-400 via-pink-500 to-purple-500 blur-md opacity-75 animate-spin duration-[10s]" />
-                <div className="relative h-44 w-44 rounded-full bg-slate-950 border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl animate-bounce-slow overflow-hidden">
+                <div className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-slate-950'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl animate-bounce-slow overflow-hidden`}>
                   {evolvingStage.image_url ? (
-                    <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-36 h-36 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]" />
+                    <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
                   ) : (
                     <span>{evolvingStage.emoji}</span>
                   )}
@@ -340,7 +340,7 @@ export default function ChildDashboard({
                             <span className={`text-xs font-black ${styles.textColor} uppercase`}>{stage.name}</span>
                           </div>
                           {stage.image_url ? (
-                            <img src={stage.image_url} alt={stage.name} className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" />
+                            <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
                           ) : (
                             <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
                           )}
@@ -401,11 +401,11 @@ export default function ChildDashboard({
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
                           transition={{ duration: 1.2 }}
-                          className={`h-36 w-36 rounded-full bg-gradient-to-br ${activeChildStage.color_theme} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-slate-950'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-36 w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : theme === 'cosmic_dark' ? 'border-slate-950' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                           onClick={handleFeedCompanion}
                         >
                           {activeChildStage.image_url ? (
-                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-28 h-28 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] animate-float" />
+                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
                           ) : (
                             <span className="text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}

@@ -935,7 +935,7 @@ export default function ParentDashboard({
                             <p className={`text-[10px] font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
                           </div>
                           {stage.image_url ? (
-                            <img src={stage.image_url} alt={stage.name} className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]" />
+                            <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
                           ) : (
                             <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
                           )}
