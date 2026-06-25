@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Star, ChevronRight, Lock, 
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle
+  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -18,6 +18,7 @@ interface ChildDashboardProps {
   onCompleteTask: (taskId: string, childId: string) => void;
   onClaimReward: (rewardId: string, childId: string) => void;
   onEnterParentMode: () => void;
+  onFeedPet: (childId: string) => void;
   theme: ThemeId;
 }
 
@@ -30,12 +31,12 @@ export default function ChildDashboard({
   onCompleteTask,
   onClaimReward,
   onEnterParentMode,
+  onFeedPet,
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
-  const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards'>('tasks');
+  const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards' | 'history'>('tasks');
   const [isFeeding, setIsFeeding] = useState(false);
-  const [feedPowerups, setFeedPowerups] = useState<number>(3);
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -50,10 +51,18 @@ export default function ChildDashboard({
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.points) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
+  const pendingRedemptionsCost = activeChild ? redemptions
+    .filter(r => r.child_id === activeChild.id && r.status === 'requested')
+    .reduce((total, r) => {
+      const rew = rewards.find(rw => rw.id === r.reward_id);
+      return total + (rew ? rew.cost_points : 0);
+    }, 0) : 0;
+
+  const availablePoints = activeChild ? activeChild.points - pendingRedemptionsCost : 0;
+
   const handleSelectChild = (id: string) => {
     playSound.click();
     setSelectedChildId(id);
-    setFeedPowerups(3); // Reset powerups for feeding
   };
 
   const handleTaskCheck = (taskId: string) => {
@@ -64,7 +73,7 @@ export default function ChildDashboard({
 
   const handleClaimReward = (rewardId: string, cost: number) => {
     if (!activeChild) return;
-    if (activeChild.points < cost) {
+    if (availablePoints < cost) {
       playSound.pinError();
       return;
     }
@@ -74,16 +83,16 @@ export default function ChildDashboard({
 
   // Fun interactive "Feed Companion" action with sound & scaling state!
   const handleFeedCompanion = () => {
-    if (feedPowerups <= 0) {
+    if (!activeChild || (activeChild.pet_food || 0) <= 0) {
       playSound.pinError();
       return;
     }
     playSound.evolution();
     setIsFeeding(true);
-    setFeedPowerups(prev => prev - 1);
+    onFeedPet(activeChild.id);
     setTimeout(() => {
       setIsFeeding(false);
-    }, 1200);
+    }, 2500); // give it more time to show the happy animation
   };
 
   // Test Evolution manually to let kids experience the high-quality character milestone!
@@ -379,9 +388,9 @@ export default function ChildDashboard({
                         <div className="absolute h-40 w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
                         
                         <motion.div
-                          animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.1, 1], rotate: [0, 15, -15, 0] } : {}}
-                          transition={{ duration: 0.8 }}
-                          className={`h-32 w-32 rounded-full bg-gradient-to-br ${activeChildStage.color_theme} flex items-center justify-center text-7xl shadow-2xl border-4 border-slate-950 relative z-10 cursor-pointer ${activeChildStage.animation_class}`}
+                          animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
+                          transition={{ duration: 1.2 }}
+                          className={`h-32 w-32 rounded-full bg-gradient-to-br ${activeChildStage.color_theme} flex items-center justify-center text-7xl shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-slate-950'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500`}
                           onClick={handleFeedCompanion}
                         >
                           <span className="drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
@@ -390,12 +399,39 @@ export default function ChildDashboard({
                         </motion.div>
 
                         {/* Sparkle bursts when feeding */}
-                        {isFeeding && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                            <span className="text-4xl animate-ping absolute">✨</span>
-                            <span className="text-5xl animate-bounce absolute text-yellow-300">🍎</span>
-                          </div>
-                        )}
+                        <AnimatePresence>
+                          {isFeeding && (
+                            <>
+                              <motion.div 
+                                initial={{ opacity: 1, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, y: -100, scale: 1.5 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                className="absolute text-5xl pointer-events-none z-20 text-red-500"
+                              >
+                                ❤️
+                              </motion.div>
+                              <motion.div 
+                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, x: -60, y: -80, scale: 2 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                                className="absolute text-4xl pointer-events-none z-20 text-yellow-300"
+                              >
+                                ✨
+                              </motion.div>
+                              <motion.div 
+                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
+                                animate={{ opacity: 0, x: 60, y: -90, scale: 1.8 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1.4, ease: "easeOut", delay: 0.4 }}
+                                className="absolute text-4xl pointer-events-none z-20"
+                              >
+                                🍎
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       <div className="space-y-1.5 w-full">
@@ -409,13 +445,13 @@ export default function ChildDashboard({
                       <div className={`w-full mt-5 pt-5 border-t ${styles.divider} space-y-3`}>
                         <div className="flex justify-between items-center text-xs">
                           <span className={`font-mono ${styles.textMuted}`}>FEED ENERGY PILLS:</span>
-                          <span className={`font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'} font-extrabold`}>{feedPowerups} LEFT</span>
+                          <span className={`font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'} font-extrabold`}>{activeChild.pet_food || 0} LEFT</span>
                         </div>
                         <button
                           onClick={handleFeedCompanion}
-                          disabled={feedPowerups <= 0}
+                          disabled={(activeChild.pet_food || 0) <= 0}
                           className={`w-full py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                            feedPowerups > 0
+                            (activeChild.pet_food || 0) > 0
                               ? theme === 'cosmic_dark'
                                 ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-slate-950 hover:from-orange-300 hover:to-amber-400 gamepad-button shadow-lg'
                                 : 'bg-amber-400 border border-stone-950 text-stone-900 shadow-[0_3px_0_0_#1c1917]'
@@ -442,18 +478,6 @@ export default function ChildDashboard({
                         </div>
                         <div className="flex justify-between items-center pt-1">
                           <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / 100</span>
-                          
-                          <button
-                            onClick={triggerManualEvolution}
-                            className={`text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer px-2.5 py-1 rounded-lg border ${
-                              theme === 'cosmic_dark'
-                                ? 'text-pink-400 bg-pink-950/15 border-pink-900/20 hover:text-pink-300'
-                                : 'text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100 font-bold shadow-sm'
-                            }`}
-                            id="evolve-test-btn"
-                          >
-                            ⭐ TEST EVOLVE
-                          </button>
                         </div>
                       </div>
 
@@ -471,6 +495,72 @@ export default function ChildDashboard({
                         </p>
                       </div>
                     </div>
+
+                    {/* Weekly & Monthly Goals */}
+                    {(() => {
+                      const now = new Date();
+                      const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
+                      const isWeeklyReset = !nextWeekly || now >= nextWeekly;
+                      const dispWeeklyXp = isWeeklyReset ? 0 : (activeChild.weekly_xp || 0);
+                      const weeklyPct = Math.min(100, Math.round((dispWeeklyXp / (activeChild.weekly_xp_target || 300)) * 100));
+
+                      const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
+                      const isMonthlyReset = !nextMonthly || now >= nextMonthly;
+                      const dispMonthlyXp = isMonthlyReset ? 0 : (activeChild.monthly_xp || 0);
+                      const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (activeChild.monthly_xp_target || 1000)) * 100));
+
+                      return (
+                        <div className="space-y-4">
+                          {/* Weekly Goal */}
+                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Weekly Target</h4>
+                                {nextWeekly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                              </div>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-cyan-950 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'}`}>
+                                {activeChild.weekly_reward_points || 200} GOLD BONUS
+                              </span>
+                            </div>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${weeklyPct}%` }}
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500"
+                              />
+                            </div>
+                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
+                              <span>{dispWeeklyXp} / {(activeChild.weekly_xp_target || 300)} XP</span>
+                              <span>{weeklyPct}% COMPLETED</span>
+                            </div>
+                          </div>
+
+                          {/* Monthly Goal */}
+                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Monthly Target</h4>
+                                {nextMonthly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                              </div>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-purple-950 text-purple-400' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
+                                {activeChild.monthly_reward_points || 1000} GOLD BONUS
+                              </span>
+                            </div>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${monthlyPct}%` }}
+                                className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500"
+                              />
+                            </div>
+                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
+                              <span>{dispMonthlyXp} / {(activeChild.monthly_xp_target || 1000)} XP</span>
+                              <span>{monthlyPct}% COMPLETED</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 )}
@@ -508,6 +598,20 @@ export default function ChildDashboard({
                         }`}
                       >
                         <Gift className="w-4 h-4" /> PRIZE DISPENSER
+                      </button>
+                      <button
+                        onClick={() => { playSound.click(); setActiveChildTab('history'); }}
+                        className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          activeChildTab === 'history'
+                            ? theme === 'cosmic_dark'
+                              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md'
+                              : 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
+                            : theme === 'cosmic_dark'
+                              ? 'text-slate-400 hover:text-slate-200'
+                              : 'text-stone-600 hover:text-stone-900 font-bold'
+                        }`}
+                      >
+                        📜 HISTORY
                       </button>
                     </div>
 
@@ -564,9 +668,14 @@ export default function ChildDashboard({
                                   </div>
 
                                   <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                                    <span className={`font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-emerald-400 bg-emerald-950/40 border-emerald-900/30' : 'text-emerald-700 bg-emerald-50 border-emerald-200'}`}>
-                                      +{task.points} GOLD
-                                    </span>
+                                    <div className="flex gap-2">
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-amber-400 bg-amber-950/40 border-amber-900/30' : 'text-yellow-700 bg-yellow-50 border-yellow-200'}`}>
+                                        <Star className="w-3.5 h-3.5" /> +{task.points}
+                                      </span>
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-cyan-400 bg-cyan-950/40 border-cyan-900/30' : 'text-cyan-700 bg-cyan-50 border-cyan-200'}`}>
+                                        <TrendingUp className="w-3.5 h-3.5" /> +{task.xp ?? task.points}
+                                      </span>
+                                    </div>
 
                                     {isApproved ? (
                                       <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase ${theme === 'cosmic_dark' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -591,7 +700,7 @@ export default function ChildDashboard({
                             })
                           )}
                         </motion.div>
-                      ) : (
+                      ) : activeChildTab === 'rewards' ? (
                         
                         /* PRIZE CABINET CONTENT */
                         <motion.div
@@ -611,8 +720,9 @@ export default function ChildDashboard({
                           ) : (
                             rewards.filter(r => r.child_ids?.includes(activeChild.id)).map((rew) => {
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
-                              const isAffordable = activeChild.points >= rew.cost_points;
-                              const canDispense = isAffordable && availability.available;
+                              const isAffordable = availablePoints >= rew.cost_points;
+                              const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
+                              const canDispense = isAffordable && availability.available && !hasPendingRequest;
                               
                               // Hide claimed one_time rewards entirely
                               if (!rew.is_available && rew.limit_type === 'one_time') {
@@ -655,7 +765,7 @@ export default function ChildDashboard({
                                       }`}
                                       id={`claim-reward-${rew.id}`}
                                     >
-                                      {!availability.available ? availability.reason : 'DISPENSE'}
+                                      {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'DISPENSE'}
                                     </button>
                                   </div>
                                 </div>
@@ -663,7 +773,51 @@ export default function ChildDashboard({
                             })
                           )}
                         </motion.div>
-                      )}
+                      ) : activeChildTab === 'history' ? (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          key="child-history-tab"
+                          className="space-y-4"
+                        >
+                          {redemptions.filter(r => r.child_id === activeChild.id && r.status === 'delivered').length === 0 ? (
+                            <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
+                              <span className="text-5xl block animate-pulse">🕵️‍♂️</span>
+                              <h4 className={`font-extrabold ${styles.textColor} text-base`}>NO PRIZES YET</h4>
+                              <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                                When you earn and receive a prize, it will appear in this log for you to remember!
+                              </p>
+                            </div>
+                          ) : (
+                            redemptions
+                              .filter(r => r.child_id === activeChild.id && r.status === 'delivered')
+                              .sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime())
+                              .map(delivery => {
+                                const reward = rewards.find(r => r.id === delivery.reward_id);
+                                return (
+                                  <div
+                                    key={delivery.id}
+                                    className={`p-5 rounded-3xl border transition-all flex items-center justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                                  >
+                                    <div className="space-y-1">
+                                      <h4 className={`font-black font-display text-base tracking-wide ${styles.titleColor}`}>
+                                        {reward?.title || "Unknown Prize"}
+                                      </h4>
+                                      <p className={`text-xs font-mono font-bold ${styles.textMuted}`}>
+                                        Delivered on {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                      </p>
+                                    </div>
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'bg-indigo-950/40 border-indigo-500/30 text-indigo-400' : 'bg-stone-100 border-stone-300 text-stone-600'}`}>
+                                      <CheckCircle className="w-4 h-4" />
+                                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider">RECEIVED</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                          )}
+                        </motion.div>
+                      ) : null}
                     </AnimatePresence>
                   </div>
                 )}

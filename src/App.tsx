@@ -12,8 +12,10 @@ import {
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
+import { getNextWeeklyResetDate, getNextMonthlyResetDate } from './utils/date';
 import ThemeSelector from './components/ThemeSelector';
-import { getSupabaseClient } from './utils/supabase';
+import { getSupabaseClient, getCurrentUserEmail, signOut } from './utils/supabase';
+import { getCurrentWeekKey, getCurrentMonthKey } from './utils/date';
 
 export default function App() {
   // Active theme style system (default to beautiful Sunny Toybox light)
@@ -198,8 +200,10 @@ export default function App() {
           'postgres_changes',
           { event: '*', schema: 'public' },
           (payload) => {
-            console.log('Realtime event received! Refreshing data...', payload);
-            fetchSupabaseData();
+            console.log('Realtime event received! Refreshing data in 500ms...', payload);
+            setTimeout(() => {
+              fetchSupabaseData();
+            }, 500);
           }
         )
         .subscribe();
@@ -256,7 +260,21 @@ export default function App() {
           level: updatedChild.level,
           xp_in_level: updatedChild.xp_in_level,
           streak_days: updatedChild.streak_days,
-          last_active_date: updatedChild.last_active_date
+          last_active_date: updatedChild.last_active_date,
+          level_up_gold_reward: updatedChild.level_up_gold_reward,
+          level_up_bonuses_received: updatedChild.level_up_bonuses_received,
+          weekly_xp_target: updatedChild.weekly_xp_target,
+          weekly_reward_points: updatedChild.weekly_reward_points,
+          monthly_xp_target: updatedChild.monthly_xp_target,
+          monthly_reward_points: updatedChild.monthly_reward_points,
+          weekly_xp: updatedChild.weekly_xp,
+          monthly_xp: updatedChild.monthly_xp,
+          last_active_week: updatedChild.last_active_week,
+          last_active_month: updatedChild.last_active_month,
+          weekly_reset_date: updatedChild.weekly_reset_date,
+          monthly_reset_date: updatedChild.monthly_reset_date,
+          last_weekly_bonus_awarded: updatedChild.last_weekly_bonus_awarded,
+          last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -370,11 +388,112 @@ export default function App() {
       if (error) console.warn('Failed to update child in Supabase:', error.message);
     }
   };
+  const processXpGains = (child: Child, addedXp: number): Child => {
+    let newLevel = child.level || 1;
+    let newXp = (child.xp_in_level || 0) + addedXp;
+    let newPoints = child.points;
+    let bonusesReceived = child.level_up_bonuses_received || 0;
+
+    // 1. Level up check
+    while (newXp >= 100) {
+      newLevel++;
+      newXp -= 100;
+      
+      const levelUpBonus = child.level_up_gold_reward ?? 500;
+      newPoints += levelUpBonus;
+      bonusesReceived++;
+      
+      setTimeout(() => playSound.levelUp(), 300);
+    }
+
+    // 2. Weekly / Monthly Tracking (Explicit Reset Logging)
+    const now = new Date();
+
+    let weeklyXp = child.weekly_xp || 0;
+    let nextWeeklyReset = child.weekly_reset_date ? new Date(child.weekly_reset_date) : null;
+    
+    if (!nextWeeklyReset || now >= nextWeeklyReset) {
+      weeklyXp = 0; // The week rolled over!
+      nextWeeklyReset = getNextWeeklyResetDate(now);
+    }
+    weeklyXp += addedXp;
+
+    let monthlyXp = child.monthly_xp || 0;
+    let nextMonthlyReset = child.monthly_reset_date ? new Date(child.monthly_reset_date) : null;
+    
+    if (!nextMonthlyReset || now >= nextMonthlyReset) {
+      monthlyXp = 0; // The month rolled over!
+      nextMonthlyReset = getNextMonthlyResetDate(now);
+    }
+    monthlyXp += addedXp;
+
+    // Check Weekly Goal
+    const weeklyTarget = child.weekly_xp_target || 300;
+    const weeklyReward = child.weekly_reward_points || 200;
+    let lastWeeklyBonus = child.last_weekly_bonus_awarded;
+
+    // The bonus key is the ISO string of the reset date, to uniquely identify the week cycle!
+    const currentWeekCycleId = nextWeeklyReset.toISOString();
+    if (weeklyXp >= weeklyTarget && lastWeeklyBonus !== currentWeekCycleId) {
+      newPoints += weeklyReward;
+      lastWeeklyBonus = currentWeekCycleId;
+      setTimeout(() => playSound.purchase(), 500);
+    }
+
+    // Check Monthly Goal
+    const monthlyTarget = child.monthly_xp_target || 1000;
+    const monthlyReward = child.monthly_reward_points || 1000;
+    let lastMonthlyBonus = child.last_monthly_bonus_awarded;
+
+    const currentMonthCycleId = nextMonthlyReset.toISOString();
+    if (monthlyXp >= monthlyTarget && lastMonthlyBonus !== currentMonthCycleId) {
+      newPoints += monthlyReward;
+      lastMonthlyBonus = currentMonthCycleId;
+      setTimeout(() => playSound.purchase(), 800);
+    }
+
+    return {
+      ...child,
+      level: newLevel,
+      xp_in_level: newXp,
+      points: newPoints,
+      level_up_bonuses_received: bonusesReceived,
+      weekly_xp: weeklyXp,
+      monthly_xp: monthlyXp,
+      weekly_reset_date: nextWeeklyReset.toISOString(),
+      monthly_reset_date: nextMonthlyReset.toISOString(),
+      last_weekly_bonus_awarded: lastWeeklyBonus,
+      last_monthly_bonus_awarded: lastMonthlyBonus
+    };
+  };
+
+
+  const handleUpdateChildStats = async (childId: string, updates: Partial<Child>) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+    
+    let targetChild = { ...child };
+    
+    // If we are manually adding XP, use the processXpGains pipeline to trigger rollovers and bonuses!
+    if (updates.xp_in_level !== undefined && updates.xp_in_level > (child.xp_in_level || 0)) {
+      const addedXp = updates.xp_in_level - (child.xp_in_level || 0);
+      targetChild = processXpGains(targetChild, addedXp);
+      delete updates.xp_in_level; // already handled
+    }
+
+    // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
+    targetChild = { ...targetChild, ...updates };
+
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
 
   // Operations: Tasks
   const handleAddTask = async (
     title: string, 
-    points: number, 
+    points: number,
+    xp: number,
     category: any, 
     recurrence: any, 
     childIds: string[]
@@ -385,6 +504,7 @@ export default function App() {
       child_ids: childIds,
       title,
       points,
+      xp,
       category,
       recurrence,
       is_active: true,
@@ -411,7 +531,7 @@ export default function App() {
     syncTasks(updatedTasks);
 
     const supabase = getSupabaseClient();
-    if (supabase && updatedTask && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app' && updatedTask) {
       const { error } = await supabase.from('tasks').update(updatedTask).eq('id', id);
       if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
@@ -493,9 +613,10 @@ export default function App() {
       id: `comp_${Date.now()}`,
       task_id: taskId,
       child_id: childId,
-      completed_at: new Date().toISOString(),
+      points_awarded: task.points,
+      xp_awarded: task.xp ?? task.points, // default to points if xp isn't set (for old tasks)
       status: 'pending',
-      points_awarded: task.points
+      completed_at: new Date().toISOString()
     };
     syncCompletions([...completions, newCompletion]);
 
@@ -532,18 +653,9 @@ export default function App() {
       }
     }
 
-    // Deduct points from child
-    const targetChild = {
-      ...child,
-      points: child.points - reward.cost_points,
-    };
-    targetChild.level = Math.floor(targetChild.points / 100) + 1;
-    targetChild.xp_in_level = targetChild.points % 100;
-
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
+    // Wait to deduct points until parent delivers it!
+    // Just trigger celebration here for the request.
     setCelebrationActive(true);
-    updateChildInSupabase(targetChild);
 
     // Create Redemption Request
     const newRedemption: RewardRedemption = {
@@ -569,6 +681,38 @@ export default function App() {
   };
 
   const handleDeliverReward = async (redemptionId: string) => {
+    const redemption = redemptions.find(r => r.id === redemptionId);
+    if (!redemption) return;
+    
+    // Look up reward cost to deduct it now
+    const reward = rewards.find(r => r.id === redemption.reward_id);
+    const child = children.find(c => c.id === redemption.child_id);
+
+    if (child) {
+      const cost = reward ? reward.cost_points : 0;
+      const targetChild = {
+        ...child,
+        points: Math.max(0, child.points - cost),
+        pet_food: (child.pet_food || 0) + 1,
+      };
+
+      const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+      syncChildren(updatedChildren);
+      
+      // Explicitly wait for child to update in DB before updating the redemption
+      const supabase = getSupabaseClient();
+      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+        const { error } = await supabase.from('children').update(targetChild).eq('id', targetChild.id);
+        if (error) {
+          console.error("Failed to update child:", error);
+          alert("Database Error: Could not update child's points and pet food. " + error.message);
+        }
+      }
+    } else {
+      console.error("Child not found for redemption:", redemption);
+      alert("Error: Could not find the child profile to give pet food to!");
+    }
+
     const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
     syncRedemptions(updated);
 
@@ -576,6 +720,27 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('reward_redemptions').update({ status: 'delivered' }).eq('id', redemptionId);
       if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+    }
+  };
+
+  const handleFeedPet = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.pet_food || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      pet_food: (child.pet_food || 0) - 1,
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('children').update(targetChild).eq('id', targetChild.id);
+      if (error) {
+        console.error("Failed to feed pet:", error);
+        alert("Database Error: Could not feed pet. " + error.message);
+      }
     }
   };
 
@@ -605,23 +770,24 @@ export default function App() {
     // 2. Award points and update Child stats
     const child = children.find(c => c.id === comp.child_id);
     if (child) {
-      const newPoints = child.points + comp.points_awarded;
-      const oldLevel = child.level;
-      const newLevel = Math.floor(newPoints / 100) + 1;
+      // Process XP
+      let targetChild = processXpGains(child, comp.xp_awarded ?? comp.points_awarded);
       
-      // Check for level-up sound trigger
-      if (newLevel > oldLevel) {
-        setTimeout(() => {
-          playSound.levelUp();
-        }, 300);
+      // Update Streak Logic (Once per day)
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastActiveStr = targetChild.last_active_date ? targetChild.last_active_date.split('T')[0] : '';
+      
+      let newStreak = targetChild.streak_days || 0;
+      if (lastActiveStr !== todayStr) {
+        newStreak += 1; // Only increment if they haven't been active yet today
       }
 
-      const targetChild = {
-        ...child,
-        points: newPoints,
-        level: newLevel,
-        xp_in_level: newPoints % 100,
-        streak_days: child.streak_days + 1
+      // Award Gold explicitly
+      targetChild = {
+        ...targetChild,
+        points: targetChild.points + comp.points_awarded,
+        streak_days: newStreak,
+        last_active_date: new Date().toISOString()
       };
 
       const updatedChildren = children.map(c => c.id === comp.child_id ? targetChild : c);
@@ -683,6 +849,7 @@ export default function App() {
               redemptions={redemptions}
               onAddChild={handleAddChild}
               onEditChild={handleEditChild}
+              onUpdateChildStats={handleUpdateChildStats}
               onAddTask={handleAddTask}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
@@ -715,6 +882,7 @@ export default function App() {
               onCompleteTask={handleCompleteTask}
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
+              onFeedPet={handleFeedPet}
               theme={activeTheme}
             />
           </motion.div>

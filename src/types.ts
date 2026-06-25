@@ -14,7 +14,23 @@ export interface Child {
   points: number;
   level: number;
   xp_in_level: number; // Progress within the current level (0-100)
+  pet_food: number;
   streak_days: number;
+  level_up_gold_reward?: number; // Custom gold amount for leveling up
+  level_up_preference?: 'points' | 'reward'; // Deprecated, keeping for backwards compatibility
+  level_up_bonuses_received?: number; // Count of bonuses given
+  weekly_xp_target?: number;
+  weekly_reward_points?: number;
+  monthly_xp_target?: number;
+  monthly_reward_points?: number;
+  last_weekly_bonus_awarded?: string; // e.g. "2026-W25"
+  last_monthly_bonus_awarded?: string; // e.g. "2026-06"
+  weekly_xp?: number;
+  monthly_xp?: number;
+  last_active_week?: string;
+  last_active_month?: string;
+  weekly_reset_date?: string; // ISO date of next reset
+  monthly_reset_date?: string; // ISO date of next reset
   last_active_date?: string;
   created_at: string;
 }
@@ -25,6 +41,7 @@ export interface Task {
   child_ids: string[];
   title: string;
   points: number;
+  xp?: number;
   category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
   recurrence: 'daily' | 'weekly' | 'one_time';
   is_active: boolean;
@@ -38,6 +55,7 @@ export interface TaskCompletion {
   completed_at: string;
   status: 'pending' | 'approved' | 'rejected';
   points_awarded: number;
+  xp_awarded?: number;
   notes?: string;
 }
 
