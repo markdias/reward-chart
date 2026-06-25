@@ -8,6 +8,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types'
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
+import { getCurrentWeekKey } from '../utils/date';
 
 interface ChildDashboardProps {
   children: Child[];
@@ -626,7 +627,13 @@ export default function ChildDashboard({
                           className="space-y-4"
                           id="child-tasks-deck"
                         >
-                          {tasks.filter(t => t.child_ids?.includes(activeChild.id)).length === 0 ? (
+                          {tasks.filter(t => {
+                            if (t.child_id !== activeChild.id) return false;
+                            if (t.recurrence === 'one_time') {
+                              return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
+                            }
+                            return true;
+                          }).length === 0 ? (
                             <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow">🎉</span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
@@ -635,10 +642,51 @@ export default function ChildDashboard({
                               </p>
                             </div>
                           ) : (
-                            tasks.filter(t => t.child_ids?.includes(activeChild.id)).map((task) => {
-                              const compl = completions.find(c => c.task_id === task.id);
+                            tasks.filter(t => {
+                              if (t.child_id !== activeChild.id) return false;
+                              if (t.recurrence === 'one_time') {
+                                return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
+                              }
+                              return true;
+                            }).map((task) => {
+                              // Filter completions by recurrence type
+                              let compl = null;
+                              if (task.recurrence === 'daily') {
+                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && new Date(c.completed_at).toDateString() === new Date().toDateString());
+                              } else if (task.recurrence === 'weekly') {
+                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                              } else if (task.recurrence === 'one_time') {
+                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                              }
+
                               const isPending = compl && compl.status === 'pending';
                               const isApproved = compl && compl.status === 'approved';
+
+                              // Count how many times repeatable quest was completed today
+                              const completedTodayCount = completions.filter(c => 
+                                c.task_id === task.id && 
+                                c.child_id === activeChild.id && 
+                                new Date(c.completed_at).toDateString() === new Date().toDateString()
+                              ).length;
+
+                              // Cooldown logic
+                              let isOnCooldown = false;
+                              let cooldownTimeLeftStr = '';
+                              if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                                const taskComps = completions
+                                  .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                                  .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+                                
+                                if (taskComps.length > 0) {
+                                  const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                                  const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                                  if (msSince < cooldownMs) {
+                                    isOnCooldown = true;
+                                    const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                                    cooldownTimeLeftStr = `${minsLeft}m`;
+                                  }
+                                }
+                              }
 
                               return (
                                 <div
@@ -648,17 +696,27 @@ export default function ChildDashboard({
                                       ? 'bg-slate-900/40 border-slate-950/50 opacity-45' 
                                       : isPending 
                                         ? 'bg-indigo-950/25 border-indigo-500/30' 
-                                        : `${styles.cardBg} ${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg`
+                                        : isOnCooldown
+                                          ? 'bg-amber-950/20 border-amber-500/20 opacity-75'
+                                          : `${styles.cardBg} ${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg`
                                   }`}
                                 >
                                   <div className="space-y-1.5">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                       <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-900/30' : 'text-amber-700 bg-amber-50 border border-amber-200'} px-2.5 py-0.5 rounded`}>
                                         {task.category.toUpperCase()}
+                                      </span>
+                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-purple-400 bg-purple-950/60 border border-purple-900/30' : 'text-purple-700 bg-purple-50 border border-purple-200'} px-2.5 py-0.5 rounded`}>
+                                        {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
                                       </span>
                                       {isPending && (
                                         <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-indigo-400 bg-indigo-950/60 border border-indigo-900/30' : 'text-stone-700 bg-stone-100 border border-stone-200'} px-2.5 py-0.5 rounded animate-pulse`}>
                                           PENDING VERIFICATION
+                                        </span>
+                                      )}
+                                      {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
+                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-amber-400 bg-amber-950/60 border border-amber-900/30' : 'text-amber-700 bg-amber-50 border border-amber-200'} px-2.5 py-0.5 rounded`}>
+                                          ⭐ Completed {completedTodayCount}x today
                                         </span>
                                       )}
                                     </div>
@@ -684,6 +742,10 @@ export default function ChildDashboard({
                                     ) : isPending ? (
                                       <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase animate-pulse ${theme === 'cosmic_dark' ? 'bg-indigo-500/10 text-indigo-300' : 'bg-stone-100 text-stone-600'}`}>
                                         AWAITING CHECK
+                                      </span>
+                                    ) : isOnCooldown ? (
+                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase ${theme === 'cosmic_dark' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                                        COOLDOWN ({cooldownTimeLeftStr})
                                       </span>
                                     ) : (
                                       <button
@@ -711,14 +773,14 @@ export default function ChildDashboard({
                           className="grid grid-cols-1 md:grid-cols-2 gap-4"
                           id="child-rewards-deck"
                         >
-                          {rewards.filter(r => r.child_ids?.includes(activeChild.id)).length === 0 ? (
+                          {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow">🎁</span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>DISPENSER EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>
                           ) : (
-                            rewards.filter(r => r.child_ids?.includes(activeChild.id)).map((rew) => {
+                            rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                               const isAffordable = availablePoints >= rew.cost_points;
                               const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');

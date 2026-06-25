@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown
+  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
+import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
+import { ParentProfile, FamilyMessage } from '../types';
+import { getSupabaseClient } from '../utils/supabase';
+import SettingsTab from './SettingsTab';
 
 interface ParentDashboardProps {
   children: Child[];
@@ -18,19 +22,31 @@ interface ParentDashboardProps {
   redemptions: RewardRedemption[];
   onAddChild: (name: string, characterId: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
-  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, childIds: string[]) => void;
+  onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
+  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
+  onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
-  onAddReward: (title: string, cost: number, childIds: string[], icon: string, limitType: any) => void;
+  onAddReward: (title: string, cost: number, icon: string, limitType: any) => void;
+  onAssignReward: (template: Reward, childIds: string[]) => void;
   onEditReward: (id: string, updates: Partial<Reward>) => void;
   onDeleteReward: (id: string) => void;
   onApproveCompletion: (id: string) => void;
   onRejectCompletion: (id: string) => void;
   onDeliverReward: (id: string) => void;
+  onRejectReward: (id: string) => void;
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
   theme: ThemeId;
+  onParentCompleteTask: (taskId: string, childId: string) => void;
+  parentProfile?: ParentProfile | null;
+  linkedParents?: ParentProfile[];
+  familyMessages?: FamilyMessage[];
+  onResetData?: (keepBlueprints: boolean) => void;
+  onDeleteAccount?: () => void;
+  onFamilyMessageSent?: (msg: FamilyMessage) => void;
+  onFamilyMessageUpdated?: (msgId: string, updates: Partial<FamilyMessage>) => void;
 }
 
 export default function ParentDashboard({
@@ -43,21 +59,40 @@ export default function ParentDashboard({
   onEditChild,
   onUpdateChildStats,
   onAddTask,
+  onAssignTask,
   onEditTask,
   onDeleteTask,
   onAddReward,
+  onAssignReward,
   onEditReward,
   onDeleteReward,
   onApproveCompletion,
   onRejectCompletion,
   onDeliverReward,
+  onRejectReward,
   onRestoreReward,
   onExitParentMode,
   parentEmail,
-  theme
+  theme,
+  onParentCompleteTask,
+  parentProfile,
+  linkedParents = [],
+  familyMessages = [],
+  onResetData,
+  onDeleteAccount,
+  onFamilyMessageSent,
+  onFamilyMessageUpdated
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance'>('approvals');
+  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings'>('approvals');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
+  const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
+  const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
+
+  // Messaging state
+  const [messageText, setMessageText] = useState('');
+  const [messageReceiverId, setMessageReceiverId] = useState<string>('all');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   // Sort children alphabetically so they don't jump around
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
@@ -77,7 +112,8 @@ export default function ParentDashboard({
   const [taskPoints, setTaskPoints] = useState(15);
   const [taskXp, setTaskXp] = useState(15);
   const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
-  const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time'>('daily');
+  const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time' | 'repeatable'>('daily');
+  const [taskCooldownMinutes, setTaskCooldownMinutes] = useState<number | undefined>(undefined);
   const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
 
   const [showAddReward, setShowAddReward] = useState(false);
@@ -91,8 +127,59 @@ export default function ParentDashboard({
   const [showNotifications, setShowNotifications] = useState(false);
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
-  const pendingDeliveries = redemptions.filter(r => r.status === 'requested');
-  const totalPending = pendingApprovals.length + pendingDeliveries.length;
+  const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
+  const unreadMessagesCount = familyMessages.filter(msg => {
+    const isMine = msg.sender_id === parentProfile?.user_id;
+    const amIReceiver = msg.receiver_id === parentProfile?.user_id || msg.receiver_id === null;
+    return !isMine && amIReceiver && !msg.is_read;
+  }).length;
+  
+  const totalPending = pendingApprovals.length + pendingRedemptions.length + unreadMessagesCount;
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !parentProfile?.family_id || !parentProfile?.user_id) return;
+    setIsSendingMessage(true);
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const newMsg = {
+        family_id: parentProfile.family_id,
+        sender_id: parentProfile.user_id,
+        receiver_id: messageReceiverId === 'all' ? null : messageReceiverId,
+        message: messageText.trim()
+      };
+      const { data, error } = await supabase.from('family_messages').insert(newMsg).select().single();
+      
+      if (!error && data) {
+        if (onFamilyMessageSent) {
+          onFamilyMessageSent(data as FamilyMessage);
+        }
+        setMessageText('');
+        
+        // Broadcast to other parents instantly!
+        supabase.channel(`family-${parentProfile.family_id}`).send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: { message: data }
+        });
+        
+        playSound.success();
+      } else {
+        playSound.pinError();
+        console.error('Failed to send message', error);
+      }
+    }
+    setIsSendingMessage(false);
+  };
+
+  const handleMarkMessageRead = async (msgId: string) => {
+    if (onFamilyMessageUpdated) {
+      onFamilyMessageUpdated(msgId, { is_read: true });
+    }
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      await supabase.from('family_messages').update({ is_read: true }).eq('id', msgId);
+    }
+  };
   
   const approvedCompletionsCount = completions.filter(c => c.status === 'approved').length;
   const styles = THEME_PRESETS[theme];
@@ -117,6 +204,46 @@ export default function ParentDashboard({
     onApproveCompletion(id);
   };
 
+  const handleImportDefaultTasks = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const tasksToInsert = PREMADE_TASKS.map(t => ({ 
+      ...t, 
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile.family_id 
+    }));
+    const { error } = await supabase.from('tasks').insert(tasksToInsert);
+    if (error) {
+      console.error('Supabase tasks insert error:', error);
+      alert(`Error importing tasks: ${error.message}`);
+    } else {
+      playSound.success();
+    }
+  };
+
+  const handleImportDefaultRewards = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const rewardsToInsert = PREMADE_REWARDS.map(r => ({ 
+      ...r, 
+      id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile.family_id 
+    }));
+    const { error } = await supabase.from('rewards').insert(rewardsToInsert);
+    if (error) {
+      console.error('Supabase rewards insert error:', error);
+      alert(`Error importing rewards: ${error.message}`);
+    } else {
+      playSound.success();
+    }
+  };
+
   const handleReject = (id: string) => {
     playSound.click();
     onRejectCompletion(id);
@@ -138,8 +265,6 @@ export default function ParentDashboard({
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle || taskChildIds.length === 0) return;
-    playSound.click();
     if (editingTaskId) {
       onEditTask(editingTaskId, {
         title: taskTitle,
@@ -147,35 +272,40 @@ export default function ParentDashboard({
         xp: taskXp,
         category: taskCategory,
         recurrence: taskRecurrence,
-        child_ids: taskChildIds
+        cooldown_minutes: taskCooldownMinutes
       });
     } else {
-      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskChildIds);
+      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
-    setTaskTitle('');
-    setEditingTaskId(null);
     setShowAddTask(false);
+    setTaskSubTab('directory');
+    setEditingTaskId(null);
+    setTaskTitle('');
+    setTaskPoints(15);
+    setTaskXp(15);
+    setTaskCategory('chores');
+    setTaskRecurrence('daily');
+    setTaskCooldownMinutes(undefined);
+    setTaskChildIds([]);
   };
 
   const handleRewardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rewardTitle || rewardChildIds.length === 0) return;
-    playSound.click();
     if (editingRewardId) {
       onEditReward(editingRewardId, {
         title: rewardTitle,
         cost_points: rewardCost,
-        child_ids: rewardChildIds,
         icon_name: rewardIcon,
         limit_type: rewardLimit
       });
     } else {
-      onAddReward(rewardTitle, rewardCost, rewardChildIds, rewardIcon, rewardLimit);
+      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit);
     }
-    setRewardTitle('');
-    setEditingRewardId(null);
-    setRewardLimit('unlimited');
     setShowAddReward(false);
+    setRewardSubTab('directory');
+    setEditingRewardId(null);
+    setRewardTitle('');
+    setRewardCost(50);
   };
   
   // Edit Handlers
@@ -191,9 +321,10 @@ export default function ParentDashboard({
     setTaskTitle(task.title);
     setTaskPoints(task.points);
     setTaskXp(task.xp ?? task.points);
-    setTaskCategory(task.category as any);
-    setTaskRecurrence(task.recurrence as any);
-    setTaskChildIds(task.child_ids || []);
+    setTaskCategory(task.category);
+    setTaskRecurrence(task.recurrence);
+    setTaskCooldownMinutes(task.cooldown_minutes ?? undefined);
+    setTaskChildIds([task.child_id || 'directory']);
     setShowAddTask(true);
   };
 
@@ -313,7 +444,8 @@ export default function ParentDashboard({
               { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.length },
-              { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck }
+              { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck },
+              { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -412,12 +544,96 @@ export default function ParentDashboard({
                   </span>
                 </div>
 
+                {/* Family Messaging Section */}
+                {linkedParents.length > 1 && (
+                  <div className={`p-5 rounded-3xl border ${styles.cardBg} ${styles.borderStyle}`}>
+                    <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase mb-4 flex items-center gap-2`}>
+                      <MessageSquare className="w-4 h-4" /> Family Comms
+                    </h3>
+                    
+                    {/* Message Input */}
+                    <div className="flex flex-col gap-3 mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted}`}>To:</span>
+                        <select
+                          value={messageReceiverId}
+                          onChange={(e) => setMessageReceiverId(e.target.value)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white' : 'bg-stone-50 border-stone-200 text-stone-900'} outline-none`}
+                        >
+                          <option value="all">Everyone</option>
+                          {linkedParents.filter(p => p.user_id !== parentProfile?.user_id).map(p => (
+                            <option key={p.user_id} value={p.user_id}>{p.name || p.email}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={messageText}
+                          onChange={(e) => setMessageText(e.target.value)}
+                          placeholder="Type a message to other parents..."
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                          className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white placeholder-slate-500' : 'bg-white border-stone-200 text-stone-900 placeholder-stone-400'} outline-none focus:ring-2 focus:ring-indigo-500`}
+                        />
+                        <button
+                          onClick={handleSendMessage}
+                          disabled={!messageText.trim() || isSendingMessage}
+                          className={`px-4 py-2.5 rounded-xl font-bold font-mono text-xs text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 transition-colors flex items-center justify-center`}
+                        >
+                          {isSendingMessage ? '...' : <Send className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Messages List */}
+                    {familyMessages.length > 0 && (
+                      <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        {familyMessages.map(msg => {
+                          const sender = linkedParents.find(p => p.user_id === msg.sender_id);
+                          const isMine = msg.sender_id === parentProfile?.user_id;
+                          const amIReceiver = msg.receiver_id === parentProfile?.user_id || msg.receiver_id === null;
+                          const showReadBtn = amIReceiver && !isMine && !msg.is_read;
+                          
+                          return (
+                            <div key={msg.id} className={`flex gap-3 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                              {!isMine && (
+                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-xs ${theme === 'cosmic_dark' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                  {sender?.name?.charAt(0) || '?'}
+                                </div>
+                              )}
+                              <div className={`max-w-[80%] rounded-2xl p-3 ${
+                                isMine 
+                                  ? (theme === 'cosmic_dark' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-indigo-500 text-white rounded-tr-sm') 
+                                  : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-200 rounded-tl-sm' : 'bg-stone-100 text-stone-800 rounded-tl-sm')
+                              }`}>
+                                <div className={`text-[9px] font-mono font-bold mb-1 opacity-70 flex justify-between gap-4`}>
+                                  <span>{isMine ? 'You' : (sender?.name || 'Unknown')} {msg.receiver_id ? '(Direct)' : '(To Everyone)'}</span>
+                                  <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <p className="text-sm">{msg.message}</p>
+                                {showReadBtn && (
+                                  <button 
+                                    onClick={() => handleMarkMessageRead(msg.id)}
+                                    className="mt-2 text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-300 hover:text-indigo-200 bg-black/20 px-2 py-1 rounded"
+                                  >
+                                    Mark as Read
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {totalPending === 0 ? (
                   <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
                     <span className="text-5xl inline-block animate-bounce-slow">🚀</span>
                     <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
                     <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
-                      Whenever kids finish chores or claim prizes, they will cascade here for parent authorization.
+                      Whenever kids finish tasks or claim prizes, they will cascade here for parent authorisation.
                     </p>
                   </div>
                 ) : (
@@ -493,13 +709,13 @@ export default function ParentDashboard({
                       </div>
                     )}
               
-                    {pendingDeliveries.length > 0 && (
+                    {pendingRedemptions.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2 pt-4`}>
-                          🎁 Pending Prize Deliveries ({pendingDeliveries.length})
+                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
+                          🎁 Pending Prize Deliveries ({pendingRedemptions.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingDeliveries.map((delivery) => {
+                          {pendingRedemptions.map((delivery) => {
                             const child = children.find(c => c.id === delivery.child_id);
                             const reward = rewards.find(r => r.id === delivery.reward_id);
                             return (
@@ -525,15 +741,26 @@ export default function ParentDashboard({
                                   <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
                                     <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
                                   </div>
-                                  <button
-                                    onClick={() => {
-                                      playSound.success();
-                                      onDeliverReward(delivery.id);
-                                    }}
-                                    className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                  >
-                                    <Check className="w-4 h-4 stroke-[3px]" /> MARK DELIVERED
-                                  </button>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        playSound.success();
+                                        onDeliverReward(delivery.id);
+                                      }}
+                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-400 hover:bg-emerald-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                    >
+                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        playSound.click();
+                                        onRejectReward(delivery.id);
+                                      }}
+                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-400 hover:text-rose-400 hover:border-rose-900/50' : 'bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
+                                    >
+                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -852,16 +1079,24 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>QUEST TEMPLATE DIRECTORY</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviors, and point allocations.</p>
+                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
+                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviours, and point allocations.</p>
                   </div>
-                  <button
-                    onClick={() => { playSound.click(); setShowAddTask(true); }}
-                    className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
-                    id="add-chore-btn-top"
-                  >
-                    <Plus className="w-4 h-4" /> CREATE TEMPLATE
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleImportDefaultTasks}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                    </button>
+                    <button
+                      onClick={() => { playSound.click(); setShowAddTask(true); }}
+                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      id="add-chore-btn-top"
+                    >
+                      <Plus className="w-4 h-4" /> CREATE TEMPLATE
+                    </button>
+                  </div>
                 </div>
 
                 {showAddTask && (
@@ -882,7 +1117,7 @@ export default function ParentDashboard({
                             type="text"
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
-                            placeholder="Clean your room, finish math workbook, brush teeth..."
+                            placeholder="Clean your room, finish maths workbook, brush teeth..."
                             className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200 placeholder-slate-700' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
@@ -909,34 +1144,7 @@ export default function ParentDashboard({
                             />
                           </div>
                         </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {sortedChildren.map(child => {
-                              const isSelected = taskChildIds.includes(child.id);
-                              return (
-                                <button
-                                  key={child.id}
-                                  type="button"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setTaskChildIds(taskChildIds.filter(id => id !== child.id));
-                                    } else {
-                                      setTaskChildIds([...taskChildIds, child.id]);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                                    isSelected 
-                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
-                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
-                                  }`}
-                                >
-                                  {child.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
                           <select
@@ -947,8 +1155,22 @@ export default function ParentDashboard({
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
                             <option value="one_time">One-off Mission</option>
+                            <option value="repeatable">Repeatable (Cooldown)</option>
                           </select>
                         </div>
+                        {taskRecurrence === 'repeatable' && (
+                          <div>
+                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={taskCooldownMinutes || ''}
+                              onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
+                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              required
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-2">
@@ -966,6 +1188,7 @@ export default function ParentDashboard({
                             setTaskTitle('');
                             setTaskPoints(15);
                             setTaskXp(15);
+                            setTaskCooldownMinutes(undefined);
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
@@ -976,57 +1199,218 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tasks.map((task) => {
-                    const assignedNames = task.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
+                {/* SUB-TABS FOR TASKS */}
+                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                  <button
+                    onClick={() => setTaskSubTab('directory')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      taskSubTab === 'directory'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    QUEST DIRECTORY (BLUEPRINTS)
+                  </button>
+                  <button
+                    onClick={() => setTaskSubTab('active')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      taskSubTab === 'active'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    ACTIVE QUESTS (ASSIGNED)
+                  </button>
+                </div>
+
+                {/* QUEST DIRECTORY */}
+                {taskSubTab === 'directory' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {tasks.filter(t => t.is_template).map((task) => {
+                      const instances = tasks.filter(t => t.template_id === task.id);
+                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                      
+                      return (
+                        <div key={task.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-4">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                  {task.category.toUpperCase()}
+                                </span>
+                                <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
+                                  <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                  <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                                </div>
+                              </div>
+                              <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
+                              <p className={`text-xs ${styles.textMuted} mt-1`}>
+                                Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-3 shrink-0">
+                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                                +{task.points} GOLD
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                  theme === 'cosmic_dark'
+                                    ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
+                                    : 'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917]'
+                                }`}
+                              >
+                                <PlusCircle className="w-4 h-4" /> Assign...
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => openEditTask(task)}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => { playSound.click(); onDeleteTask(task.id); }}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {selectingChildForTaskId === task.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                              >
+                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                  Select pilots to assign this quest:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {children.map(child => {
+                                    const isAssigned = instances.some(i => i.child_id === child.id);
+                                    return (
+                                      <button
+                                        key={child.id}
+                                        onClick={() => {
+                                          playSound.success();
+                                          const currentAssignedIds = instances.map(i => i.child_id);
+                                          const newAssignedIds = isAssigned 
+                                            ? currentAssignedIds.filter(id => id !== child.id)
+                                            : [...currentAssignedIds, child.id];
+                                          onAssignTask(task, newAssignedIds);
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                          isAssigned
+                                            ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950 border-cyan-400' : 'bg-amber-400 border-stone-900 text-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                        }`}
+                                      >
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
+                                        <span>{child.name}</span>
+                                        {isAssigned && <Check className="w-3 h-3" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                )}
+
+                {/* ACTIVE QUESTS */}
+                {taskSubTab === 'active' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE QUESTS (ASSIGNED)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tasks.filter(t => !t.is_template).map((task) => {
+                    const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
                       <div
                         key={task.id}
-                        className={`border p-5 rounded-3xl flex justify-between items-center ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                              {task.category.toUpperCase()}
-                            </span>
-                            <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                              <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
-                              <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                {task.category.toUpperCase()}
+                              </span>
+                              <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
+                                <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                              </div>
                             </div>
+                            <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
+                            <p className={`text-xs ${styles.textMuted} mt-1`}>
+                              Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
+                            </p>
                           </div>
-                          <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
-                          <p className={`text-xs ${styles.textMuted} mt-1`}>
-                            Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
-                          </p>
-                        </div>
 
-                        <div className="flex flex-col items-end gap-3 shrink-0">
-                          <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                            +{task.points} GOLD
-                          </span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditTask(task)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
+                          <div className="flex flex-col items-end gap-3 shrink-0">
+                            <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                              +{task.points} GOLD
+                            </span>
+
                             <button
                               onClick={() => {
-                                playSound.click();
-                                onDeleteTask(task.id);
+                                playSound.success();
+                                onParentCompleteTask(task.id, task.child_id);
                               }}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
-                              id={`delete-task-${task.id}`}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                theme === 'cosmic_dark'
+                                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                                  : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
+                              }`}
+                              id={`parent-complete-${task.id}`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              ⚡ Complete
                             </button>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openEditTask(task)}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  onDeleteTask(task.id);
+                                }}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                id={`delete-task-${task.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     );
                   })}
+                  </div>
                 </div>
+                )}
               </motion.div>
             )}
 
@@ -1045,13 +1429,21 @@ export default function ParentDashboard({
                     <h2 className="text-2xl font-black font-display text-white">PRIZE DISPENSER CONTROL</h2>
                     <p className="text-xs text-slate-400">Configure tangible awards and point exchange costs.</p>
                   </div>
-                  <button
-                    onClick={() => { playSound.click(); setShowAddReward(true); }}
-                    className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
-                    id="add-reward-btn-top"
-                  >
-                    <Plus className="w-4 h-4" /> ADD REWARD SLOT
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleImportDefaultRewards}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                    </button>
+                    <button
+                      onClick={() => { playSound.click(); setShowAddReward(true); }}
+                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      id="add-reward-btn-top"
+                    >
+                      <Plus className="w-4 h-4" /> ADD REWARD SLOT
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add Custom Reward Overlay */}
@@ -1090,34 +1482,7 @@ export default function ParentDashboard({
                             required
                           />
                         </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Target Pilots (Select Multiple)</label>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {sortedChildren.map(child => {
-                              const isSelected = rewardChildIds.includes(child.id);
-                              return (
-                                <button
-                                  key={child.id}
-                                  type="button"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      setRewardChildIds(rewardChildIds.filter(id => id !== child.id));
-                                    } else {
-                                      setRewardChildIds([...rewardChildIds, child.id]);
-                                    }
-                                  }}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                                    isSelected 
-                                      ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-400 text-stone-900 border border-stone-900 shadow-[0_2px_0_0_#1c1917]')
-                                      : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200')
-                                  }`}
-                                >
-                                  {child.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+
                         <div>
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
                           <select
@@ -1171,10 +1536,148 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                {/* Rewards grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rewards.map((reward) => {
-                    const assignedNames = reward.child_ids?.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join(', ');
+                {/* SUB-TABS FOR REWARDS */}
+                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                  <button
+                    onClick={() => setRewardSubTab('directory')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      rewardSubTab === 'directory'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    REWARD DIRECTORY
+                  </button>
+                  <button
+                    onClick={() => setRewardSubTab('active')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      rewardSubTab === 'active'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    ACTIVE REWARDS
+                  </button>
+                </div>
+
+                {/* REWARD DIRECTORY */}
+                {rewardSubTab === 'directory' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {rewards.filter(r => r.is_template).map((reward) => {
+                      const instances = rewards.filter(r => r.template_id === reward.id);
+                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                      return (
+                        <div key={reward.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-3.5 items-center">
+                              <span className={`text-3xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-100 border border-stone-200'} p-2.5 rounded-2xl`}>🎁</span>
+                              <div>
+                                <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
+                                  {reward.title}
+                                </h3>
+                                <p className={`text-xs ${styles.textMuted} mt-1`}>
+                                  Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                                  <span className="mx-2">•</span>
+                                  Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-3">
+                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                                {reward.cost_points} GOLD
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                  playSound.click();
+                                  setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
+                                  theme === 'cosmic_dark'
+                                    ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white'
+                                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_2.5px_0_0_#1c1917]'
+                                }`}
+                              >
+                                <PlusCircle className="w-4 h-4" /> Assign...
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => openEditReward(reward)}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {selectingChildForTaskId === reward.id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                              >
+                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                  Select pilots to assign this reward:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {children.map(child => {
+                                    const isAssigned = instances.some(i => i.child_id === child.id);
+                                    return (
+                                      <button
+                                        key={child.id}
+                                        onClick={() => {
+                                          playSound.success();
+                                          const currentAssignedIds = instances.map(i => i.child_id);
+                                          const newAssignedIds = isAssigned 
+                                            ? currentAssignedIds.filter(id => id !== child.id)
+                                            : [...currentAssignedIds, child.id];
+                                          onAssignReward(reward, newAssignedIds);
+                                        }}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                          isAssigned
+                                            ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white border-fuchsia-500' : 'bg-stone-900 border-stone-900 text-white shadow-[0_2px_0_0_#1c1917]')
+                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                        }`}
+                                      >
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
+                                        <span>{child.name}</span>
+                                        {isAssigned && <Check className="w-3 h-3" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+
+                )}
+
+                {/* ACTIVE REWARDS */}
+                {rewardSubTab === 'active' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE REWARDS (ASSIGNED)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rewards.filter(r => !r.is_template).map((reward) => {
+                    const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
                       <div
                         key={reward.id}
@@ -1192,7 +1695,7 @@ export default function ParentDashboard({
                               )}
                             </h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedNames || 'None'}</strong>
+                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
                               <span className="mx-2">•</span>
                               Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
@@ -1225,7 +1728,9 @@ export default function ParentDashboard({
                       </div>
                     );
                   })}
+                  </div>
                 </div>
+                )}
 
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">
@@ -1293,10 +1798,10 @@ export default function ParentDashboard({
                     Children's Online Privacy Protection Rule (COPPA)
                   </div>
                   <p>
-                    Reward Chart is strictly dedicated to ensuring top-tier safety. We do not transmit child behavioral, performance, or identify data to third-party advertizers or cloud syndications. All child names and custom profiles can be held in local browser state sandbox blocks, bypassing general tracking networks.
+                    Reward Chart is strictly dedicated to ensuring top-tier safety. We do not transmit child behavioural, performance, or identity data to third-party advertisers or cloud syndications. All child names and custom profiles can be held in local browser state sandbox blocks, bypassing general tracking networks.
                   </p>
                   <p>
-                    As parents, you hold total sovereignty. You can delete individual child profiles, rewrite task records, or disable cloud synchronization options instantly from these dashboards.
+                    As parents, you hold total sovereignty. You can delete individual child profiles, rewrite task records, or disable cloud synchronisation options instantly from these dashboards.
                   </p>
                   <p>
                     For inquiries regarding family data rights or physical regulatory safety logs, please contact markdias1984@gmail.com.
@@ -1311,6 +1816,23 @@ export default function ParentDashboard({
                     </p>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <SettingsTab
+                  theme={theme}
+                  parentProfile={parentProfile}
+                  linkedParents={linkedParents}
+                  onResetData={onResetData}
+                  onDeleteAccount={onDeleteAccount}
+                />
               </motion.div>
             )}
 

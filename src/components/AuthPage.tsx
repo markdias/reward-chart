@@ -25,10 +25,16 @@ const CAROUSEL_CHARACTERS = [
 export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
+  const [familyName, setFamilyName] = useState('');
+  const searchParams = new URLSearchParams(window.location.search);
+  const hasShareToken = searchParams.has('share');
+
+  const [isSignUp, setIsSignUp] = useState(hasShareToken);
   const [realAuthError, setRealAuthError] = useState('');
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'demo' | 'parent'>('demo');
+  const [activeTab, setActiveTab] = useState<'demo' | 'parent'>(hasShareToken ? 'parent' : 'demo');
   
 
   const handleDemoClick = () => {
@@ -163,6 +169,13 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
           const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+              data: {
+                name,
+                pin,
+                family_name: familyName
+              }
+            }
           });
           if (error) {
             console.warn('Supabase signup error:', error);
@@ -452,7 +465,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
                     </h3>
 
                     <p className={`text-xs ${styles.textMuted} leading-relaxed`}>
-                      Instantly spawn two profiles: <strong className="text-cyan-600 font-black">"Leo the Champion"</strong> & <strong className="text-pink-600 font-black">"Chloe the Adventurer"</strong>. Includes pre-set points, chore listings, and approval requests so you can test leveling up, unlocking pets, and parent authorizations immediately!
+                      Instantly spawn two profiles: <strong className="text-cyan-600 font-black">"Leo the Champion"</strong> & <strong className="text-pink-600 font-black">"Chloe the Adventurer"</strong>. Includes pre-set points, task listings, and approval requests so you can test leveling up, unlocking pets, and parent authorisations immediately!
                     </p>
 
                     <div className={`p-3.5 ${styles.innerCard} space-y-2`}>
@@ -517,9 +530,58 @@ export default function AuthPage({ onStartDemo, onLoginReal, theme }: AuthPagePr
                       />
                     </div>
 
+                    {isSignUp && (
+                      <>
+                        <div>
+                          <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                            Your Name
+                          </label>
+                          <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="E.g. Mummy, Daddy, Commander"
+                            required
+                            className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                          />
+                        </div>
+
+                        {!hasShareToken && (
+                          <div>
+                            <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                              Family Name
+                            </label>
+                            <input
+                              type="text"
+                              value={familyName}
+                              onChange={(e) => setFamilyName(e.target.value)}
+                              placeholder="E.g. The Smiths"
+                              required
+                              className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                            4-Digit App PIN (For Child Lock)
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
+                            placeholder="1234"
+                            required
+                            className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border tracking-widest ${styles.inputBg}`}
+                          />
+                        </div>
+                      </>
+                    )}
+
                     <div>
                       <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                        Secure Key / PIN
+                        Secure Key / Password
                       </label>
                       <input
                         type="password"

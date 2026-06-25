@@ -138,16 +138,6 @@ export default function LockScreen({
             </motion.p>
           )}
 
-          {!error && (
-            <div className={`font-mono text-[10px] mb-5 tracking-wide px-3 py-1.5 rounded-lg flex items-center gap-1 border ${
-              theme === 'cosmic_dark'
-                ? 'text-slate-400 bg-slate-950/80 border-indigo-950'
-                : 'text-stone-600 bg-stone-100 border-stone-200 font-bold'
-            }`}>
-              <Terminal className={`w-3.5 h-3.5 ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-500'}`} />
-              <span>TEST BYPASS KEY: <span className="font-extrabold text-amber-500 text-xs">{correctPin}</span></span>
-            </div>
-          )}
 
           {/* Keypad */}
           <div className="grid grid-cols-3 gap-3 w-full max-w-xs" id="keypad">
