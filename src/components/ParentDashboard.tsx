@@ -14,13 +14,22 @@ import { ParentProfile, FamilyMessage } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
 
+const PRECANNED_AVATARS = [
+  '/avatars/fox.png',
+  '/avatars/puppy.png',
+  '/avatars/kitten.png',
+  '/avatars/bunny.png',
+  '/avatars/bear.png',
+  '/avatars/owl.png'
+];
+
 interface ParentDashboardProps {
   children: Child[];
   tasks: Task[];
   completions: TaskCompletion[];
   rewards: Reward[];
   redemptions: RewardRedemption[];
-  onAddChild: (name: string, characterId: string) => void;
+  onAddChild: (name: string, characterId: string, avatarUrl: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
@@ -105,6 +114,7 @@ export default function ParentDashboard({
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
+  const [newChildAvatar, setNewChildAvatar] = useState('/avatars/fox.png');
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -254,12 +264,14 @@ export default function ParentDashboard({
     if (!newChildName) return;
     playSound.success();
     if (editingChildId) {
-      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar });
+      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar, avatar_url: newChildAvatar });
     } else {
-      onAddChild(newChildName, newChildChar);
+      onAddChild(newChildName, newChildChar, newChildAvatar);
     }
     setNewChildName('');
     setEditingChildId(null);
+    setNewChildChar('unicorn');
+    setNewChildAvatar('/avatars/fox.png');
     setShowAddChild(false);
   };
 
@@ -313,6 +325,7 @@ export default function ParentDashboard({
     setEditingChildId(child.id);
     setNewChildName(child.name);
     setNewChildChar(child.character_id);
+    setNewChildAvatar(child.avatar_url || '/avatars/fox.png');
     setShowAddChild(true);
   };
 
@@ -835,6 +848,22 @@ export default function ParentDashboard({
                         </div>
                       </div>
 
+                      <div>
+                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                        <div className="grid grid-cols-6 gap-2">
+                          {PRECANNED_AVATARS.map(url => (
+                            <button
+                              key={url}
+                              type="button"
+                              onClick={() => setNewChildAvatar(url)}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${newChildAvatar === url ? (theme === 'cosmic_dark' ? 'border-cyan-400 bg-cyan-950/30' : 'border-amber-500 bg-amber-50') : 'border-transparent hover:border-slate-500/50'}`}
+                            >
+                              <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="flex gap-2">
                         <button
                           type="submit"
@@ -849,6 +878,7 @@ export default function ParentDashboard({
                             setEditingChildId(null);
                             setNewChildName('');
                             setNewChildChar('unicorn');
+                            setNewChildAvatar('/avatars/fox.png');
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >

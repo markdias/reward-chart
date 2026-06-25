@@ -546,12 +546,12 @@ export default function App() {
   };
 
   // Operations: Children
-  const handleAddChild = async (name: string, characterId: string) => {
+  const handleAddChild = async (name: string, characterId: string, avatarUrl: string) => {
     const newChild: Child = {
       id: `child_${Date.now()}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       name,
-      avatar_url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
+      avatar_url: avatarUrl,
       character_id: characterId,
       points: 0,
       level: 1,
@@ -573,10 +573,6 @@ export default function App() {
     const updatedChildren = children.map(c => {
       if (c.id === id) {
         updatedChild = { ...c, ...updates };
-        // Update avatar if name changes
-        if (updates.name) {
-          updatedChild.avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(updates.name)}`;
-        }
         return updatedChild;
       }
       return c;
