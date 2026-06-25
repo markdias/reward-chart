@@ -66,6 +66,8 @@ export default function ParentDashboard({
   theme
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance'>('approvals');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
+  const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
   const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
 
@@ -967,9 +969,34 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
+                {/* SUB-TABS FOR TASKS */}
+                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                  <button
+                    onClick={() => setTaskSubTab('directory')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      taskSubTab === 'directory'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    QUEST DIRECTORY (BLUEPRINTS)
+                  </button>
+                  <button
+                    onClick={() => setTaskSubTab('active')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      taskSubTab === 'active'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    ACTIVE QUESTS (ASSIGNED)
+                  </button>
+                </div>
+
                 {/* QUEST DIRECTORY */}
-                <div className="mt-8">
-                  <h3 className="text-xl font-black font-display text-white mb-4">QUEST DIRECTORY (BLUEPRINTS)</h3>
+                {taskSubTab === 'directory' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {tasks.filter(t => t.is_template).map((task) => {
                       const instances = tasks.filter(t => t.template_id === task.id);
@@ -1077,9 +1104,12 @@ export default function ParentDashboard({
                   </div>
                 </div>
 
+                )}
+
                 {/* ACTIVE QUESTS */}
-                <div className="mt-12">
-                  <h3 className="text-xl font-black font-display text-white mb-4">ACTIVE QUESTS (ASSIGNED)</h3>
+                {taskSubTab === 'active' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE QUESTS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
@@ -1150,6 +1180,7 @@ export default function ParentDashboard({
                   })}
                   </div>
                 </div>
+                )}
               </motion.div>
             )}
 
@@ -1267,9 +1298,34 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
+                {/* SUB-TABS FOR REWARDS */}
+                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                  <button
+                    onClick={() => setRewardSubTab('directory')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      rewardSubTab === 'directory'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    REWARD DIRECTORY
+                  </button>
+                  <button
+                    onClick={() => setRewardSubTab('active')}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                      rewardSubTab === 'active'
+                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
+                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                    }`}
+                  >
+                    ACTIVE REWARDS
+                  </button>
+                </div>
+
                 {/* REWARD DIRECTORY */}
-                <div className="mt-8">
-                  <h3 className="text-xl font-black font-display text-white mb-4">REWARD DIRECTORY (BLUEPRINTS)</h3>
+                {rewardSubTab === 'directory' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {rewards.filter(r => r.is_template).map((reward) => {
                       const instances = rewards.filter(r => r.template_id === reward.id);
@@ -1374,9 +1430,13 @@ export default function ParentDashboard({
                   </div>
                 </div>
 
+
+                )}
+
                 {/* ACTIVE REWARDS */}
-                <div className="mt-12">
-                  <h3 className="text-xl font-black font-display text-white mb-4">ACTIVE REWARDS (ASSIGNED)</h3>
+                {rewardSubTab === 'active' && (
+                <div className="mt-4">
+                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE REWARDS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
@@ -1432,6 +1492,7 @@ export default function ParentDashboard({
                   })}
                   </div>
                 </div>
+                )}
 
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">

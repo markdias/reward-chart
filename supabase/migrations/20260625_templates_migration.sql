@@ -30,17 +30,4 @@ ALTER TABLE rewards DROP COLUMN IF EXISTS child_ids;
 ALTER TABLE completions
 ADD COLUMN IF NOT EXISTS xp_awarded INTEGER NULL;
 
--- 4. Add 'rejected' to the reward_redemptions status enum
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'redemption_status_new') THEN
-    CREATE TYPE redemption_status_new AS ENUM ('requested', 'delivered', 'rejected');
-  END IF;
-END$$;
 
-ALTER TABLE reward_redemptions 
-  ALTER COLUMN status TYPE redemption_status_new 
-  USING status::text::redemption_status_new;
-
-DROP TYPE IF EXISTS redemption_status;
-ALTER TYPE redemption_status_new RENAME TO redemption_status;
