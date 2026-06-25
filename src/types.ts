@@ -1,8 +1,11 @@
 export interface ParentProfile {
-  id: string;
+  user_id: string;
   email: string;
-  created_at: string;
-  pin: string; // 4-digit security PIN for parent mode gate
+  name: string | null;
+  family_id: string;
+  family_name?: string | null;
+  pin: string;
+  share_token: string | null;
 }
 
 export interface Child {
@@ -83,6 +86,16 @@ export interface RewardRedemption {
   parent_id: string;
   redeemed_at: string;
   status: 'requested' | 'delivered' | 'rejected';
+}
+
+export interface FamilyMessage {
+  id: string;
+  family_id: string;
+  sender_id: string;
+  receiver_id: string | null;
+  message: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export interface CharacterEvolutionStage {

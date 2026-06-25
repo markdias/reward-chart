@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown
+  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
+import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
+import { ParentProfile, FamilyMessage } from '../types';
+import { getSupabaseClient } from '../utils/supabase';
+import SettingsTab from './SettingsTab';
 
 interface ParentDashboardProps {
   children: Child[];
@@ -36,6 +40,13 @@ interface ParentDashboardProps {
   parentEmail: string;
   theme: ThemeId;
   onParentCompleteTask: (taskId: string, childId: string) => void;
+  parentProfile?: ParentProfile | null;
+  linkedParents?: ParentProfile[];
+  familyMessages?: FamilyMessage[];
+  onResetData?: (keepBlueprints: boolean) => void;
+  onDeleteAccount?: () => void;
+  onFamilyMessageSent?: (msg: FamilyMessage) => void;
+  onFamilyMessageUpdated?: (msgId: string, updates: Partial<FamilyMessage>) => void;
 }
 
 export default function ParentDashboard({
@@ -61,15 +72,27 @@ export default function ParentDashboard({
   onRejectReward,
   onRestoreReward,
   onExitParentMode,
-  onParentCompleteTask,
   parentEmail,
-  theme
+  theme,
+  onParentCompleteTask,
+  parentProfile,
+  linkedParents = [],
+  familyMessages = [],
+  onResetData,
+  onDeleteAccount,
+  onFamilyMessageSent,
+  onFamilyMessageUpdated
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance'>('approvals');
+  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
   const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
+
+  // Messaging state
+  const [messageText, setMessageText] = useState('');
+  const [messageReceiverId, setMessageReceiverId] = useState<string>('all');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   // Sort children alphabetically so they don't jump around
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
@@ -104,8 +127,59 @@ export default function ParentDashboard({
   const [showNotifications, setShowNotifications] = useState(false);
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
-  const pendingDeliveries = redemptions.filter(r => r.status === 'requested');
-  const totalPending = pendingApprovals.length + pendingDeliveries.length;
+  const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
+  const unreadMessagesCount = familyMessages.filter(msg => {
+    const isMine = msg.sender_id === parentProfile?.user_id;
+    const amIReceiver = msg.receiver_id === parentProfile?.user_id || msg.receiver_id === null;
+    return !isMine && amIReceiver && !msg.is_read;
+  }).length;
+  
+  const totalPending = pendingApprovals.length + pendingRedemptions.length + unreadMessagesCount;
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !parentProfile?.family_id || !parentProfile?.user_id) return;
+    setIsSendingMessage(true);
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const newMsg = {
+        family_id: parentProfile.family_id,
+        sender_id: parentProfile.user_id,
+        receiver_id: messageReceiverId === 'all' ? null : messageReceiverId,
+        message: messageText.trim()
+      };
+      const { data, error } = await supabase.from('family_messages').insert(newMsg).select().single();
+      
+      if (!error && data) {
+        if (onFamilyMessageSent) {
+          onFamilyMessageSent(data as FamilyMessage);
+        }
+        setMessageText('');
+        
+        // Broadcast to other parents instantly!
+        supabase.channel(`family-${parentProfile.family_id}`).send({
+          type: 'broadcast',
+          event: 'new_message',
+          payload: { message: data }
+        });
+        
+        playSound.success();
+      } else {
+        playSound.pinError();
+        console.error('Failed to send message', error);
+      }
+    }
+    setIsSendingMessage(false);
+  };
+
+  const handleMarkMessageRead = async (msgId: string) => {
+    if (onFamilyMessageUpdated) {
+      onFamilyMessageUpdated(msgId, { is_read: true });
+    }
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      await supabase.from('family_messages').update({ is_read: true }).eq('id', msgId);
+    }
+  };
   
   const approvedCompletionsCount = completions.filter(c => c.status === 'approved').length;
   const styles = THEME_PRESETS[theme];
@@ -128,6 +202,46 @@ export default function ParentDashboard({
   const handleApprove = (id: string) => {
     playSound.success();
     onApproveCompletion(id);
+  };
+
+  const handleImportDefaultTasks = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const tasksToInsert = PREMADE_TASKS.map(t => ({ 
+      ...t, 
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile.family_id 
+    }));
+    const { error } = await supabase.from('tasks').insert(tasksToInsert);
+    if (error) {
+      console.error('Supabase tasks insert error:', error);
+      alert(`Error importing tasks: ${error.message}`);
+    } else {
+      playSound.success();
+    }
+  };
+
+  const handleImportDefaultRewards = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const rewardsToInsert = PREMADE_REWARDS.map(r => ({ 
+      ...r, 
+      id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile.family_id 
+    }));
+    const { error } = await supabase.from('rewards').insert(rewardsToInsert);
+    if (error) {
+      console.error('Supabase rewards insert error:', error);
+      alert(`Error importing rewards: ${error.message}`);
+    } else {
+      playSound.success();
+    }
   };
 
   const handleReject = (id: string) => {
@@ -330,7 +444,8 @@ export default function ParentDashboard({
               { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.length },
-              { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck }
+              { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck },
+              { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -429,12 +544,96 @@ export default function ParentDashboard({
                   </span>
                 </div>
 
+                {/* Family Messaging Section */}
+                {linkedParents.length > 1 && (
+                  <div className={`p-5 rounded-3xl border ${styles.cardBg} ${styles.borderStyle}`}>
+                    <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase mb-4 flex items-center gap-2`}>
+                      <MessageSquare className="w-4 h-4" /> Family Comms
+                    </h3>
+                    
+                    {/* Message Input */}
+                    <div className="flex flex-col gap-3 mb-6">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted}`}>To:</span>
+                        <select
+                          value={messageReceiverId}
+                          onChange={(e) => setMessageReceiverId(e.target.value)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white' : 'bg-stone-50 border-stone-200 text-stone-900'} outline-none`}
+                        >
+                          <option value="all">Everyone</option>
+                          {linkedParents.filter(p => p.user_id !== parentProfile?.user_id).map(p => (
+                            <option key={p.user_id} value={p.user_id}>{p.name || p.email}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={messageText}
+                          onChange={(e) => setMessageText(e.target.value)}
+                          placeholder="Type a message to other parents..."
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                          className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white placeholder-slate-500' : 'bg-white border-stone-200 text-stone-900 placeholder-stone-400'} outline-none focus:ring-2 focus:ring-indigo-500`}
+                        />
+                        <button
+                          onClick={handleSendMessage}
+                          disabled={!messageText.trim() || isSendingMessage}
+                          className={`px-4 py-2.5 rounded-xl font-bold font-mono text-xs text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 transition-colors flex items-center justify-center`}
+                        >
+                          {isSendingMessage ? '...' : <Send className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Messages List */}
+                    {familyMessages.length > 0 && (
+                      <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        {familyMessages.map(msg => {
+                          const sender = linkedParents.find(p => p.user_id === msg.sender_id);
+                          const isMine = msg.sender_id === parentProfile?.user_id;
+                          const amIReceiver = msg.receiver_id === parentProfile?.user_id || msg.receiver_id === null;
+                          const showReadBtn = amIReceiver && !isMine && !msg.is_read;
+                          
+                          return (
+                            <div key={msg.id} className={`flex gap-3 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                              {!isMine && (
+                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-xs ${theme === 'cosmic_dark' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                  {sender?.name?.charAt(0) || '?'}
+                                </div>
+                              )}
+                              <div className={`max-w-[80%] rounded-2xl p-3 ${
+                                isMine 
+                                  ? (theme === 'cosmic_dark' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-indigo-500 text-white rounded-tr-sm') 
+                                  : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-200 rounded-tl-sm' : 'bg-stone-100 text-stone-800 rounded-tl-sm')
+                              }`}>
+                                <div className={`text-[9px] font-mono font-bold mb-1 opacity-70 flex justify-between gap-4`}>
+                                  <span>{isMine ? 'You' : (sender?.name || 'Unknown')} {msg.receiver_id ? '(Direct)' : '(To Everyone)'}</span>
+                                  <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <p className="text-sm">{msg.message}</p>
+                                {showReadBtn && (
+                                  <button 
+                                    onClick={() => handleMarkMessageRead(msg.id)}
+                                    className="mt-2 text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-300 hover:text-indigo-200 bg-black/20 px-2 py-1 rounded"
+                                  >
+                                    Mark as Read
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {totalPending === 0 ? (
                   <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
                     <span className="text-5xl inline-block animate-bounce-slow">🚀</span>
                     <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
                     <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
-                      Whenever kids finish chores or claim prizes, they will cascade here for parent authorization.
+                      Whenever kids finish tasks or claim prizes, they will cascade here for parent authorisation.
                     </p>
                   </div>
                 ) : (
@@ -510,13 +709,13 @@ export default function ParentDashboard({
                       </div>
                     )}
               
-                    {pendingDeliveries.length > 0 && (
+                    {pendingRedemptions.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2 pt-4`}>
-                          🎁 Pending Prize Deliveries ({pendingDeliveries.length})
+                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
+                          🎁 Pending Prize Deliveries ({pendingRedemptions.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingDeliveries.map((delivery) => {
+                          {pendingRedemptions.map((delivery) => {
                             const child = children.find(c => c.id === delivery.child_id);
                             const reward = rewards.find(r => r.id === delivery.reward_id);
                             return (
@@ -880,16 +1079,24 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>QUEST TEMPLATE DIRECTORY</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviors, and point allocations.</p>
+                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
+                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviours, and point allocations.</p>
                   </div>
-                  <button
-                    onClick={() => { playSound.click(); setShowAddTask(true); }}
-                    className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
-                    id="add-chore-btn-top"
-                  >
-                    <Plus className="w-4 h-4" /> CREATE TEMPLATE
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleImportDefaultTasks}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                    </button>
+                    <button
+                      onClick={() => { playSound.click(); setShowAddTask(true); }}
+                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      id="add-chore-btn-top"
+                    >
+                      <Plus className="w-4 h-4" /> CREATE TEMPLATE
+                    </button>
+                  </div>
                 </div>
 
                 {showAddTask && (
@@ -910,7 +1117,7 @@ export default function ParentDashboard({
                             type="text"
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
-                            placeholder="Clean your room, finish math workbook, brush teeth..."
+                            placeholder="Clean your room, finish maths workbook, brush teeth..."
                             className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200 placeholder-slate-700' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
@@ -1222,13 +1429,21 @@ export default function ParentDashboard({
                     <h2 className="text-2xl font-black font-display text-white">PRIZE DISPENSER CONTROL</h2>
                     <p className="text-xs text-slate-400">Configure tangible awards and point exchange costs.</p>
                   </div>
-                  <button
-                    onClick={() => { playSound.click(); setShowAddReward(true); }}
-                    className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
-                    id="add-reward-btn-top"
-                  >
-                    <Plus className="w-4 h-4" /> ADD REWARD SLOT
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleImportDefaultRewards}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                    </button>
+                    <button
+                      onClick={() => { playSound.click(); setShowAddReward(true); }}
+                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      id="add-reward-btn-top"
+                    >
+                      <Plus className="w-4 h-4" /> ADD REWARD SLOT
+                    </button>
+                  </div>
                 </div>
 
                 {/* Add Custom Reward Overlay */}
@@ -1583,10 +1798,10 @@ export default function ParentDashboard({
                     Children's Online Privacy Protection Rule (COPPA)
                   </div>
                   <p>
-                    Reward Chart is strictly dedicated to ensuring top-tier safety. We do not transmit child behavioral, performance, or identify data to third-party advertizers or cloud syndications. All child names and custom profiles can be held in local browser state sandbox blocks, bypassing general tracking networks.
+                    Reward Chart is strictly dedicated to ensuring top-tier safety. We do not transmit child behavioural, performance, or identity data to third-party advertisers or cloud syndications. All child names and custom profiles can be held in local browser state sandbox blocks, bypassing general tracking networks.
                   </p>
                   <p>
-                    As parents, you hold total sovereignty. You can delete individual child profiles, rewrite task records, or disable cloud synchronization options instantly from these dashboards.
+                    As parents, you hold total sovereignty. You can delete individual child profiles, rewrite task records, or disable cloud synchronisation options instantly from these dashboards.
                   </p>
                   <p>
                     For inquiries regarding family data rights or physical regulatory safety logs, please contact markdias1984@gmail.com.
@@ -1601,6 +1816,23 @@ export default function ParentDashboard({
                     </p>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <SettingsTab
+                  theme={theme}
+                  parentProfile={parentProfile}
+                  linkedParents={linkedParents}
+                  onResetData={onResetData}
+                  onDeleteAccount={onDeleteAccount}
+                />
               </motion.div>
             )}
 
