@@ -89,7 +89,8 @@ export default function ParentDashboard({
   const [taskPoints, setTaskPoints] = useState(15);
   const [taskXp, setTaskXp] = useState(15);
   const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
-  const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time'>('daily');
+  const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time' | 'repeatable'>('daily');
+  const [taskCooldownMinutes, setTaskCooldownMinutes] = useState<number | undefined>(undefined);
   const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
 
   const [showAddReward, setShowAddReward] = useState(false);
@@ -163,10 +164,15 @@ export default function ParentDashboard({
       onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
     setShowAddTask(false);
+    setTaskSubTab('directory');
     setEditingTaskId(null);
     setTaskTitle('');
     setTaskPoints(15);
     setTaskXp(15);
+    setTaskCategory('chores');
+    setTaskRecurrence('daily');
+    setTaskCooldownMinutes(undefined);
+    setTaskChildIds([]);
   };
 
   const handleRewardSubmit = (e: React.FormEvent) => {
@@ -182,6 +188,7 @@ export default function ParentDashboard({
       onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit);
     }
     setShowAddReward(false);
+    setRewardSubTab('directory');
     setEditingRewardId(null);
     setRewardTitle('');
     setRewardCost(50);
@@ -200,9 +207,10 @@ export default function ParentDashboard({
     setTaskTitle(task.title);
     setTaskPoints(task.points);
     setTaskXp(task.xp ?? task.points);
-    setTaskCategory(task.category as any);
-    setTaskRecurrence(task.recurrence as any);
-    setTaskChildIds(task.child_ids || []);
+    setTaskCategory(task.category);
+    setTaskRecurrence(task.recurrence);
+    setTaskCooldownMinutes(task.cooldown_minutes ?? undefined);
+    setTaskChildIds([task.child_id || 'directory']);
     setShowAddTask(true);
   };
 
@@ -940,8 +948,22 @@ export default function ParentDashboard({
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
                             <option value="one_time">One-off Mission</option>
+                            <option value="repeatable">Repeatable (Cooldown)</option>
                           </select>
                         </div>
+                        {taskRecurrence === 'repeatable' && (
+                          <div>
+                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={taskCooldownMinutes || ''}
+                              onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
+                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              required
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex gap-2">
@@ -959,6 +981,7 @@ export default function ParentDashboard({
                             setTaskTitle('');
                             setTaskPoints(15);
                             setTaskXp(15);
+                            setTaskCooldownMinutes(undefined);
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
