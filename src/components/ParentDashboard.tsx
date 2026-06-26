@@ -49,6 +49,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onFamilyMessageSent?: (msg: FamilyMessage) => void;
   onFamilyMessageUpdated?: (msgId: string, updates: Partial<FamilyMessage>) => void;
+  onRequireAccount?: () => void;
 }
 
 export default function ParentDashboard({
@@ -84,7 +85,8 @@ export default function ParentDashboard({
   onRunSetup,
   onDeleteAccount,
   onFamilyMessageSent,
-  onFamilyMessageUpdated
+  onFamilyMessageUpdated,
+  onRequireAccount
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
@@ -1920,6 +1922,7 @@ export default function ParentDashboard({
                   onRunSetup={onRunSetup}
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
+                  onRequireAccount={onRequireAccount}
                 />
               </motion.div>
             )}
