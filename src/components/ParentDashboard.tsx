@@ -15,13 +15,6 @@ import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
 
 const PRECANNED_AVATARS = [
-  // Classic original avatars
-  '/avatars/fox.png',
-  '/avatars/puppy.png',
-  '/avatars/kitten.png',
-  '/avatars/bunny.png',
-  '/avatars/bear.png',
-  '/avatars/owl.png',
   // Boy-themed new avatars
   '/avatars/boy_fox.png',
   '/avatars/boy_puppy.png',
@@ -134,7 +127,7 @@ export default function ParentDashboard({
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
-  const [newChildAvatar, setNewChildAvatar] = useState('/avatars/fox.png');
+  const [newChildAvatar, setNewChildAvatar] = useState('/avatars/boy_fox.png');
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -291,7 +284,7 @@ export default function ParentDashboard({
     setNewChildName('');
     setEditingChildId(null);
     setNewChildChar('unicorn');
-    setNewChildAvatar('/avatars/fox.png');
+    setNewChildAvatar('/avatars/boy_fox.png');
     setShowAddChild(false);
   };
 
@@ -345,7 +338,7 @@ export default function ParentDashboard({
     setEditingChildId(child.id);
     setNewChildName(child.name);
     setNewChildChar(child.character_id);
-    setNewChildAvatar(child.avatar_url || '/avatars/fox.png');
+    setNewChildAvatar(child.avatar_url || '/avatars/boy_fox.png');
     setShowAddChild(true);
   };
 
@@ -898,7 +891,7 @@ export default function ParentDashboard({
                             setEditingChildId(null);
                             setNewChildName('');
                             setNewChildChar('unicorn');
-                            setNewChildAvatar('/avatars/fox.png');
+                            setNewChildAvatar('/avatars/boy_fox.png');
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
