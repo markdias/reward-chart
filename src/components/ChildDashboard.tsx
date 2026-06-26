@@ -944,9 +944,20 @@ export default function ChildDashboard({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           key="child-rewards-tab"
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                          id="child-rewards-deck"
+                          className="space-y-4"
                         >
+                          <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
+                            <div>
+                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Dispensers</h3>
+                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600">Available Balance</span>
+                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">⭐ {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">COINS</span></span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow">🎁</span>
@@ -980,13 +991,13 @@ export default function ChildDashboard({
                                     </div>
                                     <div>
                                       <h4 className={`font-extrabold text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
-                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} PTS</p>
+                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} COINS</p>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col items-end gap-2 shrink-0">
                                     <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
-                                      ⭐ {rew.cost_points} PTS
+                                      ⭐ {rew.cost_points} COINS
                                     </span>
 
                                     <button
@@ -1006,6 +1017,7 @@ export default function ChildDashboard({
                               );
                             })
                           )}
+                          </div>
                         </motion.div>
                       ) : activeChildTab === 'history' ? (
                         <motion.div
