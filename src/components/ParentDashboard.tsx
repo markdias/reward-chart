@@ -1458,24 +1458,24 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="rewards-view"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
                   <div>
-                    <h2 className="text-2xl font-black font-display text-white">PRIZE DISPENSER CONTROL</h2>
-                    <p className="text-xs text-slate-400">Configure tangible awards and point exchange costs.</p>
+                    <h2 className={`text-xl sm:text-2xl font-black font-display ${styles.titleColor}`}>PRIZE DISPENSER CONTROL</h2>
+                    <p className={`text-[10px] sm:text-xs ${styles.textMuted} hidden sm:block`}>Configure tangible awards and point exchange costs.</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleImportDefaultRewards}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-2`}
+                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      className={`bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-reward-btn-top"
                     >
-                      <Plus className="w-4 h-4" /> ADD REWARD SLOT
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> ADD <span className="hidden sm:inline">REWARD</span>
                     </button>
                   </div>
                 </div>
