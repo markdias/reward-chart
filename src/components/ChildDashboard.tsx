@@ -823,7 +823,7 @@ export default function ChildDashboard({
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'tasks'
+                          activeChildTab === 'tasks' || activeChildTab === 'companion'
                             ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
@@ -854,7 +854,7 @@ export default function ChildDashboard({
 
                     {/* Active Screen Frame */}
                     <AnimatePresence mode="wait">
-                      {activeChildTab === 'tasks' ? (
+                      {activeChildTab === 'tasks' || activeChildTab === 'companion' ? (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
