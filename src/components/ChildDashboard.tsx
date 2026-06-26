@@ -36,7 +36,7 @@ export default function ChildDashboard({
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
-  const [activeChildTab, setActiveChildTab] = useState<'tasks' | 'rewards' | 'history'>('tasks');
+  const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('tasks');
   const [isFeeding, setIsFeeding] = useState(false);
   
   // Character Evolution Special Cinematic State
@@ -508,9 +508,9 @@ export default function ChildDashboard({
                   id="kid-dashboard-grid"
                 >
                 
-                {/* Left Column: Star-Pet Feeding Station */}
+                {/* Left Column: Star-Pet Feeding Station (Hidden on mobile unless 'companion' tab is active) */}
                 {activeChild && activeChildStage && activeChildPack && (
-                  <div className="lg:col-span-4 space-y-6">
+                  <div className={`lg:col-span-4 space-y-4 sm:space-y-6 ${activeChildTab !== 'companion' ? 'hidden lg:block' : ''}`}>
                     
                     {/* Holo Pedestal */}
                     <div className={`p-6 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
@@ -714,12 +714,12 @@ export default function ChildDashboard({
                   </div>
                 )}
 
-                {/* Right Column: Chores / Prize Cabinet */}
+                {/* Right Column: Chores / Prize Cabinet (Hidden on mobile if 'companion' tab is active) */}
                 {activeChild && (
-                  <div className="lg:col-span-8 space-y-6">
+                  <div className={`lg:col-span-8 space-y-4 sm:space-y-6 ${activeChildTab === 'companion' ? 'hidden lg:block' : ''}`}>
                     
-                    {/* Gamepad style switcher tabs */}
-                    <div className={`flex gap-2 p-1 bg-stone-100 border border-stone-200 rounded-2xl`} id="kid-dashboard-tabs">
+                    {/* Gamepad style switcher tabs (Hidden on mobile) */}
+                    <div className={`hidden lg:flex gap-2 p-1 bg-stone-100 border border-stone-200 rounded-2xl`} id="kid-dashboard-tabs">
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
@@ -1024,6 +1024,40 @@ export default function ChildDashboard({
           </AnimatePresence>
         </div>
 
+        {/* Mobile Sticky Bottom Nav for Child Dashboard */}
+        {selectedChildId && (
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
+            {[
+              { id: 'tasks', label: 'QUESTS', icon: Target },
+              { id: 'companion', label: 'PET', icon: Star },
+              { id: 'rewards', label: 'PRIZES', icon: Gift },
+              { id: 'history', label: 'HISTORY', icon: null, emoji: '📜' }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isSelected = activeChildTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                  className={`relative p-3 rounded-xl transition-all flex flex-col items-center gap-1 w-full max-w-[80px] ${
+                    isSelected
+                      ? 'text-cyan-600 bg-cyan-50'
+                      : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
+                  }`}
+                >
+                  {Icon ? (
+                    <Icon className="w-6 h-6" />
+                  ) : (
+                    <span className="text-2xl">{tab.emoji}</span>
+                  )}
+                  <span className={`text-[9px] font-bold font-mono tracking-widest uppercase ${isSelected ? 'text-cyan-600' : 'text-stone-500'}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
 }
