@@ -551,7 +551,7 @@ export default function ChildDashboard({
                   <div className={`lg:col-span-4 space-y-4 sm:space-y-6 ${activeChildTab !== 'companion' ? 'hidden lg:block' : ''}`}>
                     
                     {/* Holo Pedestal */}
-                    <div className={`p-6 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
+                    <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
                       
                       <div className="absolute inset-0 crt-overlay opacity-15 pointer-events-none" />
                       <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${activeChildStage.color_theme}`} />
@@ -865,7 +865,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={task.id}
-                                  className={`p-5 rounded-3xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                                  className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${
                                     isApproved 
                                       ? 'bg-slate-900/40 border-slate-950/50 opacity-45' 
                                       : isPending 
@@ -968,7 +968,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={rew.id}
-                                  className={`p-5 rounded-3xl ${styles.cardBg} border transition-all flex items-center justify-between gap-4 ${
+                                  className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} border transition-all flex items-center justify-between gap-3 sm:gap-4 ${
                                     canDispense 
                                       ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` 
                                       : 'opacity-60 border-slate-800/30'
@@ -1032,7 +1032,7 @@ export default function ChildDashboard({
                                 return (
                                   <div
                                     key={delivery.id}
-                                    className={`p-5 rounded-3xl border transition-all flex items-center justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                                    className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all flex items-center justify-between gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                                   >
                                     <div className="space-y-1">
                                       <h4 className={`font-black font-display text-base tracking-wide ${styles.titleColor}`}>
