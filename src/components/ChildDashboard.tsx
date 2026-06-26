@@ -562,9 +562,9 @@ export default function ChildDashboard({
                           <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${styles.tagCategory} px-3 py-1 rounded-lg`}>
-                          <Coins className={`w-3.5 h-3.5 text-amber-500 fill-current`} />
-                          <span className={`text-xs font-mono font-black text-amber-600`}>{activeChild.points} GOLD</span>
+                        <div className={`flex items-center gap-2 ${styles.tagCategory} px-4 py-2 rounded-xl shadow-sm border border-amber-200/50`}>
+                          <Coins className={`w-5 h-5 sm:w-6 sm:h-6 text-amber-500 fill-current drop-shadow-sm`} />
+                          <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight`}>{activeChild.points} GOLD</span>
                         </div>
                       </div>
 
