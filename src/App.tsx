@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import AuthPage from './components/AuthPage';
+import LandingPage from './components/LandingPage';
 import ParentDashboard from './components/ParentDashboard';
 import ChildDashboard from './components/ChildDashboard';
 import LockScreen from './components/LockScreen';
@@ -33,6 +34,10 @@ export default function App() {
   );
   const [isParentMode, setIsParentMode] = useState<boolean>(
     localStorage.getItem('RCH_PARENT_MODE') === 'true'
+  );
+  
+  const [showLogin, setShowLogin] = useState<boolean>(
+    new URLSearchParams(window.location.search).has('share')
   );
   
   // Security PIN state (default is 1234)
@@ -546,12 +551,12 @@ export default function App() {
   };
 
   // Operations: Children
-  const handleAddChild = async (name: string, characterId: string) => {
+  const handleAddChild = async (name: string, characterId: string, avatarUrl: string) => {
     const newChild: Child = {
       id: `child_${Date.now()}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       name,
-      avatar_url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`,
+      avatar_url: avatarUrl,
       character_id: characterId,
       points: 0,
       level: 1,
@@ -573,10 +578,6 @@ export default function App() {
     const updatedChildren = children.map(c => {
       if (c.id === id) {
         updatedChild = { ...c, ...updates };
-        // Update avatar if name changes
-        if (updates.name) {
-          updatedChild.avatar_url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(updates.name)}`;
-        }
         return updatedChild;
       }
       return c;
@@ -1152,19 +1153,35 @@ export default function App() {
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
         {!parentEmail ? (
-          <motion.div
-            key="auth-page"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full"
-          >
-            <AuthPage 
-              onStartDemo={handleStartDemo}
-              onLoginReal={handleLoginReal}
-              theme={activeTheme}
-            />
-          </motion.div>
+          !showLogin ? (
+            <motion.div
+              key="landing-page"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <LandingPage 
+                onEnterArcade={() => setShowLogin(true)}
+                theme={activeTheme}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="auth-page"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <AuthPage 
+                onStartDemo={handleStartDemo}
+                onLoginReal={handleLoginReal}
+                onBackToLanding={() => setShowLogin(false)}
+                theme={activeTheme}
+              />
+            </motion.div>
+          )
         ) : isParentMode ? (
           <motion.div
             key="parent-mode"

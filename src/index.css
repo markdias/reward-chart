@@ -130,3 +130,33 @@
 .ambient-glow-pink {
   background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0) 70%);
 }
+
+/* Character image animations */
+@keyframes character-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes character-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes character-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2)); }
+  50% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
+}
+
+.animate-float {
+  animation: character-float 3s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: character-wiggle 0.5s ease-in-out;
+}
+
+.animate-glow-pulse {
+  animation: character-glow 2s ease-in-out infinite;
+}
+

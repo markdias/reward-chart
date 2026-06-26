@@ -103,6 +103,7 @@ export interface CharacterEvolutionStage {
   name: string;
   description: string;
   min_points: number;
+  min_level: number; // Level threshold for this evolution stage
   emoji: string;
   color_theme: string;
   animation_class: string;

@@ -14,13 +14,35 @@ import { ParentProfile, FamilyMessage } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
 
+const PRECANNED_AVATARS = [
+  // Boy-themed new avatars
+  '/avatars/boy_fox.png',
+  '/avatars/boy_puppy.png',
+  '/avatars/boy_kitten.png',
+  '/avatars/boy_bunny.png',
+  '/avatars/boy_bear.png',
+  '/avatars/boy_owl.png',
+  // Girl-themed new avatars
+  '/avatars/girl_fox.png',
+  '/avatars/girl_puppy.png',
+  '/avatars/girl_kitten.png',
+  '/avatars/girl_bunny.png',
+  '/avatars/girl_bear.png',
+  '/avatars/girl_owl.png',
+  // Boy items
+  '/avatars/boy_car.png',
+  '/avatars/boy_rocket.png',
+  '/avatars/boy_dino.png',
+  '/avatars/boy_gamepad.png'
+];
+
 interface ParentDashboardProps {
   children: Child[];
   tasks: Task[];
   completions: TaskCompletion[];
   rewards: Reward[];
   redemptions: RewardRedemption[];
-  onAddChild: (name: string, characterId: string) => void;
+  onAddChild: (name: string, characterId: string, avatarUrl: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
@@ -105,6 +127,7 @@ export default function ParentDashboard({
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
+  const [newChildAvatar, setNewChildAvatar] = useState('/avatars/boy_fox.png');
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -254,12 +277,14 @@ export default function ParentDashboard({
     if (!newChildName) return;
     playSound.success();
     if (editingChildId) {
-      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar });
+      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar, avatar_url: newChildAvatar });
     } else {
-      onAddChild(newChildName, newChildChar);
+      onAddChild(newChildName, newChildChar, newChildAvatar);
     }
     setNewChildName('');
     setEditingChildId(null);
+    setNewChildChar('unicorn');
+    setNewChildAvatar('/avatars/boy_fox.png');
     setShowAddChild(false);
   };
 
@@ -313,6 +338,7 @@ export default function ParentDashboard({
     setEditingChildId(child.id);
     setNewChildName(child.name);
     setNewChildChar(child.character_id);
+    setNewChildAvatar(child.avatar_url || '/avatars/boy_fox.png');
     setShowAddChild(true);
   };
 
@@ -835,6 +861,22 @@ export default function ParentDashboard({
                         </div>
                       </div>
 
+                      <div>
+                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                        <div className="grid grid-cols-6 gap-2">
+                          {PRECANNED_AVATARS.map(url => (
+                            <button
+                              key={url}
+                              type="button"
+                              onClick={() => setNewChildAvatar(url)}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${newChildAvatar === url ? (theme === 'cosmic_dark' ? 'border-cyan-400 bg-cyan-950/30' : 'border-amber-500 bg-amber-50') : 'border-transparent hover:border-slate-500/50'}`}
+                            >
+                              <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="flex gap-2">
                         <button
                           type="submit"
@@ -849,6 +891,7 @@ export default function ParentDashboard({
                             setEditingChildId(null);
                             setNewChildName('');
                             setNewChildChar('unicorn');
+                            setNewChildAvatar('/avatars/boy_fox.png');
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
                         >
@@ -861,7 +904,7 @@ export default function ParentDashboard({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {sortedChildren.map((child) => {
-                    const stage = getCharacterStage(child.character_id, child.points);
+                    const stage = getCharacterStage(child.character_id, child.level);
                     const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
                     return (
                       <div
@@ -904,7 +947,11 @@ export default function ParentDashboard({
                             <p className={`text-xs font-extrabold ${styles.textColor} mt-0.5`}>{pack?.name.split(' the ')[0] || 'Unknown'}</p>
                             <p className={`text-[10px] font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
                           </div>
-                          <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
+                          {stage.image_url ? (
+                            <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
+                          ) : (
+                            <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
+                          )}
                         </div>
 
                         {onUpdateChildStats && (
