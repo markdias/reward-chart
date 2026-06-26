@@ -588,23 +588,23 @@ export default function ChildDashboard({
                           <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
-                        {/* Gold Pot Visual */}
+                        {/* Gold Coins Visual */}
                         <div className="relative group cursor-default">
                           <div className={`flex items-center gap-2 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 px-4 py-2.5 rounded-2xl shadow-md border-2 border-amber-300 relative overflow-hidden`}>
                             {/* Shine animation */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                             <div className="relative">
-                              <span className="text-2xl sm:text-3xl drop-shadow-sm">🏺</span>
+                              <span className="text-2xl sm:text-3xl drop-shadow-sm">🪙</span>
                               <motion.div
                                 animate={{ y: [0, -3, 0] }}
                                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                                 className="absolute -top-1 -right-1 text-xs"
                               >
-                                🪙
+                                ✨
                               </motion.div>
                             </div>
                             <div className="flex flex-col items-start">
-                              <span className={`text-[8px] font-mono font-bold text-amber-700 uppercase tracking-wider`}>GOLD POT</span>
+                              <span className={`text-[8px] font-mono font-bold text-amber-700 uppercase tracking-wider`}>GOLD COINS</span>
                               <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight leading-none`}>{activeChild.points}</span>
                             </div>
                           </div>
@@ -1217,7 +1217,7 @@ export default function ChildDashboard({
                             </div>
                             <div className="text-right">
                               <span className="block text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600">Available Balance</span>
-                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">⭐ {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">COINS</span></span>
+                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">⭐ {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">COINS in gold pot</span></span>
                             </div>
                           </div>
 
