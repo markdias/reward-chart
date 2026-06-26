@@ -6,6 +6,7 @@ import ParentDashboard from './components/ParentDashboard';
 import ChildDashboard from './components/ChildDashboard';
 import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
+import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -27,6 +28,10 @@ export default function App() {
     localStorage.getItem('RCH_PARENT_MODE') === 'true'
   );
   
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
+    localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
+  );
+
   const [showLogin, setShowLogin] = useState<boolean>(
     new URLSearchParams(window.location.search).has('share')
   );
@@ -419,6 +424,53 @@ export default function App() {
   };
 
   // Auth Handlers
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+    setHasCompletedOnboarding(true);
+
+    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || 'local_parent@rewardchart.app');
+    
+    setParentPin(data.pin);
+    localStorage.setItem('RCH_PARENT_PIN', data.pin);
+
+    // Create tasks
+    const initialTasks: Task[] = data.selectedTasks.map((t, index) => ({
+      ...t,
+      id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: emailToUse,
+      is_template: true
+    }));
+    
+    // Create children
+    const initialChildren: Child[] = data.children.map((c, index) => ({
+      ...c,
+      id: `child_${Date.now()}_${index}`,
+      parent_id: emailToUse,
+      points: 0,
+      level: 1,
+      xp_in_level: 0,
+      streak_days: 0,
+      created_at: new Date().toISOString()
+    })) as Child[];
+
+    localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
+    localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
+    
+    const initialRewards = PREMADE_REWARDS.map((r, index) => ({ 
+      ...r, 
+      id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: emailToUse 
+    }));
+    localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+
+    setParentEmail(emailToUse);
+    localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
+    setIsParentMode(true);
+    localStorage.setItem('RCH_PARENT_MODE', 'true');
+  };
+
   const handleStartDemo = () => {
     // Clear old localStorage to ensure fresh demo mode load
     localStorage.removeItem('RCH_CHILDREN');
@@ -452,6 +504,8 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_EMAIL', email);
     setIsParentMode(false); // Default to Child scoreboard, parent enters PIN to manage
     localStorage.setItem('RCH_PARENT_MODE', 'false');
+    setHasCompletedOnboarding(true);
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
   };
 
   const handleLogout = async () => {
@@ -523,6 +577,13 @@ export default function App() {
       await supabase.rpc('delete_user_account');
       handleLogout();
     }
+  };
+
+  const handleRunSetup = async () => {
+    await handleResetData(false);
+    await handleLogout();
+    setHasCompletedOnboarding(false);
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
   };
 
   // Parent Gating
@@ -1143,36 +1204,41 @@ export default function App() {
 
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
-        {!parentEmail ? (
-          !showLogin ? (
-            <motion.div
-              key="landing-page"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full"
-            >
-              <LandingPage 
-                onEnterArcade={() => setShowLogin(true)}
-                theme={activeTheme}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="auth-page"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full"
-            >
-              <AuthPage 
-                onStartDemo={handleStartDemo}
-                onLoginReal={handleLoginReal}
-                onBackToLanding={() => setShowLogin(false)}
-                theme={activeTheme}
-              />
-            </motion.div>
-          )
+        {!hasCompletedOnboarding ? (
+          <motion.div
+            key="onboarding"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <OnboardingWizard 
+              theme={activeTheme}
+              onComplete={handleOnboardingComplete}
+              onLoginInstead={() => {
+                setHasCompletedOnboarding(true);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+              }}
+            />
+          </motion.div>
+        ) : !parentEmail ? (
+          <motion.div
+            key="auth-page"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <AuthPage 
+              onStartDemo={handleStartDemo}
+              onLoginReal={handleLoginReal}
+              onBackToLanding={() => {
+                setHasCompletedOnboarding(false);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+              }}
+              theme={activeTheme}
+            />
+          </motion.div>
         ) : isParentMode ? (
           <motion.div
             key="parent-mode"
@@ -1209,6 +1275,7 @@ export default function App() {
               linkedParents={linkedParents}
               familyMessages={familyMessages}
               onResetData={handleResetData}
+              onRunSetup={handleRunSetup}
               onDeleteAccount={handleDeleteAccount}
               parentEmail={parentEmail}
               onFamilyMessageSent={(msg) => setFamilyMessages(prev => [msg, ...prev])}

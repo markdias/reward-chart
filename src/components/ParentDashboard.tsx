@@ -66,6 +66,7 @@ interface ParentDashboardProps {
   linkedParents?: ParentProfile[];
   familyMessages?: FamilyMessage[];
   onResetData?: (keepBlueprints: boolean) => void;
+  onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onFamilyMessageSent?: (msg: FamilyMessage) => void;
   onFamilyMessageUpdated?: (msgId: string, updates: Partial<FamilyMessage>) => void;
@@ -101,6 +102,7 @@ export default function ParentDashboard({
   linkedParents = [],
   familyMessages = [],
   onResetData,
+  onRunSetup,
   onDeleteAccount,
   onFamilyMessageSent,
   onFamilyMessageUpdated
@@ -1936,6 +1938,7 @@ export default function ParentDashboard({
                   parentProfile={parentProfile}
                   linkedParents={linkedParents}
                   onResetData={onResetData}
+                  onRunSetup={onRunSetup}
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                 />

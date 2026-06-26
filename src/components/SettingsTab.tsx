@@ -11,11 +11,12 @@ interface SettingsTabProps {
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onResetData?: (keepBlueprints: boolean) => void;
+  onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onCleanDuplicates }: SettingsTabProps) {
+export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
@@ -432,6 +433,24 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
             >
               <RefreshCw className="w-4 h-4 inline mr-2" /> FACTORY RESET
+            </button>
+          </div>
+
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
+            <div>
+              <h4 className={`font-bold ${c.text}`}>Reset App & Run Setup</h4>
+              <p className={`text-xs mt-1 ${c.textMuted}`}>Wipes all local data, logs you out, and runs the onboarding flow again.</p>
+            </div>
+            <button 
+              onClick={() => {
+                if (confirm("Are you sure you want to run setup again? All current data will be erased and you will be logged out.")) {
+                  playSound.pinError();
+                  if (onRunSetup) onRunSetup();
+                }
+              }}
+              className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
+            >
+              <RefreshCw className="w-4 h-4 inline mr-2" /> RUN SETUP
             </button>
           </div>
 

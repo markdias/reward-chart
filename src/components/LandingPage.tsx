@@ -112,9 +112,9 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           </div>
           <div>
             <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
-              KIDARCADE
+              REWARD CHART
             </span>
-            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">SUPERHERO CHORE PROTOCOL</span>
+            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
           </div>
         </div>
 
@@ -138,11 +138,11 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
             <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
               A Chore Chart That Feels Like a <br className="hidden sm:block" />
               <span className={styles.titleGradient}>
-                Virtual Pet Arcade
+                Magical Adventure
               </span>
             </h1>
             <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
-              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary skins, and evolve your heroic beast!
+              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, and have fun!
             </p>
           </div>
 
@@ -151,7 +151,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
             className={`w-full max-w-md gamepad-button ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-base uppercase font-display tracking-wide`}
             id="landing-cta-btn"
           >
-            <Play className="w-5 h-5 fill-current" /> ENTER THE ARCADE
+            <Play className="w-5 h-5 fill-current" /> GET STARTED
             <ArrowRight className="w-5 h-5" />
           </button>
 
@@ -301,7 +301,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
       {/* Footer Console */}
       <footer className={`w-full max-w-7xl mx-auto px-6 py-6 border-t ${styles.divider} text-center text-xs ${styles.textMuted} mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 relative z-20`}>
         <div>
-          © 2026 KIDARCADE Corp. Transforming family responsibilities into magical digital conquests.
+          © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-mono text-[10px]">
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY_LEDGER</a>
