@@ -119,9 +119,10 @@ export default function App() {
     }
 
     const isDemo = parentEmail === 'demo_parent@rewardchart.app';
+    const isLocal = parentEmail === 'local_parent@rewardchart.app';
     const supabase = getSupabaseClient();
 
-    if (supabase && !isDemo) {
+    if (supabase && !isDemo && !isLocal) {
       // Real Supabase backend - fetch live DB rows
       const fetchSupabaseData = async () => {
         try {
@@ -464,6 +465,13 @@ export default function App() {
       parent_id: emailToUse 
     }));
     localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+
+    // Update React state immediately so it's available without waiting for useEffect
+    setChildren(initialChildren);
+    setTasks(initialTasks);
+    setRewards(initialRewards);
+    setCompletions([]);
+    setRedemptions([]);
 
     setParentEmail(emailToUse);
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
