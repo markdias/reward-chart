@@ -33,6 +33,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+
   const getThemeClasses = () => {
     return {
       card: 'bg-white border-stone-200',
@@ -163,7 +165,51 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      <div className="flex bg-stone-100 p-1.5 rounded-xl mb-6 shadow-inner overflow-x-auto gap-1">
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('profile'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'profile'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          PROFILE
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('security'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'security'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          SECURITY
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('sharing'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'sharing'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          SHARING
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('danger'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'danger'
+              ? 'bg-rose-50 text-rose-700 shadow-sm border border-rose-200'
+              : 'text-rose-400 hover:text-rose-500'
+          }`}
+        >
+          DANGER
+        </button>
+      </div>
+
+      {activeSubTab === 'profile' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl">
             <User className="w-6 h-6" />
@@ -208,9 +254,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </button>
           {profileMsg && <p className={`text-sm ${profileMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{profileMsg}</p>}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      {activeSubTab === 'security' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl">
             <Shield className="w-6 h-6" />
@@ -279,9 +327,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </button>
           {securityMsg && <p className={`text-sm mt-3 ${securityMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{securityMsg}</p>}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      {activeSubTab === 'sharing' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl">
             <LinkIcon className="w-6 h-6" />
@@ -355,9 +405,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border bg-rose-50 border-rose-200`}>
+      {activeSubTab === 'danger' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border bg-rose-50 border-rose-200`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-rose-500/20 text-rose-500 rounded-xl">
             <AlertTriangle className="w-6 h-6" />
@@ -395,7 +447,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
+      )}
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
