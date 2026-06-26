@@ -53,7 +53,7 @@ export default function ChildDashboard({
 
   // Savings Pot UI State
   const [showDepositModal, setShowDepositModal] = useState(false);
-  const [depositAmount, setDepositAmount] = useState<number>(1);
+  const [depositAmount, setDepositAmount] = useState<number>(5);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalName, setGoalName] = useState('');
@@ -835,7 +835,7 @@ export default function ChildDashboard({
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => { setShowDepositModal(true); setDepositAmount(1); playSound.click(); }}
+                            onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points || 5)); playSound.click(); }}
                             disabled={activeChild.points <= 0}
                             className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                               activeChild.points > 0
@@ -870,7 +870,7 @@ export default function ChildDashboard({
                               <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many coins to save?</label>
                               <div className="flex items-center justify-center gap-4 py-2">
                                 <button
-                                  onClick={() => { setDepositAmount(Math.max(1, depositAmount - 1)); playSound.click(); }}
+                                  onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
                                   disabled={depositAmount <= 1}
                                   className="w-10 h-10 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                 >
@@ -882,7 +882,7 @@ export default function ChildDashboard({
                                 </div>
                                 
                                 <button
-                                  onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 1)); playSound.click(); }}
+                                  onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
                                   disabled={depositAmount >= activeChild.points}
                                   className="w-10 h-10 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                 >
