@@ -481,16 +481,6 @@ export default function ChildDashboard({
                             <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
                           )}
                         </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectChild(child.id);
-                          }}
-                          className={`w-full gamepad-button ${styles.btnPrimary} font-black py-3 rounded-xl text-xs uppercase tracking-widest cursor-pointer font-mono`}
-                        >
-                          INITIALIZE PILOT
-                        </button>
                       </motion.div>
                     );
                   })}
