@@ -56,6 +56,7 @@ export default function ChildDashboard({
   const [depositAmount, setDepositAmount] = useState<number>(5);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
+  const [showReplayVideo, setShowReplayVideo] = useState(false);
   const [goalName, setGoalName] = useState('');
   const [goalAmount, setGoalAmount] = useState('');
   
@@ -391,7 +392,7 @@ export default function ChildDashboard({
 
       {/* Savings Pot Unlock Celebration Overlay */}
       <AnimatePresence>
-        {activeChild && activeChild.savings_unlocked && !activeChild.savings_unlock_seen && (
+        {activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -442,7 +443,7 @@ export default function ChildDashboard({
               </div>
 
               <button
-                onClick={() => { playSound.success(); onSavingsUnlockSeen(activeChild.id); }}
+                onClick={() => { playSound.success(); onSavingsUnlockSeen(activeChild.id); setShowReplayVideo(false); }}
                 className="w-full gamepad-button py-4 bg-amber-400 hover:bg-amber-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 id="savings-unlock-dismiss-btn"
               >
@@ -619,80 +620,17 @@ export default function ChildDashboard({
                         <div className="absolute h-28 w-28 sm:h-40 sm:w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
                         
                         <motion.div
-                          animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
                           transition={{ duration: 1.2 }}
-                          className={`h-24 w-24 sm:h-36 sm:w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
-                          onClick={handleFeedCompanion}
+                          className={`h-20 w-20 sm:h-36 sm:w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
                           {activeChildStage.image_url ? (
                             <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
                           ) : (
-                            <span className="text-5xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
+                            <span className="text-4xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}
                             </span>
                           )}
                         </motion.div>
-
-                        {/* Sparkle bursts when feeding */}
-                        <AnimatePresence>
-                          {isFeeding && (
-                            <>
-                              <motion.div 
-                                initial={{ opacity: 1, y: 0, scale: 0.5 }}
-                                animate={{ opacity: 0, y: -100, scale: 1.5 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 1.5, ease: "easeOut" }}
-                                className="absolute text-5xl pointer-events-none z-20 text-red-500"
-                              >
-                                ❤️
-                              </motion.div>
-                              <motion.div 
-                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
-                                animate={{ opacity: 0, x: -60, y: -80, scale: 2 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
-                                className="absolute text-4xl pointer-events-none z-20 text-yellow-300"
-                              >
-                                ✨
-                              </motion.div>
-                              <motion.div 
-                                initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
-                                animate={{ opacity: 0, x: 60, y: -90, scale: 1.8 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 1.4, ease: "easeOut", delay: 0.4 }}
-                                className="absolute text-4xl pointer-events-none z-20"
-                              >
-                                🍎
-                              </motion.div>
-                            </>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <div className="space-y-1.5 w-full">
-                        <h4 className={`text-xl font-black font-display ${styles.titleColor}`}>{activeChildPack.name}</h4>
-                        <p className={`text-xs ${styles.textMuted} leading-relaxed max-w-xs mx-auto`}>
-                          "{activeChildStage.description}"
-                        </p>
-                      </div>
-
-                      {/* Feed Active companion */}
-                      <div className={`w-full mt-5 pt-5 border-t ${styles.divider} space-y-3`}>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className={`font-mono ${styles.textMuted}`}>FEED ENERGY PILLS:</span>
-                          <span className={`font-mono text-amber-600 font-extrabold`}>{activeChild.pet_food || 0} LEFT</span>
-                        </div>
-                        <button
-                          onClick={handleFeedCompanion}
-                          disabled={(activeChild.pet_food || 0) <= 0}
-                          className={`w-full py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                            (activeChild.pet_food || 0) > 0
-                              ? 'bg-amber-400 border border-stone-950 text-stone-900 shadow-[0_3px_0_0_#1c1917]'
-                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                          }`}
-                        >
-                          ⚡ INJECT PET FOOD CELL
-                        </button>
                       </div>
 
                       {/* Level and evolution progression */}
@@ -731,7 +669,15 @@ export default function ChildDashboard({
                             </div>
                             <div>
                               <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>SAVINGS POT</span>
-                              <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>🐷 Piggy Bank</h4>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Piggy Bank</h4>
+                                <button 
+                                  onClick={() => setShowReplayVideo(true)}
+                                  className="text-[9px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                                >
+                                  <Play className="w-2.5 h-2.5 fill-emerald-700" /> Play Video
+                                </button>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
