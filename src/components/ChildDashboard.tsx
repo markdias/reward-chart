@@ -37,7 +37,7 @@ export default function ChildDashboard({
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [animatingCoinId, setAnimatingCoinId] = useState<string | null>(null);
-  const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('tasks');
+  const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('companion');
   const [isFeeding, setIsFeeding] = useState(false);
   
   // Character Evolution Special Cinematic State
@@ -1078,8 +1078,8 @@ export default function ChildDashboard({
         {selectedChildId && (
           <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
             {[
-              { id: 'tasks', label: 'QUESTS', icon: Target },
               { id: 'companion', label: 'PET', icon: Star },
+              { id: 'tasks', label: 'QUESTS', icon: Target },
               { id: 'rewards', label: 'PRIZES', icon: Gift },
               { id: 'history', label: 'HISTORY', icon: null, emoji: '📜' }
             ].map((tab) => {
