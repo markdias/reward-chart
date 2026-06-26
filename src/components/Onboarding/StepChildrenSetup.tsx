@@ -44,7 +44,7 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
   };
 
   return (
-    <div className={`w-full max-w-md mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-full`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-full`}>
       <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-2">
           <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Setup Children</h2>
@@ -97,7 +97,10 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
                       selectedCharId === char.id ? 'border-amber-400 bg-amber-50' : 'border-transparent bg-white hover:border-stone-200'
                     }`}
                   >
-                    <img src={getCharacterStage(char.id, 4).image_url} alt={char.name} className="w-10 h-10 object-contain" />
+                    <img src={getCharacterStage(char.id, 4).image_url} alt={char.name} className="w-10 h-10 object-contain mb-1" />
+                    <span className={`text-[9px] font-bold uppercase tracking-wider ${selectedCharId === char.id ? 'text-amber-700' : 'text-stone-500'}`}>
+                      {char.name.split(' ')[0]}
+                    </span>
                   </button>
                 ))}
               </div>

@@ -98,7 +98,7 @@ export default function StepCreateAccount({ theme, pin, onComplete, onBack, onLo
   };
 
   return (
-    <div className={`w-full max-w-md mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-full`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-[100dvh]`}>
       <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto shadow-sm">
