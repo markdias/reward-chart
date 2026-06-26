@@ -433,7 +433,7 @@ export default function ChildDashboard({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto pt-4" id="kids-deck">
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
                   {children.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     return (
@@ -444,7 +444,7 @@ export default function ChildDashboard({
                         onClick={() => {
                           handleSelectChild(child.id);
                         }}
-                        className={`cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]`}
+                        className={`w-40 sm:w-52 md:w-64 shrink-0 cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]`}
                       >
                         {/* Inner ring for coin effect */}
                         <div className="absolute inset-2 sm:inset-3 rounded-full border border-yellow-200/60 pointer-events-none" />
