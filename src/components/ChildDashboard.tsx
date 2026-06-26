@@ -36,7 +36,6 @@ export default function ChildDashboard({
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
-  const [animatingCoinId, setAnimatingCoinId] = useState<string | null>(null);
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('companion');
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
@@ -86,14 +85,8 @@ export default function ChildDashboard({
 
   const handleSelectChild = (id: string) => {
     playSound.purchase();
-    setAnimatingCoinId(id);
-    
-    // Wait for the slot to drop, wait a couple of seconds, then coin slides in, then transition
-    setTimeout(() => {
-      setSelectedChildId(id);
-      setActiveChildTab('companion');
-      setAnimatingCoinId(null);
-    }, 3000);
+    setSelectedChildId(id);
+    setActiveChildTab('companion');
   };
 
   const handleTaskCheck = (taskId: string) => {
@@ -433,32 +426,25 @@ export default function ChildDashboard({
                   <Zap className="w-3.5 h-3.5 animate-pulse" /> INSERT PLAYER CHIP
                   </div>
                   <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight ${styles.titleColor}`}>
-                    SELECT CHORE PILOT
+                    Select your player coin
                   </h1>
                   <p className={`text-xs sm:text-sm ${styles.textMuted} max-w-md mx-auto leading-relaxed`}>
                     Choose your family operator to access your quest diary, feed energy cells, and claim your physical prizes!
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto pt-4" id="kids-deck">
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
                   {children.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     return (
                       <motion.div
-                        whileHover={animatingCoinId ? {} : { scale: 1.05, y: -4 }}
-                        whileTap={animatingCoinId ? {} : { scale: 0.98 }}
-                        animate={
-                          animatingCoinId === child.id 
-                            ? { opacity: 0, scale: 0.5, transition: { duration: 0.2 } } 
-                            : animatingCoinId !== null 
-                              ? { opacity: 0, scale: 0.8, transition: { duration: 0.3 } }
-                              : { opacity: 1, scale: 1, y: 0, rotate: 0 }
-                        }
+                        whileHover={{ scale: 1.05, y: -4 }}
+                        whileTap={{ scale: 0.98 }}
                         key={child.id}
                         onClick={() => {
-                          if (!animatingCoinId) handleSelectChild(child.id);
+                          handleSelectChild(child.id);
                         }}
-                        className={`cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group ${!animatingCoinId ? 'hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]' : ''}`}
+                        className={`w-40 sm:w-52 md:w-64 shrink-0 cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]`}
                       >
                         {/* Inner ring for coin effect */}
                         <div className="absolute inset-2 sm:inset-3 rounded-full border border-yellow-200/60 pointer-events-none" />
@@ -491,48 +477,7 @@ export default function ChildDashboard({
                   })}
                 </div>
 
-                {/* The Arcade Coin Slot Overlay Animation */}
-                <AnimatePresence>
-                  {animatingCoinId && (
-                    <div className="fixed inset-0 z-[100] pointer-events-none flex flex-col items-center overflow-hidden">
-                      {/* The Coin Slot dropping from top */}
-                      <motion.div
-                        initial={{ y: -200 }}
-                        animate={{ y: 0 }}
-                        exit={{ y: -200 }}
-                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                        className="w-48 sm:w-64 h-24 sm:h-32 bg-stone-800 rounded-b-[2rem] sm:rounded-b-[3rem] border-x-4 sm:border-x-8 border-b-4 sm:border-b-8 border-stone-600 flex flex-col items-center justify-center relative overflow-hidden z-20"
-                        style={{ willChange: "transform" }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
-                        <div className="w-32 sm:w-40 h-4 sm:h-5 bg-black rounded-full shadow-[inset_0_8px_16px_rgba(0,0,0,0.9)] border-b border-white/10 relative z-10 flex items-center justify-center">
-                          <div className="w-28 sm:w-36 h-1 bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
-                        </div>
-                        <span className="text-red-500 font-mono text-[10px] sm:text-xs font-black tracking-widest mt-4 sm:mt-6 animate-pulse relative z-10">INSERT COIN</span>
-                      </motion.div>
 
-                      {/* The Flying Coin */}
-                      <motion.div
-                        initial={{ y: '80vh', scale: 1.5, rotate: 0 }}
-                        animate={{ y: 40, scale: 0.3, rotate: 720, opacity: [1, 1, 0] }}
-                        transition={{ duration: 1.2, delay: 1.5, ease: "easeIn", times: [0, 0.9, 1] }}
-                        className="absolute top-0 left-1/2 -translate-x-1/2 z-10 origin-center"
-                        style={{ willChange: "transform, opacity" }}
-                      >
-                        {(() => {
-                          const child = children.find(c => c.id === animatingCoinId);
-                          if (!child) return null;
-                          // Simplified coin for better mobile rendering performance
-                          return (
-                            <div className="aspect-square w-32 sm:w-40 rounded-full border-4 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center relative">
-                              <img src={child.avatar_url} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600 object-cover" />
-                            </div>
-                          );
-                        })()}
-                      </motion.div>
-                    </div>
-                  )}
-                </AnimatePresence>
 
               </motion.div>
             ) : (
