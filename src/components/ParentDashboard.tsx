@@ -1937,9 +1937,7 @@ export default function ParentDashboard({
                   linkedParents={linkedParents}
                   onResetData={onResetData}
                   onDeleteAccount={onDeleteAccount}
-                  onSignOut={onSignOut}
                   onCleanDuplicates={handleCleanDuplicates}
-                  activeTheme={theme}
                 />
               </motion.div>
             )}

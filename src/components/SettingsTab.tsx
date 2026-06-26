@@ -10,13 +10,12 @@ interface SettingsTabProps {
   theme: ThemeId;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
-  onResetData: (keepBlueprints: boolean) => void;
-  onDeleteAccount: () => void;
-  onSignOut: () => void;
+  onResetData?: (keepBlueprints: boolean) => void;
+  onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onSignOut, onCleanDuplicates }: SettingsTabProps) {
+export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onCleanDuplicates }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
