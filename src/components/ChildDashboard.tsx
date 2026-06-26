@@ -38,6 +38,7 @@ export default function ChildDashboard({
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [animatingCoinId, setAnimatingCoinId] = useState<string | null>(null);
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('companion');
+  const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
   
   // Character Evolution Special Cinematic State
@@ -684,34 +685,129 @@ export default function ChildDashboard({
                       const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (activeChild.monthly_xp_target || 1000)) * 100));
 
                       return (
+                        <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
                           {/* Streak Widget */}
-                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg`}>
+                          <button 
+                            onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                          >
                             <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
                             <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
-                          </div>
+                          </button>
 
                           {/* Weekly Widget */}
-                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group`}>
+                          <button 
+                            onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                          >
                             <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
                               <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
                             </div>
                             <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
-                          </div>
+                          </button>
 
                           {/* Monthly Widget */}
-                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group`}>
+                          <button 
+                            onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                          >
                             <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
                               <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
                             </div>
                             <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
-                          </div>
+                          </button>
                         </div>
+                        
+                        <AnimatePresence>
+                          {expandedGoal && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-4 overflow-hidden"
+                            >
+                              <div className={`p-5 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl relative`}>
+                                <button 
+                                  onClick={() => setExpandedGoal(null)}
+                                  className={`absolute top-4 right-4 p-1.5 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200`}
+                                >
+                                  <ChevronRight className="w-4 h-4 rotate-90" />
+                                </button>
+                                
+                                {expandedGoal === 'streak' && (
+                                  <>
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-10 w-10 rounded-xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center">
+                                        <Flame className="w-5 h-5 text-orange-500 flame-active" />
+                                      </div>
+                                      <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Daily Streak</h4>
+                                    </div>
+                                    <p className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
+                                      You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
+                                    </p>
+                                  </>
+                                )}
+                                
+                                {expandedGoal === 'weekly' && (
+                                  <>
+                                    <div className="flex justify-between items-center pr-8">
+                                      <div>
+                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Weekly Target</h4>
+                                        {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                                      </div>
+                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
+                                        {activeChild.weekly_reward_points || 200} GOLD BONUS
+                                      </span>
+                                    </div>
+                                    <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
+                                      <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${weeklyPct}%` }}
+                                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500"
+                                      />
+                                    </div>
+                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
+                                      <span>{dispWeeklyXp} / {(activeChild.weekly_xp_target || 300)} XP</span>
+                                      <span>{weeklyPct}% COMPLETED</span>
+                                    </div>
+                                  </>
+                                )}
+                                
+                                {expandedGoal === 'monthly' && (
+                                  <>
+                                    <div className="flex justify-between items-center pr-8">
+                                      <div>
+                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Monthly Target</h4>
+                                        {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                                      </div>
+                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
+                                        {activeChild.monthly_reward_points || 1000} GOLD BONUS
+                                      </span>
+                                    </div>
+                                    <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
+                                      <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${monthlyPct}%` }}
+                                        className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500"
+                                      />
+                                    </div>
+                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
+                                      <span>{dispMonthlyXp} / {(activeChild.monthly_xp_target || 1000)} XP</span>
+                                      <span>{monthlyPct}% COMPLETED</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        </>
                       );
                     })()}
 
