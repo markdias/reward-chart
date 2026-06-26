@@ -434,15 +434,6 @@ export default function App() {
     setParentPin(data.pin);
     localStorage.setItem('RCH_PARENT_PIN', data.pin);
 
-    // Create tasks
-    const initialTasks: Task[] = data.selectedTasks.map((t, index) => ({
-      ...t,
-      id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-      created_at: new Date().toISOString(),
-      parent_id: emailToUse,
-      is_template: true
-    }));
-    
     // Create children
     const initialChildren: Child[] = data.children.map((c, index) => ({
       ...c,
@@ -454,6 +445,31 @@ export default function App() {
       streak_days: 0,
       created_at: new Date().toISOString()
     })) as Child[];
+
+    // Create tasks
+    const initialTasks: Task[] = [];
+    data.selectedTasks.forEach((t, index) => {
+      const templateId = `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
+      // Add as a blueprint
+      initialTasks.push({
+        ...t,
+        id: templateId,
+        created_at: new Date().toISOString(),
+        parent_id: emailToUse,
+        is_template: true
+      });
+      // Assign to all children immediately
+      initialChildren.forEach((child, cIdx) => {
+        initialTasks.push({
+          ...t,
+          id: `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`,
+          created_at: new Date().toISOString(),
+          parent_id: emailToUse,
+          is_template: false,
+          child_id: child.id
+        });
+      });
+    });
 
     localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
     localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
