@@ -232,7 +232,15 @@ export default function ParentDashboard({
     const supabase = getSupabaseClient();
     if (!supabase) return;
     
-    const tasksToInsert = PREMADE_TASKS.map(t => ({ 
+    const existingTitles = new Set(tasks.map(t => t.title.trim().toLowerCase()));
+    const newPremadeTasks = PREMADE_TASKS.filter(t => !existingTitles.has(t.title.trim().toLowerCase()));
+
+    if (newPremadeTasks.length === 0) {
+      alert("All default quests have already been imported!");
+      return;
+    }
+
+    const tasksToInsert = newPremadeTasks.map(t => ({ 
       ...t, 
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
@@ -252,7 +260,15 @@ export default function ParentDashboard({
     const supabase = getSupabaseClient();
     if (!supabase) return;
     
-    const rewardsToInsert = PREMADE_REWARDS.map(r => ({ 
+    const existingTitles = new Set(rewards.map(r => r.title.trim().toLowerCase()));
+    const newPremadeRewards = PREMADE_REWARDS.filter(r => !existingTitles.has(r.title.trim().toLowerCase()));
+
+    if (newPremadeRewards.length === 0) {
+      alert("All default prizes have already been imported!");
+      return;
+    }
+
+    const rewardsToInsert = newPremadeRewards.map(r => ({ 
       ...r, 
       id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
