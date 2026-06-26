@@ -1212,7 +1212,7 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Dispensers</h3>
+                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Shop</h3>
                               <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your silver coins for real-world prizes!</p>
                             </div>
                             <div className="text-right">
@@ -1225,7 +1225,7 @@ export default function ChildDashboard({
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow">🎁</span>
-                              <h4 className={`font-extrabold ${styles.textColor}`}>DISPENSER EMPTY</h4>
+                              <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>
                           ) : (
@@ -1233,6 +1233,7 @@ export default function ChildDashboard({
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                               const isAffordable = availablePoints >= rew.cost_points;
                               const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
+                              const isSavingFor = activeChild.savings_unlocked && activeChild.savings_goal_reward_id === rew.id;
                               const canDispense = isAffordable && availability.available && !hasPendingRequest;
                               
                               // Hide claimed one_time rewards entirely
@@ -1243,10 +1244,10 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={rew.id}
-                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border transition-all flex items-center justify-between gap-2 sm:gap-3 ${
-                                    canDispense 
-                                      ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` 
-                                      : 'opacity-60 border-slate-800/30'
+                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2 sm:gap-3 ${
+                                    isSavingFor
+                                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)]'
+                                      : `${styles.cardBg} ${canDispense ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` : 'opacity-60 border-slate-800/30'}`
                                   }`}
                                 >
                                   <div className="flex gap-3.5 items-center">
@@ -1265,23 +1266,25 @@ export default function ChildDashboard({
                                     </span>
 
                                     <div className="flex flex-col gap-1.5 items-end">
-                                      <button
-                                        disabled={!canDispense}
-                                        onClick={() => handleClaimReward(rew.id, rew.cost_points)}
-                                        className={`font-black font-mono py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
-                                          canDispense
-                                            ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
-                                            : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                        }`}
-                                        id={`claim-reward-${rew.id}`}
-                                      >
-                                        {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'DISPENSE'}
-                                      </button>
+                                      {isSavingFor ? null : (
+                                        <button
+                                          disabled={!canDispense}
+                                          onClick={() => handleClaimReward(rew.id, rew.cost_points)}
+                                          className={`font-black font-mono py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
+                                            canDispense
+                                              ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                          }`}
+                                          id={`claim-reward-${rew.id}`}
+                                        >
+                                          {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'BUY'}
+                                        </button>
+                                      )}
                                       
                                       {activeChild.savings_unlocked && (
-                                        activeChild.savings_goal_reward_id === rew.id ? (
-                                          <span className="text-[9px] text-emerald-600 font-black uppercase tracking-wider flex items-center gap-1">
-                                            <CheckCircle className="w-3 h-3" /> SAVING FOR
+                                        isSavingFor ? (
+                                          <span className="text-[10px] sm:text-xs text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1.5 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300 shadow-sm mt-1">
+                                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> SAVING FOR
                                           </span>
                                         ) : (
                                           <button
