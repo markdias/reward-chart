@@ -431,7 +431,7 @@ export default function ChildDashboard({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto pt-4" id="kids-deck">
                   {children.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     return (
@@ -440,7 +440,7 @@ export default function ChildDashboard({
                         whileTap={{ scale: 0.98 }}
                         key={child.id}
                         onClick={() => handleSelectChild(child.id)}
-                        className={`cursor-pointer overflow-hidden rounded-3xl ${styles.cardBg} ${styles.borderStyle} p-6 flex flex-col items-center gap-5 text-center hover:border-cyan-500/50 transition-all shadow-xl relative group`}
+                        className={`cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} p-3 sm:p-5 flex flex-col items-center gap-3 sm:gap-5 text-center hover:border-cyan-500/50 transition-all shadow-lg sm:shadow-xl relative group`}
                       >
                         {/* Upper fluorescent stripe */}
                         <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${stage.color_theme}`} />
@@ -451,32 +451,32 @@ export default function ChildDashboard({
                           <img
                             src={child.avatar_url}
                             alt={child.name}
-                            className={`w-24 h-24 rounded-2xl bg-slate-950 p-1.5 border-2 ${styles.divider} group-hover:border-white transition-all relative z-10 object-cover`}
+                            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-950 p-1 border-2 ${styles.divider} group-hover:border-white transition-all relative z-10 object-cover`}
                             referrerPolicy="no-referrer"
                           />
-                          <span className={`absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-cyan-500 font-mono flex items-center justify-center text-xs font-extrabold border-2 border-white text-white z-20`}>
+                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-cyan-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white z-20`}>
                             {child.level}
                           </span>
                         </div>
 
                         <div className="space-y-1">
-                          <h3 className={`font-black font-display text-xl ${styles.titleColor} tracking-wide group-hover:text-cyan-400 transition-colors`}>
+                          <h3 className={`font-black font-display text-sm sm:text-xl ${styles.titleColor} tracking-wide group-hover:text-cyan-400 transition-colors`}>
                             {child.name}
                           </h3>
-                          <div className="inline-flex items-center gap-1.5 text-xs text-orange-500 font-mono font-bold bg-orange-950/20 px-2.5 py-1 rounded-lg border border-orange-900/30">
-                            <Flame className="w-4 h-4 text-orange-400 animate-pulse" />
-                            <span>STREAK: {child.streak_days} DAYS</span>
+                          <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-xs text-orange-500 font-mono font-bold bg-orange-950/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-orange-900/30">
+                            <Flame className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400 animate-pulse" />
+                            <span><span className="hidden sm:inline">STREAK: </span>{child.streak_days} <span className="sm:hidden">D</span><span className="hidden sm:inline">DAYS</span></span>
                           </div>
                         </div>
 
                         {/* Pet info banner */}
-                        <div className={`w-full p-3 ${styles.innerCard} flex justify-between items-center`}>
+                        <div className={`w-full p-2 sm:p-3 ${styles.innerCard} flex justify-between items-center rounded-xl`}>
                           <div className="text-left">
-                            <span className={`block text-[8px] ${styles.textMuted} font-mono tracking-widest font-extrabold uppercase`}>ACTIVE PET</span>
-                            <span className={`text-xs font-black ${styles.textColor} uppercase`}>{stage.name}</span>
+                            <span className={`block text-[8px] ${styles.textMuted} font-mono tracking-widest font-extrabold uppercase hidden sm:block`}>ACTIVE PET</span>
+                            <span className={`text-[10px] sm:text-xs font-black ${styles.textColor} uppercase line-clamp-1`}>{stage.name}</span>
                           </div>
                           {stage.image_url ? (
-                            <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
+                            <img src={stage.image_url} alt={stage.name} className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0" />
                           ) : (
                             <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
                           )}
