@@ -1280,8 +1280,8 @@ export default function ChildDashboard({
                                       
                                       {activeChild.savings_unlocked && (
                                         activeChild.savings_goal_reward_id === rew.id ? (
-                                          <span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-300">
-                                            🎯 Saving For
+                                          <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-wider px-2 py-0.5">
+                                            Saving For
                                           </span>
                                         ) : (
                                           <button
