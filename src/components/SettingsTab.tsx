@@ -11,11 +11,13 @@ interface SettingsTabProps {
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onResetData?: (keepBlueprints: boolean) => void;
+  onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
+  onRequireAccount?: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onCleanDuplicates }: SettingsTabProps) {
+export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
@@ -55,7 +57,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
     : 'Generating...';
 
   const handleSaveProfile = async () => {
-    if (!parentProfile?.user_id) return;
+    if (!parentProfile?.user_id) {
+      setProfileMsg('Profile settings are only saved to the cloud when you create an account.');
+      playSound.pinError();
+      return;
+    }
     setIsSavingProfile(true);
     setProfileMsg('');
     const supabase = getSupabaseClient();
@@ -88,14 +94,26 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   };
 
   const handleSaveSecurity = async () => {
-    if (!parentProfile?.user_id) return;
     setIsSavingSecurity(true);
     setSecurityMsg('');
     
     const supabase = getSupabaseClient();
-    if (!supabase) return;
 
     try {
+      // Local mode fallback
+      if (!parentProfile?.user_id || !supabase) {
+        if (pin) {
+          localStorage.setItem('RCH_PARENT_PIN', pin);
+          setSecurityMsg('PIN updated locally!');
+          playSound.success();
+        }
+        if (currentPassword || newPassword) {
+           throw new Error("Cannot change password without an account.");
+        }
+        setIsSavingSecurity(false);
+        return;
+      }
+
       // 1. Update PIN in DB
       if (pin !== parentProfile.pin) {
         const { error: pinError } = await supabase
@@ -211,6 +229,21 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
 
       {activeSubTab === 'profile' && (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
+        {!parentProfile?.user_id && (
+          <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div>
+              <h4 className="font-bold text-indigo-900 mb-1 font-display">You are using a Local Account</h4>
+              <p className="text-xs text-indigo-700">Create a free account to sync your family's data across devices and never lose your progress.</p>
+            </div>
+            <button 
+              onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }} 
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold font-mono text-xs shadow-md whitespace-nowrap transition-colors"
+            >
+              CREATE CLOUD ACCOUNT
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl">
             <User className="w-6 h-6" />
@@ -344,9 +377,22 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         </div>
         
         <div className="space-y-4">
-          <p className={`text-sm ${c.textMuted}`}>
-            Copy this link and send it to your partner. When they create an account using this link, they will be joined to your family dashboard. They can set their own PIN and password, but you will both manage the same children and tasks.
-          </p>
+          {!parentProfile?.user_id ? (
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col gap-3">
+              <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>
+              <p className="text-xs text-emerald-800">You must create a free account before you can share your dashboard with another parent. This ensures your data is securely synced.</p>
+              <button 
+                onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }} 
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold font-mono text-xs shadow-md self-start transition-colors"
+              >
+                CREATE ACCOUNT TO SHARE
+              </button>
+            </div>
+          ) : (
+            <p className={`text-sm ${c.textMuted}`}>
+              Copy this link and send it to your partner. When they create an account using this link, they will be joined to your family dashboard. They can set their own PIN and password, but you will both manage the same children and tasks.
+            </p>
+          )}
           {parentProfile?.family_name && (
             <div className={`p-3 rounded-xl border flex items-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-800`}>
               <Shield className="w-4 h-4" />
@@ -432,6 +478,24 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
             >
               <RefreshCw className="w-4 h-4 inline mr-2" /> FACTORY RESET
+            </button>
+          </div>
+
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
+            <div>
+              <h4 className={`font-bold ${c.text}`}>Reset App & Run Setup</h4>
+              <p className={`text-xs mt-1 ${c.textMuted}`}>Wipes all local data, logs you out, and runs the onboarding flow again.</p>
+            </div>
+            <button 
+              onClick={() => {
+                if (confirm("Are you sure you want to run setup again? All current data will be erased and you will be logged out.")) {
+                  playSound.pinError();
+                  if (onRunSetup) onRunSetup();
+                }
+              }}
+              className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
+            >
+              <RefreshCw className="w-4 h-4 inline mr-2" /> RUN SETUP
             </button>
           </div>
 

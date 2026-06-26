@@ -6,6 +6,8 @@ import ParentDashboard from './components/ParentDashboard';
 import ChildDashboard from './components/ChildDashboard';
 import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
+import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
+import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -27,6 +29,12 @@ export default function App() {
     localStorage.getItem('RCH_PARENT_MODE') === 'true'
   );
   
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
+    localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
+  );
+
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+
   const [showLogin, setShowLogin] = useState<boolean>(
     new URLSearchParams(window.location.search).has('share')
   );
@@ -59,6 +67,11 @@ export default function App() {
     const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
     const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
     const keyRedemptions = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
+
+    const savedProfile = localStorage.getItem('RCH_PARENT_PROFILE');
+    if (savedProfile) {
+      setParentProfile(JSON.parse(savedProfile));
+    }
 
     const savedChildren = localStorage.getItem(keyChildren);
     const savedTasks = localStorage.getItem(keyTasks);
@@ -114,9 +127,10 @@ export default function App() {
     }
 
     const isDemo = parentEmail === 'demo_parent@rewardchart.app';
+    const isLocal = parentEmail === 'local_parent@rewardchart.app';
     const supabase = getSupabaseClient();
 
-    if (supabase && !isDemo) {
+    if (supabase && !isDemo && !isLocal) {
       // Real Supabase backend - fetch live DB rows
       const fetchSupabaseData = async () => {
         try {
@@ -166,34 +180,58 @@ export default function App() {
               }
 
               const meta = sessionData.session.user.user_metadata || {};
+              const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
+              const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
 
               const newProfile = {
                 user_id: sessionData.session.user.id,
                 email: sessionData.session.user.email || parentEmail,
                 family_id: familyId,
-                family_name: inheritedFamilyName || meta.family_name || null,
-                pin: meta.pin || '1234',
-                name: meta.name || null,
+                family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
+                pin: meta.pin || localProfileObj.pin || '1234',
+                name: meta.name || localProfileObj.name || null,
                 share_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
               };
               await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
               
-              // If this is a brand new family (no share token), seed the predefined templates
+              // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
               if (!shareToken) {
-                const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
-                  ...t, 
-                  id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                  created_at: new Date().toISOString(),
-                  parent_id: familyId 
-                }));
-                const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
-                  ...r, 
-                  id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                  created_at: new Date().toISOString(),
-                  parent_id: familyId 
-                }));
-                await supabase.from('tasks').insert(tasksToInsert);
-                await supabase.from('rewards').insert(rewardsToInsert);
+                const localEmail = 'local_parent@rewardchart.app';
+                const localChildren = localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
+                const localTasks = localStorage.getItem(`RCH_TASKS_${localEmail}`);
+                const localCompletions = localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
+                const localRewards = localStorage.getItem(`RCH_REWARDS_${localEmail}`);
+                const localRedemptions = localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                
+                if (localChildren && JSON.parse(localChildren).length > 0) {
+                   // Migrate all local data to this new family ID
+                   const parsedChildren = JSON.parse(localChildren).map((c: any) => ({...c, parent_id: familyId}));
+                   const parsedTasks = localTasks ? JSON.parse(localTasks).map((t: any) => ({...t, parent_id: familyId})) : [];
+                   const parsedCompletions = localCompletions ? JSON.parse(localCompletions) : [];
+                   const parsedRewards = localRewards ? JSON.parse(localRewards).map((r: any) => ({...r, parent_id: familyId})) : [];
+                   const parsedRedemptions = localRedemptions ? JSON.parse(localRedemptions).map((r: any) => ({...r, parent_id: familyId})) : [];
+                   
+                   if (parsedChildren.length) await supabase.from('children').insert(parsedChildren);
+                   if (parsedTasks.length) await supabase.from('tasks').insert(parsedTasks);
+                   if (parsedCompletions.length) await supabase.from('completions').insert(parsedCompletions);
+                   if (parsedRewards.length) await supabase.from('rewards').insert(parsedRewards);
+                   if (parsedRedemptions.length) await supabase.from('reward_redemptions').insert(parsedRedemptions);
+                } else {
+                   const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
+                     ...t, 
+                     id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                     created_at: new Date().toISOString(),
+                     parent_id: familyId 
+                   }));
+                   const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
+                     ...r, 
+                     id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                     created_at: new Date().toISOString(),
+                     parent_id: familyId 
+                   }));
+                   await supabase.from('tasks').insert(tasksToInsert);
+                   await supabase.from('rewards').insert(rewardsToInsert);
+                }
               }
               
               setParentProfile(newProfile as ParentProfile);
@@ -419,6 +457,89 @@ export default function App() {
   };
 
   // Auth Handlers
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+    setHasCompletedOnboarding(true);
+
+    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || 'local_parent@rewardchart.app');
+    
+    setParentPin(data.pin);
+    localStorage.setItem('RCH_PARENT_PIN', data.pin);
+
+    // Save parent profile locally so it persists in local mode
+    const localProfile = {
+      user_id: '',
+      email: emailToUse,
+      family_id: emailToUse,
+      family_name: data.familyName,
+      pin: data.pin,
+      name: data.parentName,
+      share_token: null
+    };
+    localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(localProfile));
+    setParentProfile(localProfile);
+
+    // Create children
+    const initialChildren: Child[] = data.children.map((c, index) => ({
+      ...c,
+      id: `child_${Date.now()}_${index}`,
+      parent_id: emailToUse,
+      points: 0,
+      level: 1,
+      xp_in_level: 0,
+      streak_days: 0,
+      created_at: new Date().toISOString()
+    })) as Child[];
+
+    // Create tasks
+    const initialTasks: Task[] = [];
+    data.selectedTasks.forEach((t, index) => {
+      const templateId = `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
+      // Add as a blueprint
+      initialTasks.push({
+        ...t,
+        id: templateId,
+        created_at: new Date().toISOString(),
+        parent_id: emailToUse,
+        is_template: true
+      });
+      // Assign to all children immediately
+      initialChildren.forEach((child, cIdx) => {
+        initialTasks.push({
+          ...t,
+          id: `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`,
+          created_at: new Date().toISOString(),
+          parent_id: emailToUse,
+          is_template: false,
+          child_id: child.id
+        });
+      });
+    });
+
+    localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
+    localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
+    
+    const initialRewards = PREMADE_REWARDS.map((r, index) => ({ 
+      ...r, 
+      id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: emailToUse 
+    }));
+    localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+
+    // Update React state immediately so it's available without waiting for useEffect
+    setChildren(initialChildren);
+    setTasks(initialTasks);
+    setRewards(initialRewards);
+    setCompletions([]);
+    setRedemptions([]);
+
+    setParentEmail(emailToUse);
+    localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
+    setIsParentMode(true);
+    localStorage.setItem('RCH_PARENT_MODE', 'true');
+  };
+
   const handleStartDemo = () => {
     // Clear old localStorage to ensure fresh demo mode load
     localStorage.removeItem('RCH_CHILDREN');
@@ -452,6 +573,8 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_EMAIL', email);
     setIsParentMode(false); // Default to Child scoreboard, parent enters PIN to manage
     localStorage.setItem('RCH_PARENT_MODE', 'false');
+    setHasCompletedOnboarding(true);
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
   };
 
   const handleLogout = async () => {
@@ -523,6 +646,13 @@ export default function App() {
       await supabase.rpc('delete_user_account');
       handleLogout();
     }
+  };
+
+  const handleRunSetup = async () => {
+    await handleResetData(false);
+    await handleLogout();
+    setHasCompletedOnboarding(false);
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
   };
 
   // Parent Gating
@@ -1143,36 +1273,41 @@ export default function App() {
 
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
-        {!parentEmail ? (
-          !showLogin ? (
-            <motion.div
-              key="landing-page"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full"
-            >
-              <LandingPage 
-                onEnterArcade={() => setShowLogin(true)}
-                theme={activeTheme}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="auth-page"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full"
-            >
-              <AuthPage 
-                onStartDemo={handleStartDemo}
-                onLoginReal={handleLoginReal}
-                onBackToLanding={() => setShowLogin(false)}
-                theme={activeTheme}
-              />
-            </motion.div>
-          )
+        {!hasCompletedOnboarding ? (
+          <motion.div
+            key="onboarding"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <OnboardingWizard 
+              theme={activeTheme}
+              onComplete={handleOnboardingComplete}
+              onLoginInstead={() => {
+                setHasCompletedOnboarding(true);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+              }}
+            />
+          </motion.div>
+        ) : !parentEmail ? (
+          <motion.div
+            key="auth-page"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <AuthPage 
+              onStartDemo={handleStartDemo}
+              onLoginReal={handleLoginReal}
+              onBackToLanding={() => {
+                setHasCompletedOnboarding(false);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+              }}
+              theme={activeTheme}
+            />
+          </motion.div>
         ) : isParentMode ? (
           <motion.div
             key="parent-mode"
@@ -1209,10 +1344,12 @@ export default function App() {
               linkedParents={linkedParents}
               familyMessages={familyMessages}
               onResetData={handleResetData}
+              onRunSetup={handleRunSetup}
               onDeleteAccount={handleDeleteAccount}
               parentEmail={parentEmail}
               onFamilyMessageSent={(msg) => setFamilyMessages(prev => [msg, ...prev])}
               onFamilyMessageUpdated={(msgId, updates) => setFamilyMessages(prev => prev.map(m => m.id === msgId ? { ...m, ...updates } : m))}
+              onRequireAccount={() => setShowCreateAccount(true)}
               theme={activeTheme}
             />
           </motion.div>
@@ -1235,6 +1372,36 @@ export default function App() {
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
               theme={activeTheme}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Upgrade Account Modal */}
+      <AnimatePresence>
+        {showCreateAccount && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed inset-0 z-[200] bg-stone-100"
+          >
+            <StepCreateAccount 
+              theme={activeTheme}
+              pin={parentPin}
+              onComplete={(skipped, email) => {
+                setShowCreateAccount(false);
+                if (!skipped && email) {
+                  setParentEmail(email);
+                  localStorage.setItem('RCH_PARENT_EMAIL', email);
+                }
+              }}
+              onBack={() => setShowCreateAccount(false)}
+              onLoginInstead={() => {
+                setShowCreateAccount(false);
+                setParentEmail('');
+                localStorage.removeItem('RCH_PARENT_EMAIL');
+              }}
             />
           </motion.div>
         )}
