@@ -18,12 +18,12 @@ interface ChildDashboardProps {
   rewards: Reward[];
   redemptions: RewardRedemption[];
   onCompleteTask: (taskId: string, childId: string) => void;
-  onClaimReward: (rewardId: string, childId: string) => void;
+  onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings') => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
   onSavingsWithdraw: (childId: string) => void;
-  onSavingsGoal: (childId: string, goalName: string, goalAmount: number) => void;
+  onSavingsGoal: (childId: string, rewardId: string) => void;
   onClearSavingsGoal: (childId: string) => void;
   onSavingsUnlockSeen: (childId: string) => void;
   theme: ThemeId;
@@ -57,8 +57,7 @@ export default function ChildDashboard({
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [showReplayVideo, setShowReplayVideo] = useState(false);
-  const [goalName, setGoalName] = useState('');
-  const [goalAmount, setGoalAmount] = useState('');
+  const [selectedGoalRewardId, setSelectedGoalRewardId] = useState('');
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -700,7 +699,7 @@ export default function ChildDashboard({
                                 <X className="w-3 h-3" />
                               </button>
                             </div>
-                            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-emerald-200">
+                            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-emerald-200 mb-1">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%` }}
@@ -708,16 +707,30 @@ export default function ChildDashboard({
                                 className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400"
                               />
                             </div>
-                            <span className="text-[10px] font-mono font-bold text-emerald-600 mt-1 block">
-                              {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
-                            </span>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 mt-1 block">
+                                {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
+                              </span>
+                              {activeChild.savings_goal_reward_id && (activeChild.savings_pot || 0) >= activeChild.savings_goal_amount && (
+                                <button
+                                  onClick={() => {
+                                    onClaimReward(activeChild.savings_goal_reward_id!, activeChild.id, 'savings');
+                                    onClearSavingsGoal(activeChild.id);
+                                    playSound.purchase();
+                                  }}
+                                  className="text-[9px] bg-amber-400 text-stone-900 px-2 py-1 rounded font-bold uppercase tracking-wider shadow-sm hover:bg-amber-300 cursor-pointer"
+                                >
+                                  Purchase!
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <button
-                            onClick={() => { setShowGoalForm(true); setGoalName(''); setGoalAmount(''); playSound.click(); }}
+                            onClick={() => { setShowGoalForm(true); setSelectedGoalRewardId(''); playSound.click(); }}
                             className="mb-3 w-full py-2 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-bold font-mono uppercase tracking-wider hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                           >
-                            🎯 Set a Savings Goal
+                            <Target className="w-4 h-4" /> Set a Goal
                           </button>
                         )}
 
@@ -731,31 +744,29 @@ export default function ChildDashboard({
                               className="mb-3 overflow-hidden"
                             >
                               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
-                                <input
-                                  type="text"
-                                  value={goalName}
-                                  onChange={(e) => setGoalName(e.target.value)}
-                                  placeholder="What are you saving for?"
+                                <label className="text-xs font-bold text-emerald-800 block mb-1">Select a Reward to Save For:</label>
+                                <select
+                                  value={selectedGoalRewardId}
+                                  onChange={(e) => setSelectedGoalRewardId(e.target.value)}
                                   className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none"
-                                />
-                                <input
-                                  type="number"
-                                  value={goalAmount}
-                                  onChange={(e) => setGoalAmount(e.target.value)}
-                                  placeholder="How many coins?"
-                                  min="1"
-                                  className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none"
-                                />
-                                <div className="flex gap-2">
+                                >
+                                  <option value="">-- Choose a Reward --</option>
+                                  {rewards.filter(r => r.is_available).map(r => (
+                                    <option key={r.id} value={r.id}>
+                                      {r.icon_name} {r.title} ({r.cost_points} coins)
+                                    </option>
+                                  ))}
+                                </select>
+                                <div className="flex gap-2 mt-2">
                                   <button
                                     onClick={() => {
-                                      if (goalName.trim() && parseInt(goalAmount) > 0) {
-                                        onSavingsGoal(activeChild.id, goalName.trim(), parseInt(goalAmount));
+                                      if (selectedGoalRewardId) {
+                                        onSavingsGoal(activeChild.id, selectedGoalRewardId);
                                         setShowGoalForm(false);
                                         playSound.success();
                                       }
                                     }}
-                                    disabled={!goalName.trim() || !goalAmount || parseInt(goalAmount) <= 0}
+                                    disabled={!selectedGoalRewardId}
                                     className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     Save Goal

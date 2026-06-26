@@ -40,6 +40,7 @@ export interface Child {
   savings_unlock_seen?: boolean;
   savings_goal_name?: string | null;
   savings_goal_amount?: number | null;
+  savings_goal_reward_id?: string | null;
   created_at: string;
 }
 
@@ -91,6 +92,7 @@ export interface RewardRedemption {
   parent_id: string;
   redeemed_at: string;
   status: 'requested' | 'delivered' | 'rejected';
+  payment_source?: 'main' | 'savings';
 }
 
 export interface FamilyMessage {
