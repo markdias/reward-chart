@@ -440,46 +440,33 @@ export default function ChildDashboard({
                         whileTap={{ scale: 0.98 }}
                         key={child.id}
                         onClick={() => handleSelectChild(child.id)}
-                        className={`cursor-pointer overflow-hidden rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} p-3 sm:p-5 flex flex-col items-center gap-3 sm:gap-5 text-center hover:border-cyan-500/50 transition-all shadow-lg sm:shadow-xl relative group`}
+                        className={`cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center hover:shadow-[0_0_30px_rgba(251,191,36,0.8)] transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group`}
                       >
-                        {/* Upper fluorescent stripe */}
-                        <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${stage.color_theme}`} />
-                        
+                        {/* Inner ring for coin effect */}
+                        <div className="absolute inset-2 sm:inset-3 rounded-full border border-yellow-200/60 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
                         {/* Interactive Kid Avatar frame */}
-                        <div className="relative mt-2">
-                          <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-indigo-500 rounded-2xl blur opacity-30 group-hover:opacity-75 transition-opacity" />
+                        <div className="relative mt-2 z-10">
                           <img
                             src={child.avatar_url}
                             alt={child.name}
-                            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-950 p-1 border-2 ${styles.divider} group-hover:border-white transition-all relative z-10 object-cover`}
+                            className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-amber-100 p-0.5 sm:p-1 border-2 border-amber-600 group-hover:border-white transition-all object-cover shadow-inner`}
                             referrerPolicy="no-referrer"
                           />
-                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-cyan-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white z-20`}>
+                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-1 sm:-right-1 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-rose-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white shadow-sm`}>
                             {child.level}
                           </span>
                         </div>
 
-                        <div className="space-y-1">
-                          <h3 className={`font-black font-display text-sm sm:text-xl ${styles.titleColor} tracking-wide group-hover:text-cyan-400 transition-colors`}>
+                        <div className="space-y-0.5 z-10 mt-1">
+                          <h3 className={`font-black font-display text-sm sm:text-xl text-amber-950 tracking-wide drop-shadow-sm`}>
                             {child.name}
                           </h3>
-                          <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-xs text-orange-500 font-mono font-bold bg-orange-950/20 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-orange-900/30">
-                            <Flame className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400 animate-pulse" />
-                            <span><span className="hidden sm:inline">STREAK: </span>{child.streak_days} <span className="sm:hidden">D</span><span className="hidden sm:inline">DAYS</span></span>
+                          <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] text-amber-900 font-mono font-bold bg-amber-200/50 px-1.5 py-0.5 rounded-full border border-amber-500/30 shadow-inner">
+                            <Flame className="w-3 h-3 text-rose-600 animate-pulse" />
+                            <span>{child.streak_days} <span className="hidden sm:inline">DAYS</span><span className="sm:hidden">D</span></span>
                           </div>
-                        </div>
-
-                        {/* Pet info banner */}
-                        <div className={`w-full p-2 sm:p-3 ${styles.innerCard} flex justify-between items-center rounded-xl`}>
-                          <div className="text-left">
-                            <span className={`block text-[8px] ${styles.textMuted} font-mono tracking-widest font-extrabold uppercase hidden sm:block`}>ACTIVE PET</span>
-                            <span className={`text-[10px] sm:text-xs font-black ${styles.textColor} uppercase line-clamp-1`}>{stage.name}</span>
-                          </div>
-                          {stage.image_url ? (
-                            <img src={stage.image_url} alt={stage.name} className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0" />
-                          ) : (
-                            <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
-                          )}
                         </div>
                       </motion.div>
                     );
