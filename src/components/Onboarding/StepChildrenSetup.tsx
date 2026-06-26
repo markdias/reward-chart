@@ -97,7 +97,7 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
                       selectedCharId === char.id ? 'border-amber-400 bg-amber-50' : 'border-transparent bg-white hover:border-stone-200'
                     }`}
                   >
-                    <span className="text-2xl">{getCharacterStage(char.id, 4).emoji}</span>
+                    <img src={getCharacterStage(char.id, 4).image_url} alt={char.name} className="w-10 h-10 object-contain" />
                   </button>
                 ))}
               </div>
