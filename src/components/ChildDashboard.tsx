@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Coins, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X
+  PiggyBank, X, Plus, Minus
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -53,7 +53,7 @@ export default function ChildDashboard({
 
   // Savings Pot UI State
   const [showDepositModal, setShowDepositModal] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
+  const [depositAmount, setDepositAmount] = useState<number>(1);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalName, setGoalName] = useState('');
@@ -835,7 +835,7 @@ export default function ChildDashboard({
                         {/* Action Buttons */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => { setShowDepositModal(true); setDepositAmount(''); playSound.click(); }}
+                            onClick={() => { setShowDepositModal(true); setDepositAmount(1); playSound.click(); }}
                             disabled={activeChild.points <= 0}
                             className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                               activeChild.points > 0
@@ -867,28 +867,39 @@ export default function ChildDashboard({
                               exit={{ opacity: 0, y: 10 }}
                               className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
                             >
-                              <label className="text-xs font-bold text-emerald-800 block">How many coins to save?</label>
-                              <input
-                                type="number"
-                                value={depositAmount}
-                                onChange={(e) => setDepositAmount(e.target.value)}
-                                placeholder={`Max: ${activeChild.points}`}
-                                min="1"
-                                max={activeChild.points}
-                                className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none font-mono"
-                              />
-                              <div className="flex gap-2">
+                              <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many coins to save?</label>
+                              <div className="flex items-center justify-center gap-4 py-2">
+                                <button
+                                  onClick={() => { setDepositAmount(Math.max(1, depositAmount - 1)); playSound.click(); }}
+                                  disabled={depositAmount <= 1}
+                                  className="w-10 h-10 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                >
+                                  <Minus className="w-5 h-5" />
+                                </button>
+                                
+                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                  <span className="text-2xl font-black font-mono text-amber-900 drop-shadow-sm">{depositAmount}</span>
+                                </div>
+                                
+                                <button
+                                  onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 1)); playSound.click(); }}
+                                  disabled={depositAmount >= activeChild.points}
+                                  className="w-10 h-10 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                >
+                                  <Plus className="w-5 h-5" />
+                                </button>
+                              </div>
+                              <div className="flex gap-2 mt-2">
                                 <button
                                   onClick={() => {
-                                    const amt = parseInt(depositAmount);
-                                    if (amt > 0 && amt <= activeChild.points) {
-                                      onSavingsDeposit(activeChild.id, amt);
+                                    if (depositAmount > 0 && depositAmount <= activeChild.points) {
+                                      onSavingsDeposit(activeChild.id, depositAmount);
                                       setShowDepositModal(false);
                                       playSound.purchase();
                                     }
                                   }}
-                                  disabled={!depositAmount || parseInt(depositAmount) <= 0 || parseInt(depositAmount) > activeChild.points}
-                                  className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  disabled={depositAmount <= 0 || depositAmount > activeChild.points}
+                                  className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-emerald-400 active:translate-y-0.5 transition-all"
                                 >
                                   Confirm
                                 </button>
