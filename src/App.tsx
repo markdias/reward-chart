@@ -454,7 +454,8 @@ export default function App() {
           savings_unlocked: updatedChild.savings_unlocked,
           savings_unlock_seen: updatedChild.savings_unlock_seen,
           savings_goal_name: updatedChild.savings_goal_name,
-          savings_goal_amount: updatedChild.savings_goal_amount
+          savings_goal_amount: updatedChild.savings_goal_amount,
+          savings_goal_reward_id: updatedChild.savings_goal_reward_id
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
