@@ -87,12 +87,12 @@ export default function ChildDashboard({
     playSound.purchase();
     setAnimatingCoinId(id);
     
-    // Wait for the slot to drop, then coin flies, then transition
+    // Wait for the slot to drop, wait a couple of seconds, then coin slides in, then transition
     setTimeout(() => {
       setSelectedChildId(id);
       setActiveChildTab('tasks');
       setAnimatingCoinId(null);
-    }, 1600);
+    }, 3000);
   };
 
   const handleTaskCheck = (taskId: string) => {
@@ -514,7 +514,7 @@ export default function ChildDashboard({
                       <motion.div
                         initial={{ y: '80vh', scale: 1.5, rotate: 0 }}
                         animate={{ y: 40, scale: 0.3, rotate: 720, opacity: [1, 1, 0] }}
-                        transition={{ duration: 0.9, delay: 0.4, ease: "easeIn", times: [0, 0.9, 1] }}
+                        transition={{ duration: 1.2, delay: 1.5, ease: "easeIn", times: [0, 0.9, 1] }}
                         className="absolute top-0 left-1/2 -translate-x-1/2 z-10 origin-center"
                         style={{ willChange: "transform, opacity" }}
                       >
