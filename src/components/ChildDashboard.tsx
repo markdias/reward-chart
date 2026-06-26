@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Coins, ChevronRight, Lock, Star,
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp
+  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
+  PiggyBank, X
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -20,6 +21,11 @@ interface ChildDashboardProps {
   onClaimReward: (rewardId: string, childId: string) => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
+  onSavingsDeposit: (childId: string, amount: number) => void;
+  onSavingsWithdraw: (childId: string) => void;
+  onSavingsGoal: (childId: string, goalName: string, goalAmount: number) => void;
+  onClearSavingsGoal: (childId: string) => void;
+  onSavingsUnlockSeen: (childId: string) => void;
   theme: ThemeId;
 }
 
@@ -33,12 +39,25 @@ export default function ChildDashboard({
   onClaimReward,
   onEnterParentMode,
   onFeedPet,
+  onSavingsDeposit,
+  onSavingsWithdraw,
+  onSavingsGoal,
+  onClearSavingsGoal,
+  onSavingsUnlockSeen,
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('companion');
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
+
+  // Savings Pot UI State
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const [showGoalForm, setShowGoalForm] = useState(false);
+  const [goalName, setGoalName] = useState('');
+  const [goalAmount, setGoalAmount] = useState('');
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -370,6 +389,72 @@ export default function ChildDashboard({
         )}
       </AnimatePresence>
 
+      {/* Savings Pot Unlock Celebration Overlay */}
+      <AnimatePresence>
+        {activeChild && activeChild.savings_unlocked && !activeChild.savings_unlock_seen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#040610]/95 flex flex-col items-center justify-center p-6 text-center"
+            id="savings-unlock-cinematic"
+          >
+            <div className="absolute inset-0 crt-overlay opacity-30 pointer-events-none" />
+
+            <motion.div
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 30 }}
+              transition={{ type: 'spring', damping: 15 }}
+              className="relative max-w-lg bg-gradient-to-br from-emerald-950 to-teal-950 border-4 border-emerald-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(16,185,129,0.4)] space-y-6"
+            >
+              {/* Animated glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                NEW FEATURE UNLOCKED
+              </div>
+
+              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                🎉 SAVINGS POT UNLOCKED!
+              </h2>
+
+              <p className="text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
+                Well done, <strong className="text-white">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-emerald-300">Piggy Bank</strong>!
+              </p>
+
+              {/* Video Placeholder */}
+              <div className="relative w-full aspect-video rounded-2xl bg-gradient-to-br from-emerald-900/60 to-teal-900/60 border-2 border-emerald-500/30 flex flex-col items-center justify-center gap-3 overflow-hidden group cursor-pointer">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvc3ZnPg==')] pointer-events-none" />
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-6xl drop-shadow-2xl"
+                >
+                  🐷💰
+                </motion.div>
+                <div className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 px-4 py-2 rounded-full">
+                  <Play className="w-4 h-4 text-emerald-300 fill-emerald-300" />
+                  <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">Watch: What is Saving?</span>
+                </div>
+                <p className="text-[11px] text-slate-400 px-6 leading-relaxed">
+                  If you want a bigger prize, try saving some coins! Put them in your piggy bank and watch them grow!
+                </p>
+              </div>
+
+              <button
+                onClick={() => { playSound.success(); onSavingsUnlockSeen(activeChild.id); }}
+                className="w-full gamepad-button py-4 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 text-slate-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-lg cursor-pointer"
+                id="savings-unlock-dismiss-btn"
+              >
+                GOT IT! 🎉
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top-tier Console Navigation Bar */}
       <header className={`p-3 sm:p-5 border-b ${styles.divider} flex justify-between items-center ${styles.headerBg} relative z-30`}>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -507,9 +592,26 @@ export default function ChildDashboard({
                           <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
-                        <div className={`flex items-center gap-2 ${styles.tagCategory} px-4 py-2 rounded-xl shadow-sm border border-amber-200/50`}>
-                          <Coins className={`w-5 h-5 sm:w-6 sm:h-6 text-amber-500 fill-current drop-shadow-sm`} />
-                          <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight`}>{activeChild.points} GOLD</span>
+                        {/* Gold Pot Visual */}
+                        <div className="relative group cursor-default">
+                          <div className={`flex items-center gap-2 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 px-4 py-2.5 rounded-2xl shadow-md border-2 border-amber-300 relative overflow-hidden`}>
+                            {/* Shine animation */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            <div className="relative">
+                              <span className="text-2xl sm:text-3xl drop-shadow-sm">🏺</span>
+                              <motion.div
+                                animate={{ y: [0, -3, 0] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                                className="absolute -top-1 -right-1 text-xs"
+                              >
+                                🪙
+                              </motion.div>
+                            </div>
+                            <div className="flex flex-col items-start">
+                              <span className={`text-[8px] font-mono font-bold text-amber-700 uppercase tracking-wider`}>GOLD POT</span>
+                              <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight leading-none`}>{activeChild.points}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -616,7 +718,247 @@ export default function ChildDashboard({
 
                     </div>
 
-                    {/* Streak & Goals Grid */}
+                    {/* === SAVINGS POT SECTION === */}
+
+                    {/* Savings Pot Unlocked Card */}
+                    {activeChild.savings_unlocked && activeChild.savings_unlock_seen && (
+                      <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
+                        <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400`} />
+                        
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-3 mt-1">
+                          <div className="flex items-center gap-2">
+                            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 flex items-center justify-center">
+                              <PiggyBank className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div>
+                              <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>SAVINGS POT</span>
+                              <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>🐷 Piggy Bank</h4>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                            <span className="text-lg">🪙</span>
+                            <span className="text-lg font-mono font-black text-emerald-700">{activeChild.savings_pot || 0}</span>
+                          </div>
+                        </div>
+
+                        {/* Optional Savings Goal */}
+                        {activeChild.savings_goal_name && activeChild.savings_goal_amount ? (
+                          <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                                🎯 {activeChild.savings_goal_name}
+                              </span>
+                              <button 
+                                onClick={() => { onClearSavingsGoal(activeChild.id); playSound.click(); }}
+                                className="p-1 rounded-full hover:bg-emerald-200 text-emerald-500 transition-all cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-emerald-200">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%` }}
+                                transition={{ duration: 0.8 }}
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400"
+                              />
+                            </div>
+                            <span className="text-[10px] font-mono font-bold text-emerald-600 mt-1 block">
+                              {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setShowGoalForm(true); setGoalName(''); setGoalAmount(''); playSound.click(); }}
+                            className="mb-3 w-full py-2 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-bold font-mono uppercase tracking-wider hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            🎯 Set a Savings Goal
+                          </button>
+                        )}
+
+                        {/* Goal Form Modal */}
+                        <AnimatePresence>
+                          {showGoalForm && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mb-3 overflow-hidden"
+                            >
+                              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
+                                <input
+                                  type="text"
+                                  value={goalName}
+                                  onChange={(e) => setGoalName(e.target.value)}
+                                  placeholder="What are you saving for?"
+                                  className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none"
+                                />
+                                <input
+                                  type="number"
+                                  value={goalAmount}
+                                  onChange={(e) => setGoalAmount(e.target.value)}
+                                  placeholder="How many coins?"
+                                  min="1"
+                                  className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none"
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      if (goalName.trim() && parseInt(goalAmount) > 0) {
+                                        onSavingsGoal(activeChild.id, goalName.trim(), parseInt(goalAmount));
+                                        setShowGoalForm(false);
+                                        playSound.success();
+                                      }
+                                    }}
+                                    disabled={!goalName.trim() || !goalAmount || parseInt(goalAmount) <= 0}
+                                    className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Save Goal
+                                  </button>
+                                  <button
+                                    onClick={() => { setShowGoalForm(false); playSound.click(); }}
+                                    className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                          Save your coins here for bigger prizes! Coins in the piggy bank can't be spent until you take them out.
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => { setShowDepositModal(true); setDepositAmount(''); playSound.click(); }}
+                            disabled={activeChild.points <= 0}
+                            className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                              activeChild.points > 0
+                                ? 'bg-emerald-500 border border-emerald-700 text-white shadow-[0_3px_0_0_#047857]'
+                                : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                            }`}
+                          >
+                            💰 Save Coins
+                          </button>
+                          <button
+                            onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
+                            disabled={(activeChild.savings_pot || 0) <= 0}
+                            className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                              (activeChild.savings_pot || 0) > 0
+                                ? 'bg-amber-100 border border-amber-300 text-amber-800 shadow-[0_3px_0_0_#d97706]'
+                                : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                            }`}
+                          >
+                            🔓 Take Out
+                          </button>
+                        </div>
+
+                        {/* Deposit Modal */}
+                        <AnimatePresence>
+                          {showDepositModal && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
+                            >
+                              <label className="text-xs font-bold text-emerald-800 block">How many coins to save?</label>
+                              <input
+                                type="number"
+                                value={depositAmount}
+                                onChange={(e) => setDepositAmount(e.target.value)}
+                                placeholder={`Max: ${activeChild.points}`}
+                                min="1"
+                                max={activeChild.points}
+                                className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none font-mono"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    const amt = parseInt(depositAmount);
+                                    if (amt > 0 && amt <= activeChild.points) {
+                                      onSavingsDeposit(activeChild.id, amt);
+                                      setShowDepositModal(false);
+                                      playSound.purchase();
+                                    }
+                                  }}
+                                  disabled={!depositAmount || parseInt(depositAmount) <= 0 || parseInt(depositAmount) > activeChild.points}
+                                  className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => { setShowDepositModal(false); playSound.click(); }}
+                                  className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Withdraw Confirmation */}
+                        <AnimatePresence>
+                          {showWithdrawConfirm && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2"
+                            >
+                              <p className="text-xs font-bold text-amber-800">
+                                Take out all {activeChild.savings_pot || 0} coins from your piggy bank?
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    onSavingsWithdraw(activeChild.id);
+                                    setShowWithdrawConfirm(false);
+                                    playSound.success();
+                                  }}
+                                  className="flex-1 py-2 rounded-lg bg-amber-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                >
+                                  Yes, Take Out
+                                </button>
+                                <button
+                                  onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}
+                                  className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                >
+                                  Keep Saving
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
+                    {!activeChild.savings_unlocked && activeChild.level === 1 && (
+                      <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
+                        <div className="flex items-center gap-2 text-stone-500">
+                          <Lock className="w-4 h-4" />
+                          <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at 50 XP!</span>
+                        </div>
+                        <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(100, (activeChild.xp_in_level / 50) * 100)}%` }}
+                            transition={{ duration: 0.8 }}
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400"
+                          />
+                        </div>
+                        <span className="text-[10px] font-mono text-stone-500 font-bold">
+                          {activeChild.xp_in_level} / 50 XP
+                        </span>
+                      </div>
+                    )}                    {/* Streak & Goals Grid */}
                     {(() => {
                       const now = new Date();
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;

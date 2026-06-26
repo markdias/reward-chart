@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
@@ -142,7 +142,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
               </span>
             </h1>
             <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
-              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, and have fun!
+              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, learn money skills, and have fun!
             </p>
           </div>
 
@@ -165,7 +165,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           </div>
 
           {/* Value Badges */}
-          <div className="grid grid-cols-2 gap-3 max-w-md">
+          <div className="grid grid-cols-3 gap-3 max-w-lg">
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
@@ -182,6 +182,15 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
               <div>
                 <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>COMPLIANCE</span>
                 <span className={`text-[11px] font-bold ${styles.textColor}`}>COPPA Encrypted</span>
+              </div>
+            </div>
+            <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                <PiggyBank className="w-4 h-4" />
+              </div>
+              <div>
+                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
+                <span className={`text-[11px] font-bold ${styles.textColor}`}>Savings & Earning</span>
               </div>
             </div>
           </div>

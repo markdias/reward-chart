@@ -449,7 +449,12 @@ export default function App() {
           weekly_reset_date: updatedChild.weekly_reset_date,
           monthly_reset_date: updatedChild.monthly_reset_date,
           last_weekly_bonus_awarded: updatedChild.last_weekly_bonus_awarded,
-          last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded
+          last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded,
+          savings_pot: updatedChild.savings_pot,
+          savings_unlocked: updatedChild.savings_unlocked,
+          savings_unlock_seen: updatedChild.savings_unlock_seen,
+          savings_goal_name: updatedChild.savings_goal_name,
+          savings_goal_amount: updatedChild.savings_goal_amount
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -775,6 +780,13 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
+    // 3. Auto-unlock Savings Pot at Level 1, 50 XP
+    let savingsUnlocked = child.savings_unlocked || false;
+    if (newLevel === 1 && newXp >= 50 && !savingsUnlocked) {
+      savingsUnlocked = true;
+      setTimeout(() => playSound.evolution(), 600);
+    }
+
     return {
       ...child,
       level: newLevel,
@@ -786,7 +798,8 @@ export default function App() {
       weekly_reset_date: nextWeeklyReset.toISOString(),
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
-      last_monthly_bonus_awarded: lastMonthlyBonus
+      last_monthly_bonus_awarded: lastMonthlyBonus,
+      savings_unlocked: savingsUnlocked
     };
   };
 
@@ -1123,6 +1136,76 @@ export default function App() {
     }
   };
 
+  // Operations: Savings Pot
+  const handleSavingsDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      savings_pot: (child.savings_pot || 0) + amount
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsWithdraw = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.savings_pot || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + (child.savings_pot || 0),
+      savings_pot: 0
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsGoal = async (childId: string, goalName: string, goalAmount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      savings_goal_name: goalName,
+      savings_goal_amount: goalAmount
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleClearSavingsGoal = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      savings_goal_name: null,
+      savings_goal_amount: null
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      savings_unlock_seen: true
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
   const handleRejectReward = async (redemptionId: string) => {
     const redemption = redemptions.find(r => r.id === redemptionId);
     if (!redemption) return;
@@ -1371,6 +1454,11 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
+              onSavingsDeposit={handleSavingsDeposit}
+              onSavingsWithdraw={handleSavingsWithdraw}
+              onSavingsGoal={handleSavingsGoal}
+              onClearSavingsGoal={handleClearSavingsGoal}
+              onSavingsUnlockSeen={handleSavingsUnlockSeen}
               theme={activeTheme}
             />
           </motion.div>

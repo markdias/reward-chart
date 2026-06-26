@@ -975,6 +975,12 @@ export default function ParentDashboard({
                                 <Coins className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                                 <span>{child.points} Gold</span>
                               </div>
+                              {child.savings_unlocked && (
+                                <div className={`flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 whitespace-nowrap`}>
+                                  <span className="text-sm">🐷</span>
+                                  <span>{child.savings_pot || 0} Saved</span>
+                                </div>
+                              )}
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
                                 <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
                                 <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/100 XP)</span></span>
