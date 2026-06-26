@@ -90,7 +90,7 @@ export default function ChildDashboard({
     // Wait for the slot to drop, wait a couple of seconds, then coin slides in, then transition
     setTimeout(() => {
       setSelectedChildId(id);
-      setActiveChildTab('tasks');
+      setActiveChildTab('companion');
       setAnimatingCoinId(null);
     }, 3000);
   };
