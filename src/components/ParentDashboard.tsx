@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -232,7 +232,15 @@ export default function ParentDashboard({
     const supabase = getSupabaseClient();
     if (!supabase) return;
     
-    const tasksToInsert = PREMADE_TASKS.map(t => ({ 
+    const existingTitles = new Set(tasks.map(t => t.title.trim().toLowerCase()));
+    const newPremadeTasks = PREMADE_TASKS.filter(t => !existingTitles.has(t.title.trim().toLowerCase()));
+
+    if (newPremadeTasks.length === 0) {
+      alert("All default quests have already been imported!");
+      return;
+    }
+
+    const tasksToInsert = newPremadeTasks.map(t => ({ 
       ...t, 
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
@@ -252,7 +260,15 @@ export default function ParentDashboard({
     const supabase = getSupabaseClient();
     if (!supabase) return;
     
-    const rewardsToInsert = PREMADE_REWARDS.map(r => ({ 
+    const existingTitles = new Set(rewards.map(r => r.title.trim().toLowerCase()));
+    const newPremadeRewards = PREMADE_REWARDS.filter(r => !existingTitles.has(r.title.trim().toLowerCase()));
+
+    if (newPremadeRewards.length === 0) {
+      alert("All default prizes have already been imported!");
+      return;
+    }
+
+    const rewardsToInsert = newPremadeRewards.map(r => ({ 
       ...r, 
       id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
@@ -264,6 +280,64 @@ export default function ParentDashboard({
       alert(`Error importing rewards: ${error.message}`);
     } else {
       playSound.success();
+    }
+  };
+
+  const handleCleanDuplicates = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    // Find duplicate task blueprints
+    const templateTasks = tasks.filter(t => t.is_template);
+    const seenTaskTitles = new Set<string>();
+    const duplicateTaskIds: string[] = [];
+    
+    for (const t of templateTasks) {
+      const titleLower = t.title.trim().toLowerCase();
+      if (seenTaskTitles.has(titleLower)) {
+        duplicateTaskIds.push(t.id);
+      } else {
+        seenTaskTitles.add(titleLower);
+      }
+    }
+
+    // Find duplicate reward blueprints
+    const templateRewards = rewards.filter(r => r.is_template !== false && r.child_id === 'directory');
+    const seenRewardTitles = new Set<string>();
+    const duplicateRewardIds: string[] = [];
+    
+    for (const r of templateRewards) {
+      const titleLower = r.title.trim().toLowerCase();
+      if (seenRewardTitles.has(titleLower)) {
+        duplicateRewardIds.push(r.id);
+      } else {
+        seenRewardTitles.add(titleLower);
+      }
+    }
+
+    if (duplicateTaskIds.length === 0 && duplicateRewardIds.length === 0) {
+      alert("No duplicates found!");
+      return;
+    }
+
+    let deletedCount = 0;
+
+    if (duplicateTaskIds.length > 0) {
+      const { error } = await supabase.from('tasks').delete().in('id', duplicateTaskIds);
+      if (error) console.error("Error deleting duplicate tasks", error);
+      else deletedCount += duplicateTaskIds.length;
+    }
+
+    if (duplicateRewardIds.length > 0) {
+      const { error } = await supabase.from('rewards').delete().in('id', duplicateRewardIds);
+      if (error) console.error("Error deleting duplicate rewards", error);
+      else deletedCount += duplicateRewardIds.length;
+    }
+
+    if (deletedCount > 0) {
+      playSound.success();
+      alert(`Successfully removed ${deletedCount} duplicate blueprints!`);
     }
   };
 
@@ -365,42 +439,37 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'cosmic_dark' ? 'bg-[#060814] text-slate-100' : 'bg-[#FCFBF9] text-stone-900'} flex flex-col font-sans relative overflow-hidden`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-[#FCFBF9] text-stone-900 flex flex-col font-sans relative overflow-hidden`} id="parent-dashboard-root">
       
-      <div className={`absolute inset-0 ${theme === 'cosmic_dark' ? 'scrolling-grid opacity-5' : 'opacity-[0.02] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px]'} pointer-events-none`} />
-      {theme === 'cosmic_dark' && (
-        <>
-          <div className="absolute top-0 right-1/4 w-[600px] h-[600px] ambient-glow-cyan pointer-events-none" />
-          <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] ambient-glow-purple pointer-events-none" />
-        </>
-      )}
+      <div className={`absolute inset-0 opacity-[0.02] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px] pointer-events-none`} />
+      
 
-      <header className={`${theme === 'cosmic_dark' ? 'bg-[#070919]/90 border-b border-indigo-950/60' : 'bg-white border-b border-stone-200 shadow-sm'} backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4`}>
-        <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme === 'cosmic_dark' ? 'from-fuchsia-500 to-purple-600 shadow-fuchsia-500/20' : 'from-amber-400 to-amber-500 border border-stone-900 shadow-sm'} flex items-center justify-center text-xl shadow-lg`}>
-            <Settings className={`w-5 h-5 ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-950'} animate-spin-slow`} />
+      <header className={`bg-white border-b border-stone-200 shadow-sm backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between gap-2`}>
+        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+          <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 border border-stone-900 shadow-sm flex items-center justify-center text-xl shadow-lg shrink-0`}>
+            <Settings className={`w-4 h-4 sm:w-5 sm:h-5 text-stone-950 animate-spin-slow`} />
           </div>
-          <div>
-            <h1 className={`text-lg font-black font-display tracking-wider ${theme === 'cosmic_dark' ? 'bg-gradient-to-r from-fuchsia-400 to-pink-400' : 'bg-gradient-to-r from-stone-900 to-stone-800'} bg-clip-text text-transparent uppercase`}>
+          <div className="min-w-0">
+            <h1 className={`text-[10px] sm:text-lg font-black font-display tracking-wider bg-gradient-to-r from-stone-900 to-stone-800 bg-clip-text text-transparent uppercase truncate`}>
               Parent Mission Control
             </h1>
-            <p className={`text-[9px] ${theme === 'cosmic_dark' ? 'text-fuchsia-400' : 'text-stone-500 font-black'} font-mono tracking-widest uppercase`}>{parentEmail}</p>
+            <p className={`hidden sm:block text-[9px] text-stone-500 font-black font-mono tracking-widest uppercase truncate`}>{parentEmail}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="relative">
             <button
               onClick={() => {
                 playSound.click();
                 setShowNotifications(!showNotifications);
               }}
-              className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-all cursor-pointer relative"
+              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white border-2 border-[#E7E5E4] text-stone-700 hover:bg-stone-50 transition-all cursor-pointer relative shadow-[0_3px_0_0_#E7E5E4] active:translate-y-[2px] active:shadow-none"
               id="notifications-bell-btn"
             >
-              <Bell className="w-4.5 h-4.5 text-cyan-400" />
+              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
               {pendingApprovals.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-mono font-bold text-white ring-2 ring-slate-950 animate-bounce">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
                   {pendingApprovals.length}
                 </span>
               )}
@@ -412,26 +481,26 @@ export default function ParentDashboard({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-3 w-80 rounded-2xl bg-[#090c23] border border-cyan-500/40 shadow-2xl overflow-hidden p-4 space-y-3 z-50"
+                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border-3 border-[#E7E5E4] shadow-[0_6px_0_0_#E7E5E4] overflow-hidden p-4 space-y-3 z-50 text-[#292524]"
                   id="notifications-box"
                 >
-                  <div className="flex items-center justify-between border-b border-indigo-950 pb-2">
-                    <span className="font-bold text-xs font-mono tracking-wider text-cyan-400 uppercase">INCOMING TELEMETRY</span>
-                    <span className="text-[8px] text-slate-500 font-mono">LIVE UPDATE</span>
+                  <div className="flex items-center justify-between border-b border-stone-200 pb-2">
+                    <span className="font-bold text-xs font-mono tracking-wider text-amber-600 uppercase">INCOMING TELEMETRY</span>
+                    <span className="text-[8px] text-stone-500 font-mono">LIVE UPDATE</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto space-y-2">
                     {pendingApprovals.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No pending chore approvals. Channels clear!</p>
+                      <p className="text-xs text-stone-500 py-4 text-center">No pending chore approvals. Channels clear!</p>
                     ) : (
                       pendingApprovals.map(appr => {
                         const child = children.find(c => c.id === appr.child_id);
                         const task = tasks.find(t => t.id === appr.task_id);
                         return (
-                          <div key={appr.id} className="p-2.5 bg-slate-950 rounded-xl text-xs flex gap-2 border border-indigo-950">
+                          <div key={appr.id} className="p-2.5 bg-[#F5F2EA] rounded-xl text-xs flex gap-2 border border-stone-200 text-stone-850">
                             <span className="text-lg">📢</span>
                             <div>
-                              <p className="text-slate-300 font-bold">{child?.name || 'Child'} finished a chore!</p>
-                              <p className="text-cyan-400 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
+                              <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
+                              <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
                             </div>
                           </div>
                         );
@@ -448,20 +517,20 @@ export default function ParentDashboard({
               playSound.click();
               onExitParentMode();
             }}
-            className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-indigo-600 hover:from-cyan-300 hover:to-indigo-500 text-slate-950 font-black px-4.5 py-3 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer shadow-lg font-mono shadow-cyan-500/10"
+            className="flex items-center gap-1 sm:gap-2 bg-rose-500 hover:bg-rose-450 text-white font-extrabold border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
             id="exit-to-child-view-btn"
           >
-            <Lock className="w-4 h-4" /> LOCK TERMINAL (KID VIEW)
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>SWITCH TO KID VIEW</span>
           </button>
         </div>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12" id="parent-workspace">
         
-        <aside className={`lg:col-span-3 ${theme === 'cosmic_dark' ? 'bg-[#070919]/60 border-r border-indigo-950/60' : 'bg-stone-50 border-r border-stone-200'} p-6 space-y-6`}>
+        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 bg-stone-50 border-r border-stone-200 p-6 space-y-6`}>
           <div className="space-y-1">
-            <span className={`text-[10px] font-bold font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
-            <p className={`text-xs ${theme === 'cosmic_dark' ? 'text-slate-500' : 'text-stone-500'}`}>Configure chore metrics and levels.</p>
+            <span className={`text-[10px] font-bold font-mono text-amber-700 uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
+            <p className={`text-xs text-stone-500`}>Configure chore metrics and levels.</p>
           </div>
 
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
@@ -481,16 +550,12 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-3.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
                     isSelected 
-                      ? theme === 'cosmic_dark'
-                        ? 'bg-gradient-to-r from-fuchsia-500 to-pink-600 text-white shadow-md shadow-pink-500/10' 
-                        : 'bg-amber-400 border border-stone-900 text-stone-950 font-black shadow-[0_3px_0_0_#1c1917]'
-                      : theme === 'cosmic_dark'
-                        ? 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'
-                        : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                      ? 'bg-amber-400 border border-stone-900 text-stone-950 font-black shadow-[0_3px_0_0_#1c1917]'
+                      : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'}`} /> {tab.label}
+                    <Icon className={`w-4 h-4 text-stone-900`} /> {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`${tab.badgeColor} text-white text-[10px] font-mono px-2 py-0.5 rounded-full font-bold`}>
@@ -498,7 +563,7 @@ export default function ParentDashboard({
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${theme === 'cosmic_dark' ? 'text-slate-500' : 'text-stone-500 font-bold'}`}>
+                    <span className={`text-[10px] font-mono text-stone-500 font-bold`}>
                       ({tab.count})
                     </span>
                   )}
@@ -517,34 +582,34 @@ export default function ParentDashboard({
           </div>
         </aside>
 
-        <main className="lg:col-span-9 p-8">
+        <main className="lg:col-span-9 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl ${theme === 'cosmic_dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                <Activity className="w-5 h-5 animate-pulse" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8">
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Activity className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-pulse" />
               </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>VERIFIED QUESTS</span>
-                <span className={`text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} COMPLETED</span>
-              </div>
-            </div>
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl ${theme === 'cosmic_dark' ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                <Award className="w-5 h-5" />
-              </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>ACTIVE PILOTS</span>
-                <span className={`text-xl font-black ${styles.titleColor} font-mono`}>{children.length} ACTIVE</span>
+              <div className="w-full">
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
               </div>
             </div>
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl ${theme === 'cosmic_dark' ? 'bg-rose-500/10 text-rose-400' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-                <ShieldAlert className="w-5 h-5 animate-bounce-slow" />
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>AWAITING REVIEW</span>
-                <span className={`text-xl font-black ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-600'} font-mono`}>{totalPending} PENDING</span>
+              <div className="w-full">
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">PILOTS</span></span>
+              </div>
+            </div>
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
+                <ShieldAlert className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-bounce-slow" />
+              </div>
+              <div className="w-full">
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
+                <span className={`text-xs sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
               </div>
             </div>
           </div>
@@ -565,7 +630,7 @@ export default function ParentDashboard({
                     <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>INBOX & APPROVALS</h2>
                     <p className={`text-xs ${styles.textMuted}`}>Authorize finished duties and deliver claimed prizes.</p>
                   </div>
-                  <span className={`px-3 py-1 ${theme === 'cosmic_dark' ? 'bg-rose-500/15 border border-rose-500/30 text-rose-400' : 'bg-rose-50 border border-rose-200 text-rose-700'} rounded-full text-xs font-bold font-mono`}>
+                  <span className={`px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold font-mono`}>
                     {totalPending} STANDBY
                   </span>
                 </div>
@@ -573,7 +638,7 @@ export default function ParentDashboard({
                 {/* Family Messaging Section */}
                 {linkedParents.length > 1 && (
                   <div className={`p-5 rounded-3xl border ${styles.cardBg} ${styles.borderStyle}`}>
-                    <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase mb-4 flex items-center gap-2`}>
+                    <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase mb-4 flex items-center gap-2`}>
                       <MessageSquare className="w-4 h-4" /> Family Comms
                     </h3>
                     
@@ -584,7 +649,7 @@ export default function ParentDashboard({
                         <select
                           value={messageReceiverId}
                           onChange={(e) => setMessageReceiverId(e.target.value)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white' : 'bg-stone-50 border-stone-200 text-stone-900'} outline-none`}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono border bg-stone-50 border-stone-200 text-stone-900 outline-none`}
                         >
                           <option value="all">Everyone</option>
                           {linkedParents.filter(p => p.user_id !== parentProfile?.user_id).map(p => (
@@ -599,7 +664,7 @@ export default function ParentDashboard({
                           onChange={(e) => setMessageText(e.target.value)}
                           placeholder="Type a message to other parents..."
                           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                          className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white placeholder-slate-500' : 'bg-white border-stone-200 text-stone-900 placeholder-stone-400'} outline-none focus:ring-2 focus:ring-indigo-500`}
+                          className={`flex-1 px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-900 placeholder-stone-400 outline-none focus:ring-2 focus:ring-indigo-500`}
                         />
                         <button
                           onClick={handleSendMessage}
@@ -623,14 +688,14 @@ export default function ParentDashboard({
                           return (
                             <div key={msg.id} className={`flex gap-3 ${isMine ? 'justify-end' : 'justify-start'}`}>
                               {!isMine && (
-                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-xs ${theme === 'cosmic_dark' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-xs bg-indigo-100 text-indigo-600`}>
                                   {sender?.name?.charAt(0) || '?'}
                                 </div>
                               )}
                               <div className={`max-w-[80%] rounded-2xl p-3 ${
                                 isMine 
-                                  ? (theme === 'cosmic_dark' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-indigo-500 text-white rounded-tr-sm') 
-                                  : (theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-200 rounded-tl-sm' : 'bg-stone-100 text-stone-800 rounded-tl-sm')
+                                  ? ('bg-indigo-500 text-white rounded-tr-sm') 
+                                  : ('bg-stone-100 text-stone-800 rounded-tl-sm')
                               }`}>
                                 <div className={`text-[9px] font-mono font-bold mb-1 opacity-70 flex justify-between gap-4`}>
                                   <span>{isMine ? 'You' : (sender?.name || 'Unknown')} {msg.receiver_id ? '(Direct)' : '(To Everyone)'}</span>
@@ -666,7 +731,7 @@ export default function ParentDashboard({
                   <div className="space-y-8">
                     {pendingApprovals.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
+                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
                           🧹 Pending Chores ({pendingApprovals.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -683,13 +748,13 @@ export default function ParentDashboard({
                                   <img
                                     src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
                                     alt="Child avatar"
-                                    className={`w-14 h-14 rounded-2xl p-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}
+                                    className={`w-14 h-14 rounded-2xl p-1 border bg-stone-100 border-stone-200`}
                                     referrerPolicy="no-referrer"
                                   />
                                   <div>
                                     <div className="flex items-center gap-1.5">
                                       <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name}</span>
-                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-cyan-900/30' : 'bg-amber-50 text-amber-700 border border-amber-200'} font-bold uppercase`}>
+                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase`}>
                                         {character?.name.split(' ')[0]}
                                       </span>
                                     </div>
@@ -702,10 +767,10 @@ export default function ParentDashboard({
                                   </div>
                                 </div>
 
-                                <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
+                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
                                   <div className="flex gap-3">
                                     <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <Star className="w-3.5 h-3.5 text-yellow-500" />
+                                      <Coins className="w-3.5 h-3.5 text-yellow-500" />
                                       {task?.points || 0} Gold
                                     </div>
                                     <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
@@ -716,13 +781,13 @@ export default function ParentDashboard({
                                   <div className="flex gap-2">
                                     <button
                                       onClick={() => handleReject(appr.id)}
-                                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border ${theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border-indigo-950' : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'}`}
+                                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200`}
                                     >
                                       <X className="w-4 h-4" /> REJECT
                                     </button>
                                     <button
                                       onClick={() => handleApprove(appr.id)}
-                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                      className={`px-4 py-2 bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
                                     >
                                       <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
                                     </button>
@@ -737,7 +802,7 @@ export default function ParentDashboard({
               
                     {pendingRedemptions.length > 0 && (
                       <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase border-b ${theme === 'cosmic_dark' ? 'border-indigo-950/50' : 'border-stone-200'} pb-2`}>
+                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
                           🎁 Pending Prize Deliveries ({pendingRedemptions.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -750,7 +815,7 @@ export default function ParentDashboard({
                                 className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
                               >
                                 <div className="flex gap-4 items-start">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-cyan-500/30' : 'bg-stone-100 border-stone-200'}`}>
+                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
                                     🎁
                                   </div>
                                   <div>
@@ -763,9 +828,9 @@ export default function ParentDashboard({
                                     </p>
                                   </div>
                                 </div>
-                                <div className={`flex items-center justify-between border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-150'} pt-4 mt-2`}>
-                                  <div className={`flex items-center gap-1.5 ${theme === 'cosmic_dark' ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-100'} px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs ${theme === 'cosmic_dark' ? 'text-rose-400' : 'text-rose-700'}`}>-{reward?.cost_points || 0} XP</span>
+                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
+                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
+                                    <span className={`font-mono font-black text-xs text-rose-700`}>-{reward?.cost_points || 0} XP</span>
                                   </div>
                                   <div className="flex gap-2">
                                     <button
@@ -773,7 +838,7 @@ export default function ParentDashboard({
                                         playSound.success();
                                         onDeliverReward(delivery.id);
                                       }}
-                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950' : 'bg-emerald-400 hover:bg-emerald-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                      className={`px-4 py-2 bg-emerald-400 hover:bg-emerald-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
                                     >
                                       <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
                                     </button>
@@ -782,7 +847,7 @@ export default function ParentDashboard({
                                         playSound.click();
                                         onRejectReward(delivery.id);
                                       }}
-                                      className={`px-4 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-400 hover:text-rose-400 hover:border-rose-900/50' : 'bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600'} rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
+                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
                                     >
                                       <X className="w-4 h-4 stroke-[3px]" /> DENY
                                     </button>
@@ -815,7 +880,7 @@ export default function ParentDashboard({
                   </div>
                   <button
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
-                    className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                    className={`bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
                     id="add-child-btn-top"
                   >
                     <UserPlus className="w-4 h-4" /> REGISTER NEW PILOT
@@ -826,10 +891,10 @@ export default function ParentDashboard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
+                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-900 shadow-2xl space-y-4`}
                     id="add-child-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
                       {editingChildId ? '✏️ Edit Pilot' : '👶 Register Family Child'}
                     </h3>
                     <form onSubmit={handleChildSubmit} className="space-y-4">
@@ -841,7 +906,7 @@ export default function ParentDashboard({
                             value={newChildName}
                             onChange={(e) => setNewChildName(e.target.value)}
                             placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200 placeholder-slate-700' : 'bg-white border border-stone-200 text-stone-900 placeholder-stone-400'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -850,7 +915,7 @@ export default function ParentDashboard({
                           <select
                             value={newChildChar}
                             onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             {CHARACTER_PACKS.map(char => (
                               <option key={char.id} value={char.id}>
@@ -869,7 +934,7 @@ export default function ParentDashboard({
                               key={url}
                               type="button"
                               onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${newChildAvatar === url ? (theme === 'cosmic_dark' ? 'border-cyan-400 bg-cyan-950/30' : 'border-amber-500 bg-amber-50') : 'border-transparent hover:border-slate-500/50'}`}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${newChildAvatar === url ? ('border-amber-500 bg-amber-50') : 'border-transparent hover:border-slate-500/50'}`}
                             >
                               <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
                             </button>
@@ -880,7 +945,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
+                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
                         >
                           {editingChildId ? 'SAVE CHANGES' : 'SPAWN PILOT & HATCH EGG'}
                         </button>
@@ -893,7 +958,7 @@ export default function ParentDashboard({
                             setNewChildChar('unicorn');
                             setNewChildAvatar('/avatars/boy_fox.png');
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
                         </button>
@@ -917,14 +982,14 @@ export default function ParentDashboard({
                           <img
                             src={child.avatar_url}
                             alt="Child avatar"
-                            className={`w-16 h-16 rounded-2xl p-1 border object-cover shrink-0 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/60' : 'bg-stone-100 border-stone-200'}`}
+                            className={`w-16 h-16 rounded-2xl p-1 border object-cover shrink-0 bg-stone-100 border-stone-200`}
                             referrerPolicy="no-referrer"
                           />
                           <div className="flex-1 min-w-0">
                             <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <Star className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                                <Coins className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                                 <span>{child.points} Gold</span>
                               </div>
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
@@ -935,17 +1000,17 @@ export default function ParentDashboard({
                           </div>
                           <button
                             onClick={() => openEditChild(child)}
-                            className={`p-2 rounded-xl transition-all cursor-pointer border absolute top-4 right-4 ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                            className={`p-2 rounded-xl transition-all cursor-pointer border absolute top-4 right-4 bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${theme === 'cosmic_dark' ? 'bg-slate-950/80 border-indigo-950/50' : 'bg-stone-50 border-stone-200'}`}>
+                        <div className={`p-3 rounded-2xl border flex items-center justify-between bg-stone-50 border-stone-200`}>
                           <div>
                             <p className={`text-[8px] ${styles.textMuted} font-mono font-bold uppercase tracking-wider`}>Species Pack</p>
                             <p className={`text-xs font-extrabold ${styles.textColor} mt-0.5`}>{pack?.name.split(' the ')[0] || 'Unknown'}</p>
-                            <p className={`text-[10px] font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
+                            <p className={`text-[10px] font-mono text-amber-700 mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
                           </div>
                           {stage.image_url ? (
                             <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
@@ -955,10 +1020,10 @@ export default function ParentDashboard({
                         </div>
 
                         {onUpdateChildStats && (
-                          <div className={`mt-2 rounded-2xl border overflow-hidden transition-all ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950/40' : 'bg-stone-50 border-stone-200'}`}>
+                          <div className={`mt-2 rounded-2xl border overflow-hidden transition-all bg-stone-50 border-stone-200`}>
                             <button
                               onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
-                              className={`w-full p-3 flex items-center justify-between text-left cursor-pointer hover:bg-stone-100 transition-colors ${theme === 'cosmic_dark' ? 'hover:bg-slate-900' : ''}`}
+                              className={`w-full p-3 flex items-center justify-between text-left cursor-pointer hover:bg-stone-100 transition-colors `}
                             >
                               <h4 className={`text-xs font-bold font-display ${styles.titleColor}`}>Quick Adjustments</h4>
                               <ChevronDown className={`w-4 h-4 ${styles.textMuted} transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
@@ -970,16 +1035,16 @@ export default function ParentDashboard({
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
                                 >
-                                  <div className={`p-3 space-y-3 border-t ${theme === 'cosmic_dark' ? 'border-indigo-950/40' : 'border-stone-200'}`}>
+                                  <div className={`p-3 space-y-3 border-t border-stone-200`}>
                                     <div className="flex items-center justify-between gap-2">
                                       <span className={`text-xs font-mono ${styles.textColor}`}>Gold:</span>
                                       <div className="flex gap-1">
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -988,9 +1053,9 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'XP'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: Math.max(0, (child.xp_in_level || 0) - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: (child.xp_in_level || 0) + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: Math.max(0, (child.xp_in_level || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: (child.xp_in_level || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 XP"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -999,9 +1064,9 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -1010,9 +1075,9 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Weekly XP'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Weekly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: Math.max(0, (child.weekly_xp || 0) - 50) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 50 Weekly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: (child.weekly_xp || 0) + 50 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 50 Weekly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Weekly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: Math.max(0, (child.weekly_xp || 0) - 50) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 50 Weekly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: (child.weekly_xp || 0) + 50 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 50 Weekly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -1021,9 +1086,9 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Monthly XP'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Monthly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: Math.max(0, (child.monthly_xp || 0) - 10) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 10 Monthly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: (child.monthly_xp || 0) + 10 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 10 Monthly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Monthly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: Math.max(0, (child.monthly_xp || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Monthly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: (child.monthly_xp || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Monthly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -1032,9 +1097,9 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Streak'});
-                                        }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-amber-900 text-amber-500 hover:bg-amber-900/30' : 'border-amber-200 text-amber-600 hover:bg-amber-50'}`} title="Reset Streak to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: Math.max(0, (child.streak_days || 0) - 1) }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-rose-900 text-rose-400 hover:bg-rose-900/30' : 'border-rose-200 text-rose-600 hover:bg-rose-50'}`} title="Remove 1 Streak Day"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'border-cyan-900 text-cyan-400 hover:bg-cyan-900/30' : 'border-cyan-200 text-cyan-600 hover:bg-cyan-50'}`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Streak to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: Math.max(0, (child.streak_days || 0) - 1) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 1 Streak Day"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="pt-2 border-t border-slate-200/10 space-y-3">
@@ -1044,7 +1109,7 @@ export default function ParentDashboard({
                                           type="number"
                                           value={child.level_up_gold_reward ?? 500}
                                           onChange={(e) => onUpdateChildStats(child.id, { level_up_gold_reward: Number(e.target.value) })}
-                                          className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                          className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
                                         />
                                       </div>
                                       <div className="grid grid-cols-2 gap-2">
@@ -1054,7 +1119,7 @@ export default function ParentDashboard({
                                             type="number"
                                             value={child.weekly_xp_target ?? 300}
                                             onChange={(e) => onUpdateChildStats(child.id, { weekly_xp_target: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
                                           />
                                         </div>
                                         <div>
@@ -1063,7 +1128,7 @@ export default function ParentDashboard({
                                             type="number"
                                             value={child.weekly_reward_points ?? 200}
                                             onChange={(e) => onUpdateChildStats(child.id, { weekly_reward_points: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
                                           />
                                         </div>
                                       </div>
@@ -1074,7 +1139,7 @@ export default function ParentDashboard({
                                             type="number"
                                             value={child.monthly_xp_target ?? 1200}
                                             onChange={(e) => onUpdateChildStats(child.id, { monthly_xp_target: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
                                           />
                                         </div>
                                         <div>
@@ -1083,7 +1148,7 @@ export default function ParentDashboard({
                                             type="number"
                                             value={child.monthly_reward_points ?? 1000}
                                             onChange={(e) => onUpdateChildStats(child.id, { monthly_reward_points: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 ${theme === 'cosmic_dark' ? 'bg-slate-900 border border-indigo-950 text-slate-300' : 'bg-white border border-stone-200 text-stone-700'} rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
                                           />
                                         </div>
                                       </div>
@@ -1097,16 +1162,15 @@ export default function ParentDashboard({
 
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                            <span>TOTAL GOLD BANK</span>
-                            <span className={`font-extrabold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{child.points} GOLD</span>
+                            <span className="uppercase">LEVEL {child.level} PROGRESS</span>
+                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / 100 XP</span>
                           </div>
-                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'} mt-2`}>
+                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
                             <div 
                               className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
                               style={{ width: `${Math.min(100, child.xp_in_level)}%` }}
                             />
                           </div>
-                          <p className={`text-[8px] font-mono ${styles.textMuted} text-right`}>XP PROGRESSION: {child.xp_in_level}%</p>
                         </div>
                       </div>
                     );
@@ -1124,24 +1188,24 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="tasks-view"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviours, and point allocations.</p>
+                    <h2 className={`text-xl sm:text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
+                    <p className={`text-[10px] sm:text-xs ${styles.textMuted} hidden sm:block`}>Configure chore metrics, behaviours, and point allocations.</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleImportDefaultTasks}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-chore-btn-top"
                     >
-                      <Plus className="w-4 h-4" /> CREATE TEMPLATE
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> CREATE <span className="hidden sm:inline">TEMPLATE</span>
                     </button>
                   </div>
                 </div>
@@ -1150,10 +1214,10 @@ export default function ParentDashboard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
+                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-900 shadow-2xl space-y-4`}
                     id="add-task-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
                       {editingTaskId ? '✏️ Edit Quest Blueprint' : '🧹 Create Quest Blueprint'}
                     </h3>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
@@ -1165,7 +1229,7 @@ export default function ParentDashboard({
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
                             placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200 placeholder-slate-700' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1177,7 +1241,7 @@ export default function ParentDashboard({
                               min="0"
                               value={taskPoints}
                               onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             />
                           </div>
                           <div className="flex-1">
@@ -1187,7 +1251,7 @@ export default function ParentDashboard({
                               min="0"
                               value={taskXp}
                               onChange={e => setTaskXp(Number(e.target.value))}
-                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             />
                           </div>
                         </div>
@@ -1197,7 +1261,7 @@ export default function ParentDashboard({
                           <select
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
@@ -1213,7 +1277,7 @@ export default function ParentDashboard({
                               min="1"
                               value={taskCooldownMinutes || ''}
                               onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                               required
                             />
                           </div>
@@ -1223,7 +1287,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
                           {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
                         </button>
@@ -1237,7 +1301,7 @@ export default function ParentDashboard({
                             setTaskXp(15);
                             setTaskCooldownMinutes(undefined);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
                         </button>
@@ -1247,59 +1311,59 @@ export default function ParentDashboard({
                 )}
 
                 {/* SUB-TABS FOR TASKS */}
-                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
                   <button
                     onClick={() => setTaskSubTab('directory')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       taskSubTab === 'directory'
-                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
-                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                        ? ('bg-stone-900 text-white')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    QUEST DIRECTORY (BLUEPRINTS)
+                    BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
                   </button>
                   <button
                     onClick={() => setTaskSubTab('active')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       taskSubTab === 'active'
-                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
-                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                        ? ('bg-stone-900 text-white')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    ACTIVE QUESTS (ASSIGNED)
+                    ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
                   </button>
                 </div>
 
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
-                <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
+                <div className="mt-2 sm:mt-4">
+                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {tasks.filter(t => t.is_template).map((task) => {
                       const instances = tasks.filter(t => t.template_id === task.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                        <div key={task.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
                           <div className="flex justify-between items-start gap-4">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
                                   {task.category.toUpperCase()}
                                 </span>
                                 <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                  <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                  <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
                                   <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                                 </div>
                               </div>
                               <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                               <p className={`text-xs ${styles.textMuted} mt-1`}>
-                                Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                                Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
                               </p>
                             </div>
 
                             <div className="flex flex-col items-end gap-3 shrink-0">
-                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                              <span className={`font-mono font-black text-sm text-emerald-700`}>
                                 +{task.points} GOLD
                               </span>
 
@@ -1309,9 +1373,7 @@ export default function ParentDashboard({
                                   setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
                                 }}
                                 className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                  theme === 'cosmic_dark'
-                                    ? 'bg-indigo-500 hover:bg-indigo-400 text-white'
-                                    : 'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917]'
+                                  'bg-indigo-400 hover:bg-indigo-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917]'
                                 }`}
                               >
                                 <PlusCircle className="w-4 h-4" /> Assign...
@@ -1320,13 +1382,13 @@ export default function ParentDashboard({
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => openEditTask(task)}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => { playSound.click(); onDeleteTask(task.id); }}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1340,7 +1402,7 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
                               >
                                 <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
                                   Select pilots to assign this quest:
@@ -1361,8 +1423,8 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? (theme === 'cosmic_dark' ? 'bg-cyan-500 text-slate-950 border-cyan-400' : 'bg-amber-400 border-stone-900 text-stone-900 shadow-[0_2px_0_0_#1c1917]')
-                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                            ? ('bg-amber-400 border-stone-900 text-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
                                         <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
@@ -1393,27 +1455,27 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={task.id}
-                        className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex justify-between items-start gap-4">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded ${theme === 'cosmic_dark' ? 'bg-slate-950 text-cyan-400 border border-indigo-950' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
                                 {task.category.toUpperCase()}
                               </span>
                               <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
                                 <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                               </div>
                             </div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Pilot assigned: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
+                              Pilot assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
                             </p>
                           </div>
 
                           <div className="flex flex-col items-end gap-3 shrink-0">
-                            <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                            <span className={`font-mono font-black text-sm text-emerald-700`}>
                               +{task.points} GOLD
                             </span>
 
@@ -1423,9 +1485,7 @@ export default function ParentDashboard({
                                 onParentCompleteTask(task.id, task.child_id);
                               }}
                               className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                theme === 'cosmic_dark'
-                                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
-                                  : 'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
+                                'bg-emerald-500 hover:bg-emerald-400 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917]'
                               }`}
                               id={`parent-complete-${task.id}`}
                             >
@@ -1435,7 +1495,7 @@ export default function ParentDashboard({
                             <div className="flex gap-2">
                               <button
                                 onClick={() => openEditTask(task)}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
@@ -1444,7 +1504,7 @@ export default function ParentDashboard({
                                   playSound.click();
                                   onDeleteTask(task.id);
                                 }}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 id={`delete-task-${task.id}`}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1471,24 +1531,24 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="rewards-view"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
                   <div>
-                    <h2 className="text-2xl font-black font-display text-white">PRIZE DISPENSER CONTROL</h2>
-                    <p className="text-xs text-slate-400">Configure tangible awards and point exchange costs.</p>
+                    <h2 className={`text-xl sm:text-2xl font-black font-display ${styles.titleColor}`}>PRIZE DISPENSER CONTROL</h2>
+                    <p className={`text-[10px] sm:text-xs ${styles.textMuted} hidden sm:block`}>Configure tangible awards and point exchange costs.</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleImportDefaultRewards}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border ${theme === 'cosmic_dark' ? 'border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10' : 'border-stone-300 text-stone-600 hover:bg-stone-100'} flex items-center gap-2`}
+                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      className={`${theme === 'cosmic_dark' ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'} font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-reward-btn-top"
                     >
-                      <Plus className="w-4 h-4" /> ADD REWARD SLOT
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> ADD <span className="hidden sm:inline">REWARD</span>
                     </button>
                   </div>
                 </div>
@@ -1498,10 +1558,10 @@ export default function ParentDashboard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border ${theme === 'cosmic_dark' ? 'border-cyan-400' : 'border-stone-900'} shadow-2xl space-y-4`}
+                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-900 shadow-2xl space-y-4`}
                     id="add-reward-box"
                   >
-                    <h3 className={`font-bold text-lg ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-display uppercase tracking-wide`}>
+                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
                       {editingRewardId ? '✏️ Edit Reward Token' : '🎁 Define Reward Token'}
                     </h3>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
@@ -1513,7 +1573,7 @@ export default function ParentDashboard({
                             value={rewardTitle}
                             onChange={(e) => setRewardTitle(e.target.value)}
                             placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200 placeholder-slate-700' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1523,7 +1583,7 @@ export default function ParentDashboard({
                             type="number"
                             value={rewardCost}
                             onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             min="10"
                             max="500"
                             required
@@ -1535,7 +1595,7 @@ export default function ParentDashboard({
                           <select
                             value={rewardIcon}
                             onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="Gamepad2">🎮 Game Time</option>
                             <option value="Pizza">🍕 Favorite Meal</option>
@@ -1549,7 +1609,7 @@ export default function ParentDashboard({
                           <select
                             value={rewardLimit}
                             onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950 text-slate-200' : 'bg-white border border-stone-200 text-stone-900'} rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="unlimited">♾️ Unlimited</option>
                             <option value="daily">📅 1x Daily</option>
@@ -1562,7 +1622,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 ${theme === 'cosmic_dark' ? 'bg-cyan-500 hover:bg-cyan-400' : 'bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950'} py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
                           {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
                         </button>
@@ -1574,7 +1634,7 @@ export default function ParentDashboard({
                             setRewardTitle('');
                             setRewardCost(50);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 text-slate-400' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
                         </button>
@@ -1584,48 +1644,48 @@ export default function ParentDashboard({
                 )}
 
                 {/* SUB-TABS FOR REWARDS */}
-                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
                   <button
                     onClick={() => setRewardSubTab('directory')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       rewardSubTab === 'directory'
-                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
-                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                        ? ('bg-stone-900 text-white')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    REWARD DIRECTORY
+                    BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
                   </button>
                   <button
                     onClick={() => setRewardSubTab('active')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       rewardSubTab === 'active'
-                        ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white' : 'bg-stone-900 text-white')
-                        : (theme === 'cosmic_dark' ? 'text-slate-400 hover:text-fuchsia-400' : 'text-stone-500 hover:text-stone-900')
+                        ? ('bg-stone-900 text-white')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    ACTIVE REWARDS
+                    ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
                   </button>
                 </div>
 
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
-                <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
+                <div className="mt-2 sm:mt-4">
+                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {rewards.filter(r => r.is_template).map((reward) => {
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className={`border p-5 rounded-3xl flex flex-col gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                        <div key={reward.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-3.5 items-center">
-                              <span className={`text-3xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-100 border border-stone-200'} p-2.5 rounded-2xl`}>🎁</span>
+                              <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>
                               <div>
                                 <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
                                   {reward.title}
                                 </h3>
                                 <p className={`text-xs ${styles.textMuted} mt-1`}>
-                                  Assigned to: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                                  Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
                                   <span className="mx-2">•</span>
                                   Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                                 </p>
@@ -1633,7 +1693,7 @@ export default function ParentDashboard({
                             </div>
 
                             <div className="flex flex-col items-end gap-3">
-                              <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                              <span className={`font-mono font-black text-sm text-amber-600`}>
                                 {reward.cost_points} GOLD
                               </span>
 
@@ -1643,9 +1703,7 @@ export default function ParentDashboard({
                                   setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
                                 }}
                                 className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                  theme === 'cosmic_dark'
-                                    ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white'
-                                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_2.5px_0_0_#1c1917]'
+                                  'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_2.5px_0_0_#1c1917]'
                                 }`}
                               >
                                 <PlusCircle className="w-4 h-4" /> Assign...
@@ -1654,13 +1712,13 @@ export default function ParentDashboard({
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => openEditReward(reward)}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1674,7 +1732,7 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden ${theme === 'cosmic_dark' ? 'border-indigo-950/60' : 'border-stone-200'}`}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
                               >
                                 <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
                                   Select pilots to assign this reward:
@@ -1695,8 +1753,8 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? (theme === 'cosmic_dark' ? 'bg-fuchsia-600 text-white border-fuchsia-500' : 'bg-stone-900 border-stone-900 text-white shadow-[0_2px_0_0_#1c1917]')
-                                            : (theme === 'cosmic_dark' ? 'bg-slate-950 hover:bg-slate-900 border-indigo-950/80 text-slate-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                            ? ('bg-stone-900 border-stone-900 text-white shadow-[0_2px_0_0_#1c1917]')
+                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
                                         <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-slate-900 border border-slate-700/50 object-cover" />
@@ -1728,10 +1786,10 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={reward.id}
-                        className={`border p-5 rounded-3xl flex justify-between items-center ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex justify-between items-center gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex gap-3.5 items-center">
-                          <span className={`text-3xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-100 border border-stone-200'} p-2.5 rounded-2xl`}>🎁</span>
+                          <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>
                           <div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
                               {reward.title}
@@ -1742,7 +1800,7 @@ export default function ParentDashboard({
                               )}
                             </h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Available for: <strong className={`font-bold ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'}`}>{assignedName || 'None'}</strong>
+                              Available for: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
                               <span className="mx-2">•</span>
                               Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
@@ -1750,13 +1808,13 @@ export default function ParentDashboard({
                         </div>
 
                         <div className="flex flex-col items-end gap-3">
-                          <span className={`font-mono font-black text-sm ${theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-600'}`}>
+                          <span className={`font-mono font-black text-sm text-amber-600`}>
                             {reward.cost_points} GOLD
                           </span>
                           <div className="flex gap-2">
                             <button
                               onClick={() => openEditReward(reward)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-cyan-950/40 text-slate-400 hover:text-cyan-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900'}`}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -1765,7 +1823,7 @@ export default function ParentDashboard({
                                 playSound.click();
                                 onDeleteReward(reward.id);
                               }}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400' : 'bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'}`}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                               id={`delete-reward-${reward.id}`}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1781,7 +1839,7 @@ export default function ParentDashboard({
 
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">
-                  <h3 className={`font-bold font-mono text-sm ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} uppercase pb-4`}>
+                  <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
                     📜 Dispensation History Log
                   </h3>
                   <div className="space-y-3">
@@ -1797,9 +1855,9 @@ export default function ParentDashboard({
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
                           
                           return (
-                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border ${theme === 'cosmic_dark' ? 'bg-slate-950/50 border-indigo-950/40' : 'bg-stone-50 border-stone-200'} ${styles.textColor}`}>
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 border-stone-200 ${styles.textColor}`}>
                               <div>
-                                <span className="text-xs font-bold">{child?.name}</span> received <strong className={theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'}>{reward?.title}</strong>
+                                <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900'}>{reward?.title}</strong>
                                 <p className={`text-[10px] font-mono mt-1 ${styles.textMuted}`}>
                                   {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                 </p>
@@ -1810,7 +1868,7 @@ export default function ParentDashboard({
                                     playSound.success();
                                     onRestoreReward(reward.id);
                                   }}
-                                  className={`px-3 py-1.5 rounded text-[10px] font-mono font-bold uppercase border ${theme === 'cosmic_dark' ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10' : 'border-amber-500/50 text-amber-700 hover:bg-amber-50'}`}
+                                  className={`px-3 py-1.5 rounded text-[10px] font-mono font-bold uppercase border border-amber-500/50 text-amber-700 hover:bg-amber-50`}
                                 >
                                   RESTORE ONE-TIME
                                 </button>
@@ -1840,7 +1898,7 @@ export default function ParentDashboard({
                 </div>
 
                 <div className={`p-6 rounded-3xl border ${styles.cardBg} ${styles.borderStyle} space-y-4 text-xs ${styles.textColor} leading-relaxed font-sans`}>
-                  <div className={`flex items-center gap-2 ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} font-bold text-sm font-display`}>
+                  <div className={`flex items-center gap-2 text-stone-900 font-bold text-sm font-display`}>
                     <ShieldCheck className="w-5 h-5 text-emerald-400" />
                     Children's Online Privacy Protection Rule (COPPA)
                   </div>
@@ -1854,8 +1912,8 @@ export default function ParentDashboard({
                     For inquiries regarding family data rights or physical regulatory safety logs, please contact markdias1984@gmail.com.
                   </p>
                   
-                  <div className={`p-4 rounded-2xl border space-y-2 ${theme === 'cosmic_dark' ? 'bg-slate-950/80 border-indigo-950/50' : 'bg-stone-50 border-stone-200'}`}>
-                    <h4 className={`${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-700'} font-bold text-xs flex items-center gap-1.5 font-display`}>
+                  <div className={`p-4 rounded-2xl border space-y-2 bg-stone-50 border-stone-200`}>
+                    <h4 className={`text-amber-700 font-bold text-xs flex items-center gap-1.5 font-display`}>
                       <Info className="w-4 h-4" /> SECURE CONSOLE SECURITY
                     </h4>
                     <p className={`text-[11px] ${styles.textMuted} leading-normal`}>
@@ -1879,6 +1937,7 @@ export default function ParentDashboard({
                   linkedParents={linkedParents}
                   onResetData={onResetData}
                   onDeleteAccount={onDeleteAccount}
+                  onCleanDuplicates={handleCleanDuplicates}
                 />
               </motion.div>
             )}
@@ -1900,29 +1959,25 @@ export default function ParentDashboard({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${
-                  theme === 'cosmic_dark' 
-                    ? 'bg-slate-900 border-rose-500/50 shadow-rose-900/20' 
-                    : 'bg-white border-rose-200 shadow-rose-900/10'
+                  'bg-white border-rose-200 shadow-rose-900/10'
                 }`}
               >
                 <div className="flex justify-center mb-4">
-                  <div className={`p-3 rounded-full ${theme === 'cosmic_dark' ? 'bg-rose-950/50 text-rose-500' : 'bg-rose-100 text-rose-600'}`}>
+                  <div className={`p-3 rounded-full bg-rose-100 text-rose-600`}>
                     <RotateCcw className="w-8 h-8" />
                   </div>
                 </div>
-                <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900'}`}>
+                <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
                   Reset {resetConfirmation.type}?
                 </h3>
-                <p className={`text-center text-sm font-mono mb-6 ${theme === 'cosmic_dark' ? 'text-slate-400' : 'text-stone-600'}`}>
+                <p className={`text-center text-sm font-mono mb-6 text-stone-600`}>
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => { playSound.click(); setResetConfirmation(null); }}
                     className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${
-                      theme === 'cosmic_dark' 
-                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' 
-                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                      'bg-stone-100 hover:bg-stone-200 text-stone-700'
                     }`}
                   >
                     CANCEL
@@ -1939,9 +1994,7 @@ export default function ParentDashboard({
                       setResetConfirmation(null);
                     }}
                     className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
-                      theme === 'cosmic_dark' 
-                        ? 'bg-gradient-to-r from-rose-600 to-red-600' 
-                        : 'bg-gradient-to-r from-rose-500 to-red-500'
+                      'bg-gradient-to-r from-rose-500 to-red-500'
                     }`}
                   >
                     RESET NOW
@@ -1952,6 +2005,38 @@ export default function ParentDashboard({
           )}
         </AnimatePresence>
 
+        {/* Mobile Sticky Bottom Nav */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
+          {[
+            { id: 'approvals', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
+            { id: 'children', icon: Users },
+            { id: 'tasks', icon: CheckSquare },
+            { id: 'rewards', icon: Trophy },
+            { id: 'compliance', icon: ShieldCheck },
+            { id: 'settings', icon: Settings }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
+                className={`relative p-3 rounded-xl transition-all flex flex-col items-center gap-1 ${
+                  isSelected
+                    ? 'text-amber-600 bg-amber-50'
+                    : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className={`absolute top-1 right-1 ${tab.badgeColor} text-white text-[8px] font-mono px-1.5 py-0.5 rounded-full font-bold`}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

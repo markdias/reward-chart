@@ -101,30 +101,20 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
     <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-hidden transition-colors duration-300`} id="landing-page-root">
       {/* High-Tech Animated Background */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      {theme === 'cosmic_dark' ? (
-        <>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-          <div className="absolute top-10 left-10 w-96 h-96 ambient-glow-cyan pointer-events-none" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 ambient-glow-purple pointer-events-none" />
-        </>
-      ) : (
-        <>
-          <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
-        </>
-      )}
+      <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Retro Header Console */}
       <header className={`w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b ${styles.divider} relative z-20`}>
         <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme === 'cosmic_dark' ? 'from-cyan-400 via-indigo-500 to-purple-600' : 'from-amber-400 to-orange-500'} flex items-center justify-center shadow-lg`}>
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
             <Gamepad2 className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div>
             <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
               KIDARCADE
             </span>
-            <span className={`block text-[9px] ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-[#78716C]'} font-mono tracking-widest font-extrabold`}>SUPERHERO CHORE PROTOCOL</span>
+            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">SUPERHERO CHORE PROTOCOL</span>
           </div>
         </div>
 
@@ -138,20 +128,20 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-20">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center relative z-20">
         {/* Left Column: Marketing Info and CTA */}
         <div className="lg:col-span-6 flex flex-col space-y-8">
           <div className="space-y-4">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${theme === 'cosmic_dark' ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-300' : 'bg-amber-100 border border-amber-200 text-amber-800'} text-xs font-bold uppercase tracking-widest font-mono`}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-widest font-mono">
               <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" /> HOLOGRAPHIC LAUNCHER
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black font-display tracking-tight leading-tight">
-              A Chore Chart That Feels Like a <br />
-              <span className={`${styles.titleGradient} ${theme === 'cosmic_dark' ? 'neon-glow-cyan' : ''}`}>
+            <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
+              A Chore Chart That Feels Like a <br className="hidden sm:block" />
+              <span className={styles.titleGradient}>
                 Virtual Pet Arcade
               </span>
             </h1>
-            <p className={`${styles.textMuted} text-sm sm:text-base max-w-xl`}>
+            <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
               Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary skins, and evolve your heroic beast!
             </p>
           </div>
@@ -168,7 +158,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           {/* Value Badges */}
           <div className="grid grid-cols-2 gap-3 max-w-md">
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-              <div className={`p-2 rounded-xl ${theme === 'cosmic_dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-amber-100 text-amber-600'}`}>
+              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
@@ -177,7 +167,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
               </div>
             </div>
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-              <div className={`p-2 rounded-xl ${theme === 'cosmic_dark' ? 'bg-pink-500/10 text-pink-400' : 'bg-red-100 text-red-500'}`}>
+              <div className="p-2 rounded-xl bg-red-100 text-red-500">
                 <Heart className="w-4 h-4" />
               </div>
               <div>
@@ -190,7 +180,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
 
         {/* Right Column: Evolved Companion Showcase */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          <div className={`p-6 rounded-3xl ${styles.cardBg} relative overflow-hidden flex flex-col md:flex-row gap-6 items-center`}>
+          <div className={`p-4 sm:p-6 rounded-3xl ${styles.cardBg} relative overflow-hidden flex flex-col md:flex-row gap-6 items-center`}>
             {/* Ambient Scanlines */}
             <div className={`absolute inset-0 ${styles.overlayCrt} pointer-events-none`} />
             
@@ -235,8 +225,8 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
                   {activeChar.name}
                 </h3>
                 <div className={`p-3 ${styles.innerCard} rounded-xl relative`}>
-                  <div className={`absolute left-4 -top-2 w-3 h-3 ${theme === 'cosmic_dark' ? 'bg-slate-950/80 border-t border-l border-indigo-950/50' : theme === 'sunny_toybox' ? 'bg-[#F5F2EA] border-t border-l border-stone-200' : 'bg-slate-50 border-t border-l border-slate-200'} rotate-45`} />
-                  <p className={`text-xs italic ${theme === 'cosmic_dark' ? 'text-cyan-200' : 'text-stone-700'}`}>
+                  <div className="absolute left-4 -top-2 w-3 h-3 bg-[#F5F2EA] border-t border-l border-stone-200 rotate-45" />
+                  <p className="text-xs italic text-stone-700">
                     "{activeChar.greeting}"
                   </p>
                 </div>
@@ -254,7 +244,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
                       <span>{stat.label}</span>
                       <span className={styles.textColor}>{stat.val} XP</span>
                     </div>
-                    <div className={`h-2 ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-200'} rounded-full overflow-hidden p-0.5 border ${theme === 'cosmic_dark' ? 'border-slate-900' : 'border-stone-300'}`}>
+                    <div className="h-2 bg-stone-200 rounded-full overflow-hidden p-0.5 border border-stone-300">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${stat.val}%` }}
@@ -284,16 +274,8 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
                     key={char.id}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected 
-                        ? theme === 'cosmic_dark'
-                          ? 'bg-indigo-900/30 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.3)]' 
-                          : theme === 'sunny_toybox'
-                            ? 'bg-amber-100 border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917]'
-                            : 'bg-slate-100 border-2 border-cyan-500 shadow-sm'
-                        : theme === 'cosmic_dark'
-                          ? 'bg-slate-900/40 border-slate-800 hover:border-slate-700 text-slate-400'
-                          : theme === 'sunny_toybox'
-                            ? 'bg-white border-2 border-[#E7E5E4] text-stone-700 hover:border-stone-300'
-                            : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 shadow-sm'
+                        ? 'bg-amber-100 border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917]'
+                        : 'bg-white border-2 border-[#E7E5E4] text-stone-700 hover:border-stone-300'
                     }`}
                   >
                     {char.image ? (
@@ -322,10 +304,10 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           © 2026 KIDARCADE Corp. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-mono text-[10px]">
-          <a href="#privacy" className={`hover:${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} transition-colors`}>PRIVACY_LEDGER</a>
-          <a href="#terms" className={`hover:${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} transition-colors`}>TERMS_OF_SERVICE</a>
+          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY_LEDGER</a>
+          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS_OF_SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className={`${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-emerald-600'} font-bold animate-pulse`}>● ENGINE_ONLINE_V2.0</span>
+          <span className="text-emerald-600 font-bold animate-pulse">● ENGINE_ONLINE_V2.0</span>
         </div>
       </footer>
     </div>

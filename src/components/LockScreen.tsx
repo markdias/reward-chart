@@ -54,52 +54,35 @@ export default function LockScreen({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${theme === 'cosmic_dark' ? 'bg-[#03050c]/95' : 'bg-stone-950/80'} p-4 backdrop-blur-md`} id="lock-screen-container">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 p-4 backdrop-blur-md" id="lock-screen-container">
       
       {/* Background neon elements */}
-      <div className={`absolute inset-0 ${theme === 'cosmic_dark' ? 'scrolling-grid opacity-10' : 'opacity-[0.03] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px]'} pointer-events-none`} />
-      {theme === 'cosmic_dark' && (
-        <div className="absolute h-[500px] w-[500px] rounded-full bg-fuchsia-500/10 blur-3xl pointer-events-none" />
-      )}
+      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px] pointer-events-none" />
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`w-full max-w-md overflow-hidden rounded-3xl border-2 ${
-          theme === 'cosmic_dark'
-            ? 'border-fuchsia-500/80 bg-[#090c23] shadow-[0_0_40px_rgba(217,70,239,0.3)]'
-            : theme === 'sunny_toybox'
-              ? 'border-stone-900 bg-[#FCFBF9] shadow-[0_4px_0_0_#1c1917]'
-              : 'border-slate-300 bg-white shadow-lg'
-        } relative`}
+        className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-stone-900 bg-[#FCFBF9] shadow-[0_4px_0_0_#1c1917] relative"
         id="lock-panel"
       >
         <div className="absolute inset-0 crt-overlay opacity-25 pointer-events-none" />
 
         {/* Vault Frame Header */}
-        <div className={`${theme === 'cosmic_dark' ? 'bg-gradient-to-r from-fuchsia-600/20 to-purple-800/20' : 'bg-stone-50'} p-6 text-center border-b ${theme === 'cosmic_dark' ? 'border-fuchsia-950/60' : 'border-stone-200'} relative`}>
+        <div className="bg-stone-50 p-6 text-center border-b border-stone-200 relative">
           <button 
             onClick={onClose} 
-            className={`absolute top-4 left-4 p-2 rounded-xl border transition-all cursor-pointer ${
-              theme === 'cosmic_dark'
-                ? 'bg-slate-950 border-indigo-950 hover:border-fuchsia-500/30 text-slate-300'
-                : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50 shadow-sm'
-            }`}
+            className="absolute top-4 left-4 p-2 rounded-xl border transition-all cursor-pointer bg-white border-stone-200 text-stone-700 hover:bg-stone-50 shadow-sm"
             id="lock-back-btn"
           >
-            <ArrowLeft className={`w-4 h-4 ${theme === 'cosmic_dark' ? 'text-fuchsia-400' : 'text-stone-700'}`} />
+            <ArrowLeft className="w-4 h-4 text-stone-700" />
           </button>
           
-          <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border ${
-            theme === 'cosmic_dark'
-              ? 'bg-[#03050c] border-fuchsia-500/40 text-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.2)]'
-              : 'bg-amber-100 border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917]'
-          }`}>
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border bg-amber-100 border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917]">
             <Lock className="w-6 h-6 animate-pulse" />
           </div>
-          <h2 className={`text-xl font-black font-display tracking-wider uppercase ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900'}`}>{title}</h2>
-          <p className={`font-mono text-[9px] tracking-widest mt-1 uppercase ${theme === 'cosmic_dark' ? 'text-fuchsia-300/80' : 'text-stone-500 font-bold'}`}>{subtitle}</p>
+          <h2 className="text-xl font-black font-display tracking-wider uppercase text-stone-900">{title}</h2>
+          <p className="font-mono text-[9px] tracking-widest mt-1 uppercase text-stone-500 font-bold">{subtitle}</p>
         </div>
 
         {/* PIN Indicators */}
@@ -117,12 +100,8 @@ export default function LockScreen({
                   error 
                     ? 'bg-rose-500 border-rose-500 scale-125' 
                     : idx < pin.length 
-                      ? theme === 'cosmic_dark'
-                        ? 'bg-cyan-400 border-cyan-400 scale-125 shadow-[0_0_12px_#22d3ee]'
-                        : 'bg-amber-400 border-stone-900 scale-125 shadow-sm' 
-                      : theme === 'cosmic_dark'
-                        ? 'border-slate-800 bg-slate-950'
-                        : 'border-stone-200 bg-stone-100'
+                      ? 'bg-amber-400 border-stone-900 scale-125 shadow-sm' 
+                      : 'border-stone-200 bg-stone-100'
                 }`}
               />
             ))}
@@ -138,7 +117,6 @@ export default function LockScreen({
             </motion.p>
           )}
 
-
           {/* Keypad */}
           <div className="grid grid-cols-3 gap-3 w-full max-w-xs" id="keypad">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
@@ -147,11 +125,7 @@ export default function LockScreen({
                 whileTap={{ scale: 0.95 }}
                 key={num}
                 onClick={() => handleKeyPress(num)}
-                className={`h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border ${
-                  theme === 'cosmic_dark'
-                    ? 'bg-slate-950 border-indigo-950/80 text-white shadow-md hover:border-fuchsia-500/40 active:bg-fuchsia-600 active:text-slate-950'
-                    : 'bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]'
-                }`}
+                className="h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
               >
                 {num}
               </motion.button>
@@ -160,11 +134,7 @@ export default function LockScreen({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleClear}
-              className={`h-16 rounded-2xl font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
-                theme === 'cosmic_dark'
-                  ? 'bg-slate-950 border-indigo-950/50 hover:border-indigo-800/80 text-slate-500 hover:text-white'
-                  : 'bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-900 font-bold hover:bg-stone-100'
-              }`}
+              className="h-16 rounded-2xl font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center border bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-900 font-bold hover:bg-stone-100"
             >
               CLEAR
             </motion.button>
@@ -172,11 +142,7 @@ export default function LockScreen({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleKeyPress('0')}
-              className={`h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border ${
-                theme === 'cosmic_dark'
-                  ? 'bg-slate-950 border-indigo-950/80 text-white shadow-md hover:border-fuchsia-500/40 active:bg-fuchsia-600 active:text-slate-950'
-                  : 'bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]'
-              }`}
+              className="h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
             >
               0
             </motion.button>
@@ -184,11 +150,7 @@ export default function LockScreen({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className={`h-16 rounded-2xl border transition-all cursor-pointer flex items-center justify-center text-xs font-mono font-bold ${
-                theme === 'cosmic_dark'
-                  ? 'bg-rose-950/15 border-rose-950 text-rose-400 hover:bg-rose-950/30'
-                  : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e]'
-              }`}
+              className="h-16 rounded-2xl border transition-all cursor-pointer flex items-center justify-center text-xs font-mono font-bold bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e]"
             >
               ABORT
             </motion.button>

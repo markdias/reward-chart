@@ -13,20 +13,11 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, F
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
-import ThemeSelector from './components/ThemeSelector';
 import { getSupabaseClient, getCurrentUserEmail, signOut } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate } from './utils/date';
 
 export default function App() {
-  // Active theme style system (default to beautiful Sunny Toybox light)
-  const [activeTheme, setActiveTheme] = useState<ThemeId>(
-    (localStorage.getItem('RCH_THEME') as ThemeId) || 'sunny_toybox'
-  );
-
-  const handleThemeChange = (themeId: ThemeId) => {
-    setActiveTheme(themeId);
-    localStorage.setItem('RCH_THEME', themeId);
-  };
+  const activeTheme = 'sunny_toybox';
 
   // Auth state
   const [parentEmail, setParentEmail] = useState<string | null>(
@@ -1261,20 +1252,11 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Theme Selector Widget */}
-      <ThemeSelector currentTheme={activeTheme} onThemeChange={handleThemeChange} />
-
       {/* Silent Floating Logout button for Parent Mode when in Child Mode to return to Landing */}
       {parentEmail && !isParentMode && (
         <button
           onClick={handleLogout}
-          className={`fixed bottom-4 right-4 p-3 rounded-full transition-all cursor-pointer text-xs z-30 flex items-center gap-1.5 border ${
-            activeTheme === 'cosmic_dark'
-              ? 'bg-slate-900/60 hover:bg-rose-950/40 border-slate-850 text-slate-500 hover:text-rose-400'
-              : activeTheme === 'sunny_toybox'
-                ? 'bg-white border-2 border-stone-300 hover:bg-stone-50 text-stone-600 shadow-sm font-bold'
-                : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm'
-          }`}
+          className="fixed bottom-4 right-4 p-3 rounded-full transition-all cursor-pointer text-xs z-30 flex items-center gap-1.5 border-2 border-stone-300 bg-white hover:bg-stone-50 text-stone-600 shadow-sm font-bold"
           id="global-logout-btn"
         >
           Sign Out App

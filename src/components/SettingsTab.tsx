@@ -12,9 +12,10 @@ interface SettingsTabProps {
   linkedParents?: ParentProfile[];
   onResetData?: (keepBlueprints: boolean) => void;
   onDeleteAccount?: () => void;
+  onCleanDuplicates: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount }: SettingsTabProps) {
+export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onCleanDuplicates }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
@@ -33,15 +34,17 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+
   const getThemeClasses = () => {
     return {
-      card: theme === 'cosmic_dark' ? 'bg-[#0a0d24] border-indigo-900/50' : 'bg-white border-stone-200',
-      text: theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900',
-      textMuted: theme === 'cosmic_dark' ? 'text-slate-400' : 'text-stone-500',
-      input: theme === 'cosmic_dark' ? 'bg-[#151936] border-indigo-900/50 text-white placeholder-slate-500' : 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400',
-      primaryBtn: theme === 'cosmic_dark' ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white' : 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white',
-      dangerBtn: theme === 'cosmic_dark' ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white' : 'bg-gradient-to-r from-rose-500 to-red-500 text-white',
-      dangerBtnOutline: theme === 'cosmic_dark' ? 'border-rose-500/50 text-rose-400 hover:bg-rose-500/10' : 'border-rose-200 text-rose-600 hover:bg-rose-50',
+      card: 'bg-white border-stone-200',
+      text: 'text-stone-900',
+      textMuted: 'text-stone-500',
+      input: 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400',
+      primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold border-2 border-stone-900 shadow-[0_4px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
+      dangerBtn: 'bg-rose-500 hover:bg-rose-400 text-white font-extrabold border-2 border-stone-900 shadow-[0_4px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
+      dangerBtnOutline: 'border-2 border-rose-350 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e] active:translate-y-1 active:shadow-none',
     };
   };
 
@@ -163,7 +166,51 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      <div className="flex bg-stone-100 p-1.5 rounded-xl mb-6 shadow-inner overflow-x-auto gap-1">
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('profile'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'profile'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          PROFILE
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('security'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'security'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          SECURITY
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('sharing'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'sharing'
+              ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
+              : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          SHARING
+        </button>
+        <button
+          onClick={() => { playSound.click(); setActiveSubTab('danger'); }}
+          className={`flex-1 py-2.5 px-3 rounded-lg text-[10px] sm:text-xs font-bold font-mono tracking-wider transition-all whitespace-nowrap ${
+            activeSubTab === 'danger'
+              ? 'bg-rose-50 text-rose-700 shadow-sm border border-rose-200'
+              : 'text-rose-400 hover:text-rose-500'
+          }`}
+        >
+          DANGER
+        </button>
+      </div>
+
+      {activeSubTab === 'profile' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl">
             <User className="w-6 h-6" />
@@ -208,9 +255,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </button>
           {profileMsg && <p className={`text-sm ${profileMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{profileMsg}</p>}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      {activeSubTab === 'security' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl">
             <Shield className="w-6 h-6" />
@@ -223,7 +272,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <h4 className={`text-sm font-bold border-b pb-2 ${theme === 'cosmic_dark' ? 'border-indigo-900/50 text-indigo-300' : 'border-stone-200 text-indigo-600'}`}>Parent Dashboard PIN</h4>
+            <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Parent Dashboard PIN</h4>
             <div>
               <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>4-Digit PIN</label>
               <input 
@@ -238,7 +287,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </div>
           
           <div className="space-y-4">
-            <h4 className={`text-sm font-bold border-b pb-2 ${theme === 'cosmic_dark' ? 'border-indigo-900/50 text-indigo-300' : 'border-stone-200 text-indigo-600'}`}>Account Password</h4>
+            <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Account Password</h4>
             <div>
               <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Current Password</label>
               <input 
@@ -279,9 +328,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </button>
           {securityMsg && <p className={`text-sm mt-3 ${securityMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{securityMsg}</p>}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border ${c.card}`}>
+      {activeSubTab === 'sharing' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border ${c.card}`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl">
             <LinkIcon className="w-6 h-6" />
@@ -297,7 +348,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             Copy this link and send it to your partner. When they create an account using this link, they will be joined to your family dashboard. They can set their own PIN and password, but you will both manage the same children and tasks.
           </p>
           {parentProfile?.family_name && (
-            <div className={`p-3 rounded-xl border flex items-center gap-2 ${theme === 'cosmic_dark' ? 'bg-indigo-950/30 border-indigo-900/50 text-indigo-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+            <div className={`p-3 rounded-xl border flex items-center gap-2 bg-emerald-50 border-emerald-200 text-emerald-800`}>
               <Shield className="w-4 h-4" />
               <span className="text-sm font-bold">Currently linked to: {parentProfile.family_name}</span>
             </div>
@@ -327,7 +378,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               {linkedParents.map(parent => {
                 const isMe = parent.user_id === parentProfile?.user_id;
                 return (
-                  <div key={parent.user_id} className={`p-4 rounded-xl border flex items-center justify-between ${theme === 'cosmic_dark' ? 'bg-[#0a0d24]/50 border-indigo-900/30' : 'bg-stone-50 border-stone-200'}`}>
+                  <div key={parent.user_id} className={`p-4 rounded-xl border flex items-center justify-between bg-stone-50 border-stone-200`}>
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isMe ? 'bg-indigo-500 text-white' : 'bg-stone-200 text-stone-500'}`}>
                         {parent.name?.charAt(0) || '?'}
@@ -355,21 +406,23 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
+      )}
 
-      <div className={`p-6 rounded-2xl border ${theme === 'cosmic_dark' ? 'bg-rose-950/20 border-rose-900/50' : 'bg-rose-50 border-rose-200'}`}>
+      {activeSubTab === 'danger' && (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-2xl border bg-rose-50 border-rose-200`}>
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-rose-500/20 text-rose-500 rounded-xl">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
             <h3 className={`text-lg font-black font-display uppercase tracking-wide text-rose-500`}>Danger Zone</h3>
-            <p className={`text-sm ${theme === 'cosmic_dark' ? 'text-rose-400/80' : 'text-rose-600'}`}>Irreversible destructive actions.</p>
+            <p className={`text-sm text-rose-600`}>Irreversible destructive actions.</p>
           </div>
         </div>
         
         <div className="space-y-4">
-          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${theme === 'cosmic_dark' ? 'bg-[#0a0d24]/50 border-rose-900/30' : 'bg-white border-rose-100'}`}>
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
             <div>
               <h4 className={`font-bold ${c.text}`}>Reset All Data</h4>
               <p className={`text-xs mt-1 ${c.textMuted}`}>Deletes all task completions, history, and resets children's points to zero.</p>
@@ -381,8 +434,23 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               <RefreshCw className="w-4 h-4 inline mr-2" /> FACTORY RESET
             </button>
           </div>
+
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
+            <div>
+              <h4 className={`font-bold ${c.text}`}>Clean Up Duplicates</h4>
+              <p className={`text-xs mt-1 ${c.textMuted}`}>Removes any duplicate blueprint templates from multiple imports.</p>
+            </div>
+            <button 
+              onClick={() => {
+                onCleanDuplicates();
+              }}
+              className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
+            >
+              <RefreshCw className="w-4 h-4 inline mr-2" /> CLEAN DUPLICATES
+            </button>
+          </div>
           
-          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${theme === 'cosmic_dark' ? 'bg-[#0a0d24]/50 border-rose-900/30' : 'bg-white border-rose-100'}`}>
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
             <div>
               <h4 className={`font-bold ${c.text}`}>Delete Account</h4>
               <p className={`text-xs mt-1 ${c.textMuted}`}>Permanently deletes your account and all associated family data.</p>
@@ -395,13 +463,14 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
+      )}
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${theme === 'cosmic_dark' ? 'bg-slate-900 border-rose-500/50' : 'bg-white border-rose-200'}`}>
-            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900'}`}>
+          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200`}>
+            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
               Are you sure?
             </h3>
             <p className={`text-center text-sm font-mono mb-6 ${c.textMuted}`}>
@@ -422,7 +491,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResetConfirm(false)}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${theme === 'cosmic_dark' ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'}`}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors bg-stone-100 hover:bg-stone-200 text-stone-700`}
               >
                 CANCEL
               </button>
@@ -444,16 +513,16 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${theme === 'cosmic_dark' ? 'bg-rose-950 border-red-500' : 'bg-white border-red-500'}`}>
+          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-red-500`}>
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-red-500/20 text-red-500 rounded-full animate-pulse">
                 <AlertTriangle className="w-10 h-10" />
               </div>
             </div>
-            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 ${theme === 'cosmic_dark' ? 'text-white' : 'text-stone-900'}`}>
+            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
               Delete Account
             </h3>
-            <p className={`text-center text-sm font-mono mb-6 ${theme === 'cosmic_dark' ? 'text-rose-200' : 'text-rose-600'}`}>
+            <p className={`text-center text-sm font-mono mb-6 text-rose-600`}>
               This is permanent. All your family data, children, and progress will be erased forever. You cannot undo this.
             </p>
             <div className="flex flex-col gap-3">
@@ -469,7 +538,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className={`w-full py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${theme === 'cosmic_dark' ? 'bg-slate-800 text-slate-300' : 'bg-stone-100 text-stone-700'}`}
+                className={`w-full py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors bg-stone-100 text-stone-700`}
               >
                 NEVERMIND, GO BACK
               </button>
