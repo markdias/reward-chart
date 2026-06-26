@@ -55,9 +55,7 @@ export default function ChildDashboard({
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState<number>(5);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
-  const [showGoalForm, setShowGoalForm] = useState(false);
   const [showReplayVideo, setShowReplayVideo] = useState(false);
-  const [selectedGoalRewardId, setSelectedGoalRewardId] = useState('');
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -727,61 +725,12 @@ export default function ChildDashboard({
                           </div>
                         ) : (
                           <button
-                            onClick={() => { setShowGoalForm(true); setSelectedGoalRewardId(''); playSound.click(); }}
+                            onClick={() => { setActiveChildTab('rewards'); playSound.click(); }}
                             className="mb-3 w-full py-2 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-bold font-mono uppercase tracking-wider hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                           >
-                            <Target className="w-4 h-4" /> Set a Goal
+                            <Target className="w-4 h-4" /> Pick a Goal from Rewards
                           </button>
                         )}
-
-                        {/* Goal Form Modal */}
-                        <AnimatePresence>
-                          {showGoalForm && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mb-3 overflow-hidden"
-                            >
-                              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
-                                <label className="text-xs font-bold text-emerald-800 block mb-1">Select a Reward to Save For:</label>
-                                <select
-                                  value={selectedGoalRewardId}
-                                  onChange={(e) => setSelectedGoalRewardId(e.target.value)}
-                                  className="w-full px-3 py-2 rounded-lg border border-emerald-300 text-sm bg-white focus:border-emerald-500 focus:outline-none"
-                                >
-                                  <option value="">-- Choose a Reward --</option>
-                                  {rewards.filter(r => r.is_available).map(r => (
-                                    <option key={r.id} value={r.id}>
-                                      {r.icon_name} {r.title} ({r.cost_points} coins)
-                                    </option>
-                                  ))}
-                                </select>
-                                <div className="flex gap-2 mt-2">
-                                  <button
-                                    onClick={() => {
-                                      if (selectedGoalRewardId) {
-                                        onSavingsGoal(activeChild.id, selectedGoalRewardId);
-                                        setShowGoalForm(false);
-                                        playSound.success();
-                                      }
-                                    }}
-                                    disabled={!selectedGoalRewardId}
-                                    className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
-                                    Save Goal
-                                  </button>
-                                  <button
-                                    onClick={() => { setShowGoalForm(false); playSound.click(); }}
-                                    className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
 
                         <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                           Save your coins here for bigger prizes! Coins in the Savings Pot can't be spent until you take them out.
@@ -1315,18 +1264,38 @@ export default function ChildDashboard({
                                       ⭐ {rew.cost_points} COINS
                                     </span>
 
-                                    <button
-                                      disabled={!canDispense}
-                                      onClick={() => handleClaimReward(rew.id, rew.cost_points)}
-                                      className={`font-black font-mono py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
-                                        canDispense
-                                          ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
-                                          : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                      }`}
-                                      id={`claim-reward-${rew.id}`}
-                                    >
-                                      {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'DISPENSE'}
-                                    </button>
+                                    <div className="flex flex-col gap-1.5 items-end">
+                                      <button
+                                        disabled={!canDispense}
+                                        onClick={() => handleClaimReward(rew.id, rew.cost_points)}
+                                        className={`font-black font-mono py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
+                                          canDispense
+                                            ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
+                                            : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                        }`}
+                                        id={`claim-reward-${rew.id}`}
+                                      >
+                                        {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'DISPENSE'}
+                                      </button>
+                                      
+                                      {activeChild.savings_unlocked && (
+                                        activeChild.savings_goal_reward_id === rew.id ? (
+                                          <span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 border border-emerald-300">
+                                            🎯 Saving For
+                                          </span>
+                                        ) : (
+                                          <button
+                                            onClick={() => {
+                                              onSavingsGoal(activeChild.id, rew.id);
+                                              playSound.success();
+                                            }}
+                                            className="text-[8px] text-emerald-600 hover:bg-emerald-50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
+                                          >
+                                            Set as Goal
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               );
