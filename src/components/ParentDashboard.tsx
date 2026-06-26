@@ -1088,8 +1088,8 @@ export default function ParentDashboard({
 
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                            <span>TOTAL GOLD BANK</span>
-                            <span className={`font-extrabold text-amber-700`}>{child.points} GOLD</span>
+                            <span className="uppercase">LEVEL {child.level} PROGRESS</span>
+                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / 100 XP</span>
                           </div>
                           <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
                             <div 
@@ -1097,7 +1097,6 @@ export default function ParentDashboard({
                               style={{ width: `${Math.min(100, child.xp_in_level)}%` }}
                             />
                           </div>
-                          <p className={`text-[8px] font-mono ${styles.textMuted} text-right`}>XP PROGRESSION: {child.xp_in_level}%</p>
                         </div>
                       </div>
                     );
