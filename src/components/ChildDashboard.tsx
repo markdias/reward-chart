@@ -388,9 +388,9 @@ export default function ChildDashboard({
               🎮
             </div>
           )}
-          <div className="hidden sm:block">
-            <span className={`text-[10px] sm:text-sm font-black font-display tracking-widest uppercase ${styles.titleGradient}`}>
-              KID CONTROL DECK
+          <div className="flex flex-col">
+            <span className={`text-[12px] sm:text-sm font-black font-display tracking-widest uppercase ${styles.titleGradient}`}>
+              {activeChild ? `${activeChild.name}'S DASHBOARD` : 'KID CONTROL DECK'}
             </span>
             <span className={`hidden md:block text-[8px] font-mono tracking-widest ${styles.textMuted} font-bold`}>CABINET INTERFACE V2.5</span>
           </div>
