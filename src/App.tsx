@@ -780,9 +780,9 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Savings Pot at Level 1, 50 XP
+    // 3. Auto-unlock Savings Pot at Level 1, 50 XP (or Level 2+)
     let savingsUnlocked = child.savings_unlocked || false;
-    if (newLevel === 1 && newXp >= 50 && !savingsUnlocked) {
+    if ((newLevel > 1 || newXp >= 50) && !savingsUnlocked) {
       savingsUnlocked = true;
       setTimeout(() => playSound.evolution(), 600);
     }
@@ -819,6 +819,12 @@ export default function App() {
 
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
+
+    // Check if savings pot requirements are no longer met after XP/Level reductions
+    if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
+      targetChild.savings_unlocked = false;
+      targetChild.savings_unlock_seen = false;
+    }
 
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
