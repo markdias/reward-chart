@@ -174,17 +174,8 @@ export default function ChildDashboard({
       
       {/* Immersive Starry Grid Backdrop */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      {theme === 'cosmic_dark' ? (
-        <>
-          <div className="absolute top-0 right-1/4 w-[600px] h-[600px] ambient-glow-cyan pointer-events-none" />
-          <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] ambient-glow-purple pointer-events-none" />
-        </>
-      ) : (
-        <>
-          <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
-        </>
-      )}
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
@@ -384,18 +375,14 @@ export default function ChildDashboard({
             <button
               onClick={() => { playSound.click(); setSelectedChildId(null); }}
               className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-2 text-xs font-mono font-bold ${
-                theme === 'cosmic_dark'
-                  ? 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
-                  : theme === 'sunny_toybox'
-                    ? 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm font-bold'
+                'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
               }`}
               id="back-to-profiles-btn"
             >
-              <ArrowLeft className={`w-4 h-4 ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-500'}`} /> CHOOSE OPERATOR
+              <ArrowLeft className={`w-4 h-4 text-amber-500`} /> CHOOSE OPERATOR
             </button>
           ) : (
-            <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${theme === 'cosmic_dark' ? 'from-cyan-400 to-indigo-600' : 'from-amber-400 to-orange-500'} flex items-center justify-center text-lg shadow-md`}>
+            <div className={`h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-lg shadow-md`}>
               🎮
             </div>
           )}
@@ -410,13 +397,11 @@ export default function ChildDashboard({
         <button
           onClick={() => { playSound.click(); onEnterParentMode(); }}
           className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold font-mono cursor-pointer transition-all border ${
-            theme === 'cosmic_dark'
-              ? 'border-fuchsia-800/40 hover:border-fuchsia-400/40 bg-fuchsia-950/15 text-fuchsia-400 hover:text-fuchsia-300 shadow-sm shadow-fuchsia-500/5'
-              : 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
+            'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
           }`}
           id="parent-gate-lock-btn"
         >
-          <Lock className={`w-3.5 h-3.5 ${theme === 'cosmic_dark' ? 'text-fuchsia-400 animate-pulse' : 'text-rose-500'}`} /> PARENT ACCESS
+          <Lock className={`w-3.5 h-3.5 text-rose-500`} /> PARENT ACCESS
         </button>
       </header>
 
@@ -469,7 +454,7 @@ export default function ChildDashboard({
                             className={`w-24 h-24 rounded-2xl bg-slate-950 p-1.5 border-2 ${styles.divider} group-hover:border-white transition-all relative z-10 object-cover`}
                             referrerPolicy="no-referrer"
                           />
-                          <span className={`absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-cyan-500 font-mono flex items-center justify-center text-xs font-extrabold border-2 ${theme === 'cosmic_dark' ? 'border-slate-950 text-slate-950' : 'border-white text-white'} z-20`}>
+                          <span className={`absolute -bottom-2 -right-2 h-7 w-7 rounded-full bg-cyan-500 font-mono flex items-center justify-center text-xs font-extrabold border-2 border-white text-white z-20`}>
                             {child.level}
                           </span>
                         </div>
@@ -539,8 +524,8 @@ export default function ChildDashboard({
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
                         <div className={`flex items-center gap-1.5 ${styles.tagCategory} px-3 py-1 rounded-lg`}>
-                          <Star className={`w-3.5 h-3.5 ${theme === 'cosmic_dark' ? 'text-cyan-400 fill-current' : 'text-amber-500 fill-current'}`} />
-                          <span className={`text-xs font-mono font-black ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'}`}>{activeChild.points} GOLD</span>
+                          <Star className={`w-3.5 h-3.5 text-amber-500 fill-current`} />
+                          <span className={`text-xs font-mono font-black text-amber-600`}>{activeChild.points} GOLD</span>
                         </div>
                       </div>
 
@@ -552,7 +537,7 @@ export default function ChildDashboard({
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
                           transition={{ duration: 1.2 }}
-                          className={`h-36 w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : theme === 'cosmic_dark' ? 'border-slate-950' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-36 w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                           onClick={handleFeedCompanion}
                         >
                           {activeChildStage.image_url ? (
@@ -611,16 +596,14 @@ export default function ChildDashboard({
                       <div className={`w-full mt-5 pt-5 border-t ${styles.divider} space-y-3`}>
                         <div className="flex justify-between items-center text-xs">
                           <span className={`font-mono ${styles.textMuted}`}>FEED ENERGY PILLS:</span>
-                          <span className={`font-mono ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-amber-600'} font-extrabold`}>{activeChild.pet_food || 0} LEFT</span>
+                          <span className={`font-mono text-amber-600 font-extrabold`}>{activeChild.pet_food || 0} LEFT</span>
                         </div>
                         <button
                           onClick={handleFeedCompanion}
                           disabled={(activeChild.pet_food || 0) <= 0}
                           className={`w-full py-3 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                             (activeChild.pet_food || 0) > 0
-                              ? theme === 'cosmic_dark'
-                                ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-slate-950 hover:from-orange-300 hover:to-amber-400 gamepad-button shadow-lg'
-                                : 'bg-amber-400 border border-stone-950 text-stone-900 shadow-[0_3px_0_0_#1c1917]'
+                              ? 'bg-amber-400 border border-stone-950 text-stone-900 shadow-[0_3px_0_0_#1c1917]'
                               : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                           }`}
                         >
@@ -684,11 +667,11 @@ export default function ChildDashboard({
                                 <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Weekly Target</h4>
                                 {nextWeekly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
                               </div>
-                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-cyan-950 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border border-cyan-200'}`}>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
                                 {activeChild.weekly_reward_points || 200} GOLD BONUS
                               </span>
                             </div>
-                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border bg-stone-100 border-stone-200`}>
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${weeklyPct}%` }}
@@ -708,11 +691,11 @@ export default function ChildDashboard({
                                 <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Monthly Target</h4>
                                 {nextMonthly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
                               </div>
-                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md ${theme === 'cosmic_dark' ? 'bg-purple-950 text-purple-400' : 'bg-purple-50 text-purple-700 border border-purple-200'}`}>
+                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
                                 {activeChild.monthly_reward_points || 1000} GOLD BONUS
                               </span>
                             </div>
-                            <div className={`w-full h-2 rounded-full overflow-hidden border ${theme === 'cosmic_dark' ? 'bg-slate-950 border-indigo-950' : 'bg-stone-100 border-stone-200'}`}>
+                            <div className={`w-full h-2 rounded-full overflow-hidden border bg-stone-100 border-stone-200`}>
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${monthlyPct}%` }}
@@ -736,17 +719,13 @@ export default function ChildDashboard({
                   <div className="lg:col-span-8 space-y-6">
                     
                     {/* Gamepad style switcher tabs */}
-                    <div className={`flex gap-2 p-1 ${theme === 'cosmic_dark' ? 'bg-slate-950 border border-indigo-950/80' : 'bg-stone-100 border border-stone-200'} rounded-2xl`} id="kid-dashboard-tabs">
+                    <div className={`flex gap-2 p-1 bg-stone-100 border border-stone-200 rounded-2xl`} id="kid-dashboard-tabs">
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
                         className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'tasks'
-                            ? theme === 'cosmic_dark'
-                              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md'
-                              : 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
-                            : theme === 'cosmic_dark'
-                              ? 'text-slate-400 hover:text-slate-200'
-                              : 'text-stone-600 hover:text-stone-900 font-bold'
+                            ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
                         <Target className="w-4 h-4" /> QUEST LIST LISTING
@@ -755,12 +734,8 @@ export default function ChildDashboard({
                         onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
                         className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'rewards'
-                            ? theme === 'cosmic_dark'
-                              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md'
-                              : 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
-                            : theme === 'cosmic_dark'
-                              ? 'text-slate-400 hover:text-slate-200'
-                              : 'text-stone-600 hover:text-stone-900 font-bold'
+                            ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
                         <Gift className="w-4 h-4" /> PRIZE DISPENSER
@@ -769,12 +744,8 @@ export default function ChildDashboard({
                         onClick={() => { playSound.click(); setActiveChildTab('history'); }}
                         className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'history'
-                            ? theme === 'cosmic_dark'
-                              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md'
-                              : 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
-                            : theme === 'cosmic_dark'
-                              ? 'text-slate-400 hover:text-slate-200'
-                              : 'text-stone-600 hover:text-stone-900 font-bold'
+                            ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
+                            : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
                         📜 HISTORY
@@ -868,19 +839,19 @@ export default function ChildDashboard({
                                 >
                                   <div className="space-y-1.5">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-900/30' : 'text-amber-700 bg-amber-50 border border-amber-200'} px-2.5 py-0.5 rounded`}>
+                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
                                         {task.category.toUpperCase()}
                                       </span>
-                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-purple-400 bg-purple-950/60 border border-purple-900/30' : 'text-purple-700 bg-purple-50 border border-purple-200'} px-2.5 py-0.5 rounded`}>
+                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded`}>
                                         {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
                                       </span>
                                       {isPending && (
-                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-indigo-400 bg-indigo-950/60 border border-indigo-900/30' : 'text-stone-700 bg-stone-100 border border-stone-200'} px-2.5 py-0.5 rounded animate-pulse`}>
+                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded animate-pulse`}>
                                           PENDING VERIFICATION
                                         </span>
                                       )}
                                       {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
-                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${theme === 'cosmic_dark' ? 'text-amber-400 bg-amber-950/60 border border-amber-900/30' : 'text-amber-700 bg-amber-50 border border-amber-200'} px-2.5 py-0.5 rounded`}>
+                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
                                           ⭐ Completed {completedTodayCount}x today
                                         </span>
                                       )}
@@ -892,30 +863,30 @@ export default function ChildDashboard({
 
                                   <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
                                     <div className="flex gap-2">
-                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-amber-400 bg-amber-950/40 border-amber-900/30' : 'text-yellow-700 bg-yellow-50 border-yellow-200'}`}>
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
                                         <Star className="w-3.5 h-3.5" /> +{task.points}
                                       </span>
-                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border ${theme === 'cosmic_dark' ? 'text-cyan-400 bg-cyan-950/40 border-cyan-900/30' : 'text-cyan-700 bg-cyan-50 border-cyan-200'}`}>
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-cyan-700 bg-cyan-50 border-cyan-200`}>
                                         <TrendingUp className="w-3.5 h-3.5" /> +{task.xp ?? task.points}
                                       </span>
                                     </div>
 
                                     {isApproved ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase ${theme === 'cosmic_dark' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700'}`}>
+                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
                                         VERIFIED
                                       </span>
                                     ) : isPending ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase animate-pulse ${theme === 'cosmic_dark' ? 'bg-indigo-500/10 text-indigo-300' : 'bg-stone-100 text-stone-600'}`}>
+                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
                                         AWAITING CHECK
                                       </span>
                                     ) : isOnCooldown ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase ${theme === 'cosmic_dark' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
                                         COOLDOWN ({cooldownTimeLeftStr})
                                       </span>
                                     ) : (
                                       <button
                                         onClick={() => handleTaskCheck(task.id)}
-                                        className={`bg-indigo-600 hover:bg-indigo-500 hover:scale-105 active:scale-95 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono ${theme === 'cosmic_dark' ? '' : 'bg-stone-900 hover:bg-stone-800 shadow-[0_3px_0_0_#1c1917]'}`}
+                                        className={`bg-indigo-600 hover:bg-indigo-500 hover:scale-105 active:scale-95 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-stone-900 hover:bg-stone-800 shadow-[0_3px_0_0_#1c1917]`}
                                         id={`claim-task-${task.id}`}
                                       >
                                         COMPLETE QUEST!
@@ -966,7 +937,7 @@ export default function ChildDashboard({
                                   }`}
                                 >
                                   <div className="flex gap-3.5 items-center">
-                                    <div className={`h-12 w-12 rounded-2xl ${theme === 'cosmic_dark' ? 'bg-slate-950' : 'bg-stone-150 border border-stone-200'} flex items-center justify-center text-3xl`}>
+                                    <div className={`h-12 w-12 rounded-2xl bg-stone-150 border border-stone-200 flex items-center justify-center text-3xl`}>
                                       🎁
                                     </div>
                                     <div>
@@ -976,7 +947,7 @@ export default function ChildDashboard({
                                   </div>
 
                                   <div className="flex flex-col items-end gap-2 shrink-0">
-                                    <span className={`text-[10px] font-mono font-black ${isAffordable ? theme === 'cosmic_dark' ? 'text-amber-400' : 'text-amber-700' : 'text-slate-500'}`}>
+                                    <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
                                       ⭐ {rew.cost_points} PTS
                                     </span>
 
@@ -985,9 +956,7 @@ export default function ChildDashboard({
                                       onClick={() => handleClaimReward(rew.id, rew.cost_points)}
                                       className={`font-black font-mono py-2 px-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                         canDispense
-                                          ? theme === 'cosmic_dark'
-                                            ? 'bg-amber-400 hover:bg-amber-300 hover:scale-105 text-slate-950 font-black'
-                                            : 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
+                                          ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
                                           : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                       }`}
                                       id={`claim-reward-${rew.id}`}
@@ -1035,7 +1004,7 @@ export default function ChildDashboard({
                                         Delivered on {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                       </p>
                                     </div>
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${theme === 'cosmic_dark' ? 'bg-indigo-950/40 border-indigo-500/30 text-indigo-400' : 'bg-stone-100 border-stone-300 text-stone-600'}`}>
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-stone-100 border-stone-300 text-stone-600`}>
                                       <CheckCircle className="w-4 h-4" />
                                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider">RECEIVED</span>
                                     </div>

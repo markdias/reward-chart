@@ -210,36 +210,26 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
       
       {/* High-Tech Animated Background */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      {theme === 'cosmic_dark' ? (
-        <>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
-          <div className="absolute top-10 left-10 w-96 h-96 ambient-glow-cyan pointer-events-none" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 ambient-glow-purple pointer-events-none" />
-        </>
-      ) : (
-        <>
-          <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
-        </>
-      )}
+      <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Retro Header Console */}
       <header className={`w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b ${styles.divider} relative z-20`}>
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToLanding}
-            className={`mr-2 flex items-center gap-1 text-xs font-mono font-bold ${theme === 'cosmic_dark' ? 'text-slate-400 hover:text-white' : 'text-[#78716C] hover:text-[#292524]'} transition-colors cursor-pointer`}
+            className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer"
           >
             ← Back to Home
           </button>
-          <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${theme === 'cosmic_dark' ? 'from-cyan-400 via-indigo-500 to-purple-600' : 'from-amber-400 to-orange-500'} flex items-center justify-center shadow-lg`}>
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
             <Gamepad2 className="w-6 h-6 text-white animate-pulse" />
           </div>
           <div>
             <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
               KIDARCADE
             </span>
-            <span className={`block text-[9px] ${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-[#78716C]'} font-mono tracking-widest font-extrabold`}>SUPERHERO CHORE PROTOCOL</span>
+            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">SUPERHERO CHORE PROTOCOL</span>
           </div>
         </div>
       </header>
@@ -349,11 +339,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
 
               <button
                 type="submit"
-                className={`w-full gamepad-button py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer shadow-md mt-4 ${
-                  theme === 'cosmic_dark' 
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white' 
-                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]'
-                }`}
+                className="w-full gamepad-button py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
                 id="real-login-submit"
               >
                 {isSignUp ? 'ESTABLISH FAMILY ZONE' : 'AUTHENTICATE SECURE ZONE'}
@@ -361,11 +347,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
             </form>
 
             {isSignUp && (
-              <div className={`p-3 border rounded-xl text-[11px] leading-relaxed space-y-1 ${
-                theme === 'cosmic_dark' 
-                  ? 'bg-indigo-950/40 border-indigo-900 text-indigo-300' 
-                  : 'bg-amber-50 border-amber-200 text-amber-800'
-              }`}>
+              <div className="p-3 border rounded-xl text-[11px] leading-relaxed space-y-1 bg-amber-50 border-amber-200 text-amber-800">
                 <p className="font-bold flex items-center gap-1">💡 Supabase Setup Tip:</p>
                 <p>1. Make sure you have executed the <strong>SQL Table Setup Script</strong> in your Supabase SQL Editor so the tables exist.</p>
                 <p>2. Disable <strong>Confirm email</strong> in your Supabase Dashboard under <strong>Auth ➔ Providers ➔ Email</strong> to allow instant logins.</p>
@@ -378,7 +360,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
                   playSound.click();
                   setIsSignUp(!isSignUp);
                 }}
-                className={`text-xs ${theme === 'cosmic_dark' ? 'text-pink-400 hover:text-pink-300' : 'text-stone-600 hover:text-stone-950 font-bold'} font-medium font-mono`}
+                className="text-xs text-stone-600 hover:text-stone-950 font-bold font-medium font-mono"
                 id="toggle-sign-up"
               >
                 {isSignUp ? '← USE EXISTING KEY' : 'CREATE SECURE KEYZONE'}
@@ -409,7 +391,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className={`p-2 rounded-xl ${theme === 'cosmic_dark' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-amber-100 text-amber-600'}`}>
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -418,7 +400,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className={`p-2 rounded-xl ${theme === 'cosmic_dark' ? 'bg-pink-500/10 text-pink-400' : 'bg-red-100 text-red-500'}`}>
+            <div className="p-2 rounded-xl bg-red-100 text-red-500">
               <Heart className="w-4 h-4" />
             </div>
             <div>
@@ -435,10 +417,10 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
           © 2026 KIDARCADE Corp. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-mono text-[10px]">
-          <a href="#privacy" className={`hover:${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} transition-colors`}>PRIVACY_LEDGER</a>
-          <a href="#terms" className={`hover:${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-stone-900'} transition-colors`}>TERMS_OF_SERVICE</a>
+          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY_LEDGER</a>
+          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS_OF_SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className={`${theme === 'cosmic_dark' ? 'text-cyan-400' : 'text-emerald-600'} font-bold animate-pulse`}>● ENGINE_ONLINE_V2.0</span>
+          <span className="text-emerald-600 font-bold animate-pulse">● ENGINE_ONLINE_V2.0</span>
         </div>
       </footer>
     </div>

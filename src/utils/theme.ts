@@ -1,4 +1,4 @@
-export type ThemeId = 'cosmic_dark' | 'sunny_toybox' | 'cyber_synth';
+export type ThemeId = 'sunny_toybox';
 
 export interface ThemeStyles {
   id: ThemeId;
@@ -27,31 +27,6 @@ export interface ThemeStyles {
 }
 
 export const THEME_PRESETS: Record<ThemeId, ThemeStyles> = {
-  cosmic_dark: {
-    id: 'cosmic_dark',
-    name: 'Cosmic Dark Arcade',
-    emoji: '🌌',
-    description: 'Immersive dark arcade cabinet with glowing retro neon indicators.',
-    bodyBg: 'bg-[#060814] text-slate-100',
-    textColor: 'text-slate-100',
-    textMuted: 'text-slate-400',
-    cardBg: 'bg-[#090c23]/90 border border-indigo-950/80 shadow-2xl rounded-3xl',
-    headerBg: 'bg-[#070919]/90 border-b border-indigo-950/60 backdrop-blur-md',
-    btnPrimary: 'bg-gradient-to-r from-cyan-400 to-indigo-600 hover:from-cyan-300 hover:to-indigo-500 text-slate-950 font-black shadow-lg shadow-cyan-500/10 active:scale-95',
-    btnSecondary: 'bg-slate-950 border border-indigo-950 hover:bg-slate-900 text-slate-300 hover:text-white',
-    tabActive: 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-slate-950 font-black shadow-md',
-    tabInactive: 'text-slate-400 hover:text-slate-200 bg-slate-950/40 hover:bg-slate-950/80',
-    inputBg: 'bg-slate-950 border border-indigo-950 text-slate-100 placeholder-slate-700 focus:border-cyan-400',
-    accentGlow: 'ambient-glow-cyan opacity-100',
-    tagCategory: 'text-cyan-400 bg-cyan-950/60 border border-cyan-900/30 font-bold',
-    gridStyle: 'scrolling-grid-cyan opacity-[0.08]',
-    innerCard: 'bg-slate-950/80 border border-indigo-950/50 rounded-2xl',
-    titleGradient: 'bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-400 bg-clip-text text-transparent',
-    divider: 'border-indigo-950/50',
-    overlayCrt: 'crt-overlay opacity-25',
-    titleColor: 'text-white',
-    borderStyle: 'border-indigo-950/80'
-  },
   sunny_toybox: {
     id: 'sunny_toybox',
     name: 'Sunny Toybox Light',
@@ -76,30 +51,5 @@ export const THEME_PRESETS: Record<ThemeId, ThemeStyles> = {
     overlayCrt: 'hidden',
     titleColor: 'text-[#1C1917]',
     borderStyle: 'border-stone-200'
-  },
-  cyber_synth: {
-    id: 'cyber_synth',
-    name: 'Cyber Synth Light',
-    emoji: '🎛️',
-    description: 'Sleek, high-contrast platinum white gadget hardware style with vivid cyan alerts.',
-    bodyBg: 'bg-[#F1F3F9] text-slate-800',
-    textColor: 'text-slate-800',
-    textMuted: 'text-slate-500',
-    cardBg: 'bg-white border border-slate-200 shadow-md rounded-3xl text-slate-800 shadow-slate-200/80',
-    headerBg: 'bg-white/95 border-b border-slate-200 backdrop-blur-md',
-    btnPrimary: 'bg-cyan-500 hover:bg-cyan-400 text-white font-extrabold shadow-sm hover:shadow-cyan-500/20 active:scale-95',
-    btnSecondary: 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100',
-    tabActive: 'bg-cyan-500 text-white font-extrabold shadow-md',
-    tabInactive: 'text-slate-500 hover:text-slate-800 bg-slate-100/70 border border-slate-200/40',
-    inputBg: 'bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:outline-none',
-    accentGlow: 'ambient-glow-cyan opacity-40',
-    tagCategory: 'text-cyan-600 bg-cyan-50 border border-cyan-200/60 font-extrabold uppercase',
-    gridStyle: 'scrolling-grid-cyan opacity-[0.06]',
-    innerCard: 'bg-slate-50 border border-slate-200/60 rounded-2xl',
-    titleGradient: 'bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent',
-    divider: 'border-slate-200',
-    overlayCrt: 'hidden',
-    titleColor: 'text-slate-900',
-    borderStyle: 'border-slate-200/60'
   }
 };
