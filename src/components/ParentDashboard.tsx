@@ -446,7 +446,7 @@ export default function ParentDashboard({
             className="flex items-center gap-1 sm:gap-2 bg-rose-500 hover:bg-rose-450 text-white font-extrabold border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
             id="exit-to-child-view-btn"
           >
-            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">LOCK TERMINAL</span>
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>SWITCH TO KID VIEW</span>
           </button>
         </div>
       </header>
@@ -510,32 +510,32 @@ export default function ParentDashboard({
 
         <main className="lg:col-span-9 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
-            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Activity className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8">
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Activity className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-pulse" />
               </div>
               <div className="w-full">
-                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
-                <span className={`text-sm sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
               </div>
             </div>
-            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Award className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <div className="w-full">
-                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
-                <span className={`text-sm sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">PILOTS</span></span>
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">PILOTS</span></span>
               </div>
             </div>
-            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
-                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 animate-bounce-slow" />
+            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
+                <ShieldAlert className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-bounce-slow" />
               </div>
               <div className="w-full">
-                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
-                <span className={`text-sm sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
+                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
+                <span className={`text-xs sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
               </div>
             </div>
           </div>
