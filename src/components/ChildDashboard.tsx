@@ -420,7 +420,7 @@ export default function ChildDashboard({
               </h2>
 
               <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
-                Well done, <strong className="text-stone-900">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-amber-600">Piggy Bank</strong>!
+                Well done, <strong className="text-stone-900">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-amber-600">Savings Pot</strong>!
               </p>
 
               {/* Video Player */}
@@ -670,7 +670,7 @@ export default function ChildDashboard({
                             <div>
                               <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>SAVINGS POT</span>
                               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Piggy Bank</h4>
+                                <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Savings Pot</h4>
                                 <button 
                                   onClick={() => setShowReplayVideo(true)}
                                   className="text-[9px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
@@ -773,7 +773,7 @@ export default function ChildDashboard({
                         </AnimatePresence>
 
                         <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                          Save your coins here for bigger prizes! Coins in the piggy bank can't be spent until you take them out.
+                          Save your coins here for bigger prizes! Coins in the Savings Pot can't be spent until you take them out.
                         </p>
 
                         {/* Action Buttons */}
@@ -868,7 +868,7 @@ export default function ChildDashboard({
                               className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2"
                             >
                               <p className="text-xs font-bold text-amber-800">
-                                Take out all {activeChild.savings_pot || 0} coins from your piggy bank?
+                                Take out all {activeChild.savings_pot || 0} coins from your Savings Pot?
                               </p>
                               <div className="flex gap-2">
                                 <button
