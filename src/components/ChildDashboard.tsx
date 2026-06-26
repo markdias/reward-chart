@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Trophy, Flame, Play, Coins, ChevronRight, Lock, 
+  Trophy, Flame, Play, Coins, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
