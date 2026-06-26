@@ -370,32 +370,32 @@ export default function ParentDashboard({
       <div className={`absolute inset-0 opacity-[0.02] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px] pointer-events-none`} />
       
 
-      <header className={`bg-white border-b border-stone-200 shadow-sm backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4`}>
-        <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 border border-stone-900 shadow-sm flex items-center justify-center text-xl shadow-lg`}>
-            <Settings className={`w-5 h-5 text-stone-950 animate-spin-slow`} />
+      <header className={`bg-white border-b border-stone-200 shadow-sm backdrop-blur-md sticky top-0 z-40 px-3 sm:px-6 py-2 sm:py-4 flex items-center justify-between gap-2`}>
+        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+          <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 border border-stone-900 shadow-sm flex items-center justify-center text-xl shadow-lg shrink-0`}>
+            <Settings className={`w-4 h-4 sm:w-5 sm:h-5 text-stone-950 animate-spin-slow`} />
           </div>
-          <div>
-            <h1 className={`text-lg font-black font-display tracking-wider bg-gradient-to-r from-stone-900 to-stone-800 bg-clip-text text-transparent uppercase`}>
+          <div className="min-w-0">
+            <h1 className={`text-[10px] sm:text-lg font-black font-display tracking-wider bg-gradient-to-r from-stone-900 to-stone-800 bg-clip-text text-transparent uppercase truncate`}>
               Parent Mission Control
             </h1>
-            <p className={`text-[9px] text-stone-500 font-black font-mono tracking-widest uppercase`}>{parentEmail}</p>
+            <p className={`hidden sm:block text-[9px] text-stone-500 font-black font-mono tracking-widest uppercase truncate`}>{parentEmail}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="relative">
             <button
               onClick={() => {
                 playSound.click();
                 setShowNotifications(!showNotifications);
               }}
-              className="p-3 rounded-xl bg-white border-2 border-[#E7E5E4] text-stone-700 hover:bg-stone-50 transition-all cursor-pointer relative shadow-[0_3px_0_0_#E7E5E4] active:translate-y-[2px] active:shadow-none"
+              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white border-2 border-[#E7E5E4] text-stone-700 hover:bg-stone-50 transition-all cursor-pointer relative shadow-[0_3px_0_0_#E7E5E4] active:translate-y-[2px] active:shadow-none"
               id="notifications-bell-btn"
             >
-              <Bell className="w-4.5 h-4.5 text-amber-500" />
+              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
               {pendingApprovals.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
                   {pendingApprovals.length}
                 </span>
               )}
@@ -443,10 +443,10 @@ export default function ParentDashboard({
               playSound.click();
               onExitParentMode();
             }}
-            className="flex items-center gap-2 bg-rose-500 hover:bg-rose-450 text-white font-extrabold border-2 border-stone-900 shadow-[0_4px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-4.5 py-3 rounded-xl text-xs font-mono"
+            className="flex items-center gap-1 sm:gap-2 bg-rose-500 hover:bg-rose-450 text-white font-extrabold border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
             id="exit-to-child-view-btn"
           >
-            <Lock className="w-4 h-4" /> LOCK TERMINAL (KID VIEW)
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">LOCK TERMINAL</span>
           </button>
         </div>
       </header>
@@ -1115,24 +1115,24 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="tasks-view"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Configure chore metrics, behaviours, and point allocations.</p>
+                    <h2 className={`text-xl sm:text-2xl font-black font-display ${styles.titleColor}`}>ACTIVE DIRECTORY</h2>
+                    <p className={`text-[10px] sm:text-xs ${styles.textMuted} hidden sm:block`}>Configure chore metrics, behaviours, and point allocations.</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleImportDefaultTasks}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-2`}
+                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT DEFAULTS
+                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      className={`bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-chore-btn-top"
                     >
-                      <Plus className="w-4 h-4" /> CREATE TEMPLATE
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> CREATE <span className="hidden sm:inline">TEMPLATE</span>
                     </button>
                   </div>
                 </div>
@@ -1238,33 +1238,33 @@ export default function ParentDashboard({
                 )}
 
                 {/* SUB-TABS FOR TASKS */}
-                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
                   <button
                     onClick={() => setTaskSubTab('directory')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       taskSubTab === 'directory'
                         ? ('bg-stone-900 text-white')
-                        : ('text-stone-500 hover:text-stone-900')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    QUEST DIRECTORY (BLUEPRINTS)
+                    BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
                   </button>
                   <button
                     onClick={() => setTaskSubTab('active')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       taskSubTab === 'active'
                         ? ('bg-stone-900 text-white')
-                        : ('text-stone-500 hover:text-stone-900')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    ACTIVE QUESTS (ASSIGNED)
+                    ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
                   </button>
                 </div>
 
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
-                <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
+                <div className="mt-2 sm:mt-4">
+                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {tasks.filter(t => t.is_template).map((task) => {
                       const instances = tasks.filter(t => t.template_id === task.id);
@@ -1571,33 +1571,33 @@ export default function ParentDashboard({
                 )}
 
                 {/* SUB-TABS FOR REWARDS */}
-                <div className="flex gap-2 border-b border-stone-200/50 pb-4 mb-6">
+                <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
                   <button
                     onClick={() => setRewardSubTab('directory')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       rewardSubTab === 'directory'
                         ? ('bg-stone-900 text-white')
-                        : ('text-stone-500 hover:text-stone-900')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    REWARD DIRECTORY
+                    BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
                   </button>
                   <button
                     onClick={() => setRewardSubTab('active')}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold font-mono transition-all ${
+                    className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
                       rewardSubTab === 'active'
                         ? ('bg-stone-900 text-white')
-                        : ('text-stone-500 hover:text-stone-900')
+                        : ('bg-stone-100 text-stone-500 hover:text-stone-900')
                     }`}
                   >
-                    ACTIVE REWARDS
+                    ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
                   </button>
                 </div>
 
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
-                <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
+                <div className="mt-2 sm:mt-4">
+                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {rewards.filter(r => r.is_template).map((reward) => {
                       const instances = rewards.filter(r => r.template_id === reward.id);
