@@ -128,20 +128,20 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-20">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center relative z-20">
         {/* Left Column: Marketing Info and CTA */}
         <div className="lg:col-span-6 flex flex-col space-y-8">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-widest font-mono">
               <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" /> HOLOGRAPHIC LAUNCHER
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black font-display tracking-tight leading-tight">
-              A Chore Chart That Feels Like a <br />
+            <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
+              A Chore Chart That Feels Like a <br className="hidden sm:block" />
               <span className={styles.titleGradient}>
                 Virtual Pet Arcade
               </span>
             </h1>
-            <p className={`${styles.textMuted} text-sm sm:text-base max-w-xl`}>
+            <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
               Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary skins, and evolve your heroic beast!
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
 
         {/* Right Column: Evolved Companion Showcase */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          <div className={`p-6 rounded-3xl ${styles.cardBg} relative overflow-hidden flex flex-col md:flex-row gap-6 items-center`}>
+          <div className={`p-4 sm:p-6 rounded-3xl ${styles.cardBg} relative overflow-hidden flex flex-col md:flex-row gap-6 items-center`}>
             {/* Ambient Scanlines */}
             <div className={`absolute inset-0 ${styles.overlayCrt} pointer-events-none`} />
             

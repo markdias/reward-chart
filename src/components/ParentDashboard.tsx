@@ -407,7 +407,7 @@ export default function ParentDashboard({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-3 w-80 rounded-3xl bg-white border-3 border-[#E7E5E4] shadow-[0_6px_0_0_#E7E5E4] overflow-hidden p-4 space-y-3 z-50 text-[#292524]"
+                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border-3 border-[#E7E5E4] shadow-[0_6px_0_0_#E7E5E4] overflow-hidden p-4 space-y-3 z-50 text-[#292524]"
                   id="notifications-box"
                 >
                   <div className="flex items-center justify-between border-b border-stone-200 pb-2">
@@ -453,7 +453,7 @@ export default function ParentDashboard({
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12" id="parent-workspace">
         
-        <aside className={`lg:col-span-3 bg-stone-50 border-r border-stone-200 p-6 space-y-6`}>
+        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 bg-stone-50 border-r border-stone-200 p-6 space-y-6`}>
           <div className="space-y-1">
             <span className={`text-[10px] font-bold font-mono text-amber-700 uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
             <p className={`text-xs text-stone-500`}>Configure chore metrics and levels.</p>
@@ -508,7 +508,7 @@ export default function ParentDashboard({
           </div>
         </aside>
 
-        <main className="lg:col-span-9 p-8">
+        <main className="lg:col-span-9 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
@@ -1931,6 +1931,38 @@ export default function ParentDashboard({
           )}
         </AnimatePresence>
 
+        {/* Mobile Sticky Bottom Nav */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
+          {[
+            { id: 'approvals', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
+            { id: 'children', icon: Users },
+            { id: 'tasks', icon: CheckSquare },
+            { id: 'rewards', icon: Trophy },
+            { id: 'compliance', icon: ShieldCheck },
+            { id: 'settings', icon: Settings }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isSelected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
+                className={`relative p-3 rounded-xl transition-all flex flex-col items-center gap-1 ${
+                  isSelected
+                    ? 'text-amber-600 bg-amber-50'
+                    : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className={`absolute top-1 right-1 ${tab.badgeColor} text-white text-[8px] font-mono px-1.5 py-0.5 rounded-full font-bold`}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

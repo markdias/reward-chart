@@ -406,7 +406,7 @@ export default function ChildDashboard({
       </header>
 
       {/* Central HUD Viewport */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col justify-center relative z-20" id="child-viewport">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col relative z-20 overflow-y-auto" id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -431,7 +431,7 @@ export default function ChildDashboard({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
                   {children.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     return (
@@ -499,14 +499,14 @@ export default function ChildDashboard({
             ) : (
               
               /* ACTIVE PILOT ARCADE HUDS */
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                key="kid-kiosk"
-                className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-                id="kid-dashboard-grid"
-              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  key="kid-kiosk"
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start pb-12"
+                  id="kid-dashboard-grid"
+                >
                 
                 {/* Left Column: Star-Pet Feeding Station */}
                 {activeChild && activeChildStage && activeChildPack && (
@@ -722,33 +722,33 @@ export default function ChildDashboard({
                     <div className={`flex gap-2 p-1 bg-stone-100 border border-stone-200 rounded-2xl`} id="kid-dashboard-tabs">
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
-                        className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'tasks'
                             ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <Target className="w-4 h-4" /> QUEST LIST LISTING
+                        <Target className="w-5 h-5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">QUESTS</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
-                        className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'rewards'
                             ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <Gift className="w-4 h-4" /> PRIZE DISPENSER
+                        <Gift className="w-5 h-5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">PRIZES</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('history'); }}
-                        className={`flex-1 py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs font-mono uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'history'
                             ? 'bg-amber-400 border border-stone-950 text-stone-900 font-black shadow-sm'
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        📜 HISTORY
+                        <span className="text-xl sm:text-base">📜</span> <span className="hidden sm:inline">HISTORY</span>
                       </button>
                     </div>
 

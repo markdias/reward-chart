@@ -235,13 +235,13 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-md mx-auto px-6 py-10 flex flex-col justify-center relative z-20" id="login-form-panel">
+      <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center relative z-20" id="login-form-panel">
         
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-6 rounded-3xl ${styles.cardBg} space-y-4`}
+            className={`p-5 sm:p-6 rounded-3xl ${styles.cardBg} space-y-4`}
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
