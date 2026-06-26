@@ -426,7 +426,7 @@ export default function ChildDashboard({
                   <Zap className="w-3.5 h-3.5 animate-pulse" /> INSERT PLAYER CHIP
                   </div>
                   <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight ${styles.titleColor}`}>
-                    SELECT CHORE PILOT
+                    Select your player coin
                   </h1>
                   <p className={`text-xs sm:text-sm ${styles.textMuted} max-w-md mx-auto leading-relaxed`}>
                     Choose your family operator to access your quest diary, feed energy cells, and claim your physical prizes!
