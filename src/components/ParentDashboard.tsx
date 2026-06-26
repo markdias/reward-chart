@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Star, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -696,7 +696,7 @@ export default function ParentDashboard({
                                 <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
                                   <div className="flex gap-3">
                                     <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <Star className="w-3.5 h-3.5 text-yellow-500" />
+                                      <Coins className="w-3.5 h-3.5 text-yellow-500" />
                                       {task?.points || 0} Gold
                                     </div>
                                     <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
@@ -915,7 +915,7 @@ export default function ParentDashboard({
                             <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <Star className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                                <Coins className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                                 <span>{child.points} Gold</span>
                               </div>
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
@@ -1278,7 +1278,7 @@ export default function ParentDashboard({
                                   {task.category.toUpperCase()}
                                 </span>
                                 <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                  <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                  <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
                                   <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                                 </div>
                               </div>
@@ -1390,7 +1390,7 @@ export default function ParentDashboard({
                                 {task.category.toUpperCase()}
                               </span>
                               <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-500" /> {task.points}</span>
+                                <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
                                 <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                               </div>
                             </div>

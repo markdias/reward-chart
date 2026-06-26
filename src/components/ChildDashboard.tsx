@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Trophy, Flame, Play, Star, ChevronRight, Lock, 
+  Trophy, Flame, Play, Coins, ChevronRight, Lock, 
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
@@ -562,7 +562,7 @@ export default function ChildDashboard({
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
                         <div className={`flex items-center gap-1.5 ${styles.tagCategory} px-3 py-1 rounded-lg`}>
-                          <Star className={`w-3.5 h-3.5 text-amber-500 fill-current`} />
+                          <Coins className={`w-3.5 h-3.5 text-amber-500 fill-current`} />
                           <span className={`text-xs font-mono font-black text-amber-600`}>{activeChild.points} GOLD</span>
                         </div>
                       </div>
@@ -902,7 +902,7 @@ export default function ChildDashboard({
                                   <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
                                     <div className="flex gap-2">
                                       <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
-                                        <Star className="w-3.5 h-3.5" /> +{task.points}
+                                        <Coins className="w-3.5 h-3.5" /> +{task.points}
                                       </span>
                                       <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-cyan-700 bg-cyan-50 border-cyan-200`}>
                                         <TrendingUp className="w-3.5 h-3.5" /> +{task.xp ?? task.points}
