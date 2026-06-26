@@ -6,7 +6,7 @@ import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
 
 interface LandingPageProps {
-  onEnterArcade: () => void;
+  onEnterArcade: (role: 'parent' | 'child') => void;
   theme: ThemeId;
 }
 
@@ -92,9 +92,9 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
     playSound.click();
   };
 
-  const handleEnterClick = () => {
+  const handleEnterClick = (role: 'parent' | 'child') => {
     playSound.levelUp();
-    onEnterArcade();
+    onEnterArcade(role);
   };
 
   return (
@@ -119,7 +119,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
         </div>
 
         <button
-          onClick={handleEnterClick}
+          onClick={() => handleEnterClick('parent')}
           className={`gamepad-button ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
           id="landing-signin-btn"
         >
@@ -146,14 +146,23 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
             </p>
           </div>
 
-          <button
-            onClick={handleEnterClick}
-            className={`w-full max-w-md gamepad-button ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-base uppercase font-display tracking-wide`}
-            id="landing-cta-btn"
-          >
-            <Play className="w-5 h-5 fill-current" /> GET STARTED
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          <div className="w-full max-w-md pt-2 pb-4">
+            <h3 className={`text-sm font-bold uppercase tracking-widest font-mono mb-3 ${styles.textMuted}`}>Who is starting the adventure today?</h3>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => handleEnterClick('parent')}
+                className={`flex-1 gamepad-button bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-sm border border-indigo-200 cursor-pointer text-sm uppercase font-display tracking-wide transition-all`}
+              >
+                I'm a Grown-up
+              </button>
+              <button
+                onClick={() => handleEnterClick('child')}
+                className={`flex-1 gamepad-button ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-sm uppercase font-display tracking-wide`}
+              >
+                I'm a Kid <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
           {/* Value Badges */}
           <div className="grid grid-cols-2 gap-3 max-w-md">

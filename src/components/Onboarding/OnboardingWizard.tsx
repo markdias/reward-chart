@@ -7,6 +7,8 @@ import StepChildrenSetup from './StepChildrenSetup';
 import StepTasksSelection from './StepTasksSelection';
 import StepPinSetup from './StepPinSetup';
 import StepCreateAccount from './StepCreateAccount';
+import StepHandover from './StepHandover';
+import StepParentDetails from './StepParentDetails';
 import { Child, Task, Reward } from '../../types';
 import { PREMADE_TASKS } from '../../data/premadeTemplates';
 
@@ -18,42 +20,60 @@ interface OnboardingWizardProps {
 
 export interface OnboardingData {
   children: Partial<Child>[];
+  parentName: string;
+  familyName: string;
   selectedTasks: Task[];
   pin: string;
   skippedAccount: boolean;
   email?: string;
 }
 
+type WizardStep = 'welcome' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'pin' | 'account';
+
 export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: OnboardingWizardProps) {
-  const [step, setStep] = useState<number>(0);
+  const [step, setStep] = useState<WizardStep>('welcome');
+  const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(null);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     children: [],
+    parentName: '',
+    familyName: '',
     selectedTasks: [],
     pin: '',
     skippedAccount: false,
   });
 
-  const nextStep = () => setStep(s => s + 1);
-  const prevStep = () => setStep(s => s - 1);
-
-  const handleWelcomeComplete = () => {
-    nextStep();
+  const handleWelcomeComplete = (role: 'parent' | 'child') => {
+    setStartedBy(role);
+    setStep('children');
   };
 
   const handleChildrenSetupComplete = (childrenData: Partial<Child>[]) => {
     setOnboardingData(prev => ({ ...prev, children: childrenData }));
-    nextStep();
+    if (startedBy === 'child') {
+      setStep('handover');
+    } else {
+      setStep('parentDetails');
+    }
+  };
+
+  const handleHandoverComplete = () => {
+    setStep('parentDetails');
+  };
+
+  const handleParentDetailsComplete = (name: string, familyName: string) => {
+    setOnboardingData(prev => ({ ...prev, parentName: name, familyName }));
+    setStep('tasks');
   };
 
   const handleTasksSelectionComplete = (selectedTaskIds: string[]) => {
     const tasks = PREMADE_TASKS.filter(t => selectedTaskIds.includes(t.id));
     setOnboardingData(prev => ({ ...prev, selectedTasks: tasks }));
-    nextStep();
+    setStep('pin');
   };
 
   const handlePinSetupComplete = (pin: string) => {
     setOnboardingData(prev => ({ ...prev, pin }));
-    nextStep();
+    setStep('account');
   };
 
   const handleAccountComplete = (skipped: boolean, email?: string) => {
@@ -64,45 +84,64 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
 
   const renderStep = () => {
     switch (step) {
-      case 0:
+      case 'welcome':
         return (
           <LandingPage 
             onEnterArcade={handleWelcomeComplete} 
             theme={theme} 
           />
         );
-      case 1:
+      case 'children':
         return (
           <StepChildrenSetup
             theme={theme}
             onNext={handleChildrenSetupComplete}
             initialChildren={onboardingData.children}
+            startedBy={startedBy}
           />
         );
-      case 2:
+      case 'handover':
+        return (
+          <StepHandover 
+            theme={theme}
+            onNext={handleHandoverComplete}
+          />
+        );
+      case 'parentDetails':
+        return (
+          <StepParentDetails
+            theme={theme}
+            onNext={handleParentDetailsComplete}
+            initialName={onboardingData.parentName}
+            initialFamilyName={onboardingData.familyName}
+          />
+        );
+      case 'tasks':
         return (
           <StepTasksSelection
             theme={theme}
             onNext={handleTasksSelectionComplete}
-            onBack={prevStep}
+            onBack={() => setStep('parentDetails')}
             initialSelectedTaskIds={onboardingData.selectedTasks.map(t => t.id)}
           />
         );
-      case 3:
+      case 'pin':
         return (
           <StepPinSetup
             theme={theme}
             onNext={handlePinSetupComplete}
-            onBack={prevStep}
+            onBack={() => setStep('tasks')}
           />
         );
-      case 4:
+      case 'account':
         return (
           <StepCreateAccount
             theme={theme}
             pin={onboardingData.pin}
+            name={onboardingData.parentName}
+            familyName={onboardingData.familyName}
             onComplete={handleAccountComplete}
-            onBack={prevStep}
+            onBack={() => setStep('pin')}
             onLoginInstead={onLoginInstead}
           />
         );

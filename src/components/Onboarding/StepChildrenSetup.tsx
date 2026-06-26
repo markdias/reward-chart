@@ -6,11 +6,12 @@ import { UserPlus, ArrowRight, User } from 'lucide-react';
 
 interface StepChildrenSetupProps {
   theme: ThemeId;
-  initialChildren: Partial<Child>[];
   onNext: (children: Partial<Child>[]) => void;
+  initialChildren?: Partial<Child>[];
+  startedBy?: 'parent' | 'child' | null;
 }
 
-export default function StepChildrenSetup({ theme, initialChildren, onNext }: StepChildrenSetupProps) {
+export default function StepChildrenSetup({ theme, onNext, initialChildren = [], startedBy }: StepChildrenSetupProps) {
   const styles = THEME_PRESETS[theme];
   const [children, setChildren] = useState<Partial<Child>[]>(initialChildren);
   const [isAdding, setIsAdding] = useState(initialChildren.length === 0);
@@ -142,17 +143,26 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
           </form>
         ) : (
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setIsAdding(true)}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-300 text-stone-500 font-bold hover:bg-stone-50 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" /> Add Another Child
-            </button>
+            {startedBy === 'child' ? (
+              <button
+                onClick={() => setIsAdding(true)}
+                className="flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-dashed border-stone-300 text-stone-600 font-bold hover:bg-stone-50 transition-colors"
+              >
+                <UserPlus className="w-5 h-5 text-indigo-500" /> Add a sibling? Pass them the phone!
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAdding(true)}
+                className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-300 text-stone-500 font-bold hover:bg-stone-50 transition-colors"
+              >
+                <UserPlus className="w-4 h-4" /> Add Another Child
+              </button>
+            )}
             <button
               onClick={handleContinue}
               className={`w-full ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg`}
             >
-              Continue <ArrowRight className="w-4 h-4" />
+              {startedBy === 'child' ? "I'm Done" : "Continue"} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         )}

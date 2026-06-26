@@ -68,6 +68,11 @@ export default function App() {
     const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
     const keyRedemptions = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
 
+    const savedProfile = localStorage.getItem('RCH_PARENT_PROFILE');
+    if (savedProfile) {
+      setParentProfile(JSON.parse(savedProfile));
+    }
+
     const savedChildren = localStorage.getItem(keyChildren);
     const savedTasks = localStorage.getItem(keyTasks);
     const savedCompletions = localStorage.getItem(keyCompletions);
@@ -175,14 +180,16 @@ export default function App() {
               }
 
               const meta = sessionData.session.user.user_metadata || {};
+              const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
+              const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
 
               const newProfile = {
                 user_id: sessionData.session.user.id,
                 email: sessionData.session.user.email || parentEmail,
                 family_id: familyId,
-                family_name: inheritedFamilyName || meta.family_name || null,
-                pin: meta.pin || '1234',
-                name: meta.name || null,
+                family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
+                pin: meta.pin || localProfileObj.pin || '1234',
+                name: meta.name || localProfileObj.name || null,
                 share_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
               };
               await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
@@ -458,6 +465,19 @@ export default function App() {
     
     setParentPin(data.pin);
     localStorage.setItem('RCH_PARENT_PIN', data.pin);
+
+    // Save parent profile locally so it persists in local mode
+    const localProfile = {
+      user_id: '',
+      email: emailToUse,
+      family_id: emailToUse,
+      family_name: data.familyName,
+      pin: data.pin,
+      name: data.parentName,
+      share_token: null
+    };
+    localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(localProfile));
+    setParentProfile(localProfile);
 
     // Create children
     const initialChildren: Child[] = data.children.map((c, index) => ({

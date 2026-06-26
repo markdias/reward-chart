@@ -7,17 +7,18 @@ import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
 interface StepCreateAccountProps {
   theme: ThemeId;
   pin: string;
+  name?: string;
+  familyName?: string;
   onComplete: (skipped: boolean, email?: string) => void;
   onBack: () => void;
   onLoginInstead: () => void;
 }
 
-export default function StepCreateAccount({ theme, pin, onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
+export default function StepCreateAccount({ theme, pin, name = '', familyName = '', onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
   const styles = THEME_PRESETS[theme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [familyName, setFamilyName] = useState('');
+
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,29 +129,7 @@ export default function StepCreateAccount({ theme, pin, onComplete, onBack, onLo
             />
           </div>
 
-          <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Your Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="E.g. Mummy, Daddy"
-              required
-              className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
-            />
-          </div>
 
-          <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Family Name</label>
-            <input
-              type="text"
-              value={familyName}
-              onChange={(e) => setFamilyName(e.target.value)}
-              placeholder="E.g. The Smiths"
-              required
-              className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
-            />
-          </div>
 
           <div>
             <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
