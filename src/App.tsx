@@ -449,7 +449,13 @@ export default function App() {
           weekly_reset_date: updatedChild.weekly_reset_date,
           monthly_reset_date: updatedChild.monthly_reset_date,
           last_weekly_bonus_awarded: updatedChild.last_weekly_bonus_awarded,
-          last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded
+          last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded,
+          savings_pot: updatedChild.savings_pot,
+          savings_unlocked: updatedChild.savings_unlocked,
+          savings_unlock_seen: updatedChild.savings_unlock_seen,
+          savings_goal_name: updatedChild.savings_goal_name,
+          savings_goal_amount: updatedChild.savings_goal_amount,
+          savings_goal_reward_id: updatedChild.savings_goal_reward_id
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -775,6 +781,13 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
+    // 3. Auto-unlock Savings Pot at Level 1, 50 XP (or Level 2+)
+    let savingsUnlocked = child.savings_unlocked || false;
+    if ((newLevel > 1 || newXp >= 50) && !savingsUnlocked) {
+      savingsUnlocked = true;
+      setTimeout(() => playSound.evolution(), 600);
+    }
+
     return {
       ...child,
       level: newLevel,
@@ -786,7 +799,8 @@ export default function App() {
       weekly_reset_date: nextWeeklyReset.toISOString(),
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
-      last_monthly_bonus_awarded: lastMonthlyBonus
+      last_monthly_bonus_awarded: lastMonthlyBonus,
+      savings_unlocked: savingsUnlocked
     };
   };
 
@@ -806,6 +820,12 @@ export default function App() {
 
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
+
+    // Check if savings pot requirements are no longer met after XP/Level reductions
+    if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
+      targetChild.savings_unlocked = false;
+      targetChild.savings_unlock_seen = false;
+    }
 
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1006,10 +1026,11 @@ export default function App() {
     }
   };
 
-  const handleClaimReward = async (rewardId: string, childId: string) => {
+  const handleClaimReward = async (rewardId: string, childId: string, paymentSource: 'main' | 'savings' = 'main') => {
     const reward = rewards.find(r => r.id === rewardId);
     const child = children.find(c => c.id === childId);
-    if (!reward || !child || child.points < reward.cost_points || !reward.is_available) return;
+    const availablePoints = paymentSource === 'savings' ? (child?.savings_pot || 0) : (child?.points || 0);
+    if (!reward || !child || availablePoints < reward.cost_points || !reward.is_available) return;
 
     // --- Limit Checks ---
     const now = new Date();
@@ -1043,7 +1064,8 @@ export default function App() {
       child_id: child.id,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       redeemed_at: now.toISOString(),
-      status: 'requested'
+      status: 'requested',
+      payment_source: paymentSource
     };
     syncRedemptions([...redemptions, newRedemption]);
 
@@ -1069,9 +1091,11 @@ export default function App() {
 
     if (child) {
       const cost = reward ? reward.cost_points : 0;
+      const isSavingsPurchase = redemption.payment_source === 'savings';
       const targetChild = {
         ...child,
-        points: Math.max(0, child.points - cost),
+        points: isSavingsPurchase ? child.points : Math.max(0, child.points - cost),
+        savings_pot: isSavingsPurchase ? Math.max(0, (child.savings_pot || 0) - cost) : child.savings_pot,
         pet_food: (child.pet_food || 0) + 1,
       };
 
@@ -1121,6 +1145,79 @@ export default function App() {
         alert("Database Error: Could not feed pet. " + error.message);
       }
     }
+  };
+
+  // Operations: Savings Pot
+  const handleSavingsDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      savings_pot: (child.savings_pot || 0) + amount
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsWithdraw = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.savings_pot || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + (child.savings_pot || 0),
+      savings_pot: 0
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsGoal = async (childId: string, rewardId: string) => {
+    const child = children.find(c => c.id === childId);
+    const reward = rewards.find(r => r.id === rewardId);
+    if (!child || !reward) return;
+
+    const targetChild = {
+      ...child,
+      savings_goal_name: reward.title,
+      savings_goal_amount: reward.cost_points,
+      savings_goal_reward_id: reward.id
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleClearSavingsGoal = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      savings_goal_name: null,
+      savings_goal_amount: null,
+      savings_goal_reward_id: null
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSavingsUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      savings_unlock_seen: true
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
   };
 
   const handleRejectReward = async (redemptionId: string) => {
@@ -1371,6 +1468,11 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
+              onSavingsDeposit={handleSavingsDeposit}
+              onSavingsWithdraw={handleSavingsWithdraw}
+              onSavingsGoal={handleSavingsGoal}
+              onClearSavingsGoal={handleClearSavingsGoal}
+              onSavingsUnlockSeen={handleSavingsUnlockSeen}
               theme={activeTheme}
             />
           </motion.div>

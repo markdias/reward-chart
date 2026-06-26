@@ -89,6 +89,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
           <LandingPage 
             onEnterArcade={handleWelcomeComplete} 
             theme={theme} 
+            onSignIn={onLoginInstead}
           />
         );
       case 'children':

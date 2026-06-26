@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Coins, Target } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
@@ -8,6 +8,7 @@ import { getCharacterStage } from '../data/characters';
 interface LandingPageProps {
   onEnterArcade: (role: 'parent' | 'child') => void;
   theme: ThemeId;
+  onSignIn?: () => void;
 }
 
 const CAROUSEL_CHARACTERS = [
@@ -73,7 +74,7 @@ const CAROUSEL_CHARACTERS = [
   },
 ];
 
-export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) {
+export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingPageProps) {
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   
   const charactersWithImages = CAROUSEL_CHARACTERS.map(char => {
@@ -119,7 +120,14 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
         </div>
 
         <button
-          onClick={() => handleEnterClick('parent')}
+          onClick={() => {
+            playSound.click();
+            if (onSignIn) {
+              onSignIn();
+            } else {
+              handleEnterClick('parent');
+            }
+          }}
           className={`gamepad-button ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
           id="landing-signin-btn"
         >
@@ -142,7 +150,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
               </span>
             </h1>
             <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
-              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, and have fun!
+              Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, learn money skills, and have fun!
             </p>
           </div>
 
@@ -165,7 +173,7 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           </div>
 
           {/* Value Badges */}
-          <div className="grid grid-cols-2 gap-3 max-w-md">
+          <div className="grid grid-cols-3 gap-3 max-w-lg">
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
@@ -182,6 +190,15 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
               <div>
                 <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>COMPLIANCE</span>
                 <span className={`text-[11px] font-bold ${styles.textColor}`}>COPPA Encrypted</span>
+              </div>
+            </div>
+            <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                <PiggyBank className="w-4 h-4" />
+              </div>
+              <div>
+                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
+                <span className={`text-[11px] font-bold ${styles.textColor}`}>Savings & Earning</span>
               </div>
             </div>
           </div>
@@ -306,6 +323,51 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
           </div>
         </div>
       </main>
+
+      {/* Financial Literacy Journey Section */}
+      <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
+        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-white border-4 border-stone-200 shadow-xl relative overflow-hidden`}>
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
+
+          <div className="relative flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            <div className="flex-1 space-y-6 text-center md:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <PiggyBank className="w-4 h-4 text-amber-500" />
+                LEARN REAL MONEY SKILLS
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black font-display text-stone-900">
+                A Financial Journey for Kids
+              </h2>
+              <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-xl mx-auto md:mx-0">
+                Reward Chart isn't just about finishing chores. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
+              </p>
+            </div>
+
+            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-4 border border-amber-200">
+                  <Coins className="w-6 h-6" />
+                </div>
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Complete real-world tasks to earn Gold Coins into their main wallet, learning the direct connection between work and reward.
+                </p>
+              </div>
+              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
+                <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-500 mb-4 border border-sky-200">
+                  <Target className="w-6 h-6" />
+                </div>
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">2. Save for Goals</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Move coins into the secure Savings Pot to protect them from impulse buys. Set big goals and track progress over time.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Footer Console */}
       <footer className={`w-full max-w-7xl mx-auto px-6 py-6 border-t ${styles.divider} text-center text-xs ${styles.textMuted} mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 relative z-20`}>
