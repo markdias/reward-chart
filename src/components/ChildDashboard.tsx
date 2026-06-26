@@ -36,6 +36,7 @@ export default function ChildDashboard({
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [animatingCoinId, setAnimatingCoinId] = useState<string | null>(null);
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'history'>('tasks');
   const [isFeeding, setIsFeeding] = useState(false);
   
@@ -83,8 +84,15 @@ export default function ChildDashboard({
   const availablePoints = activeChild ? activeChild.points - pendingRedemptionsCost : 0;
 
   const handleSelectChild = (id: string) => {
-    playSound.click();
-    setSelectedChildId(id);
+    playSound.purchase();
+    setAnimatingCoinId(id);
+    
+    // Wait for the fly-off animation to complete before actually switching views
+    setTimeout(() => {
+      setSelectedChildId(id);
+      setActiveChildTab('tasks');
+      setAnimatingCoinId(null);
+    }, 600);
   };
 
   const handleTaskCheck = (taskId: string) => {
@@ -436,11 +444,20 @@ export default function ChildDashboard({
                     const stage = getCharacterStage(child.character_id, child.level);
                     return (
                       <motion.div
-                        whileHover={{ scale: 1.05, y: -4 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={animatingCoinId ? {} : { scale: 1.05, y: -4 }}
+                        whileTap={animatingCoinId ? {} : { scale: 0.98 }}
+                        animate={
+                          animatingCoinId === child.id 
+                            ? { y: -800, rotate: 720, opacity: 0, scale: 0.5, transition: { duration: 0.6, ease: "easeIn" } } 
+                            : animatingCoinId !== null 
+                              ? { opacity: 0, scale: 0.8, transition: { duration: 0.3 } }
+                              : { opacity: 1, scale: 1, y: 0, rotate: 0 }
+                        }
                         key={child.id}
-                        onClick={() => handleSelectChild(child.id)}
-                        className={`cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center hover:shadow-[0_0_30px_rgba(251,191,36,0.8)] transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group`}
+                        onClick={() => {
+                          if (!animatingCoinId) handleSelectChild(child.id);
+                        }}
+                        className={`cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group ${!animatingCoinId ? 'hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]' : ''}`}
                       >
                         {/* Inner ring for coin effect */}
                         <div className="absolute inset-2 sm:inset-3 rounded-full border border-yellow-200/60 pointer-events-none" />
