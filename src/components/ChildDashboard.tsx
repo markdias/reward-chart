@@ -588,13 +588,13 @@ export default function ChildDashboard({
                           <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
                           <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
                         </div>
-                        {/* Gold Coins Visual */}
+                        {/* Silver Coins Visual */}
                         <div className="relative group cursor-default">
-                          <div className={`flex items-center gap-2 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 px-4 py-2.5 rounded-2xl shadow-md border-2 border-amber-300 relative overflow-hidden`}>
+                          <div className={`flex items-center gap-2 bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 px-4 py-2.5 rounded-2xl shadow-md border-2 border-slate-300 relative overflow-hidden`}>
                             {/* Shine animation */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                             <div className="relative">
-                              <span className="text-2xl sm:text-3xl drop-shadow-sm">🪙</span>
+                              <span className="text-2xl sm:text-3xl drop-shadow-sm grayscale">🪙</span>
                               <motion.div
                                 animate={{ y: [0, -3, 0] }}
                                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
@@ -604,8 +604,8 @@ export default function ChildDashboard({
                               </motion.div>
                             </div>
                             <div className="flex flex-col items-start">
-                              <span className={`text-[8px] font-mono font-bold text-amber-700 uppercase tracking-wider`}>GOLD COINS</span>
-                              <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight leading-none`}>{activeChild.points}</span>
+                              <span className={`text-[8px] font-mono font-bold text-slate-700 uppercase tracking-wider`}>SILVER COINS</span>
+                              <span className={`text-lg sm:text-xl font-mono font-black text-slate-600 tracking-tight leading-none`}>{activeChild.points}</span>
                             </div>
                           </div>
                         </div>
@@ -678,7 +678,7 @@ export default function ChildDashboard({
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-                            <span className="text-lg">🪙</span>
+                            <span className="text-lg"><span className="grayscale inline-block">🪙</span></span>
                             <span className="text-lg font-mono font-black text-emerald-700">{activeChild.savings_pot || 0}</span>
                           </div>
                         </div>
@@ -707,7 +707,7 @@ export default function ChildDashboard({
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] font-mono font-bold text-emerald-600 mt-1 block">
-                                {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} gold coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
+                                {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} silver coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
                               </span>
                               {activeChild.savings_goal_reward_id && (activeChild.savings_pot || 0) >= activeChild.savings_goal_amount && (
                                 <button
@@ -733,7 +733,7 @@ export default function ChildDashboard({
                         )}
 
                         <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                          Save your gold coins here for bigger prizes! Gold coins in the Savings Pot can't be spent until you take them out.
+                          Save your silver coins here for bigger prizes! Silver coins in the Savings Pot can't be spent until you take them out.
                         </p>
 
                         {/* Action Buttons */}
@@ -747,7 +747,7 @@ export default function ChildDashboard({
                                 : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                             }`}
                           >
-                            💰 Save Gold Coins
+                            💰 Save Silver Coins
                           </button>
                           <button
                             onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
@@ -771,7 +771,7 @@ export default function ChildDashboard({
                               exit={{ opacity: 0, y: 10 }}
                               className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
                             >
-                              <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many gold coins to save?</label>
+                              <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many silver coins to save?</label>
                               <div className="flex items-center justify-center gap-4 py-2">
                                 <button
                                   onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
@@ -781,8 +781,8 @@ export default function ChildDashboard({
                                   <Minus className="w-5 h-5" />
                                 </button>
                                 
-                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                  <span className="text-2xl font-black font-mono text-amber-900 drop-shadow-sm">{depositAmount}</span>
+                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 border-4 border-slate-300 shadow-[0_4px_10px_rgba(148,163,184,0.4)]">
+                                  <span className="text-2xl font-black font-mono text-slate-800 drop-shadow-sm">{depositAmount}</span>
                                 </div>
                                 
                                 <button
@@ -828,7 +828,7 @@ export default function ChildDashboard({
                               className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2"
                             >
                               <p className="text-xs font-bold text-amber-800">
-                                Take out all {activeChild.savings_pot || 0} gold coins from your Savings Pot?
+                                Take out all {activeChild.savings_pot || 0} silver coins from your Savings Pot?
                               </p>
                               <div className="flex gap-2">
                                 <button
@@ -964,7 +964,7 @@ export default function ChildDashboard({
                                         {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
-                                        {activeChild.weekly_reward_points || 200} GOLD BONUS
+                                        {activeChild.weekly_reward_points || 200} SILVER BONUS
                                       </span>
                                     </div>
                                     <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
@@ -989,7 +989,7 @@ export default function ChildDashboard({
                                         {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
-                                        {activeChild.monthly_reward_points || 1000} GOLD BONUS
+                                        {activeChild.monthly_reward_points || 1000} SILVER BONUS
                                       </span>
                                     </div>
                                     <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
@@ -1153,8 +1153,8 @@ export default function ChildDashboard({
                                         </span>
                                       )}
                                       {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
-                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
-                                          🪙 Completed {completedTodayCount}x today
+                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded`}>
+                                          <span className="grayscale inline-block">🪙</span> Completed {completedTodayCount}x today
                                         </span>
                                       )}
                                     </div>
@@ -1213,11 +1213,11 @@ export default function ChildDashboard({
                           <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
                             <div>
                               <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Dispensers</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</p>
+                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your silver coins for real-world prizes!</p>
                             </div>
                             <div className="text-right">
-                              <span className="block text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600">Available Balance</span>
-                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">🪙 {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">GOLD COINS</span></span>
+                              <span className="block text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">Available Balance</span>
+                              <span className="text-xl sm:text-2xl font-black font-mono text-slate-600"><span className="grayscale inline-block">🪙</span> {availablePoints} <span className="text-[10px] sm:text-xs text-slate-500">SILVER COINS</span></span>
                             </div>
                           </div>
 
@@ -1255,13 +1255,13 @@ export default function ChildDashboard({
                                     </div>
                                     <div>
                                       <h4 className={`font-extrabold text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
-                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD COINS</p>
+                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} SILVER COINS</p>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col items-end gap-2 shrink-0">
-                                    <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
-                                      🪙 {rew.cost_points} GOLD COINS
+                                    <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-slate-700' : 'text-slate-400'}`}>
+                                      <span className="grayscale inline-block">🪙</span> {rew.cost_points} SILVER COINS
                                     </span>
 
                                     <div className="flex flex-col gap-1.5 items-end">
