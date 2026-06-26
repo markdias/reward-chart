@@ -10,11 +10,13 @@ interface SettingsTabProps {
   theme: ThemeId;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
-  onResetData?: (keepBlueprints: boolean) => void;
-  onDeleteAccount?: () => void;
+  onResetData: (keepBlueprints: boolean) => void;
+  onDeleteAccount: () => void;
+  onSignOut: () => void;
+  onCleanDuplicates: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount }: SettingsTabProps) {
+export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onDeleteAccount, onSignOut, onCleanDuplicates }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
@@ -431,6 +433,21 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
             >
               <RefreshCw className="w-4 h-4 inline mr-2" /> FACTORY RESET
+            </button>
+          </div>
+
+          <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
+            <div>
+              <h4 className={`font-bold ${c.text}`}>Clean Up Duplicates</h4>
+              <p className={`text-xs mt-1 ${c.textMuted}`}>Removes any duplicate blueprint templates from multiple imports.</p>
+            </div>
+            <button 
+              onClick={() => {
+                onCleanDuplicates();
+              }}
+              className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold font-mono text-xs border transition-colors ${c.dangerBtnOutline}`}
+            >
+              <RefreshCw className="w-4 h-4 inline mr-2" /> CLEAN DUPLICATES
             </button>
           </div>
           

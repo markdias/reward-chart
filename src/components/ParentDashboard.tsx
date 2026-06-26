@@ -283,6 +283,64 @@ export default function ParentDashboard({
     }
   };
 
+  const handleCleanDuplicates = async () => {
+    if (!parentProfile?.family_id) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    // Find duplicate task blueprints
+    const templateTasks = tasks.filter(t => t.is_template);
+    const seenTaskTitles = new Set<string>();
+    const duplicateTaskIds: string[] = [];
+    
+    for (const t of templateTasks) {
+      const titleLower = t.title.trim().toLowerCase();
+      if (seenTaskTitles.has(titleLower)) {
+        duplicateTaskIds.push(t.id);
+      } else {
+        seenTaskTitles.add(titleLower);
+      }
+    }
+
+    // Find duplicate reward blueprints
+    const templateRewards = rewards.filter(r => r.is_template !== false && r.child_id === 'directory');
+    const seenRewardTitles = new Set<string>();
+    const duplicateRewardIds: string[] = [];
+    
+    for (const r of templateRewards) {
+      const titleLower = r.title.trim().toLowerCase();
+      if (seenRewardTitles.has(titleLower)) {
+        duplicateRewardIds.push(r.id);
+      } else {
+        seenRewardTitles.add(titleLower);
+      }
+    }
+
+    if (duplicateTaskIds.length === 0 && duplicateRewardIds.length === 0) {
+      alert("No duplicates found!");
+      return;
+    }
+
+    let deletedCount = 0;
+
+    if (duplicateTaskIds.length > 0) {
+      const { error } = await supabase.from('tasks').delete().in('id', duplicateTaskIds);
+      if (error) console.error("Error deleting duplicate tasks", error);
+      else deletedCount += duplicateTaskIds.length;
+    }
+
+    if (duplicateRewardIds.length > 0) {
+      const { error } = await supabase.from('rewards').delete().in('id', duplicateRewardIds);
+      if (error) console.error("Error deleting duplicate rewards", error);
+      else deletedCount += duplicateRewardIds.length;
+    }
+
+    if (deletedCount > 0) {
+      playSound.success();
+      alert(`Successfully removed ${deletedCount} duplicate blueprints!`);
+    }
+  };
+
   const handleReject = (id: string) => {
     playSound.click();
     onRejectCompletion(id);
@@ -1879,6 +1937,9 @@ export default function ParentDashboard({
                   linkedParents={linkedParents}
                   onResetData={onResetData}
                   onDeleteAccount={onDeleteAccount}
+                  onSignOut={onSignOut}
+                  onCleanDuplicates={handleCleanDuplicates}
+                  activeTheme={theme}
                 />
               </motion.div>
             )}
