@@ -448,7 +448,7 @@ export default function ChildDashboard({
                         whileTap={animatingCoinId ? {} : { scale: 0.98 }}
                         animate={
                           animatingCoinId === child.id 
-                            ? { y: -800, rotate: 720, opacity: 0, scale: 0.5, transition: { duration: 0.6, ease: "easeIn" } } 
+                            ? { opacity: 0, scale: 0.5, transition: { duration: 0.2 } } 
                             : animatingCoinId !== null 
                               ? { opacity: 0, scale: 0.8, transition: { duration: 0.3 } }
                               : { opacity: 1, scale: 1, y: 0, rotate: 0 }
@@ -489,6 +489,51 @@ export default function ChildDashboard({
                     );
                   })}
                 </div>
+
+                {/* The Arcade Coin Slot Overlay Animation */}
+                <AnimatePresence>
+                  {animatingCoinId && (
+                    <div className="fixed inset-0 z-[100] pointer-events-none flex flex-col items-center overflow-hidden">
+                      {/* The Coin Slot dropping from top */}
+                      <motion.div
+                        initial={{ y: -150 }}
+                        animate={{ y: 0 }}
+                        exit={{ y: -150 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        className="w-48 sm:w-64 h-24 sm:h-32 bg-stone-800 rounded-b-[2rem] sm:rounded-b-[3rem] border-x-4 sm:border-x-8 border-b-4 sm:border-b-8 border-stone-600 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden z-20"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+                        <div className="w-32 sm:w-40 h-4 sm:h-5 bg-black rounded-full shadow-[inset_0_8px_16px_rgba(0,0,0,0.9)] border-b border-white/10 relative z-10 flex items-center justify-center">
+                          <div className="w-28 sm:w-36 h-1 bg-gradient-to-r from-transparent via-red-500/20 to-transparent blur-[1px]" />
+                        </div>
+                        <span className="text-red-500 font-mono text-[10px] sm:text-xs font-black tracking-widest mt-4 sm:mt-6 animate-pulse relative z-10 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]">INSERT COIN</span>
+                      </motion.div>
+
+                      {/* The Flying Coin */}
+                      <motion.div
+                        initial={{ y: '70vh', scale: 1.5, rotate: 0 }}
+                        animate={{ y: 40, scale: 0.3, rotate: 1080, opacity: [1, 1, 0] }}
+                        transition={{ duration: 0.6, ease: "easeIn" }}
+                        className="absolute top-0 left-1/2 -translate-x-1/2 z-10 origin-center"
+                      >
+                        {(() => {
+                          const child = children.find(c => c.id === animatingCoinId);
+                          if (!child) return null;
+                          return (
+                            <div className="aspect-square w-32 sm:w-40 rounded-full border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center shadow-[0_8px_0_0_#b45309] relative">
+                              <div className="absolute inset-3 rounded-full border-2 border-yellow-200/60 pointer-events-none" />
+                              <img src={child.avatar_url} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600 object-cover" />
+                              <span className={`absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-rose-500 font-mono flex items-center justify-center text-sm font-extrabold border-2 border-white text-white shadow-sm`}>
+                                {child.level}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
+
               </motion.div>
             ) : (
               
