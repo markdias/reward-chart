@@ -15,12 +15,32 @@ import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
 
 const PRECANNED_AVATARS = [
+  // Classic original avatars
   '/avatars/fox.png',
   '/avatars/puppy.png',
   '/avatars/kitten.png',
   '/avatars/bunny.png',
   '/avatars/bear.png',
-  '/avatars/owl.png'
+  '/avatars/owl.png',
+  // Boy-themed new avatars
+  '/avatars/boy_fox.png',
+  '/avatars/boy_puppy.png',
+  '/avatars/boy_kitten.png',
+  '/avatars/boy_bunny.png',
+  '/avatars/boy_bear.png',
+  '/avatars/boy_owl.png',
+  // Girl-themed new avatars
+  '/avatars/girl_fox.png',
+  '/avatars/girl_puppy.png',
+  '/avatars/girl_kitten.png',
+  '/avatars/girl_bunny.png',
+  '/avatars/girl_bear.png',
+  '/avatars/girl_owl.png',
+  // Boy items
+  '/avatars/boy_car.png',
+  '/avatars/boy_rocket.png',
+  '/avatars/boy_dino.png',
+  '/avatars/boy_gamepad.png'
 ];
 
 interface ParentDashboardProps {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import AuthPage from './components/AuthPage';
+import LandingPage from './components/LandingPage';
 import ParentDashboard from './components/ParentDashboard';
 import ChildDashboard from './components/ChildDashboard';
 import LockScreen from './components/LockScreen';
@@ -33,6 +34,10 @@ export default function App() {
   );
   const [isParentMode, setIsParentMode] = useState<boolean>(
     localStorage.getItem('RCH_PARENT_MODE') === 'true'
+  );
+  
+  const [showLogin, setShowLogin] = useState<boolean>(
+    new URLSearchParams(window.location.search).has('share')
   );
   
   // Security PIN state (default is 1234)
@@ -1148,19 +1153,35 @@ export default function App() {
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
         {!parentEmail ? (
-          <motion.div
-            key="auth-page"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="w-full"
-          >
-            <AuthPage 
-              onStartDemo={handleStartDemo}
-              onLoginReal={handleLoginReal}
-              theme={activeTheme}
-            />
-          </motion.div>
+          !showLogin ? (
+            <motion.div
+              key="landing-page"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <LandingPage 
+                onEnterArcade={() => setShowLogin(true)}
+                theme={activeTheme}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="auth-page"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full"
+            >
+              <AuthPage 
+                onStartDemo={handleStartDemo}
+                onLoginReal={handleLoginReal}
+                onBackToLanding={() => setShowLogin(false)}
+                theme={activeTheme}
+              />
+            </motion.div>
+          )
         ) : isParentMode ? (
           <motion.div
             key="parent-mode"
