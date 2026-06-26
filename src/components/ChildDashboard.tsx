@@ -568,20 +568,20 @@ export default function ChildDashboard({
                       </div>
 
                       {/* Giant Levitating Pedestal */}
-                      <div className="my-8 relative flex items-center justify-center">
+                      <div className="my-4 sm:my-8 relative flex items-center justify-center">
                         {/* Interactive floating particles */}
-                        <div className="absolute h-40 w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
+                        <div className="absolute h-28 w-28 sm:h-40 sm:w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
                         
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.4, 0.9, 1.2, 1], rotate: [0, 20, -20, 10, -10, 0] } : {}}
                           transition={{ duration: 1.2 }}
-                          className={`h-36 w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-24 w-24 sm:h-36 sm:w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 ${isFeeding ? 'border-pink-500 shadow-pink-500/50' : 'border-stone-300'} relative z-10 cursor-pointer ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                           onClick={handleFeedCompanion}
                         >
                           {activeChildStage.image_url ? (
                             <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
                           ) : (
-                            <span className="text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
+                            <span className="text-5xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}
                             </span>
                           )}
@@ -670,20 +670,7 @@ export default function ChildDashboard({
 
                     </div>
 
-                    {/* Streak flame indicator */}
-                    <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex items-center gap-4 shadow-xl`}>
-                      <div className="h-12 w-12 rounded-2xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center relative">
-                        <Flame className="w-7 h-7 text-orange-500 flame-active" />
-                      </div>
-                      <div>
-                        <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Daily Streak Active!</h4>
-                        <p className={`text-xs ${styles.textMuted} leading-normal`}>
-                          You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed!
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Weekly & Monthly Goals */}
+                    {/* Streak & Goals Grid */}
                     {(() => {
                       const now = new Date();
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
@@ -697,53 +684,32 @@ export default function ChildDashboard({
                       const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (activeChild.monthly_xp_target || 1000)) * 100));
 
                       return (
-                        <div className="space-y-4">
-                          {/* Weekly Goal */}
-                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Weekly Target</h4>
-                                {nextWeekly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
-                              </div>
-                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
-                                {activeChild.weekly_reward_points || 200} GOLD BONUS
-                              </span>
-                            </div>
-                            <div className={`w-full h-2 rounded-full overflow-hidden border bg-stone-100 border-stone-200`}>
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${weeklyPct}%` }}
-                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500"
-                              />
-                            </div>
-                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
-                              <span>{dispWeeklyXp} / {(activeChild.weekly_xp_target || 300)} XP</span>
-                              <span>{weeklyPct}% COMPLETED</span>
-                            </div>
+                        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                          {/* Streak Widget */}
+                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg`}>
+                            <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
+                            <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
+                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
                           </div>
 
-                          {/* Monthly Goal */}
-                          <div className={`p-4 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl`}>
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className={`font-extrabold text-sm font-display ${styles.titleColor}`}>Monthly Target</h4>
-                                {nextMonthly && <p className={`text-[9px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
-                              </div>
-                              <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
-                                {activeChild.monthly_reward_points || 1000} GOLD BONUS
-                              </span>
+                          {/* Weekly Widget */}
+                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group`}>
+                            <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
+                              <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
                             </div>
-                            <div className={`w-full h-2 rounded-full overflow-hidden border bg-stone-100 border-stone-200`}>
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${monthlyPct}%` }}
-                                className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-500"
-                              />
+                            <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
+                            <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
+                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
+                          </div>
+
+                          {/* Monthly Widget */}
+                          <div className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group`}>
+                            <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
+                              <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
                             </div>
-                            <div className={`flex justify-between text-[10px] font-mono font-bold ${styles.textMuted}`}>
-                              <span>{dispMonthlyXp} / {(activeChild.monthly_xp_target || 1000)} XP</span>
-                              <span>{monthlyPct}% COMPLETED</span>
-                            </div>
+                            <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
+                            <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
+                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
                           </div>
                         </div>
                       );
