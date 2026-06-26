@@ -326,42 +326,41 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
       {/* Financial Literacy Journey Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
-        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-gradient-to-br from-emerald-900 to-teal-950 border-4 border-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.2)] relative overflow-hidden`}>
+        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-white border-4 border-stone-200 shadow-xl relative overflow-hidden`}>
           {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl" />
-          <div className="absolute inset-0 crt-overlay opacity-30 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
 
           <div className="relative flex flex-col md:flex-row items-center gap-10 md:gap-16">
             <div className="flex-1 space-y-6 text-center md:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
-                <PiggyBank className="w-4 h-4 text-emerald-400" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <PiggyBank className="w-4 h-4 text-amber-500" />
                 LEARN REAL MONEY SKILLS
               </div>
-              <h2 className="text-3xl md:text-5xl font-black font-display bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
+              <h2 className="text-3xl md:text-5xl font-black font-display text-stone-900">
                 A Financial Journey for Kids
               </h2>
-              <p className="text-sm md:text-base text-emerald-50/80 leading-relaxed max-w-xl mx-auto md:mx-0">
+              <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-xl mx-auto md:mx-0">
                 Reward Chart isn't just about finishing chores. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
               </p>
             </div>
 
             <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-emerald-950/50 border border-emerald-500/30 p-5 rounded-3xl backdrop-blur-sm">
-                <div className="w-12 h-12 bg-yellow-500/20 rounded-2xl flex items-center justify-center text-yellow-400 mb-4 border border-yellow-500/30">
+              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-4 border border-amber-200">
                   <Coins className="w-6 h-6" />
                 </div>
-                <h3 className="text-emerald-100 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
-                <p className="text-xs text-emerald-200/70 leading-relaxed">
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
                   Complete real-world tasks to earn Gold Coins into their main wallet, learning the direct connection between work and reward.
                 </p>
               </div>
-              <div className="bg-emerald-950/50 border border-emerald-500/30 p-5 rounded-3xl backdrop-blur-sm">
-                <div className="w-12 h-12 bg-pink-500/20 rounded-2xl flex items-center justify-center text-pink-400 mb-4 border border-pink-500/30">
+              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
+                <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-500 mb-4 border border-sky-200">
                   <Target className="w-6 h-6" />
                 </div>
-                <h3 className="text-emerald-100 font-bold font-display text-lg mb-2">2. Save for Goals</h3>
-                <p className="text-xs text-emerald-200/70 leading-relaxed">
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">2. Save for Goals</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
                   Move coins into the secure Savings Pot to protect them from impulse buys. Set big goals and track progress over time.
                 </p>
               </div>

@@ -396,56 +396,54 @@ export default function ChildDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#040610]/95 flex flex-col items-center justify-center p-6 text-center"
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
             id="savings-unlock-cinematic"
           >
-            <div className="absolute inset-0 crt-overlay opacity-30 pointer-events-none" />
-
             <motion.div
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative max-w-lg bg-gradient-to-br from-emerald-950 to-teal-950 border-4 border-emerald-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(16,185,129,0.4)] space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
             >
-              {/* Animated glow */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
+              {/* Sunburst background effect */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
-                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
 
-              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+              <h2 className="text-3xl font-black font-display text-stone-900">
                 🎉 SAVINGS POT UNLOCKED!
               </h2>
 
-              <p className="text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
-                Well done, <strong className="text-white">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-emerald-300">Piggy Bank</strong>!
+              <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
+                Well done, <strong className="text-stone-900">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-amber-600">Piggy Bank</strong>!
               </p>
 
-              {/* Video Placeholder */}
-              <div className="relative w-full aspect-video rounded-2xl bg-gradient-to-br from-emerald-900/60 to-teal-900/60 border-2 border-emerald-500/30 flex flex-col items-center justify-center gap-3 overflow-hidden group cursor-pointer">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvc3ZnPg==')] pointer-events-none" />
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-6xl drop-shadow-2xl"
+              {/* Video Player */}
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+                <video 
+                  src="/savings-video.mp4" 
+                  controls 
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster="/savings-poster.jpg"
                 >
-                  🐷💰
-                </motion.div>
-                <div className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 px-4 py-2 rounded-full">
-                  <Play className="w-4 h-4 text-emerald-300 fill-emerald-300" />
-                  <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">Watch: What is Saving?</span>
+                  <source src="/savings-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20">
+                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                    <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-400 px-6 leading-relaxed">
-                  If you want a bigger prize, try saving some coins! Put them in your piggy bank and watch them grow!
-                </p>
               </div>
 
               <button
                 onClick={() => { playSound.success(); onSavingsUnlockSeen(activeChild.id); }}
-                className="w-full gamepad-button py-4 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 text-slate-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-lg cursor-pointer"
+                className="w-full gamepad-button py-4 bg-amber-400 hover:bg-amber-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 id="savings-unlock-dismiss-btn"
               >
                 GOT IT! 🎉
