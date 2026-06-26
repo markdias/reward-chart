@@ -1271,7 +1271,7 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className={`border p-4 sm:p-5 rounded-2xl sm:rounded-3xl flex flex-col gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                        <div key={task.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
                           <div className="flex justify-between items-start gap-4">
                             <div>
                               <div className="flex items-center gap-2">
@@ -1382,7 +1382,7 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={task.id}
-                        className={`border p-4 sm:p-5 rounded-2xl sm:rounded-3xl flex flex-col gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex justify-between items-start gap-4">
                           <div>
@@ -1603,7 +1603,7 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className={`border p-4 sm:p-5 rounded-2xl sm:rounded-3xl flex flex-col gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}>
+                        <div key={reward.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-3.5 items-center">
                               <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>
@@ -1713,7 +1713,7 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={reward.id}
-                        className={`border p-4 sm:p-5 rounded-2xl sm:rounded-3xl flex justify-between items-center gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex justify-between items-center gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex gap-3.5 items-center">
                           <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>

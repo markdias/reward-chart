@@ -865,7 +865,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={task.id}
-                                  className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 ${
+                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3 ${
                                     isApproved 
                                       ? 'bg-slate-900/40 border-slate-950/50 opacity-45' 
                                       : isPending 
@@ -968,7 +968,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={rew.id}
-                                  className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} border transition-all flex items-center justify-between gap-3 sm:gap-4 ${
+                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border transition-all flex items-center justify-between gap-2 sm:gap-3 ${
                                     canDispense 
                                       ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` 
                                       : 'opacity-60 border-slate-800/30'
@@ -1032,7 +1032,7 @@ export default function ChildDashboard({
                                 return (
                                   <div
                                     key={delivery.id}
-                                    className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all flex items-center justify-between gap-3 sm:gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                                    className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
                                   >
                                     <div className="space-y-1">
                                       <h4 className={`font-black font-display text-base tracking-wide ${styles.titleColor}`}>
