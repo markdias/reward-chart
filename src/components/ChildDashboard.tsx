@@ -707,7 +707,7 @@ export default function ChildDashboard({
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] font-mono font-bold text-emerald-600 mt-1 block">
-                                {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
+                                {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount} gold coins ({Math.min(100, Math.round(((activeChild.savings_pot || 0) / activeChild.savings_goal_amount) * 100))}%)
                               </span>
                               {activeChild.savings_goal_reward_id && (activeChild.savings_pot || 0) >= activeChild.savings_goal_amount && (
                                 <button
@@ -733,7 +733,7 @@ export default function ChildDashboard({
                         )}
 
                         <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                          Save your coins here for bigger prizes! Coins in the Savings Pot can't be spent until you take them out.
+                          Save your gold coins here for bigger prizes! Gold coins in the Savings Pot can't be spent until you take them out.
                         </p>
 
                         {/* Action Buttons */}
@@ -747,7 +747,7 @@ export default function ChildDashboard({
                                 : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                             }`}
                           >
-                            💰 Save Coins
+                            💰 Save Gold Coins
                           </button>
                           <button
                             onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
@@ -771,7 +771,7 @@ export default function ChildDashboard({
                               exit={{ opacity: 0, y: 10 }}
                               className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
                             >
-                              <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many coins to save?</label>
+                              <label className="text-xs font-bold text-emerald-800 block text-center mb-1">How many gold coins to save?</label>
                               <div className="flex items-center justify-center gap-4 py-2">
                                 <button
                                   onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
@@ -828,7 +828,7 @@ export default function ChildDashboard({
                               className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 space-y-2"
                             >
                               <p className="text-xs font-bold text-amber-800">
-                                Take out all {activeChild.savings_pot || 0} coins from your Savings Pot?
+                                Take out all {activeChild.savings_pot || 0} gold coins from your Savings Pot?
                               </p>
                               <div className="flex gap-2">
                                 <button
@@ -1154,7 +1154,7 @@ export default function ChildDashboard({
                                       )}
                                       {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
                                         <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
-                                          ⭐ Completed {completedTodayCount}x today
+                                          🪙 Completed {completedTodayCount}x today
                                         </span>
                                       )}
                                     </div>
@@ -1217,7 +1217,7 @@ export default function ChildDashboard({
                             </div>
                             <div className="text-right">
                               <span className="block text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600">Available Balance</span>
-                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">⭐ {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">COINS in gold pot</span></span>
+                              <span className="text-xl sm:text-2xl font-black font-mono text-amber-500">🪙 {availablePoints} <span className="text-[10px] sm:text-xs text-amber-600">GOLD COINS</span></span>
                             </div>
                           </div>
 
@@ -1255,13 +1255,13 @@ export default function ChildDashboard({
                                     </div>
                                     <div>
                                       <h4 className={`font-extrabold text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
-                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} COINS</p>
+                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD COINS</p>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col items-end gap-2 shrink-0">
                                     <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
-                                      ⭐ {rew.cost_points} COINS
+                                      🪙 {rew.cost_points} GOLD COINS
                                     </span>
 
                                     <div className="flex flex-col gap-1.5 items-end">
