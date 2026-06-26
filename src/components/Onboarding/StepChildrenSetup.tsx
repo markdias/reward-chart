@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { Child } from '../../types';
-import { CHARACTER_PACKS, getCharacterStage } from '../../data/characters';
+import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User } from 'lucide-react';
 
 interface StepChildrenSetupProps {
@@ -16,6 +16,7 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
   const [isAdding, setIsAdding] = useState(initialChildren.length === 0);
   const [name, setName] = useState('');
   const [selectedCharId, setSelectedCharId] = useState(CHARACTER_PACKS[0].id);
+  const [selectedAvatar, setSelectedAvatar] = useState(PRECANNED_AVATARS[0]);
 
   const handleAddChild = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +28,12 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
         id: `temp_${Date.now()}`,
         name: name.trim(),
         character_id: selectedCharId,
-        avatar_url: getCharacterStage(selectedCharId, 4).image_url || '',
+        avatar_url: selectedAvatar,
       }
     ]);
     setName('');
     setSelectedCharId(CHARACTER_PACKS[0].id);
+    setSelectedAvatar(PRECANNED_AVATARS[0]);
     setIsAdding(false);
   };
 
@@ -96,6 +98,22 @@ export default function StepChildrenSetup({ theme, initialChildren, onNext }: St
                     }`}
                   >
                     <span className="text-2xl">{getCharacterStage(char.id, 4).emoji}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-2`}>Select Avatar</label>
+              <div className="grid grid-cols-6 gap-2">
+                {PRECANNED_AVATARS.map(url => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => setSelectedAvatar(url)}
+                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${selectedAvatar === url ? 'border-amber-500 bg-amber-50' : 'border-transparent hover:border-slate-500/50'}`}
+                  >
+                    <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
                   </button>
                 ))}
               </div>

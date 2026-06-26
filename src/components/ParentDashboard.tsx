@@ -6,7 +6,7 @@ import {
   BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
-import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
+import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
@@ -14,27 +14,6 @@ import { ParentProfile, FamilyMessage } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
 
-const PRECANNED_AVATARS = [
-  // Boy-themed new avatars
-  '/avatars/boy_fox.png',
-  '/avatars/boy_puppy.png',
-  '/avatars/boy_kitten.png',
-  '/avatars/boy_bunny.png',
-  '/avatars/boy_bear.png',
-  '/avatars/boy_owl.png',
-  // Girl-themed new avatars
-  '/avatars/girl_fox.png',
-  '/avatars/girl_puppy.png',
-  '/avatars/girl_kitten.png',
-  '/avatars/girl_bunny.png',
-  '/avatars/girl_bear.png',
-  '/avatars/girl_owl.png',
-  // Boy items
-  '/avatars/boy_car.png',
-  '/avatars/boy_rocket.png',
-  '/avatars/boy_dino.png',
-  '/avatars/boy_gamepad.png'
-];
 
 interface ParentDashboardProps {
   children: Child[];
