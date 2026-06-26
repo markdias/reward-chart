@@ -8,6 +8,7 @@ import { getCharacterStage } from '../data/characters';
 interface LandingPageProps {
   onEnterArcade: (role: 'parent' | 'child') => void;
   theme: ThemeId;
+  onSignIn?: () => void;
 }
 
 const CAROUSEL_CHARACTERS = [
@@ -73,7 +74,7 @@ const CAROUSEL_CHARACTERS = [
   },
 ];
 
-export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) {
+export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingPageProps) {
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   
   const charactersWithImages = CAROUSEL_CHARACTERS.map(char => {
@@ -119,7 +120,14 @@ export default function LandingPage({ onEnterArcade, theme }: LandingPageProps) 
         </div>
 
         <button
-          onClick={() => handleEnterClick('parent')}
+          onClick={() => {
+            playSound.click();
+            if (onSignIn) {
+              onSignIn();
+            } else {
+              handleEnterClick('parent');
+            }
+          }}
           className={`gamepad-button ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
           id="landing-signin-btn"
         >
