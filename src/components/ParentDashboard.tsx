@@ -510,32 +510,32 @@ export default function ParentDashboard({
 
         <main className="lg:col-span-9 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Activity className="w-5 h-5 animate-pulse" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
+            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>VERIFIED QUESTS</span>
-                <span className={`text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} COMPLETED</span>
-              </div>
-            </div>
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Award className="w-5 h-5" />
-              </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>ACTIVE PILOTS</span>
-                <span className={`text-xl font-black ${styles.titleColor} font-mono`}>{children.length} ACTIVE</span>
+              <div className="w-full">
+                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
+                <span className={`text-sm sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
               </div>
             </div>
-            <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex items-center gap-4`}>
-              <div className={`p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
-                <ShieldAlert className="w-5 h-5 animate-bounce-slow" />
+            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
+                <Award className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <span className={`block text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold`}>AWAITING REVIEW</span>
-                <span className={`text-xl font-black text-rose-600 font-mono`}>{totalPending} PENDING</span>
+              <div className="w-full">
+                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
+                <span className={`text-sm sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">PILOTS</span></span>
+              </div>
+            </div>
+            <div className={`p-2 sm:p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
+              <div className={`p-1.5 sm:p-3 rounded-lg sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 animate-bounce-slow" />
+              </div>
+              <div className="w-full">
+                <span className={`block text-[7px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
+                <span className={`text-sm sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
               </div>
             </div>
           </div>
