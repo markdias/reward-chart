@@ -465,21 +465,9 @@ export default function App() {
           points: updatedChild.points,
           level: updatedChild.level,
           xp_in_level: updatedChild.xp_in_level,
-          xp_to_level_up: updatedChild.xp_to_level_up,
-          savings_pot_unlock_level: updatedChild.savings_pot_unlock_level,
-          savings_pot_unlock_xp: updatedChild.savings_pot_unlock_xp,
-          food_pot_unlock_level: updatedChild.food_pot_unlock_level,
-          food_pot_unlock_xp: updatedChild.food_pot_unlock_xp,
-          gifting_pot_unlock_level: updatedChild.gifting_pot_unlock_level,
-          gifting_pot_unlock_xp: updatedChild.gifting_pot_unlock_xp,
           streak_days: updatedChild.streak_days,
           last_active_date: updatedChild.last_active_date,
-          level_up_gold_reward: updatedChild.level_up_gold_reward,
           level_up_bonuses_received: updatedChild.level_up_bonuses_received,
-          weekly_xp_target: updatedChild.weekly_xp_target,
-          weekly_reward_points: updatedChild.weekly_reward_points,
-          monthly_xp_target: updatedChild.monthly_xp_target,
-          monthly_reward_points: updatedChild.monthly_reward_points,
           weekly_xp: updatedChild.weekly_xp,
           monthly_xp: updatedChild.monthly_xp,
           last_active_week: updatedChild.last_active_week,
@@ -804,14 +792,14 @@ export default function App() {
     let newXp = (child.xp_in_level || 0) + addedXp;
     let newPoints = child.points;
     let bonusesReceived = child.level_up_bonuses_received || 0;
-    const xpToLevelUp = child.xp_to_level_up ?? 100;
+    const xpToLevelUp = parentProfile?.xp_to_level_up ?? 100;
 
     // 1. Level up check
     while (newXp >= xpToLevelUp) {
       newLevel++;
       newXp -= xpToLevelUp;
       
-      const levelUpBonus = child.level_up_gold_reward ?? 500;
+      const levelUpBonus = parentProfile?.level_up_gold_reward ?? 500;
       newPoints += levelUpBonus;
       bonusesReceived++;
       
@@ -842,8 +830,8 @@ export default function App() {
     monthlyXp += addedXp;
 
     // Check Weekly Goal
-    const weeklyTarget = child.weekly_xp_target || 300;
-    const weeklyReward = child.weekly_reward_points || 200;
+    const weeklyTarget = parentProfile?.weekly_xp_target || 300;
+    const weeklyReward = parentProfile?.weekly_reward_points || 200;
     let lastWeeklyBonus = child.last_weekly_bonus_awarded;
 
     // The bonus key is the ISO string of the reset date, to uniquely identify the week cycle!
@@ -855,8 +843,8 @@ export default function App() {
     }
 
     // Check Monthly Goal
-    const monthlyTarget = child.monthly_xp_target || 1000;
-    const monthlyReward = child.monthly_reward_points || 1000;
+    const monthlyTarget = parentProfile?.monthly_xp_target || 1000;
+    const monthlyReward = parentProfile?.monthly_reward_points || 1000;
     let lastMonthlyBonus = child.last_monthly_bonus_awarded;
 
     const currentMonthCycleId = nextMonthlyReset.toISOString();
@@ -868,8 +856,8 @@ export default function App() {
 
     // 3. Auto-unlock Savings Pot
     let savingsUnlocked = child.savings_unlocked || false;
-    const savingsLvl = child.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = child.savings_pot_unlock_xp ?? 50;
+    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
     if ((newLevel > savingsLvl || (newLevel === savingsLvl && newXp >= savingsXpReq)) && !savingsUnlocked) {
       savingsUnlocked = true;
       setTimeout(() => playSound.evolution(), 600);
@@ -877,8 +865,8 @@ export default function App() {
 
     // 4. Auto-unlock Food Pot
     let foodPotUnlocked = child.food_pot_unlocked || false;
-    const foodLvl = child.food_pot_unlock_level ?? 2;
-    const foodXpReq = child.food_pot_unlock_xp ?? 50;
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
     if ((newLevel > foodLvl || (newLevel === foodLvl && newXp >= foodXpReq)) && !foodPotUnlocked) {
       foodPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 900);
@@ -886,8 +874,8 @@ export default function App() {
 
     // 5. Auto-unlock Gifting Pot
     let giftingPotUnlocked = child.gifting_unlocked || false;
-    const giftingLvl = child.gifting_pot_unlock_level ?? 3;
-    const giftingXpReq = child.gifting_pot_unlock_xp ?? 50;
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
     if ((newLevel > giftingLvl || (newLevel === giftingLvl && newXp >= giftingXpReq)) && !giftingPotUnlocked) {
       giftingPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 1200);
@@ -1778,6 +1766,7 @@ export default function App() {
             className="w-full"
           >
             <ChildDashboard
+              parentProfile={parentProfile}
               children={children}
               tasks={tasks}
               completions={completions}

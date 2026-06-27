@@ -21,6 +21,18 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [pin, setPin] = useState(parentProfile?.pin || '');
+  const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
+  const [weeklyXpTarget, setWeeklyXpTarget] = useState(parentProfile?.weekly_xp_target ?? 300);
+  const [weeklyRewardPoints, setWeeklyRewardPoints] = useState(parentProfile?.weekly_reward_points ?? 200);
+  const [monthlyXpTarget, setMonthlyXpTarget] = useState(parentProfile?.monthly_xp_target ?? 1200);
+  const [monthlyRewardPoints, setMonthlyRewardPoints] = useState(parentProfile?.monthly_reward_points ?? 1000);
+  const [xpToLevelUp, setXpToLevelUp] = useState(parentProfile?.xp_to_level_up ?? 100);
+  const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 1);
+  const [savingsPotUnlockXp, setSavingsPotUnlockXp] = useState(parentProfile?.savings_pot_unlock_xp ?? 50);
+  const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 2);
+  const [foodPotUnlockXp, setFoodPotUnlockXp] = useState(parentProfile?.food_pot_unlock_xp ?? 50);
+  const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 3);
+  const [giftingPotUnlockXp, setGiftingPotUnlockXp] = useState(parentProfile?.gifting_pot_unlock_xp ?? 50);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -71,7 +83,21 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       // Update the current user's name
       const { error: nameError } = await supabase
         .from('parent_profiles')
-        .update({ name })
+        .update({ 
+          name,
+          level_up_gold_reward: levelUpGoldReward,
+          weekly_xp_target: weeklyXpTarget,
+          weekly_reward_points: weeklyRewardPoints,
+          monthly_xp_target: monthlyXpTarget,
+          monthly_reward_points: monthlyRewardPoints,
+          xp_to_level_up: xpToLevelUp,
+          savings_pot_unlock_level: savingsPotUnlockLevel,
+          savings_pot_unlock_xp: savingsPotUnlockXp,
+          food_pot_unlock_level: foodPotUnlockLevel,
+          food_pot_unlock_xp: foodPotUnlockXp,
+          gifting_pot_unlock_level: giftingPotUnlockLevel,
+          gifting_pot_unlock_xp: giftingPotUnlockXp
+        })
         .eq('user_id', parentProfile.user_id);
         
       if (nameError) throw nameError;
@@ -278,6 +304,136 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               placeholder="E.g. The Smiths"
               className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
             />
+          </div>
+
+          <div className="pt-4 border-t border-stone-200">
+            <h4 className={`text-xs font-bold font-display uppercase tracking-widest ${c.text} mb-4`}>Global Rewards & Targets</h4>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Level Up Gold Reward</label>
+                <input 
+                  type="number" 
+                  value={levelUpGoldReward}
+                  onChange={(e) => setLevelUpGoldReward(Number(e.target.value))}
+                  className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Weekly XP Target</label>
+                  <input 
+                    type="number" 
+                    value={weeklyXpTarget}
+                    onChange={(e) => setWeeklyXpTarget(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Weekly Gold Bonus</label>
+                  <input 
+                    type="number" 
+                    value={weeklyRewardPoints}
+                    onChange={(e) => setWeeklyRewardPoints(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Monthly XP Target</label>
+                  <input 
+                    type="number" 
+                    value={monthlyXpTarget}
+                    onChange={(e) => setMonthlyXpTarget(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Monthly Gold Bonus</label>
+                  <input 
+                    type="number" 
+                    value={monthlyRewardPoints}
+                    onChange={(e) => setMonthlyRewardPoints(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-stone-200">
+            <h4 className={`text-xs font-bold font-display uppercase tracking-widest ${c.text} mb-4`}>Levels & Pots Configuration</h4>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>XP to Level Up</label>
+                <input 
+                  type="number" 
+                  value={xpToLevelUp}
+                  onChange={(e) => setXpToLevelUp(Number(e.target.value))}
+                  className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-emerald-600`}>Savings Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={savingsPotUnlockLevel}
+                    onChange={(e) => setSavingsPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-emerald-200 text-stone-700 bg-emerald-50 focus:ring-2 focus:ring-emerald-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-emerald-600`}>Savings Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={savingsPotUnlockXp}
+                    onChange={(e) => setSavingsPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-emerald-200 text-stone-700 bg-emerald-50 focus:ring-2 focus:ring-emerald-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-orange-600`}>Food Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={foodPotUnlockLevel}
+                    onChange={(e) => setFoodPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-orange-200 text-stone-700 bg-orange-50 focus:ring-2 focus:ring-orange-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-orange-600`}>Food Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={foodPotUnlockXp}
+                    onChange={(e) => setFoodPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-orange-200 text-stone-700 bg-orange-50 focus:ring-2 focus:ring-orange-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-rose-600`}>Gifting Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={giftingPotUnlockLevel}
+                    onChange={(e) => setGiftingPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-rose-600`}>Gifting Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={giftingPotUnlockXp}
+                    onChange={(e) => setGiftingPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <button 
             onClick={handleSaveProfile}

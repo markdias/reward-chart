@@ -6,6 +6,18 @@ export interface ParentProfile {
   family_name?: string | null;
   pin: string;
   share_token: string | null;
+  level_up_gold_reward?: number;
+  xp_to_level_up?: number;
+  savings_pot_unlock_level?: number;
+  savings_pot_unlock_xp?: number;
+  food_pot_unlock_level?: number;
+  food_pot_unlock_xp?: number;
+  gifting_pot_unlock_level?: number;
+  gifting_pot_unlock_xp?: number;
+  weekly_xp_target?: number;
+  weekly_reward_points?: number;
+  monthly_xp_target?: number;
+  monthly_reward_points?: number;
 }
 
 export interface Child {
@@ -19,20 +31,8 @@ export interface Child {
   xp_in_level: number; // Progress within the current level (0-100)
   pet_food: number;
   streak_days: number;
-  level_up_gold_reward?: number; // Custom gold amount for leveling up
   level_up_preference?: 'points' | 'reward'; // Deprecated, keeping for backwards compatibility
   level_up_bonuses_received?: number; // Count of bonuses given
-  xp_to_level_up?: number;
-  savings_pot_unlock_level?: number;
-  savings_pot_unlock_xp?: number;
-  food_pot_unlock_level?: number;
-  food_pot_unlock_xp?: number;
-  gifting_pot_unlock_level?: number;
-  gifting_pot_unlock_xp?: number;
-  weekly_xp_target?: number;
-  weekly_reward_points?: number;
-  monthly_xp_target?: number;
-  monthly_reward_points?: number;
   last_weekly_bonus_awarded?: string; // e.g. "2026-W25"
   last_monthly_bonus_awarded?: string; // e.g. "2026-06"
   weekly_xp?: number;

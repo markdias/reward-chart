@@ -5,10 +5,10 @@ import {
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils
 } from 'lucide-react';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ThemeId, ParentProfile } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
-import { ThemeId, THEME_PRESETS } from '../utils/theme';
+import { THEME_PRESETS } from '../utils/theme';
 import { getCurrentWeekKey } from '../utils/date';
 
 const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string }) => (
@@ -27,6 +27,7 @@ const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string })
 );
 
 interface ChildDashboardProps {
+  parentProfile?: ParentProfile | null;
   children: Child[];
   tasks: Task[];
   completions: TaskCompletion[];
@@ -53,6 +54,7 @@ interface ChildDashboardProps {
 }
 
 export default function ChildDashboard({
+  parentProfile,
   children,
   tasks,
   completions,
@@ -969,13 +971,13 @@ export default function ChildDashboard({
                         <div className={`w-full h-3 ${styles.innerCard} rounded-full overflow-hidden p-0.5`}>
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(100, ((activeChild.xp_in_level || 0) / (activeChild.xp_to_level_up ?? 100)) * 100)}%` }}
+                            animate={{ width: `${Math.min(100, ((activeChild.xp_in_level || 0) / (parentProfile?.xp_to_level_up ?? 100)) * 100)}%` }}
                             transition={{ duration: 1 }}
                             className={`h-full rounded-full bg-gradient-to-r ${activeChildStage.color_theme}`}
                           />
                         </div>
                         <div className="flex justify-between items-center pt-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / {activeChild.xp_to_level_up ?? 100}</span>
+                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / {parentProfile?.xp_to_level_up ?? 100}</span>
                         </div>
                       </div>
 
@@ -1020,12 +1022,12 @@ export default function ChildDashboard({
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
                       const isWeeklyReset = !nextWeekly || now >= nextWeekly;
                       const dispWeeklyXp = isWeeklyReset ? 0 : (activeChild.weekly_xp || 0);
-                      const weeklyPct = Math.min(100, Math.round((dispWeeklyXp / (activeChild.weekly_xp_target || 300)) * 100));
+                      const weeklyPct = Math.min(100, Math.round((dispWeeklyXp / (parentProfile?.weekly_xp_target || 300)) * 100));
 
                       const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
                       const isMonthlyReset = !nextMonthly || now >= nextMonthly;
                       const dispMonthlyXp = isMonthlyReset ? 0 : (activeChild.monthly_xp || 0);
-                      const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (activeChild.monthly_xp_target || 1000)) * 100));
+                      const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (parentProfile?.monthly_xp_target || 1000)) * 100));
 
                       return (
                         <>
@@ -1116,7 +1118,7 @@ export default function ChildDashboard({
                                       />
                                     </div>
                                     <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispWeeklyXp} / {(activeChild.weekly_xp_target || 300)} XP</span>
+                                      <span>{dispWeeklyXp} / {(parentProfile?.weekly_xp_target || 300)} XP</span>
                                       <span>{weeklyPct}% COMPLETED</span>
                                     </div>
                                   </>
@@ -1141,7 +1143,7 @@ export default function ChildDashboard({
                                       />
                                     </div>
                                     <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispMonthlyXp} / {(activeChild.monthly_xp_target || 1000)} XP</span>
+                                      <span>{dispMonthlyXp} / {(parentProfile?.monthly_xp_target || 1000)} XP</span>
                                       <span>{monthlyPct}% COMPLETED</span>
                                     </div>
                                   </>
@@ -1659,20 +1661,20 @@ export default function ChildDashboard({
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
-                          {!activeChild.savings_unlocked && (activeChild.level < (activeChild.savings_pot_unlock_level ?? 1) || (activeChild.level === (activeChild.savings_pot_unlock_level ?? 1) && activeChild.xp_in_level < (activeChild.savings_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.savings_unlocked && (activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 1) || (activeChild.level === (parentProfile?.savings_pot_unlock_level ?? 1) && activeChild.xp_in_level < (parentProfile?.savings_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {activeChild.savings_pot_unlock_level ?? 1}, {activeChild.savings_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 1}, {parentProfile?.savings_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                       const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((activeChild.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (activeChild.savings_pot_unlock_xp ?? 50);
+                                      const xpReq = ((parentProfile?.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (parentProfile?.savings_pot_unlock_xp ?? 50);
                                       return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
                                     })()}%`
                                   }}
@@ -1682,9 +1684,9 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
                                 {(() => {
-                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                   const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((activeChild.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (activeChild.savings_pot_unlock_xp ?? 50);
+                                  const xpReq = ((parentProfile?.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (parentProfile?.savings_pot_unlock_xp ?? 50);
                                   return `${xpEarned} / ${xpReq} XP`;
                                 })()}
                               </span>
@@ -1838,20 +1840,20 @@ export default function ChildDashboard({
                           )}
 
                           {/* Food Pot Locked Preview */}
-                          {!activeChild.food_pot_unlocked && (activeChild.level < (activeChild.food_pot_unlock_level ?? 2) || (activeChild.level === (activeChild.food_pot_unlock_level ?? 2) && activeChild.xp_in_level < (activeChild.food_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.food_pot_unlocked && (activeChild.level < (parentProfile?.food_pot_unlock_level ?? 2) || (activeChild.level === (parentProfile?.food_pot_unlock_level ?? 2) && activeChild.xp_in_level < (parentProfile?.food_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {activeChild.food_pot_unlock_level ?? 2}, {activeChild.food_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 2}, {parentProfile?.food_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                       const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((activeChild.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (activeChild.food_pot_unlock_xp ?? 50);
+                                      const xpReq = ((parentProfile?.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (parentProfile?.food_pot_unlock_xp ?? 50);
                                       return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
                                     })()}%`
                                   }}
@@ -1861,9 +1863,9 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
                                 {(() => {
-                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                   const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((activeChild.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (activeChild.food_pot_unlock_xp ?? 50);
+                                  const xpReq = ((parentProfile?.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (parentProfile?.food_pot_unlock_xp ?? 50);
                                   return `${xpEarned} / ${xpReq} XP`;
                                 })()}
                               </span>
@@ -2128,20 +2130,20 @@ export default function ChildDashboard({
                           )}
 
                           {/* Gifting Pot Locked Preview */}
-                          {!activeChild.gifting_unlocked && (activeChild.level < (activeChild.gifting_pot_unlock_level ?? 3) || (activeChild.level === (activeChild.gifting_pot_unlock_level ?? 3) && activeChild.xp_in_level < (activeChild.gifting_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.gifting_unlocked && (activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 3) || (activeChild.level === (parentProfile?.gifting_pot_unlock_level ?? 3) && activeChild.xp_in_level < (parentProfile?.gifting_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {activeChild.gifting_pot_unlock_level ?? 3}, {activeChild.gifting_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 3}, {parentProfile?.gifting_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                       const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((activeChild.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (activeChild.gifting_pot_unlock_xp ?? 50);
+                                      const xpReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (parentProfile?.gifting_pot_unlock_xp ?? 50);
                                       return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
                                     })()}%`
                                   }}
@@ -2151,9 +2153,9 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
                                 {(() => {
-                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
                                   const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((activeChild.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (activeChild.gifting_pot_unlock_xp ?? 50);
+                                  const xpReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (parentProfile?.gifting_pot_unlock_xp ?? 50);
                                   return `${xpEarned} / ${xpReq} XP`;
                                 })()}
                               </span>
