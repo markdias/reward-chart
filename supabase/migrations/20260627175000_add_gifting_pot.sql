@@ -7,11 +7,11 @@ ADD COLUMN gifting_unlock_seen boolean DEFAULT false;
 -- Create gifting_requests table
 CREATE TABLE gifting_requests (
     id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-    child_id uuid REFERENCES children(id) ON DELETE CASCADE,
+    child_id text REFERENCES children(id) ON DELETE CASCADE,
     parent_id uuid REFERENCES parent_profiles(user_id) ON DELETE CASCADE,
     amount numeric NOT NULL,
     type text NOT NULL CHECK (type IN ('charity', 'sibling')),
-    sibling_id uuid REFERENCES children(id) ON DELETE CASCADE,
+    sibling_id text REFERENCES children(id) ON DELETE CASCADE,
     charity_name text,
     status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
