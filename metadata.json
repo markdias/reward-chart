@@ -1,0 +1,6 @@
+{
+  "name": "Reward Chart",
+  "description": "A gamified reward chart app for families where children can complete tasks, earn points, and evolve adorable character companions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
