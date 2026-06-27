@@ -346,7 +346,7 @@ export default function App() {
           const { data: dbGifting, error: errGifting } = await supabase
             .from('gifting_requests')
             .select('*')
-            .eq('parent_id', currentFamilyId);
+            .eq('family_id', currentFamilyId);
 
           if (!errGifting) {
             setGiftingRequests(dbGifting || []);
@@ -467,12 +467,7 @@ export default function App() {
           xp_in_level: updatedChild.xp_in_level,
           streak_days: updatedChild.streak_days,
           last_active_date: updatedChild.last_active_date,
-          level_up_gold_reward: updatedChild.level_up_gold_reward,
           level_up_bonuses_received: updatedChild.level_up_bonuses_received,
-          weekly_xp_target: updatedChild.weekly_xp_target,
-          weekly_reward_points: updatedChild.weekly_reward_points,
-          monthly_xp_target: updatedChild.monthly_xp_target,
-          monthly_reward_points: updatedChild.monthly_reward_points,
           weekly_xp: updatedChild.weekly_xp,
           monthly_xp: updatedChild.monthly_xp,
           last_active_week: updatedChild.last_active_week,
@@ -680,7 +675,7 @@ export default function App() {
         await supabase.from('completions').delete().in('child_id', childIds);
       }
       await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
-      await supabase.from('gifting_requests').delete().eq('parent_id', familyId);
+      await supabase.from('gifting_requests').delete().eq('family_id', familyId);
 
       const updatedChildren = children.map(c => ({
         ...c,
@@ -797,13 +792,14 @@ export default function App() {
     let newXp = (child.xp_in_level || 0) + addedXp;
     let newPoints = child.points;
     let bonusesReceived = child.level_up_bonuses_received || 0;
+    const xpToLevelUp = parentProfile?.xp_to_level_up ?? 100;
 
     // 1. Level up check
-    while (newXp >= 100) {
+    while (newXp >= xpToLevelUp) {
       newLevel++;
-      newXp -= 100;
+      newXp -= xpToLevelUp;
       
-      const levelUpBonus = child.level_up_gold_reward ?? 500;
+      const levelUpBonus = parentProfile?.level_up_gold_reward ?? 500;
       newPoints += levelUpBonus;
       bonusesReceived++;
       
@@ -834,8 +830,8 @@ export default function App() {
     monthlyXp += addedXp;
 
     // Check Weekly Goal
-    const weeklyTarget = child.weekly_xp_target || 300;
-    const weeklyReward = child.weekly_reward_points || 200;
+    const weeklyTarget = parentProfile?.weekly_xp_target || 300;
+    const weeklyReward = parentProfile?.weekly_reward_points || 200;
     let lastWeeklyBonus = child.last_weekly_bonus_awarded;
 
     // The bonus key is the ISO string of the reset date, to uniquely identify the week cycle!
@@ -847,8 +843,8 @@ export default function App() {
     }
 
     // Check Monthly Goal
-    const monthlyTarget = child.monthly_xp_target || 1000;
-    const monthlyReward = child.monthly_reward_points || 1000;
+    const monthlyTarget = parentProfile?.monthly_xp_target || 1000;
+    const monthlyReward = parentProfile?.monthly_reward_points || 1000;
     let lastMonthlyBonus = child.last_monthly_bonus_awarded;
 
     const currentMonthCycleId = nextMonthlyReset.toISOString();
@@ -858,23 +854,29 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Savings Pot at Level 1, 50 XP (or Level 2+)
+    // 3. Auto-unlock Savings Pot
     let savingsUnlocked = child.savings_unlocked || false;
-    if ((newLevel > 1 || newXp >= 50) && !savingsUnlocked) {
+    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
+    if ((newLevel > savingsLvl || (newLevel === savingsLvl && newXp >= savingsXpReq)) && !savingsUnlocked) {
       savingsUnlocked = true;
       setTimeout(() => playSound.evolution(), 600);
     }
 
-    // 4. Auto-unlock Food Pot at Level 2, 50 XP (or Level 3+)
+    // 4. Auto-unlock Food Pot
     let foodPotUnlocked = child.food_pot_unlocked || false;
-    if ((newLevel > 2 || (newLevel === 2 && newXp >= 50)) && !foodPotUnlocked) {
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
+    if ((newLevel > foodLvl || (newLevel === foodLvl && newXp >= foodXpReq)) && !foodPotUnlocked) {
       foodPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 900);
     }
 
-    // 5. Auto-unlock Gifting Pot at Level 3, 50 XP (or Level 4+)
+    // 5. Auto-unlock Gifting Pot
     let giftingPotUnlocked = child.gifting_unlocked || false;
-    if ((newLevel > 3 || (newLevel === 3 && newXp >= 50)) && !giftingPotUnlocked) {
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
+    if ((newLevel > giftingLvl || (newLevel === giftingLvl && newXp >= giftingXpReq)) && !giftingPotUnlocked) {
       giftingPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 1200);
     }
@@ -916,28 +918,34 @@ export default function App() {
     targetChild = { ...targetChild, ...updates };
 
     // Check if savings pot requirements are met
-    if (!targetChild.savings_unlocked && (targetChild.level > 1 || (targetChild.level === 1 && (targetChild.xp_in_level || 0) >= 50))) {
+    const savingsLvl = targetChild.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = targetChild.savings_pot_unlock_xp ?? 50;
+    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
       targetChild.savings_unlocked = true;
       targetChild.savings_unlock_seen = false;
-    } else if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
+    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
       targetChild.savings_unlocked = false;
       targetChild.savings_unlock_seen = false;
     }
 
-    // Check if food pot requirements are met (Level 2, 50 XP)
-    if (!targetChild.food_pot_unlocked && (targetChild.level > 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) >= 50))) {
+    // Check if food pot requirements are met
+    const foodLvl = targetChild.food_pot_unlock_level ?? 2;
+    const foodXpReq = targetChild.food_pot_unlock_xp ?? 50;
+    if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
-    } else if (targetChild.food_pot_unlocked && (targetChild.level < 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) < 50))) {
+    } else if (targetChild.food_pot_unlocked && (targetChild.level < foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) < foodXpReq))) {
       targetChild.food_pot_unlocked = false;
       targetChild.food_pot_unlock_seen = false;
     }
 
-    // Check if gifting pot requirements are met (Level 3, 50 XP)
-    if (!targetChild.gifting_unlocked && (targetChild.level > 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) >= 50))) {
+    // Check if gifting pot requirements are met
+    const giftingLvl = targetChild.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = targetChild.gifting_pot_unlock_xp ?? 50;
+    if (!targetChild.gifting_unlocked && (targetChild.level > giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) >= giftingXpReq))) {
       targetChild.gifting_unlocked = true;
       targetChild.gifting_unlock_seen = false;
-    } else if (targetChild.gifting_unlocked && (targetChild.level < 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) < 50))) {
+    } else if (targetChild.gifting_unlocked && (targetChild.level < giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) < giftingXpReq))) {
       targetChild.gifting_unlocked = false;
       targetChild.gifting_unlock_seen = false;
     }
@@ -1552,7 +1560,7 @@ export default function App() {
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       child_id: childId,
-      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      family_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       amount,
       type: 'charity',
       charity_name: charityName,
@@ -1575,7 +1583,7 @@ export default function App() {
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       child_id: childId,
-      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      family_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       amount,
       type: 'sibling',
       sibling_id: siblingId,
@@ -1758,6 +1766,7 @@ export default function App() {
             className="w-full"
           >
             <ChildDashboard
+              parentProfile={parentProfile}
               children={children}
               tasks={tasks}
               completions={completions}

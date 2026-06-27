@@ -179,8 +179,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>OFFLINE ZONE</span>
-                <span className={`text-[11px] font-bold ${styles.textColor}`}>Local Sandbox Save</span>
+                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
+                <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
               </div>
             </div>
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
@@ -258,28 +258,36 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
               </div>
 
-              {/* Dynamic stats bars */}
-              <div className="space-y-2">
-                {[
-                  { label: 'POWER SPEED', val: activeChar.stats.power, color: 'bg-rose-500' },
-                  { label: 'CHORE MOTIVATION', val: activeChar.stats.fun, color: 'bg-amber-500' },
-                  { label: 'BRAIN INTELLECT', val: activeChar.stats.brains, color: 'bg-emerald-500' }
-                ].map((stat, i) => (
-                  <div key={i} className="space-y-1">
-                    <div className={`flex justify-between text-[10px] font-mono font-bold tracking-wider ${styles.textMuted}`}>
-                      <span>{stat.label}</span>
-                      <span className={styles.textColor}>{stat.val} XP</span>
-                    </div>
-                    <div className="h-2 bg-stone-200 rounded-full overflow-hidden p-0.5 border border-stone-300">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.val}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${stat.color}`}
-                      />
-                    </div>
+              {/* Progression Preview */}
+              <div className={`p-4 rounded-2xl ${styles.innerCard} border border-stone-200/50 space-y-3 mt-2`}>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
+                      HOW IT WORKS
+                    </span>
+                    <span className={`text-sm font-bold font-display ${styles.textColor}`}>
+                      Level 4 <ArrowRight className="inline w-3 h-3 mx-1 text-stone-400" /> Level 5
+                    </span>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-amber-500 animate-pulse">+50 XP</span>
+                  </div>
+                </div>
+                
+                <div className="h-3 bg-stone-200/80 rounded-full overflow-hidden p-0.5 border border-stone-300/50 relative">
+                  <motion.div
+                    initial={{ width: '40%' }}
+                    animate={{ width: '75%' }}
+                    transition={{ duration: 1.5, ease: 'easeInOut', repeat: Infinity, repeatType: 'reverse', repeatDelay: 1 }}
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500"
+                  />
+                  {/* Subtle shine effect on the bar */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 rounded-t-full" />
+                </div>
+                
+                <p className={`text-[11px] leading-tight ${styles.textMuted}`}>
+                  Complete real-world tasks to earn XP. Leveling up unlocks new pots and evolves your companion!
+                </p>
               </div>
             </div>
           </div>
@@ -287,7 +295,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           {/* Quick Select Character Carousel Grid */}
           <div className="space-y-2">
             <span className={`text-[10px] font-mono font-bold ${styles.textMuted} tracking-wider uppercase block`}>
-              TAP TO SWITCH COMPANIONS (FULLY EVOLVED)
+              TAP TO PREVIEW COMPANIONS
             </span>
             <div className="grid grid-cols-6 gap-2" id="character-carousel-list">
               {charactersWithImages.map((char, index) => {
@@ -362,7 +370,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">2. Save for Goals</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Move coins into the secure Savings Pot to protect them from impulse buys. Set big goals and track progress over time.
+                  Unlock the Savings Pot as you level up! Move coins to protect them from impulse buys, set big goals, and track progress over time.
                 </p>
               </div>
 
@@ -372,7 +380,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">3. Weekly Budgeting</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Allocate coins weekly to the Food Pot to feed their digital pet. Teaches budgeting for recurring expenses and responsibility!
+                  Level up to unlock the Food Pot and feed your digital pet! Teaches budgeting for recurring expenses and daily responsibility.
                 </p>
               </div>
 
@@ -382,7 +390,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">4. Gifting & Generosity</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  Donate coins to charity or gift them to a sibling. Fosters kindness and shows how money can be used to help others!
+                  Reach higher levels to unlock the Gifting Pot. Donate coins to charity or gift them to a sibling to learn the value of giving back!
                 </p>
               </div>
             </div>

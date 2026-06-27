@@ -1,14 +1,16 @@
 -- Add Gifting Pot columns to children table
 ALTER TABLE children
-ADD COLUMN gifting_pot numeric DEFAULT 0,
-ADD COLUMN gifting_unlocked boolean DEFAULT false,
-ADD COLUMN gifting_unlock_seen boolean DEFAULT false;
+ADD COLUMN IF NOT EXISTS gifting_pot numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS gifting_unlocked boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS gifting_unlock_seen boolean DEFAULT false;
 
--- Create gifting_requests table
+-- Drop and recreate gifting_requests table to fix schema mismatch
+DROP TABLE IF EXISTS gifting_requests CASCADE;
+
 CREATE TABLE gifting_requests (
-    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id text PRIMARY KEY,
     child_id text REFERENCES children(id) ON DELETE CASCADE,
-    parent_id uuid REFERENCES parent_profiles(user_id) ON DELETE CASCADE,
+    family_id text NOT NULL,
     amount numeric NOT NULL,
     type text NOT NULL CHECK (type IN ('charity', 'sibling')),
     sibling_id text REFERENCES children(id) ON DELETE CASCADE,
@@ -21,14 +23,27 @@ CREATE TABLE gifting_requests (
 ALTER TABLE gifting_requests ENABLE ROW LEVEL SECURITY;
 
 -- Add RLS policies for gifting_requests
+DROP POLICY IF EXISTS "Parents can manage their family gifting requests" ON gifting_requests;
 CREATE POLICY "Parents can manage their family gifting requests"
     ON gifting_requests
     FOR ALL
     USING (
-        parent_id IN (
-            SELECT user_id FROM parent_profiles 
-            WHERE family_id = (
-                SELECT family_id FROM parent_profiles WHERE user_id = auth.uid()
-            )
-        )
+        family_id = (SELECT family_id FROM parent_profiles WHERE user_id = auth.uid())
     );
+
+-- Force PostgREST schema cache reload to fix 400 errors immediately
+NOTIFY pgrst, 'reload schema';
+
+-- Enable Realtime for gifting_requests
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+    AND tablename = 'gifting_requests'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE gifting_requests;
+  END IF;
+END
+$$;

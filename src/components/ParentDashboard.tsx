@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target
 } from 'lucide-react';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
@@ -13,6 +13,7 @@ import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { ParentProfile, FamilyMessage } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import SettingsTab from './SettingsTab';
+import TargetsTab from './TargetsTab';
 
 
 interface ParentDashboardProps {
@@ -39,6 +40,7 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
+  theme: ThemeId;
   onParentCompleteTask: (taskId: string, childId: string) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
@@ -90,9 +92,10 @@ export default function ParentDashboard({
   onRequireAccount,
   giftingRequests = [],
   onApproveGiftingRequest,
-  onRejectGiftingRequest
+  onRejectGiftingRequest,
+  onDeleteAccount
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings'>('approvals');
+  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
@@ -456,9 +459,9 @@ export default function ParentDashboard({
               id="notifications-bell-btn"
             >
               <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
-              {pendingApprovals.length > 0 && (
+              {totalPending > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
-                  {pendingApprovals.length}
+                  {totalPending}
                 </span>
               )}
             </button>
@@ -477,22 +480,50 @@ export default function ParentDashboard({
                     <span className="text-[8px] text-stone-500 font-mono">LIVE UPDATE</span>
                   </div>
                   <div className="max-h-60 overflow-y-auto space-y-2">
-                    {pendingApprovals.length === 0 ? (
-                      <p className="text-xs text-stone-500 py-4 text-center">No pending chore approvals. Channels clear!</p>
+                    {totalPending === 0 ? (
+                      <p className="text-xs text-stone-500 py-4 text-center">No pending approvals. Channels clear!</p>
                     ) : (
-                      pendingApprovals.map(appr => {
-                        const child = children.find(c => c.id === appr.child_id);
-                        const task = tasks.find(t => t.id === appr.task_id);
-                        return (
-                          <div key={appr.id} className="p-2.5 bg-[#F5F2EA] rounded-xl text-xs flex gap-2 border border-stone-200 text-stone-850">
-                            <span className="text-lg">📢</span>
-                            <div>
-                              <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
-                              <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
+                      <>
+                        {pendingApprovals.map(appr => {
+                          const child = children.find(c => c.id === appr.child_id);
+                          const task = tasks.find(t => t.id === appr.task_id);
+                          return (
+                            <div key={appr.id} className="p-2.5 bg-[#F5F2EA] rounded-xl text-xs flex gap-2 border border-stone-200 text-stone-850">
+                              <span className="text-lg">📢</span>
+                              <div>
+                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
+                                <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                        {pendingRedemptions.map(req => {
+                          const child = children.find(c => c.id === req.child_id);
+                          return (
+                            <div key={req.id} className="p-2.5 bg-rose-50 rounded-xl text-xs flex gap-2 border border-rose-200 text-stone-850">
+                              <span className="text-lg">🎁</span>
+                              <div>
+                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
+                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{req.reward_name}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {pendingGiftingRequests.map(req => {
+                          const child = children.find(c => c.id === req.child_id);
+                          const typeIcon = req.type === 'charity' ? '🌍' : '💝';
+                          const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
+                          return (
+                            <div key={req.id} className="p-2.5 bg-blue-50 rounded-xl text-xs flex gap-2 border border-blue-200 text-stone-850">
+                              <span className="text-lg">{typeIcon}</span>
+                              <div>
+                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
+                                <p className="text-blue-600 font-semibold text-[11px] mt-0.5">{title}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
                     )}
                   </div>
                 </motion.div>
@@ -527,6 +558,7 @@ export default function ParentDashboard({
               { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.length },
+              { id: 'targets', label: 'TARGETS & POTS', icon: Target },
               { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck },
               { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
@@ -868,7 +900,7 @@ export default function ParentDashboard({
                                   <div>
                                     <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} requested:</span>
                                     <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {req.type === 'charity' ? `Donate to Charity (${req.charity_id})` : `Gift to Sibling (${children.find(c => c.id === req.sibling_id)?.name})`}
+                                      {req.type === 'charity' ? `Donate to Charity (${(req as any).charity_name})` : `Gift to Sibling (${children.find(c => c.id === req.sibling_id)?.name})`}
                                     </h3>
                                     <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
                                       REQUESTED AT: {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1047,7 +1079,7 @@ export default function ParentDashboard({
                               )}
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
                                 <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/100 XP)</span></span>
+                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/{parentProfile?.xp_to_level_up ?? 100} XP)</span></span>
                               </div>
                             </div>
                           </div>
@@ -1155,57 +1187,6 @@ export default function ParentDashboard({
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
-                                    <div className="pt-2 border-t border-slate-200/10 space-y-3">
-                                      <div>
-                                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Level Up Gold Reward</label>
-                                        <input
-                                          type="number"
-                                          value={child.level_up_gold_reward ?? 500}
-                                          onChange={(e) => onUpdateChildStats(child.id, { level_up_gold_reward: Number(e.target.value) })}
-                                          className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
-                                        />
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Weekly XP Target</label>
-                                          <input
-                                            type="number"
-                                            value={child.weekly_xp_target ?? 300}
-                                            onChange={(e) => onUpdateChildStats(child.id, { weekly_xp_target: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
-                                          />
-                                        </div>
-                                        <div>
-                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Weekly Gold Bonus</label>
-                                          <input
-                                            type="number"
-                                            value={child.weekly_reward_points ?? 200}
-                                            onChange={(e) => onUpdateChildStats(child.id, { weekly_reward_points: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Monthly XP Target</label>
-                                          <input
-                                            type="number"
-                                            value={child.monthly_xp_target ?? 1200}
-                                            onChange={(e) => onUpdateChildStats(child.id, { monthly_xp_target: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
-                                          />
-                                        </div>
-                                        <div>
-                                          <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Monthly Gold Bonus</label>
-                                          <input
-                                            type="number"
-                                            value={child.monthly_reward_points ?? 1000}
-                                            onChange={(e) => onUpdateChildStats(child.id, { monthly_reward_points: Number(e.target.value) })}
-                                            className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
                                   </div>
                                 </motion.div>
                               )}
@@ -1216,12 +1197,12 @@ export default function ParentDashboard({
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
                             <span className="uppercase">LEVEL {child.level} PROGRESS</span>
-                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / 100 XP</span>
+                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / {parentProfile?.xp_to_level_up ?? 100} XP</span>
                           </div>
                           <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
                             <div 
                               className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
-                              style={{ width: `${Math.min(100, child.xp_in_level)}%` }}
+                              style={{ width: `${Math.min(100, ((child.xp_in_level || 0) / (parentProfile?.xp_to_level_up ?? 100)) * 100)}%` }}
                             />
                           </div>
                         </div>
@@ -1993,6 +1974,20 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'targets' && (
+              <motion.div
+                key="targets"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <TargetsTab
+                  theme={theme}
+                  parentProfile={parentProfile}
                 />
               </motion.div>
             )}
