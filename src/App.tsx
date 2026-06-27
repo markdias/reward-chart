@@ -465,6 +465,13 @@ export default function App() {
           points: updatedChild.points,
           level: updatedChild.level,
           xp_in_level: updatedChild.xp_in_level,
+          xp_to_level_up: updatedChild.xp_to_level_up,
+          savings_pot_unlock_level: updatedChild.savings_pot_unlock_level,
+          savings_pot_unlock_xp: updatedChild.savings_pot_unlock_xp,
+          food_pot_unlock_level: updatedChild.food_pot_unlock_level,
+          food_pot_unlock_xp: updatedChild.food_pot_unlock_xp,
+          gifting_pot_unlock_level: updatedChild.gifting_pot_unlock_level,
+          gifting_pot_unlock_xp: updatedChild.gifting_pot_unlock_xp,
           streak_days: updatedChild.streak_days,
           last_active_date: updatedChild.last_active_date,
           level_up_gold_reward: updatedChild.level_up_gold_reward,
@@ -797,11 +804,12 @@ export default function App() {
     let newXp = (child.xp_in_level || 0) + addedXp;
     let newPoints = child.points;
     let bonusesReceived = child.level_up_bonuses_received || 0;
+    const xpToLevelUp = child.xp_to_level_up ?? 100;
 
     // 1. Level up check
-    while (newXp >= 100) {
+    while (newXp >= xpToLevelUp) {
       newLevel++;
-      newXp -= 100;
+      newXp -= xpToLevelUp;
       
       const levelUpBonus = child.level_up_gold_reward ?? 500;
       newPoints += levelUpBonus;
@@ -858,23 +866,29 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Savings Pot at Level 1, 50 XP (or Level 2+)
+    // 3. Auto-unlock Savings Pot
     let savingsUnlocked = child.savings_unlocked || false;
-    if ((newLevel > 1 || newXp >= 50) && !savingsUnlocked) {
+    const savingsLvl = child.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = child.savings_pot_unlock_xp ?? 50;
+    if ((newLevel > savingsLvl || (newLevel === savingsLvl && newXp >= savingsXpReq)) && !savingsUnlocked) {
       savingsUnlocked = true;
       setTimeout(() => playSound.evolution(), 600);
     }
 
-    // 4. Auto-unlock Food Pot at Level 2, 50 XP (or Level 3+)
+    // 4. Auto-unlock Food Pot
     let foodPotUnlocked = child.food_pot_unlocked || false;
-    if ((newLevel > 2 || (newLevel === 2 && newXp >= 50)) && !foodPotUnlocked) {
+    const foodLvl = child.food_pot_unlock_level ?? 2;
+    const foodXpReq = child.food_pot_unlock_xp ?? 50;
+    if ((newLevel > foodLvl || (newLevel === foodLvl && newXp >= foodXpReq)) && !foodPotUnlocked) {
       foodPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 900);
     }
 
-    // 5. Auto-unlock Gifting Pot at Level 3, 50 XP (or Level 4+)
+    // 5. Auto-unlock Gifting Pot
     let giftingPotUnlocked = child.gifting_unlocked || false;
-    if ((newLevel > 3 || (newLevel === 3 && newXp >= 50)) && !giftingPotUnlocked) {
+    const giftingLvl = child.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = child.gifting_pot_unlock_xp ?? 50;
+    if ((newLevel > giftingLvl || (newLevel === giftingLvl && newXp >= giftingXpReq)) && !giftingPotUnlocked) {
       giftingPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 1200);
     }
@@ -916,28 +930,34 @@ export default function App() {
     targetChild = { ...targetChild, ...updates };
 
     // Check if savings pot requirements are met
-    if (!targetChild.savings_unlocked && (targetChild.level > 1 || (targetChild.level === 1 && (targetChild.xp_in_level || 0) >= 50))) {
+    const savingsLvl = targetChild.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = targetChild.savings_pot_unlock_xp ?? 50;
+    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
       targetChild.savings_unlocked = true;
       targetChild.savings_unlock_seen = false;
-    } else if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
+    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
       targetChild.savings_unlocked = false;
       targetChild.savings_unlock_seen = false;
     }
 
-    // Check if food pot requirements are met (Level 2, 50 XP)
-    if (!targetChild.food_pot_unlocked && (targetChild.level > 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) >= 50))) {
+    // Check if food pot requirements are met
+    const foodLvl = targetChild.food_pot_unlock_level ?? 2;
+    const foodXpReq = targetChild.food_pot_unlock_xp ?? 50;
+    if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
-    } else if (targetChild.food_pot_unlocked && (targetChild.level < 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) < 50))) {
+    } else if (targetChild.food_pot_unlocked && (targetChild.level < foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) < foodXpReq))) {
       targetChild.food_pot_unlocked = false;
       targetChild.food_pot_unlock_seen = false;
     }
 
-    // Check if gifting pot requirements are met (Level 3, 50 XP)
-    if (!targetChild.gifting_unlocked && (targetChild.level > 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) >= 50))) {
+    // Check if gifting pot requirements are met
+    const giftingLvl = targetChild.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = targetChild.gifting_pot_unlock_xp ?? 50;
+    if (!targetChild.gifting_unlocked && (targetChild.level > giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) >= giftingXpReq))) {
       targetChild.gifting_unlocked = true;
       targetChild.gifting_unlock_seen = false;
-    } else if (targetChild.gifting_unlocked && (targetChild.level < 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) < 50))) {
+    } else if (targetChild.gifting_unlocked && (targetChild.level < giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) < giftingXpReq))) {
       targetChild.gifting_unlocked = false;
       targetChild.gifting_unlock_seen = false;
     }

@@ -1047,7 +1047,7 @@ export default function ParentDashboard({
                               )}
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
                                 <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/100 XP)</span></span>
+                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/{child.xp_to_level_up ?? 100} XP)</span></span>
                               </div>
                             </div>
                           </div>
@@ -1206,6 +1206,78 @@ export default function ParentDashboard({
                                         </div>
                                       </div>
                                     </div>
+                                    <div className="pt-2 border-t border-slate-200/10 space-y-3">
+                                      <h4 className={`text-[10px] font-bold font-display ${styles.titleColor} uppercase`}>Levels & Pots Configuration</h4>
+                                      <div>
+                                        <label className={`block text-[8px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>XP to Level Up</label>
+                                        <input
+                                          type="number"
+                                          value={child.xp_to_level_up ?? 100}
+                                          onChange={(e) => onUpdateChildStats(child.id, { xp_to_level_up: Number(e.target.value) })}
+                                          className={`w-full px-2 py-1 bg-white border border-stone-200 text-stone-700 rounded-lg focus:outline-none focus:border-cyan-400 text-[10px] font-mono`}
+                                        />
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-emerald-700 uppercase tracking-widest mb-1`}>Savings Pot Lvl</label>
+                                          <input
+                                            type="number"
+                                            value={child.savings_pot_unlock_level ?? 1}
+                                            onChange={(e) => onUpdateChildStats(child.id, { savings_pot_unlock_level: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-emerald-200 text-stone-700 rounded-lg focus:outline-none focus:border-emerald-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-emerald-700 uppercase tracking-widest mb-1`}>Savings Pot XP</label>
+                                          <input
+                                            type="number"
+                                            value={child.savings_pot_unlock_xp ?? 50}
+                                            onChange={(e) => onUpdateChildStats(child.id, { savings_pot_unlock_xp: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-emerald-200 text-stone-700 rounded-lg focus:outline-none focus:border-emerald-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-orange-700 uppercase tracking-widest mb-1`}>Food Pot Lvl</label>
+                                          <input
+                                            type="number"
+                                            value={child.food_pot_unlock_level ?? 2}
+                                            onChange={(e) => onUpdateChildStats(child.id, { food_pot_unlock_level: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-orange-200 text-stone-700 rounded-lg focus:outline-none focus:border-orange-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-orange-700 uppercase tracking-widest mb-1`}>Food Pot XP</label>
+                                          <input
+                                            type="number"
+                                            value={child.food_pot_unlock_xp ?? 50}
+                                            onChange={(e) => onUpdateChildStats(child.id, { food_pot_unlock_xp: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-orange-200 text-stone-700 rounded-lg focus:outline-none focus:border-orange-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-rose-700 uppercase tracking-widest mb-1`}>Gifting Pot Lvl</label>
+                                          <input
+                                            type="number"
+                                            value={child.gifting_pot_unlock_level ?? 3}
+                                            onChange={(e) => onUpdateChildStats(child.id, { gifting_pot_unlock_level: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-rose-200 text-stone-700 rounded-lg focus:outline-none focus:border-rose-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className={`block text-[8px] font-bold font-mono text-rose-700 uppercase tracking-widest mb-1`}>Gifting Pot XP</label>
+                                          <input
+                                            type="number"
+                                            value={child.gifting_pot_unlock_xp ?? 50}
+                                            onChange={(e) => onUpdateChildStats(child.id, { gifting_pot_unlock_xp: Number(e.target.value) })}
+                                            className={`w-full px-2 py-1 bg-white border border-rose-200 text-stone-700 rounded-lg focus:outline-none focus:border-rose-400 text-[10px] font-mono`}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </motion.div>
                               )}
@@ -1216,12 +1288,12 @@ export default function ParentDashboard({
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
                             <span className="uppercase">LEVEL {child.level} PROGRESS</span>
-                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / 100 XP</span>
+                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / {child.xp_to_level_up ?? 100} XP</span>
                           </div>
                           <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
                             <div 
                               className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
-                              style={{ width: `${Math.min(100, child.xp_in_level)}%` }}
+                              style={{ width: `${Math.min(100, ((child.xp_in_level || 0) / (child.xp_to_level_up ?? 100)) * 100)}%` }}
                             />
                           </div>
                         </div>

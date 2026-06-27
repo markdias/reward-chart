@@ -22,6 +22,13 @@ export interface Child {
   level_up_gold_reward?: number; // Custom gold amount for leveling up
   level_up_preference?: 'points' | 'reward'; // Deprecated, keeping for backwards compatibility
   level_up_bonuses_received?: number; // Count of bonuses given
+  xp_to_level_up?: number;
+  savings_pot_unlock_level?: number;
+  savings_pot_unlock_xp?: number;
+  food_pot_unlock_level?: number;
+  food_pot_unlock_xp?: number;
+  gifting_pot_unlock_level?: number;
+  gifting_pot_unlock_xp?: number;
   weekly_xp_target?: number;
   weekly_reward_points?: number;
   monthly_xp_target?: number;

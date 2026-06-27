@@ -969,13 +969,13 @@ export default function ChildDashboard({
                         <div className={`w-full h-3 ${styles.innerCard} rounded-full overflow-hidden p-0.5`}>
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: `${activeChild.xp_in_level}%` }}
+                            animate={{ width: `${Math.min(100, ((activeChild.xp_in_level || 0) / (activeChild.xp_to_level_up ?? 100)) * 100)}%` }}
                             transition={{ duration: 1 }}
                             className={`h-full rounded-full bg-gradient-to-r ${activeChildStage.color_theme}`}
                           />
                         </div>
                         <div className="flex justify-between items-center pt-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / 100</span>
+                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / {activeChild.xp_to_level_up ?? 100}</span>
                         </div>
                       </div>
 
@@ -1659,22 +1659,34 @@ export default function ChildDashboard({
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
-                          {!activeChild.savings_unlocked && activeChild.level === 1 && (
+                          {!activeChild.savings_unlocked && (activeChild.level < (activeChild.savings_pot_unlock_level ?? 1) || (activeChild.level === (activeChild.savings_pot_unlock_level ?? 1) && activeChild.xp_in_level < (activeChild.savings_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at 50 XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {activeChild.savings_pot_unlock_level ?? 1}, {activeChild.savings_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(100, (activeChild.xp_in_level / 50) * 100)}%` }}
+                                  animate={{
+                                    width: `${(() => {
+                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                      const xpReq = ((activeChild.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (activeChild.savings_pot_unlock_xp ?? 50);
+                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
+                                    })()}%`
+                                  }}
                                   transition={{ duration: 0.8 }}
                                   className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400"
                                 />
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
-                                {activeChild.xp_in_level} / 50 XP
+                                {(() => {
+                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                  const xpReq = ((activeChild.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (activeChild.savings_pot_unlock_xp ?? 50);
+                                  return `${xpEarned} / ${xpReq} XP`;
+                                })()}
                               </span>
                             </div>
                           )}
@@ -1826,19 +1838,21 @@ export default function ChildDashboard({
                           )}
 
                           {/* Food Pot Locked Preview */}
-                          {!activeChild.food_pot_unlocked && (activeChild.level < 2 || (activeChild.level === 2 && activeChild.xp_in_level < 50)) && (
+                          {!activeChild.food_pot_unlocked && (activeChild.level < (activeChild.food_pot_unlock_level ?? 2) || (activeChild.level === (activeChild.food_pot_unlock_level ?? 2) && activeChild.xp_in_level < (activeChild.food_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level 2, 50 XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {activeChild.food_pot_unlock_level ?? 2}, {activeChild.food_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : 150);
-                                      return Math.min(100, Math.round((xpEarned / 150) * 100));
+                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                      const xpReq = ((activeChild.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (activeChild.food_pot_unlock_xp ?? 50);
+                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
                                     })()}%`
                                   }}
                                   transition={{ duration: 0.8 }}
@@ -1847,8 +1861,10 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
                                 {(() => {
-                                  const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : 150);
-                                  return `${xpEarned} / 150 XP`;
+                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                  const xpReq = ((activeChild.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (activeChild.food_pot_unlock_xp ?? 50);
+                                  return `${xpEarned} / ${xpReq} XP`;
                                 })()}
                               </span>
                             </div>
@@ -2112,19 +2128,21 @@ export default function ChildDashboard({
                           )}
 
                           {/* Gifting Pot Locked Preview */}
-                          {!activeChild.gifting_unlocked && (activeChild.level < 3 || (activeChild.level === 3 && activeChild.xp_in_level < 50)) && (
+                          {!activeChild.gifting_unlocked && (activeChild.level < (activeChild.gifting_pot_unlock_level ?? 3) || (activeChild.level === (activeChild.gifting_pot_unlock_level ?? 3) && activeChild.xp_in_level < (activeChild.gifting_pot_unlock_xp ?? 50))) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level 3, 50 XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {activeChild.gifting_pot_unlock_level ?? 3}, {activeChild.gifting_pot_unlock_xp ?? 50} XP!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : (activeChild.level === 3 ? 250 + activeChild.xp_in_level : 300));
-                                      return Math.min(100, Math.round((xpEarned / 300) * 100));
+                                      const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                      const xpReq = ((activeChild.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (activeChild.gifting_pot_unlock_xp ?? 50);
+                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
                                     })()}%`
                                   }}
                                   transition={{ duration: 0.8 }}
@@ -2133,8 +2151,10 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-500 font-bold">
                                 {(() => {
-                                  const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : (activeChild.level === 3 ? 250 + activeChild.xp_in_level : 300));
-                                  return `${xpEarned} / 300 XP`;
+                                  const xpPerLvl = activeChild.xp_to_level_up ?? 100;
+                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                  const xpReq = ((activeChild.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (activeChild.gifting_pot_unlock_xp ?? 50);
+                                  return `${xpEarned} / ${xpReq} XP`;
                                 })()}
                               </span>
                             </div>
