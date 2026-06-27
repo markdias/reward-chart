@@ -451,11 +451,21 @@ export default function App() {
           last_weekly_bonus_awarded: updatedChild.last_weekly_bonus_awarded,
           last_monthly_bonus_awarded: updatedChild.last_monthly_bonus_awarded,
           savings_pot: updatedChild.savings_pot,
+          pet_food: updatedChild.pet_food,
           savings_unlocked: updatedChild.savings_unlocked,
           savings_unlock_seen: updatedChild.savings_unlock_seen,
           savings_goal_name: updatedChild.savings_goal_name,
           savings_goal_amount: updatedChild.savings_goal_amount,
-          savings_goal_reward_id: updatedChild.savings_goal_reward_id
+          savings_goal_reward_id: updatedChild.savings_goal_reward_id,
+          food_pot: updatedChild.food_pot,
+          food_pot_unlocked: updatedChild.food_pot_unlocked,
+          food_pot_unlock_seen: updatedChild.food_pot_unlock_seen,
+          food_pot_weekly_contribution: updatedChild.food_pot_weekly_contribution,
+          pet_fed_today: updatedChild.pet_fed_today,
+          pet_hunger_time: updatedChild.pet_hunger_time,
+          pet_unhappy: updatedChild.pet_unhappy,
+          last_fed_date: updatedChild.last_fed_date,
+          last_hunger_check_date: updatedChild.last_hunger_check_date
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -494,6 +504,16 @@ export default function App() {
       level: 1,
       xp_in_level: 0,
       streak_days: 0,
+      pet_food: 0,
+      food_pot: 0,
+      food_pot_unlocked: false,
+      food_pot_unlock_seen: false,
+      food_pot_weekly_contribution: 0,
+      pet_fed_today: true,
+      pet_hunger_time: null,
+      pet_unhappy: false,
+      last_fed_date: null,
+      last_hunger_check_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     })) as Child[];
 
@@ -689,6 +709,16 @@ export default function App() {
       level: 1,
       xp_in_level: 0,
       streak_days: 0,
+      pet_food: 0,
+      food_pot: 0,
+      food_pot_unlocked: false,
+      food_pot_unlock_seen: false,
+      food_pot_weekly_contribution: 0,
+      pet_fed_today: true,
+      pet_hunger_time: null,
+      pet_unhappy: false,
+      last_fed_date: null,
+      last_hunger_check_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -739,10 +769,12 @@ export default function App() {
     const now = new Date();
 
     let weeklyXp = child.weekly_xp || 0;
+    let foodPotWeeklyContribution = child.food_pot_weekly_contribution || 0;
     let nextWeeklyReset = child.weekly_reset_date ? new Date(child.weekly_reset_date) : null;
     
     if (!nextWeeklyReset || now >= nextWeeklyReset) {
       weeklyXp = 0; // The week rolled over!
+      foodPotWeeklyContribution = 0; // Reset food pot weekly contribution!
       nextWeeklyReset = getNextWeeklyResetDate(now);
     }
     weeklyXp += addedXp;
@@ -788,6 +820,13 @@ export default function App() {
       setTimeout(() => playSound.evolution(), 600);
     }
 
+    // 4. Auto-unlock Food Pot at Level 2, 50 XP (or Level 3+)
+    let foodPotUnlocked = child.food_pot_unlocked || false;
+    if ((newLevel > 2 || (newLevel === 2 && newXp >= 50)) && !foodPotUnlocked) {
+      foodPotUnlocked = true;
+      setTimeout(() => playSound.evolution(), 900);
+    }
+
     return {
       ...child,
       level: newLevel,
@@ -800,7 +839,9 @@ export default function App() {
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
       last_monthly_bonus_awarded: lastMonthlyBonus,
-      savings_unlocked: savingsUnlocked
+      savings_unlocked: savingsUnlocked,
+      food_pot_unlocked: foodPotUnlocked,
+      food_pot_weekly_contribution: foodPotWeeklyContribution
     };
   };
 
@@ -821,10 +862,22 @@ export default function App() {
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
 
-    // Check if savings pot requirements are no longer met after XP/Level reductions
-    if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
+    // Check if savings pot requirements are met
+    if (!targetChild.savings_unlocked && (targetChild.level > 1 || (targetChild.level === 1 && (targetChild.xp_in_level || 0) >= 50))) {
+      targetChild.savings_unlocked = true;
+      targetChild.savings_unlock_seen = false;
+    } else if (targetChild.savings_unlocked && targetChild.level === 1 && (targetChild.xp_in_level || 0) < 50) {
       targetChild.savings_unlocked = false;
       targetChild.savings_unlock_seen = false;
+    }
+
+    // Check if food pot requirements are met (Level 2, 50 XP)
+    if (!targetChild.food_pot_unlocked && (targetChild.level > 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) >= 50))) {
+      targetChild.food_pot_unlocked = true;
+      targetChild.food_pot_unlock_seen = false;
+    } else if (targetChild.food_pot_unlocked && (targetChild.level < 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) < 50))) {
+      targetChild.food_pot_unlocked = false;
+      targetChild.food_pot_unlock_seen = false;
     }
 
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
@@ -1130,21 +1183,74 @@ export default function App() {
     const child = children.find(c => c.id === childId);
     if (!child || (child.pet_food || 0) <= 0) return;
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const targetChild = {
       ...child,
       pet_food: (child.pet_food || 0) - 1,
+      pet_fed_today: true,
+      pet_unhappy: false,
+      last_fed_date: todayStr
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
     
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('children').update(targetChild).eq('id', targetChild.id);
+      const { error } = await supabase.from('children').update({
+        pet_food: targetChild.pet_food,
+        pet_fed_today: targetChild.pet_fed_today,
+        pet_unhappy: targetChild.pet_unhappy,
+        last_fed_date: targetChild.last_fed_date
+      }).eq('id', targetChild.id);
       if (error) {
         console.error("Failed to feed pet:", error);
         alert("Database Error: Could not feed pet. " + error.message);
       }
     }
+  };
+
+  // Operations: Food Pot
+  const handleFoodPotDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      food_pot: (child.food_pot || 0) + amount,
+      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + amount
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleBuyPetFood = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.food_pot || 0) < 1) return;
+
+    const targetChild = {
+      ...child,
+      food_pot: (child.food_pot || 0) - 1,
+      pet_food: (child.pet_food || 0) + 1
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleFoodPotUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      food_pot_unlock_seen: true
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
   };
 
   // Operations: Savings Pot
@@ -1473,6 +1579,10 @@ export default function App() {
               onSavingsGoal={handleSavingsGoal}
               onClearSavingsGoal={handleClearSavingsGoal}
               onSavingsUnlockSeen={handleSavingsUnlockSeen}
+              onFoodPotDeposit={handleFoodPotDeposit}
+              onBuyPetFood={handleBuyPetFood}
+              onFoodPotUnlockSeen={handleFoodPotUnlockSeen}
+              onUpdateChildStats={handleUpdateChildStats}
               theme={activeTheme}
             />
           </motion.div>

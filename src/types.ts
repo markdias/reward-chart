@@ -41,6 +41,15 @@ export interface Child {
   savings_goal_name?: string | null;
   savings_goal_amount?: number | null;
   savings_goal_reward_id?: string | null;
+  food_pot?: number;
+  food_pot_unlocked?: boolean;
+  food_pot_unlock_seen?: boolean;
+  food_pot_weekly_contribution?: number;
+  pet_fed_today?: boolean;
+  pet_hunger_time?: string | null;
+  pet_unhappy?: boolean;
+  last_fed_date?: string | null;
+  last_hunger_check_date?: string | null;
   created_at: string;
 }
 
