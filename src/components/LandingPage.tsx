@@ -345,7 +345,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </p>
             </div>
 
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-5 border border-amber-200">
                   <Coins className="w-6 h-6" />
@@ -373,6 +373,16 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">3. Weekly Budgeting</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
                   Allocate coins weekly to the Food Pot to feed their digital pet. Teaches budgeting for recurring expenses and responsibility!
+                </p>
+              </div>
+
+              <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-500 mb-5 border border-rose-200">
+                  <Heart className="w-6 h-6" />
+                </div>
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">4. Gifting & Generosity</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Donate coins to charity or gift them to a sibling. Fosters kindness and shows how money can be used to help others!
                 </p>
               </div>
             </div>

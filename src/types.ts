@@ -50,6 +50,9 @@ export interface Child {
   pet_unhappy?: boolean;
   last_fed_date?: string | null;
   last_hunger_check_date?: string | null;
+  gifting_pot?: number;
+  gifting_unlocked?: boolean;
+  gifting_unlock_seen?: boolean;
   created_at: string;
 }
 
@@ -103,6 +106,26 @@ export interface RewardRedemption {
   status: 'requested' | 'delivered' | 'rejected';
   payment_source?: 'main' | 'savings';
 }
+
+export interface GiftingRequest {
+  id: string;
+  child_id: string;
+  parent_id: string;
+  amount: number;
+  type: 'charity' | 'sibling';
+  sibling_id?: string | null;
+  charity_name?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+export const PREDEFINED_CHARITIES = [
+  'Save the Children',
+  'World Wildlife Fund (WWF)',
+  'Local Food Bank',
+  'Make-A-Wish Foundation',
+  'St. Jude Children\\'s Research Hospital'
+];
 
 export interface FamilyMessage {
   id: string;

@@ -39,8 +39,10 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
-  theme: ThemeId;
   onParentCompleteTask: (taskId: string, childId: string) => void;
+  giftingRequests: GiftingRequest[];
+  onApproveGiftingRequest: (id: string) => void;
+  onRejectGiftingRequest: (id: string) => void;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   familyMessages?: FamilyMessage[];
@@ -83,10 +85,12 @@ export default function ParentDashboard({
   familyMessages = [],
   onResetData,
   onRunSetup,
-  onDeleteAccount,
   onFamilyMessageSent,
   onFamilyMessageUpdated,
-  onRequireAccount
+  onRequireAccount,
+  giftingRequests = [],
+  onApproveGiftingRequest,
+  onRejectGiftingRequest
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
@@ -134,13 +138,14 @@ export default function ParentDashboard({
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
   const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
+  const pendingGiftingRequests = giftingRequests.filter(g => g.status === 'pending');
   const unreadMessagesCount = familyMessages.filter(msg => {
     const isMine = msg.sender_id === parentProfile?.user_id;
     const amIReceiver = msg.receiver_id === parentProfile?.user_id || msg.receiver_id === null;
     return !isMine && amIReceiver && !msg.is_read;
   }).length;
   
-  const totalPending = pendingApprovals.length + pendingRedemptions.length + unreadMessagesCount;
+  const totalPending = pendingApprovals.length + pendingRedemptions.length + pendingGiftingRequests.length + unreadMessagesCount;
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !parentProfile?.family_id || !parentProfile?.user_id) return;
@@ -829,6 +834,65 @@ export default function ParentDashboard({
                                       onClick={() => {
                                         playSound.click();
                                         onRejectReward(delivery.id);
+                                      }}
+                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
+                                    >
+                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {pendingGiftingRequests.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
+                          💖 Pending Gifting Requests ({pendingGiftingRequests.length})
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {pendingGiftingRequests.map((req) => {
+                            const child = children.find(c => c.id === req.child_id);
+                            return (
+                              <div
+                                key={req.id}
+                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
+                              >
+                                <div className="flex gap-4 items-start">
+                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
+                                    {req.type === 'charity' ? '🌍' : '🎁'}
+                                  </div>
+                                  <div>
+                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} requested:</span>
+                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
+                                      {req.type === 'charity' ? `Donate to Charity (${req.charity_id})` : `Gift to Sibling (${children.find(c => c.id === req.sibling_id)?.name})`}
+                                    </h3>
+                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
+                                      REQUESTED AT: {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
+                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
+                                    <span className={`font-mono font-black text-xs text-rose-700`}>{req.amount} Gold Coins</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        playSound.success();
+                                        onApproveGiftingRequest(req.id);
+                                      }}
+                                      className={`px-4 py-2 bg-emerald-400 hover:bg-emerald-300 border border-stone-900 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                    >
+                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        playSound.click();
+                                        onRejectGiftingRequest(req.id);
                                       }}
                                       className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
                                     >

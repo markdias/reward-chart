@@ -11,7 +11,7 @@ import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, FamilyMessage } from './types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, FamilyMessage, GiftingRequest } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
@@ -55,6 +55,7 @@ export default function App() {
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
+  const [giftingRequests, setGiftingRequests] = useState<GiftingRequest[]>([]);
 
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
@@ -67,6 +68,7 @@ export default function App() {
     const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
     const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
     const keyRedemptions = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
+    const keyGiftingRequests = parentEmail ? `RCH_GIFTING_${parentEmail}` : 'RCH_GIFTING';
 
     const savedProfile = localStorage.getItem('RCH_PARENT_PROFILE');
     if (savedProfile) {
@@ -78,6 +80,7 @@ export default function App() {
     const savedCompletions = localStorage.getItem(keyCompletions);
     const savedRewards = localStorage.getItem(keyRewards);
     const savedRedemptions = localStorage.getItem(keyRedemptions);
+    const savedGiftingRequests = localStorage.getItem(keyGiftingRequests);
 
     if (savedChildren) {
       setChildren(JSON.parse(savedChildren));
@@ -117,6 +120,13 @@ export default function App() {
       const initial = isDemo ? INITIAL_REDEMPTIONS : [];
       setRedemptions(initial);
       localStorage.setItem(keyRedemptions, JSON.stringify(initial));
+    }
+
+    if (savedGiftingRequests) {
+      setGiftingRequests(JSON.parse(savedGiftingRequests));
+    } else {
+      setGiftingRequests([]);
+      localStorage.setItem(keyGiftingRequests, JSON.stringify([]));
     }
   };
 
@@ -210,12 +220,15 @@ export default function App() {
                    const parsedCompletions = localCompletions ? JSON.parse(localCompletions) : [];
                    const parsedRewards = localRewards ? JSON.parse(localRewards).map((r: any) => ({...r, parent_id: familyId})) : [];
                    const parsedRedemptions = localRedemptions ? JSON.parse(localRedemptions).map((r: any) => ({...r, parent_id: familyId})) : [];
+                   const localGifting = localStorage.getItem(`RCH_GIFTING_${localEmail}`);
+                   const parsedGifting = localGifting ? JSON.parse(localGifting).map((r: any) => ({...r, parent_id: familyId})) : [];
                    
                    if (parsedChildren.length) await supabase.from('children').insert(parsedChildren);
                    if (parsedTasks.length) await supabase.from('tasks').insert(parsedTasks);
                    if (parsedCompletions.length) await supabase.from('completions').insert(parsedCompletions);
                    if (parsedRewards.length) await supabase.from('rewards').insert(parsedRewards);
                    if (parsedRedemptions.length) await supabase.from('reward_redemptions').insert(parsedRedemptions);
+                   if (parsedGifting.length) await supabase.from('gifting_requests').insert(parsedGifting);
                 } else {
                    const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
                      ...t, 
@@ -328,6 +341,18 @@ export default function App() {
             localStorage.setItem(keyRedemptions, JSON.stringify(dbRedemptions || []));
           }
 
+          // Fetch gifting requests
+          const keyGiftingRequests = `RCH_GIFTING_${currentFamilyId}`;
+          const { data: dbGifting, error: errGifting } = await supabase
+            .from('gifting_requests')
+            .select('*')
+            .eq('parent_id', currentFamilyId);
+
+          if (!errGifting) {
+            setGiftingRequests(dbGifting || []);
+            localStorage.setItem(keyGiftingRequests, JSON.stringify(dbGifting || []));
+          }
+
         } catch (err) {
           console.warn('Error loading Supabase data:', err);
           loadLocalStorageFallback(isDemo);
@@ -424,6 +449,12 @@ export default function App() {
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
+  const syncGiftingRequests = (newList: GiftingRequest[]) => {
+    setGiftingRequests(newList);
+    const key = parentEmail ? `RCH_GIFTING_${parentEmail}` : 'RCH_GIFTING';
+    localStorage.setItem(key, JSON.stringify(newList));
+  };
+
   // Supabase update helper
   const updateChildInSupabase = async (updatedChild: Child) => {
     const supabase = getSupabaseClient();
@@ -465,7 +496,10 @@ export default function App() {
           pet_hunger_time: updatedChild.pet_hunger_time,
           pet_unhappy: updatedChild.pet_unhappy,
           last_fed_date: updatedChild.last_fed_date,
-          last_hunger_check_date: updatedChild.last_hunger_check_date
+          last_hunger_check_date: updatedChild.last_hunger_check_date,
+          gifting_pot: updatedChild.gifting_pot,
+          gifting_unlocked: updatedChild.gifting_unlocked,
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -514,6 +548,9 @@ export default function App() {
       pet_unhappy: false,
       last_fed_date: null,
       last_hunger_check_date: new Date().toISOString().split('T')[0],
+      gifting_pot: 0,
+      gifting_unlocked: false,
+      gifting_unlock_seen: false,
       created_at: new Date().toISOString()
     })) as Child[];
 
@@ -559,6 +596,7 @@ export default function App() {
     setRewards(initialRewards);
     setCompletions([]);
     setRedemptions([]);
+    setGiftingRequests([]);
 
     setParentEmail(emailToUse);
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
@@ -579,6 +617,7 @@ export default function App() {
     localStorage.removeItem('RCH_COMPLETIONS_demo_parent@rewardchart.app');
     localStorage.removeItem('RCH_REWARDS_demo_parent@rewardchart.app');
     localStorage.removeItem('RCH_REDEMPTIONS_demo_parent@rewardchart.app');
+    localStorage.removeItem('RCH_GIFTING_demo_parent@rewardchart.app');
     
     setParentEmail('demo_parent@rewardchart.app');
     localStorage.setItem('RCH_PARENT_EMAIL', 'demo_parent@rewardchart.app');
@@ -618,6 +657,7 @@ export default function App() {
     localStorage.removeItem('RCH_COMPLETIONS');
     localStorage.removeItem('RCH_REWARDS');
     localStorage.removeItem('RCH_REDEMPTIONS');
+    localStorage.removeItem('RCH_GIFTING');
     window.location.reload();
   };
 
@@ -640,6 +680,7 @@ export default function App() {
         await supabase.from('completions').delete().in('child_id', childIds);
       }
       await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
+      await supabase.from('gifting_requests').delete().eq('parent_id', familyId);
 
       const updatedChildren = children.map(c => ({
         ...c,
@@ -663,6 +704,7 @@ export default function App() {
       }
       syncCompletions([]);
       syncRedemptions([]);
+      syncGiftingRequests([]);
     }
   };
 
@@ -719,6 +761,9 @@ export default function App() {
       pet_unhappy: false,
       last_fed_date: null,
       last_hunger_check_date: new Date().toISOString().split('T')[0],
+      gifting_pot: 0,
+      gifting_unlocked: false,
+      gifting_unlock_seen: false,
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -827,6 +872,13 @@ export default function App() {
       setTimeout(() => playSound.evolution(), 900);
     }
 
+    // 5. Auto-unlock Gifting Pot at Level 3, 50 XP (or Level 4+)
+    let giftingPotUnlocked = child.gifting_unlocked || false;
+    if ((newLevel > 3 || (newLevel === 3 && newXp >= 50)) && !giftingPotUnlocked) {
+      giftingPotUnlocked = true;
+      setTimeout(() => playSound.evolution(), 1200);
+    }
+
     return {
       ...child,
       level: newLevel,
@@ -841,7 +893,8 @@ export default function App() {
       last_monthly_bonus_awarded: lastMonthlyBonus,
       savings_unlocked: savingsUnlocked,
       food_pot_unlocked: foodPotUnlocked,
-      food_pot_weekly_contribution: foodPotWeeklyContribution
+      food_pot_weekly_contribution: foodPotWeeklyContribution,
+      gifting_unlocked: giftingPotUnlocked
     };
   };
 
@@ -878,6 +931,15 @@ export default function App() {
     } else if (targetChild.food_pot_unlocked && (targetChild.level < 2 || (targetChild.level === 2 && (targetChild.xp_in_level || 0) < 50))) {
       targetChild.food_pot_unlocked = false;
       targetChild.food_pot_unlock_seen = false;
+    }
+
+    // Check if gifting pot requirements are met (Level 3, 50 XP)
+    if (!targetChild.gifting_unlocked && (targetChild.level > 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) >= 50))) {
+      targetChild.gifting_unlocked = true;
+      targetChild.gifting_unlock_seen = false;
+    } else if (targetChild.gifting_unlocked && (targetChild.level < 3 || (targetChild.level === 3 && (targetChild.xp_in_level || 0) < 50))) {
+      targetChild.gifting_unlocked = false;
+      targetChild.gifting_unlock_seen = false;
     }
 
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
@@ -1468,6 +1530,134 @@ export default function App() {
     }
   };
 
+  // Operations: Gifting Pot
+  const handleGiftingDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      gifting_pot: (child.gifting_pot || 0) + amount
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleGiftingRequestCharity = async (childId: string, amount: number, charityName: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > (child.gifting_pot || 0)) return;
+
+    const newRequest: GiftingRequest = {
+      id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      child_id: childId,
+      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      amount,
+      type: 'charity',
+      charity_name: charityName,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    syncGiftingRequests([...giftingRequests, newRequest]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('gifting_requests').insert(newRequest);
+      if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
+    }
+  };
+
+  const handleGiftingRequestSibling = async (childId: string, amount: number, siblingId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > (child.gifting_pot || 0)) return;
+
+    const newRequest: GiftingRequest = {
+      id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      child_id: childId,
+      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      amount,
+      type: 'sibling',
+      sibling_id: siblingId,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    syncGiftingRequests([...giftingRequests, newRequest]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('gifting_requests').insert(newRequest);
+      if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
+    }
+  };
+
+  const handleApproveGiftingRequest = async (requestId: string) => {
+    const request = giftingRequests.find(r => r.id === requestId);
+    if (!request || request.status !== 'pending') return;
+
+    const child = children.find(c => c.id === request.child_id);
+    if (!child || (child.gifting_pot || 0) < request.amount) return;
+
+    // Deduct from sender's pot
+    let targetChild = {
+      ...child,
+      gifting_pot: (child.gifting_pot || 0) - request.amount
+    };
+    let updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+    
+    // If sibling, add to sibling's points
+    if (request.type === 'sibling' && request.sibling_id) {
+      const sibling = updatedChildren.find(c => c.id === request.sibling_id);
+      if (sibling) {
+        const targetSibling = {
+          ...sibling,
+          points: sibling.points + request.amount
+        };
+        updatedChildren = updatedChildren.map(c => c.id === sibling.id ? targetSibling : c);
+        updateChildInSupabase(targetSibling);
+      }
+    }
+    
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+
+    const updatedRequests = giftingRequests.map(r => r.id === requestId ? { ...r, status: 'approved' as const } : r);
+    syncGiftingRequests(updatedRequests);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('gifting_requests').update({ status: 'approved' }).eq('id', requestId);
+      if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
+    }
+  };
+
+  const handleRejectGiftingRequest = async (requestId: string) => {
+    const request = giftingRequests.find(r => r.id === requestId);
+    if (!request || request.status !== 'pending') return;
+
+    const updatedRequests = giftingRequests.map(r => r.id === requestId ? { ...r, status: 'rejected' as const } : r);
+    syncGiftingRequests(updatedRequests);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error } = await supabase.from('gifting_requests').update({ status: 'rejected' }).eq('id', requestId);
+      if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
+    }
+  };
+
+  const handleGiftingUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      gifting_unlock_seen: true
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
   return (
     <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
       
@@ -1525,6 +1715,7 @@ export default function App() {
               completions={completions}
               rewards={rewards}
               redemptions={redemptions}
+              giftingRequests={giftingRequests}
               onAddChild={handleAddChild}
               onEditChild={handleEditChild}
               onUpdateChildStats={handleUpdateChildStats}
@@ -1541,6 +1732,8 @@ export default function App() {
               onDeliverReward={handleDeliverReward}
               onRejectReward={handleRejectReward}
               onRestoreReward={handleRestoreReward}
+              onApproveGiftingRequest={handleApproveGiftingRequest}
+              onRejectGiftingRequest={handleRejectGiftingRequest}
               onExitParentMode={handleExitParentMode}
               onParentCompleteTask={handleParentCompleteTask}
               parentProfile={parentProfile}
@@ -1582,6 +1775,10 @@ export default function App() {
               onFoodPotDeposit={handleFoodPotDeposit}
               onBuyPetFood={handleBuyPetFood}
               onFoodPotUnlockSeen={handleFoodPotUnlockSeen}
+              onGiftingDeposit={handleGiftingDeposit}
+              onGiftingRequestCharity={handleGiftingRequestCharity}
+              onGiftingRequestSibling={handleGiftingRequestSibling}
+              onGiftingUnlockSeen={handleGiftingUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               theme={activeTheme}
             />
