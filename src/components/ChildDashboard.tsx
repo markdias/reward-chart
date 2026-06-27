@@ -44,6 +44,10 @@ interface ChildDashboardProps {
   onFoodPotDeposit: (childId: string, amount: number) => void;
   onBuyPetFood: (childId: string) => void;
   onFoodPotUnlockSeen: (childId: string) => void;
+  onGiftingDeposit: (childId: string, amount: number) => void;
+  onGiftingRequestCharity: (childId: string, amount: number, charityId: string) => void;
+  onGiftingRequestSibling: (childId: string, amount: number, siblingId: string) => void;
+  onGiftingUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
   theme: ThemeId;
 }
@@ -66,6 +70,10 @@ export default function ChildDashboard({
   onFoodPotDeposit,
   onBuyPetFood,
   onFoodPotUnlockSeen,
+  onGiftingDeposit,
+  onGiftingRequestCharity,
+  onGiftingRequestSibling,
+  onGiftingUnlockSeen,
   onUpdateChildStats,
   theme
 }: ChildDashboardProps) {
@@ -87,6 +95,19 @@ export default function ChildDashboard({
   const [foodDepositAmount, setFoodDepositAmount] = useState<number>(7);
   const [showFoodReplayVideo, setShowFoodReplayVideo] = useState(false);
   const [penaltyMessage, setPenaltyMessage] = useState<string | null>(null);
+
+  // Gifting Pot UI State
+  const [showGiftingDepositModal, setShowGiftingDepositModal] = useState(false);
+  const [giftingDepositAmount, setGiftingDepositAmount] = useState<number>(5);
+  const [showGiftingReplayVideo, setShowGiftingReplayVideo] = useState(false);
+  
+  const [showCharityModal, setShowCharityModal] = useState(false);
+  const [charityAmount, setCharityAmount] = useState<number>(1);
+  const [selectedCharityId, setSelectedCharityId] = useState<string>('');
+  
+  const [showSiblingModal, setShowSiblingModal] = useState(false);
+  const [siblingAmount, setSiblingAmount] = useState<number>(1);
+  const [selectedSiblingId, setSelectedSiblingId] = useState<string>('');
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -124,10 +145,11 @@ export default function ChildDashboard({
   useEffect(() => {
     const showUnlock = activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo);
     const showFoodUnlock = activeChild && activeChild.food_pot_unlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo);
-    if (!showUnlock && !showFoodUnlock) {
+    const showGiftingUnlock = activeChild && activeChild.gifting_unlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo);
+    if (!showUnlock && !showFoodUnlock && !showGiftingUnlock) {
       setIsVideoPlaying(false);
     }
-  }, [activeChild, showReplayVideo, showFoodReplayVideo]);
+  }, [activeChild, showReplayVideo, showFoodReplayVideo, showGiftingReplayVideo]);
 
   // Daily hunger check & penalty check hook
   useEffect(() => {
@@ -617,6 +639,81 @@ export default function ChildDashboard({
                 onClick={() => { playSound.success(); onFoodPotUnlockSeen(activeChild.id); setShowFoodReplayVideo(false); }}
                 className="w-full gamepad-button py-4 bg-orange-400 hover:bg-orange-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 id="food-pot-unlock-dismiss-btn"
+              >
+                GOT IT! 🎉
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Gifting Pot Unlock Celebration Overlay */}
+      <AnimatePresence>
+        {activeChild && activeChild.gifting_unlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
+            id="gifting-pot-unlock-cinematic"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 30 }}
+              transition={{ type: 'spring', damping: 15 }}
+              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+            >
+              {/* Sunburst background effect */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
+                NEW FEATURE UNLOCKED
+              </div>
+
+              <h2 className="text-3xl font-black font-display text-stone-900">
+                🎉 GIFTING POT UNLOCKED!
+              </h2>
+
+              <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
+                You're so generous, <strong className="text-stone-900">{activeChild.name}</strong>! You've unlocked the <strong className="text-rose-600">Gifting Pot</strong>! You can now use your gold coins to help others by donating to charity or gifting to a sibling.
+              </p>
+
+              {/* Video Player */}
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+                <video 
+                  ref={videoRef}
+                  src="/gifting-pot-video.mp4" 
+                  controls 
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster="/gifting-pot-poster.jpg"
+                  onPlay={() => setIsVideoPlaying(true)}
+                  onPause={() => setIsVideoPlaying(false)}
+                  onEnded={() => setIsVideoPlaying(false)}
+                >
+                  <source src="/gifting-pot-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                {!isVideoPlaying && (
+                  <div 
+                    onClick={() => {
+                      videoRef.current?.play();
+                    }}
+                    className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
+                  >
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+                      <Play className="w-8 h-8 text-rose-500 fill-rose-500 ml-1" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => { playSound.success(); onGiftingUnlockSeen(activeChild.id); setShowGiftingReplayVideo(false); }}
+                className="w-full gamepad-button py-4 bg-rose-400 hover:bg-rose-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                id="gifting-pot-unlock-dismiss-btn"
               >
                 GOT IT! 🎉
               </button>
@@ -1756,6 +1853,293 @@ export default function ChildDashboard({
                               </span>
                             </div>
                           )}
+
+                          {/* === GIFTING POT SECTION === */}
+
+                          {/* Gifting Pot Unlocked Card */}
+                          {activeChild.gifting_unlocked && activeChild.gifting_unlock_seen && (
+                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
+                              <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-rose-400 via-pink-400 to-fuchsia-500`} />
+                        
+                              {/* Header */}
+                              <div className="flex items-center justify-between mb-3 mt-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 border border-rose-200 flex items-center justify-center">
+                                    <Gift className="w-5 h-5 text-rose-600" />
+                                  </div>
+                                  <div>
+                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>GIFTING POT</span>
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Gifting Pot</h4>
+                                      <button 
+                                        onClick={() => setShowGiftingReplayVideo(true)}
+                                        className="text-[9px] bg-rose-100 text-rose-700 hover:bg-rose-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
+                                      >
+                                        <Play className="w-2.5 h-2.5 fill-rose-700" /> Play Video
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl">
+                                  <span className="text-lg"><GoldCoinIcon /></span>
+                                  <span className="text-lg font-mono font-black text-rose-700">{activeChild.gifting_pot || 0}</span>
+                                </div>
+                              </div>
+
+                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                                Add gold coins to your Gifting Pot to donate to charity or gift to a sibling. It feels good to give!
+                              </p>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => { setShowGiftingDepositModal(true); setGiftingDepositAmount(Math.min(5, activeChild.points || 5)); playSound.click(); }}
+                                  disabled={activeChild.points <= 0}
+                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                                    activeChild.points > 0
+                                      ? 'bg-rose-500 border border-rose-700 text-white shadow-[0_3px_0_0_#be123c]'
+                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                  }`}
+                                >
+                                  💰 Add Gold
+                                </button>
+                                <button
+                                  onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.gifting_pot || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
+                                  disabled={(activeChild.gifting_pot || 0) <= 0}
+                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                                    (activeChild.gifting_pot || 0) > 0
+                                      ? 'bg-emerald-100 border border-emerald-300 text-emerald-800 shadow-[0_3px_0_0_#059669]'
+                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                  }`}
+                                >
+                                  🌍 Donate
+                                </button>
+                                <button
+                                  onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.gifting_pot || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
+                                  disabled={(activeChild.gifting_pot || 0) <= 0 || children.length <= 1}
+                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                                    (activeChild.gifting_pot || 0) > 0 && children.length > 1
+                                      ? 'bg-pink-100 border border-pink-300 text-pink-800 shadow-[0_3px_0_0_#be185d]'
+                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                  }`}
+                                >
+                                  🎁 Gift Sibling
+                                </button>
+                              </div>
+
+                              {/* Gifting Pot Deposit Modal */}
+                              <AnimatePresence>
+                                {showGiftingDepositModal && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2"
+                                  >
+                                    <label className="text-xs font-bold text-rose-800 block text-center mb-1">Add how many gold coins to Gifting Pot?</label>
+                                    <div className="flex items-center justify-center gap-4 py-2">
+                                      <button
+                                        onClick={() => { setGiftingDepositAmount(Math.max(1, giftingDepositAmount - 1)); playSound.click(); }}
+                                        disabled={giftingDepositAmount <= 1}
+                                        className="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center cursor-pointer hover:bg-rose-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                
+                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{giftingDepositAmount}</span>
+                                      </div>
+                                
+                                      <button
+                                        onClick={() => { setGiftingDepositAmount(Math.min(activeChild.points, giftingDepositAmount + 1)); playSound.click(); }}
+                                        disabled={giftingDepositAmount >= activeChild.points}
+                                        className="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center cursor-pointer hover:bg-rose-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={() => {
+                                          if (giftingDepositAmount > 0 && giftingDepositAmount <= activeChild.points) {
+                                            onGiftingDeposit(activeChild.id, giftingDepositAmount);
+                                            setShowGiftingDepositModal(false);
+                                            playSound.purchase();
+                                          }
+                                        }}
+                                        disabled={giftingDepositAmount <= 0 || giftingDepositAmount > activeChild.points}
+                                        className="flex-1 py-2 rounded-lg bg-rose-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-rose-400 active:translate-y-0.5 transition-all"
+                                      >
+                                        Confirm
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowGiftingDepositModal(false); playSound.click(); }}
+                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+
+                              {/* Charity Modal */}
+                              <AnimatePresence>
+                                {showCharityModal && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
+                                  >
+                                    <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Donate to Charity (requires parent approval)</label>
+                                    <select
+                                      value={selectedCharityId}
+                                      onChange={(e) => setSelectedCharityId(e.target.value)}
+                                      className="w-full bg-white border border-emerald-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                    >
+                                      <option value="CH-WILDLIFE">🦁 Global Wildlife Fund</option>
+                                      <option value="CH-OCEAN">🌊 Save the Oceans</option>
+                                      <option value="CH-CHILDREN">📚 Kids Education Charity</option>
+                                    </select>
+                                    <div className="flex items-center justify-center gap-4 py-2">
+                                      <button
+                                        onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
+                                        disabled={charityAmount <= 1}
+                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{charityAmount}</span>
+                                      </div>
+                                      <button
+                                        onClick={() => { setCharityAmount(Math.min((activeChild.gifting_pot || 0), charityAmount + 1)); playSound.click(); }}
+                                        disabled={charityAmount >= (activeChild.gifting_pot || 0)}
+                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={() => {
+                                          if (charityAmount > 0 && charityAmount <= (activeChild.gifting_pot || 0) && selectedCharityId) {
+                                            onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
+                                            setShowCharityModal(false);
+                                            playSound.success();
+                                          }
+                                        }}
+                                        disabled={charityAmount <= 0 || charityAmount > (activeChild.gifting_pot || 0) || !selectedCharityId}
+                                        className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-emerald-400 active:translate-y-0.5 transition-all"
+                                      >
+                                        Ask to Donate
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowCharityModal(false); playSound.click(); }}
+                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+
+                              {/* Sibling Modal */}
+                              <AnimatePresence>
+                                {showSiblingModal && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="mt-3 p-3 rounded-xl bg-pink-50 border border-pink-200 space-y-2"
+                                  >
+                                    <label className="text-xs font-bold text-pink-800 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
+                                    <select
+                                      value={selectedSiblingId}
+                                      onChange={(e) => setSelectedSiblingId(e.target.value)}
+                                      className="w-full bg-white border border-pink-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                                    >
+                                      {children.filter(c => c.id !== activeChild.id).map(c => (
+                                        <option key={c.id} value={c.id}>👧👦 {c.name}</option>
+                                      ))}
+                                    </select>
+                                    <div className="flex items-center justify-center gap-4 py-2">
+                                      <button
+                                        onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
+                                        disabled={siblingAmount <= 1}
+                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{siblingAmount}</span>
+                                      </div>
+                                      <button
+                                        onClick={() => { setSiblingAmount(Math.min((activeChild.gifting_pot || 0), siblingAmount + 1)); playSound.click(); }}
+                                        disabled={siblingAmount >= (activeChild.gifting_pot || 0)}
+                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                      <button
+                                        onClick={() => {
+                                          if (siblingAmount > 0 && siblingAmount <= (activeChild.gifting_pot || 0) && selectedSiblingId) {
+                                            onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
+                                            setShowSiblingModal(false);
+                                            playSound.success();
+                                          }
+                                        }}
+                                        disabled={siblingAmount <= 0 || siblingAmount > (activeChild.gifting_pot || 0) || !selectedSiblingId}
+                                        className="flex-1 py-2 rounded-lg bg-pink-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-pink-400 active:translate-y-0.5 transition-all"
+                                      >
+                                        Ask to Gift
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowSiblingModal(false); playSound.click(); }}
+                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
+
+                          {/* Gifting Pot Locked Preview */}
+                          {!activeChild.gifting_unlocked && (activeChild.level < 3 || (activeChild.level === 3 && activeChild.xp_in_level < 50)) && (
+                            <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
+                              <div className="flex items-center gap-2 text-stone-500">
+                                <Lock className="w-4 h-4" />
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level 3, 50 XP!</span>
+                              </div>
+                              <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{
+                                    width: `${(() => {
+                                      const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : (activeChild.level === 3 ? 250 + activeChild.xp_in_level : 300));
+                                      return Math.min(100, Math.round((xpEarned / 300) * 100));
+                                    })()}%`
+                                  }}
+                                  transition={{ duration: 0.8 }}
+                                  className="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500"
+                                />
+                              </div>
+                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                                {(() => {
+                                  const xpEarned = activeChild.level === 1 ? activeChild.xp_in_level : (activeChild.level === 2 ? 100 + activeChild.xp_in_level : (activeChild.level === 3 ? 250 + activeChild.xp_in_level : 300));
+                                  return `${xpEarned} / 300 XP`;
+                                })()}
+                              </span>
+                            </div>
+                          )}
+
                         </motion.div>
                       ) : null}
                     </AnimatePresence>
