@@ -258,28 +258,36 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
               </div>
 
-              {/* Dynamic progression bars */}
-              <div className="space-y-2">
-                {[
-                  { label: 'LEVEL PROGRESS', val: activeChar.stats.power, color: 'bg-rose-500' },
-                  { label: 'POTS UNLOCKED', val: activeChar.stats.fun, color: 'bg-amber-500' },
-                  { label: 'NEXT EVOLUTION', val: activeChar.stats.brains, color: 'bg-emerald-500' }
-                ].map((stat, i) => (
-                  <div key={i} className="space-y-1">
-                    <div className={`flex justify-between text-[10px] font-mono font-bold tracking-wider ${styles.textMuted}`}>
-                      <span>{stat.label}</span>
-                      <span className={styles.textColor}>{stat.val}%</span>
-                    </div>
-                    <div className="h-2 bg-stone-200 rounded-full overflow-hidden p-0.5 border border-stone-300">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.val}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${stat.color}`}
-                      />
-                    </div>
+              {/* Progression Preview */}
+              <div className={`p-4 rounded-2xl ${styles.innerCard} border border-stone-200/50 space-y-3 mt-2`}>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
+                      HOW IT WORKS
+                    </span>
+                    <span className={`text-sm font-bold font-display ${styles.textColor}`}>
+                      Level 4 <ArrowRight className="inline w-3 h-3 mx-1 text-stone-400" /> Level 5
+                    </span>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-amber-500 animate-pulse">+50 XP</span>
+                  </div>
+                </div>
+                
+                <div className="h-3 bg-stone-200/80 rounded-full overflow-hidden p-0.5 border border-stone-300/50 relative">
+                  <motion.div
+                    initial={{ width: '40%' }}
+                    animate={{ width: '75%' }}
+                    transition={{ duration: 1.5, ease: 'easeInOut', repeat: Infinity, repeatType: 'reverse', repeatDelay: 1 }}
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500"
+                  />
+                  {/* Subtle shine effect on the bar */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-white/20 rounded-t-full" />
+                </div>
+                
+                <p className={`text-[11px] leading-tight ${styles.textMuted}`}>
+                  Complete real-world tasks to earn XP. Leveling up unlocks new pots and evolves your companion!
+                </p>
               </div>
             </div>
           </div>
