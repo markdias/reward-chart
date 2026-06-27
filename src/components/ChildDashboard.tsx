@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Coins, ChevronRight, Lock, Star,
@@ -71,6 +71,8 @@ export default function ChildDashboard({
   const [depositAmount, setDepositAmount] = useState<number>(5);
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   const [showReplayVideo, setShowReplayVideo] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
@@ -103,6 +105,14 @@ export default function ChildDashboard({
   }, [evolvingStage, isHatching]);
 
   const activeChild = children.find(c => c.id === selectedChildId);
+
+  // Reset video play state when popup is closed
+  useEffect(() => {
+    const showUnlock = activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo);
+    if (!showUnlock) {
+      setIsVideoPlaying(false);
+    }
+  }, [activeChild, showReplayVideo]);
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
@@ -438,20 +448,31 @@ export default function ChildDashboard({
               {/* Video Player */}
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
                 <video 
+                  ref={videoRef}
                   src="/savings-video.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
                   poster="/savings-poster.jpg"
+                  onPlay={() => setIsVideoPlaying(true)}
+                  onPause={() => setIsVideoPlaying(false)}
+                  onEnded={() => setIsVideoPlaying(false)}
                 >
                   <source src="/savings-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20">
-                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                    <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
+                {!isVideoPlaying && (
+                  <div 
+                    onClick={() => {
+                      videoRef.current?.play();
+                    }}
+                    className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
+                  >
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+                      <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <button
