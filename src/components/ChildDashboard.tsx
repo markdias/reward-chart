@@ -1074,7 +1074,7 @@ export default function ChildDashboard({
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <Target className="w-5 h-5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">QUESTS</span>
+                        <span className="text-xl sm:text-base">🎯</span> <span className="hidden sm:inline">QUESTS</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
@@ -1084,7 +1084,7 @@ export default function ChildDashboard({
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <Gift className="w-5 h-5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">PRIZES</span>
+                        <span className="text-xl sm:text-base">🎁</span> <span className="hidden sm:inline">PRIZES</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
@@ -1772,9 +1772,9 @@ export default function ChildDashboard({
         {selectedChildId && (
           <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
             {[
-              { id: 'companion', label: 'PET', icon: Star },
-              { id: 'tasks', label: 'QUESTS', icon: Target },
-              { id: 'rewards', label: 'PRIZES', icon: Gift },
+              { id: 'companion', label: 'PET', icon: null, emoji: '✨' },
+              { id: 'tasks', label: 'QUESTS', icon: null, emoji: '🎯' },
+              { id: 'rewards', label: 'PRIZES', icon: null, emoji: '🎁' },
               { id: 'pots', label: 'POTS', icon: null, emoji: '🍯' }
             ].map((tab) => {
               const Icon = tab.icon;
