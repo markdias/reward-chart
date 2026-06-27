@@ -37,6 +37,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
   
@@ -307,61 +308,23 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </div>
 
           <div className="pt-4 border-t border-stone-200">
-            <h4 className={`text-xs font-bold font-display uppercase tracking-widest ${c.text} mb-4`}>Global Rewards & Targets</h4>
-            <div className="space-y-4">
-              <div>
-                <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Level Up Gold Reward</label>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div className="relative flex items-center">
                 <input 
-                  type="number" 
-                  value={levelUpGoldReward}
-                  onChange={(e) => setLevelUpGoldReward(Number(e.target.value))}
-                  className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
+                  type="checkbox" 
+                  checked={showAdvanced}
+                  onChange={(e) => setShowAdvanced(e.target.checked)}
+                  className="sr-only" 
                 />
+                <div className={`w-10 h-6 rounded-full transition-colors ${showAdvanced ? 'bg-indigo-500' : 'bg-stone-300'}`}></div>
+                <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${showAdvanced ? 'translate-x-4' : 'translate-x-0'}`}></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Weekly XP Target</label>
-                  <input 
-                    type="number" 
-                    value={weeklyXpTarget}
-                    onChange={(e) => setWeeklyXpTarget(Number(e.target.value))}
-                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Weekly Gold Bonus</label>
-                  <input 
-                    type="number" 
-                    value={weeklyRewardPoints}
-                    onChange={(e) => setWeeklyRewardPoints(Number(e.target.value))}
-                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Monthly XP Target</label>
-                  <input 
-                    type="number" 
-                    value={monthlyXpTarget}
-                    onChange={(e) => setMonthlyXpTarget(Number(e.target.value))}
-                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Monthly Gold Bonus</label>
-                  <input 
-                    type="number" 
-                    value={monthlyRewardPoints}
-                    onChange={(e) => setMonthlyRewardPoints(Number(e.target.value))}
-                    className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
-                  />
-                </div>
-              </div>
-            </div>
+              <span className={`text-xs font-bold font-display uppercase tracking-widest ${c.text}`}>Enable Advanced Configuration</span>
+            </label>
           </div>
 
-          <div className="pt-4 border-t border-stone-200">
+          {showAdvanced && (
+            <div className="pt-4 border-t border-stone-200">
             <h4 className={`text-xs font-bold font-display uppercase tracking-widest ${c.text} mb-4`}>Levels & Pots Configuration</h4>
             <div className="space-y-4">
               <div>
@@ -435,6 +398,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               </div>
             </div>
           </div>
+          )}
           <button 
             onClick={handleSaveProfile}
             disabled={isSavingProfile}

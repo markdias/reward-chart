@@ -346,7 +346,7 @@ export default function App() {
           const { data: dbGifting, error: errGifting } = await supabase
             .from('gifting_requests')
             .select('*')
-            .eq('parent_id', currentFamilyId);
+            .eq('family_id', currentFamilyId);
 
           if (!errGifting) {
             setGiftingRequests(dbGifting || []);
@@ -675,7 +675,7 @@ export default function App() {
         await supabase.from('completions').delete().in('child_id', childIds);
       }
       await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
-      await supabase.from('gifting_requests').delete().eq('parent_id', familyId);
+      await supabase.from('gifting_requests').delete().eq('family_id', familyId);
 
       const updatedChildren = children.map(c => ({
         ...c,
@@ -1560,7 +1560,7 @@ export default function App() {
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       child_id: childId,
-      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      family_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       amount,
       type: 'charity',
       charity_name: charityName,
@@ -1583,7 +1583,7 @@ export default function App() {
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       child_id: childId,
-      parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
+      family_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       amount,
       type: 'sibling',
       sibling_id: siblingId,

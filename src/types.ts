@@ -117,7 +117,7 @@ export interface RewardRedemption {
 export interface GiftingRequest {
   id: string;
   child_id: string;
-  parent_id: string;
+  family_id: string;
   amount: number;
   type: 'charity' | 'sibling';
   sibling_id?: string | null;
