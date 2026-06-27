@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Coins, Target } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Coins, Target, Utensils } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
@@ -331,8 +331,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
 
-          <div className="relative flex flex-col md:flex-row items-center gap-10 md:gap-16">
-            <div className="flex-1 space-y-6 text-center md:text-left">
+          <div className="relative flex flex-col items-center gap-10 md:gap-12">
+            <div className="w-full space-y-4 text-center">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
                 <PiggyBank className="w-4 h-4 text-amber-500" />
                 LEARN REAL MONEY SKILLS
@@ -340,14 +340,14 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               <h2 className="text-3xl md:text-5xl font-black font-display text-stone-900">
                 A Financial Journey for Kids
               </h2>
-              <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-xl mx-auto md:mx-0">
+              <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-2xl mx-auto">
                 Reward Chart isn't just about finishing chores. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
               </p>
             </div>
 
-            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
-                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-4 border border-amber-200">
+            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+              <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-5 border border-amber-200">
                   <Coins className="w-6 h-6" />
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
@@ -355,13 +355,24 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                   Complete real-world tasks to earn Gold Coins into their main wallet, learning the direct connection between work and reward.
                 </p>
               </div>
-              <div className="bg-stone-50 border border-stone-200 p-5 rounded-3xl">
-                <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-500 mb-4 border border-sky-200">
+              
+              <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center text-sky-500 mb-5 border border-sky-200">
                   <Target className="w-6 h-6" />
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">2. Save for Goals</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
                   Move coins into the secure Savings Pot to protect them from impulse buys. Set big goals and track progress over time.
+                </p>
+              </div>
+
+              <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-500 mb-5 border border-orange-200">
+                  <Utensils className="w-6 h-6" />
+                </div>
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">3. Weekly Budgeting</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Allocate coins weekly to the Food Pot to feed their digital pet. Teaches budgeting for recurring expenses and responsibility!
                 </p>
               </div>
             </div>
