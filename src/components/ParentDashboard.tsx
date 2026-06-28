@@ -620,7 +620,7 @@ export default function ParentDashboard({
               </div>
               <div className="w-full">
                 <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">CHILDREN</span></span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">{children.length === 1 ? 'CHILD' : 'CHILDREN'}</span></span>
               </div>
             </div>
             <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
