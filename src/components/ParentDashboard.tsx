@@ -1163,13 +1163,18 @@ export default function ParentDashboard({
                   </div>
                 </div>
 
+                <AnimatePresence>
                 {showAddTask && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
+
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-900 shadow-2xl space-y-4`}
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
                     id="add-task-box"
                   >
+
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
                       {editingTaskId ? '✏️ Edit Quest Blueprint' : '🧹 Create Quest Blueprint'}
                     </h3>
@@ -1261,7 +1266,9 @@ export default function ParentDashboard({
                       </div>
                     </form>
                   </motion.div>
+                  </div>
                 )}
+                </AnimatePresence>
 
                 {/* SUB-TABS FOR TASKS */}
                 <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
@@ -1297,26 +1304,26 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-4">
+                        <div key={task.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-2 sm:gap-4">
                             <div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
                                   {task.category.toUpperCase()}
                                 </span>
-                                <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                  <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
-                                  <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                                <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
+                                  <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
+                                  <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                                 </div>
                               </div>
-                              <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
-                              <p className={`text-xs ${styles.textMuted} mt-1`}>
+                              <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
+                              <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
                                 Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
                               </p>
                             </div>
 
-                            <div className="flex flex-col items-end gap-3 shrink-0">
-                              <span className={`font-mono font-black text-sm text-emerald-700`}>
+                            <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
+                              <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
                                 +{task.points} GOLD
                               </span>
 
@@ -1335,15 +1342,15 @@ export default function ParentDashboard({
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => openEditTask(task)}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
+                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                                 >
-                                  <Edit2 className="w-4 h-4" />
+                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
                                   onClick={() => { playSound.click(); onDeleteTask(task.id); }}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
+                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
                             </div>
@@ -1408,27 +1415,27 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={task.id}
-                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
                       >
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex justify-between items-start gap-2 sm:gap-4">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
                                 {task.category.toUpperCase()}
                               </span>
-                              <div className={`flex gap-3 text-sm font-mono font-bold ${styles.textColor}`}>
-                                <span className="flex items-center gap-1"><Coins className="w-4 h-4 text-yellow-500" /> {task.points}</span>
-                                <span className="flex items-center gap-1"><TrendingUp className="w-4 h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                              <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
+                                <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
+                                <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                               </div>
                             </div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
-                            <p className={`text-xs ${styles.textMuted} mt-1`}>
+                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
+                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
                               Child assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
                             </p>
                           </div>
 
-                          <div className="flex flex-col items-end gap-3 shrink-0">
-                            <span className={`font-mono font-black text-sm text-emerald-700`}>
+                          <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
+                            <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
                               +{task.points} GOLD
                             </span>
 
@@ -1448,19 +1455,19 @@ export default function ParentDashboard({
                             <div className="flex gap-2">
                               <button
                                 onClick={() => openEditTask(task)}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
+                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                               >
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               </button>
                               <button
                                 onClick={() => {
                                   playSound.click();
                                   onDeleteTask(task.id);
                                 }}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
+                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 id={`delete-task-${task.id}`}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               </button>
                             </div>
                           </div>
@@ -1507,13 +1514,18 @@ export default function ParentDashboard({
                 </div>
 
                 {/* Add Custom Reward Overlay */}
+                <AnimatePresence>
                 {showAddReward && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
+
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-900 shadow-2xl space-y-4`}
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
                     id="add-reward-box"
                   >
+
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
                       {editingRewardId ? '✏️ Edit Reward Token' : '🎁 Define Reward Token'}
                     </h3>
@@ -1594,7 +1606,9 @@ export default function ParentDashboard({
                       </div>
                     </form>
                   </motion.div>
+                  </div>
                 )}
+                </AnimatePresence>
 
                 {/* SUB-TABS FOR REWARDS */}
                 <div className="flex gap-2 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6 overflow-x-auto">
@@ -1629,24 +1643,24 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-3.5 items-center">
-                              <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>
+                        <div key={reward.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
+                          <div className="flex justify-between items-start gap-2 sm:gap-4">
+                            <div className="flex gap-2 sm:gap-3 items-center">
+                              <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}>🎁</span>
                               <div>
-                                <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
+                                <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
                                   {reward.title}
                                 </h3>
-                                <p className={`text-xs ${styles.textMuted} mt-1`}>
-                                  Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
-                                  <span className="mx-2">•</span>
-                                  Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                                <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
+                                  Assigned: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
+                                  <span className="mx-1 sm:mx-2">•</span>
+                                  Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-3">
-                              <span className={`font-mono font-black text-sm text-amber-600`}>
+                            <div className="flex flex-col items-end gap-1.5 sm:gap-3">
+                              <span className={`font-mono font-black text-xs sm:text-sm text-amber-600 hidden sm:inline-block`}>
                                 {reward.cost_points} GOLD
                               </span>
 
@@ -1665,15 +1679,15 @@ export default function ParentDashboard({
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => openEditReward(reward)}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
+                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                                 >
-                                  <Edit2 className="w-4 h-4" />
+                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                                 <button
                                   onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
-                                  className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
+                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
                             </div>
@@ -1739,47 +1753,47 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={reward.id}
-                        className={`border p-3 sm:p-4 rounded-xl sm:rounded-2xl flex justify-between items-center gap-2 sm:gap-3 ${styles.cardBg} ${styles.borderStyle}`}
+                        className={`border p-2 sm:p-3 rounded-xl flex justify-between items-center gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
                       >
-                        <div className="flex gap-3.5 items-center">
-                          <span className={`text-3xl bg-stone-100 border border-stone-200 p-2.5 rounded-2xl`}>🎁</span>
+                        <div className="flex gap-2 sm:gap-3 items-center">
+                          <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}>🎁</span>
                           <div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-base font-display`}>
+                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
                               {reward.title}
                               {!reward.is_available && reward.limit_type === 'one_time' && (
-                                <span className="ml-2 text-[9px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase align-middle">
+                                <span className="ml-1 sm:ml-2 text-[8px] sm:text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase align-middle">
                                   CLAIMED
                                 </span>
                               )}
                             </h3>
-                            <p className={`text-xs ${styles.textMuted} mt-1`}>
+                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
                               Available for: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
-                              <span className="mx-2">•</span>
-                              Limit: <strong className="font-bold uppercase text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                              <span className="mx-1 sm:mx-2">•</span>
+                              Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-3">
-                          <span className={`font-mono font-black text-sm text-amber-600`}>
+                        <div className="flex flex-col items-end gap-1.5 sm:gap-3">
+                          <span className={`font-mono font-black text-xs sm:text-sm text-amber-600`}>
                             {reward.cost_points} GOLD
                           </span>
                           <div className="flex gap-2">
                             <button
                               onClick={() => openEditReward(reward)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
+                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                             <button
                               onClick={() => {
                                 playSound.click();
                                 onDeleteReward(reward.id);
                               }}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
+                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
                               id={`delete-reward-${reward.id}`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </div>
