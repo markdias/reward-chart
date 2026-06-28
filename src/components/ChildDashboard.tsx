@@ -1164,12 +1164,16 @@ export default function ChildDashboard({
                       {(activeChild.main_pot_damaged || activeChild.is_rent_due) && (
                         <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4">
                           <span className="font-bold text-sm mb-1">
-                            {activeChild.is_rent_due ? "⚠️ RENT OVERDUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
+                            {activeChild.is_rent_due && activeChild.main_pot_damaged 
+                              ? "⚠️ RENT OVERDUE & POT BROKEN! ⚠️" 
+                              : activeChild.is_rent_due ? "⚠️ RENT OVERDUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
                           </span>
                           <span className="text-[10px] font-mono leading-tight mb-2">
-                            {activeChild.is_rent_due 
-                              ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Rent button."
-                              : "You are losing 1 point per day! Pay 5 points to repair it. If your Maintenance Pot has 5 coins, it will be used!"}
+                            {activeChild.is_rent_due && activeChild.main_pot_damaged
+                              ? "You are losing 6 points per day (5 for rent, 1 for damage)! Pay 20 coins for rent, and 5 to repair the pot!"
+                              : activeChild.is_rent_due 
+                                ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Rent button."
+                                : "You are losing 1 point per day! Pay 5 points to repair it. If your Maintenance Pot has 5 coins, it will be used!"}
                           </span>
                           <button 
                             onClick={() => { 
@@ -1192,9 +1196,11 @@ export default function ChildDashboard({
                                 playSound.purchase(); 
                               }
                             }} 
-                            className="bg-red-500 text-white font-bold py-1 px-4 rounded-xl text-[10px] hover:bg-red-600 transition-colors"
+                            className="w-auto px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
                           >
-                            {activeChild.is_rent_due ? "Pay Rent (20 Coins)" : "Repair (5 Coins)"}
+                            {activeChild.is_rent_due && activeChild.main_pot_damaged
+                              ? "Pay Rent First (20 Coins)"
+                              : activeChild.is_rent_due ? "Pay Rent (20 Coins)" : "Repair Pot (5 Coins)"}
                           </button>
                         </div>
                       )}
