@@ -2554,13 +2554,15 @@ export default function ChildDashboard({
               className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? 'border-emerald-400' : 'border-red-500'}`}
             >
               <div className="text-6xl mb-4">
-                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : maintenanceEventType === 'rent_failed' ? '⚠️' : '💥'}
+                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : (activeChild.is_rent_due && activeChild.main_pot_damaged && maintenanceEventType === 'rent_due') ? '🚨' : maintenanceEventType === 'rent_due' ? '💸' : maintenanceEventType === 'rent_failed' ? '⚠️' : '💥'}
               </div>
               <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
                 {maintenanceEventType === 'paid' 
                   ? 'Rent Paid!' 
-                  : maintenanceEventType === 'rent_due' 
-                    ? 'Rent Due!' 
+                  : (activeChild.is_rent_due && activeChild.main_pot_damaged && maintenanceEventType === 'rent_due')
+                    ? 'Rent Due & Pot Broken!'
+                    : maintenanceEventType === 'rent_due' 
+                      ? 'Rent Due!' 
                     : maintenanceEventType === 'rent_failed'
                       ? 'Not Enough Coins!'
                       : maintenanceEventType === 'broken' 
@@ -2570,6 +2572,8 @@ export default function ChildDashboard({
               <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
                 {maintenanceEventType === 'paid' 
                   ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
+                  : (activeChild.is_rent_due && activeChild.main_pot_damaged && maintenanceEventType === 'rent_due')
+                    ? 'It is time to pay your rent of 20 gold coins, AND your Main Pot is broken! You must pay the rent first to avoid losing 5 points a day, then repair the pot for 5 points.'
                   : maintenanceEventType === 'rent_due'
                   ? 'It is time to pay your rent of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
                   : maintenanceEventType === 'rent_failed'
