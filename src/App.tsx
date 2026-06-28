@@ -1444,53 +1444,76 @@ export default function App() {
 
   // Operations: Maintenance & Main Pot
   const handleMaintenanceDeposit = async (childId: string, amount: number) => {
-    const child = children.find(c => c.id === childId);
-    if (!child || amount <= 0 || amount > child.points) return;
+    let finalUpdatedChild: Child | null = null;
+    let autoPaid = false;
 
-    const targetChild = {
-      ...child,
-      points: child.points - amount,
-      maintenance_pot: (child.maintenance_pot || 0) + amount
-    };
-    
-    // Check if depositing allows an automatic rent payment
-    const lastMaintenance = targetChild.main_last_maintenance_date ? new Date(targetChild.main_last_maintenance_date) : new Date();
-    const daysSince = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince >= 30 && targetChild.maintenance_pot >= 20) {
-      targetChild.maintenance_pot -= 20;
-      targetChild.main_last_maintenance_date = new Date().toISOString();
-    }
+    setChildren(prev => {
+      const child = prev.find(c => c.id === childId);
+      if (!child || amount <= 0 || amount > child.points) return prev;
 
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
-    
-    const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      await supabase.from('children').update({
-        points: targetChild.points,
-        maintenance_pot: targetChild.maintenance_pot,
-        main_last_maintenance_date: targetChild.main_last_maintenance_date
-      }).eq('id', childId);
+      finalUpdatedChild = {
+        ...child,
+        points: child.points - amount,
+        maintenance_pot: (child.maintenance_pot || 0) + amount
+      };
+      
+      const lastMaintenance = finalUpdatedChild.main_last_maintenance_date ? new Date(finalUpdatedChild.main_last_maintenance_date) : new Date();
+      const daysSince = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince >= 30 && finalUpdatedChild.maintenance_pot >= 20) {
+        finalUpdatedChild.maintenance_pot -= 20;
+        finalUpdatedChild.main_last_maintenance_date = new Date().toISOString();
+        finalUpdatedChild.is_rent_due = false;
+        finalUpdatedChild.rent_due_date = null;
+        autoPaid = true;
+      }
+
+      const newList = prev.map(c => c.id === childId ? finalUpdatedChild! : c);
+      syncChildren(newList);
+      return newList;
+    });
+
+    if (!finalUpdatedChild) return;
+
+    if (autoPaid) {
+      localStorage.removeItem(`pending_maintenance_popup_${childId}`);
+      updateChildInSupabase(finalUpdatedChild);
+    } else {
+      const supabase = getSupabaseClient();
+      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+        await supabase.from('children').update({
+          points: finalUpdatedChild.points,
+          maintenance_pot: finalUpdatedChild.maintenance_pot,
+          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
+        }).eq('id', childId);
+      }
     }
   };
 
   const handleMaintenanceWithdraw = async (childId: string) => {
-    const child = children.find(c => c.id === childId);
-    if (!child || (child.maintenance_pot || 0) <= 0) return;
-
-    const targetChild = {
-      ...child,
-      points: child.points + (child.maintenance_pot || 0),
-      maintenance_pot: 0
-    };
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
+    let finalUpdatedChild: Child | null = null;
     
+    setChildren(prev => {
+      const child = prev.find(c => c.id === childId);
+      if (!child || (child.maintenance_pot || 0) <= 0) return prev;
+
+      finalUpdatedChild = {
+        ...child,
+        points: child.points + (child.maintenance_pot || 0),
+        maintenance_pot: 0
+      };
+
+      const newList = prev.map(c => c.id === childId ? finalUpdatedChild! : c);
+      syncChildren(newList);
+      return newList;
+    });
+
+    if (!finalUpdatedChild) return;
+
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       await supabase.from('children').update({
-        points: targetChild.points,
-        maintenance_pot: targetChild.maintenance_pot
+        points: finalUpdatedChild.points,
+        maintenance_pot: finalUpdatedChild.maintenance_pot
       }).eq('id', childId);
     }
   };
