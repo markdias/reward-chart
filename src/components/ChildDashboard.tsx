@@ -37,6 +37,8 @@ interface ChildDashboardProps {
   onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings') => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
+  onPaySavingsMaintenance: (childId: string) => void;
+  onRepairSavingsPot: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
   onSavingsWithdraw: (childId: string) => void;
   onSavingsGoal: (childId: string, rewardId: string) => void;
@@ -64,6 +66,8 @@ export default function ChildDashboard({
   onClaimReward,
   onEnterParentMode,
   onFeedPet,
+  onPaySavingsMaintenance,
+  onRepairSavingsPot,
   onSavingsDeposit,
   onSavingsWithdraw,
   onSavingsGoal,
@@ -1467,8 +1471,18 @@ export default function ChildDashboard({
                               {/* Header */}
                               <div className="flex items-center justify-between mb-3 mt-1">
                                 <div className="flex items-center gap-2">
-                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 flex items-center justify-center">
-                                    <PiggyBank className="w-5 h-5 text-emerald-600" />
+                                  <div className="h-12 w-12 rounded-xl flex items-center justify-center overflow-hidden">
+                                    <img 
+                                      src={
+                                        activeChild.savings_pot_damaged 
+                                          ? "/savings_pot_cracked.png" 
+                                          : (activeChild.savings_pot || 0) > 0 
+                                            ? "/savings_pot_full.png" 
+                                            : "/savings_pot_empty.png"
+                                      }
+                                      alt="Savings Pot" 
+                                      className="object-contain w-full h-full drop-shadow-md"
+                                    />
                                   </div>
                                   <div>
                                     <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>SAVINGS POT</span>
@@ -1538,35 +1552,82 @@ export default function ChildDashboard({
                                 </button>
                               )}
 
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Save your gold coins here for bigger prizes! Gold coins in the Savings Pot can't be spent until you take them out.
-                              </p>
+                              {(() => {
+                                const maintenanceCost = Math.ceil((activeChild.savings_pot || 0) * 0.05);
+                                const lastMaintenance = activeChild.savings_last_maintenance_date 
+                                  ? new Date(activeChild.savings_last_maintenance_date)
+                                  : new Date();
+                                const daysSinceMaintenance = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+                                const isLocked = daysSinceMaintenance >= 30;
 
-                              {/* Action Buttons */}
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points || 5)); playSound.click(); }}
-                                  disabled={activeChild.points <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                                    activeChild.points > 0
-                                      ? 'bg-emerald-500 border border-emerald-700 text-white shadow-[0_3px_0_0_#047857]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  💰 Save Gold Coins
-                                </button>
-                                <button
-                                  onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
-                                  disabled={(activeChild.savings_pot || 0) <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                                    (activeChild.savings_pot || 0) > 0
-                                      ? 'bg-amber-100 border border-amber-300 text-amber-800 shadow-[0_3px_0_0_#d97706]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  🔓 Take Out
-                                </button>
-                              </div>
+                                if (isLocked) {
+                                  return (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl mb-3 flex flex-col items-center gap-2">
+                                      <Lock className="w-6 h-6 text-red-500" />
+                                      <p className="text-xs font-bold text-red-700 text-center">
+                                        Your Savings Pot is locked! You must pay {maintenanceCost} coins (5% maintenance) to unlock it.
+                                      </p>
+                                      <button
+                                        onClick={() => { onPaySavingsMaintenance(activeChild.id); playSound.success(); }}
+                                        className="py-2 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                                      >
+                                        Pay Maintenance
+                                      </button>
+                                    </div>
+                                  );
+                                }
+
+                                if (activeChild.savings_pot_damaged) {
+                                  return (
+                                    <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl mb-3 flex flex-col items-center gap-2">
+                                      <p className="text-xs font-bold text-amber-800 text-center flex items-center gap-1.5">
+                                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                        Oh no! Your pot is broken and leaking 1 coin a day!
+                                      </p>
+                                      <button
+                                        onClick={() => { onRepairSavingsPot(activeChild.id); playSound.purchase(); }}
+                                        className="py-2 px-4 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                                      >
+                                        Repair (50 Coins)
+                                      </button>
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <>
+                                    <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                                      Save your gold coins here for bigger prizes! Gold coins in the Savings Pot can't be spent until you take them out.
+                                    </p>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points || 5)); playSound.click(); }}
+                                        disabled={activeChild.points <= 0}
+                                        className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                                          activeChild.points > 0
+                                            ? 'bg-emerald-500 border border-emerald-700 text-white shadow-[0_3px_0_0_#047857]'
+                                            : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                        }`}
+                                      >
+                                        💰 Save Gold Coins
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
+                                        disabled={(activeChild.savings_pot || 0) <= 0}
+                                        className={`flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                                          (activeChild.savings_pot || 0) > 0
+                                            ? 'bg-amber-100 border border-amber-300 text-amber-800 shadow-[0_3px_0_0_#d97706]'
+                                            : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                        }`}
+                                      >
+                                        🔓 Take Out
+                                      </button>
+                                    </div>
+                                  </>
+                                );
+                              })()}
 
                               {/* Deposit Modal */}
                               <AnimatePresence>

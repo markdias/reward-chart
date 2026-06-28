@@ -287,8 +287,54 @@ export default function App() {
             .eq('parent_id', currentFamilyId);
           
           if (!errChildren) {
-            setChildren(dbChildren || []);
-            localStorage.setItem(keyChildren, JSON.stringify(dbChildren || []));
+            let processedChildren = dbChildren || [];
+            
+            // --- Savings Pot Daily/Monthly Logic ---
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            let needsDbUpdate = false;
+            
+            processedChildren = processedChildren.map(child => {
+              let updated = { ...child };
+              let changed = false;
+              
+              // 1. Process Leak (1 coin per day since damage date)
+              if (updated.savings_pot_damaged && updated.savings_damage_date) {
+                const damageDate = new Date(updated.savings_damage_date);
+                const diffTime = Math.abs(now.getTime() - damageDate.getTime());
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 0) {
+                  const leaked = diffDays * 1; // 1 coin per day
+                  updated.savings_pot = Math.max(0, (updated.savings_pot || 0) - leaked);
+                  updated.savings_damage_date = now.toISOString(); // Reset date to avoid double charging
+                  changed = true;
+                }
+              }
+              
+              // 2. Random Damage Event (~1/30 chance per day), trigger on hunger check reset to ensure once a day
+              if (updated.last_hunger_check_date !== todayStr) {
+                if (updated.savings_unlocked && !updated.savings_pot_damaged && Math.random() < 0.033) {
+                  updated.savings_pot_damaged = true;
+                  updated.savings_damage_date = now.toISOString();
+                  changed = true;
+                }
+              }
+              
+              if (changed) needsDbUpdate = true;
+              return updated;
+            });
+            
+            if (needsDbUpdate) {
+              // Fire and forget updates to DB so we don't block load
+              processedChildren.forEach(child => {
+                 supabase.from('children').update(child).eq('id', child.id).then();
+              });
+            }
+            // ---------------------------------------
+
+            setChildren(processedChildren);
+            localStorage.setItem(keyChildren, JSON.stringify(processedChildren));
           } else {
             console.warn('Could not load children from Supabase, using localStorage:', errChildren.message);
             loadLocalStorageFallback(isDemo);
@@ -1324,6 +1370,64 @@ export default function App() {
   };
 
   // Operations: Savings Pot
+  const handlePaySavingsMaintenance = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const maintenanceCost = Math.ceil((child.savings_pot || 0) * 0.05); // 5%
+    if ((child.savings_pot || 0) < maintenanceCost) {
+      alert("Not enough coins in Savings Pot to pay maintenance!");
+      return;
+    }
+
+    const updatedChild = {
+      ...child,
+      savings_pot: (child.savings_pot || 0) - maintenanceCost,
+      savings_last_maintenance_date: new Date().toISOString()
+    };
+    const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        savings_pot: updatedChild.savings_pot,
+        savings_last_maintenance_date: updatedChild.savings_last_maintenance_date
+      }).eq('id', childId);
+    }
+  };
+
+  const handleRepairSavingsPot = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const repairCost = 50;
+    if (child.points < repairCost && (child.savings_pot || 0) < repairCost) {
+      alert("Not enough coins in Pocket or Savings to repair the pot!");
+      return;
+    }
+
+    let updatedChild = { ...child, savings_pot_damaged: false, savings_damage_date: null };
+    if ((child.savings_pot || 0) >= repairCost) {
+      updatedChild.savings_pot = (child.savings_pot || 0) - repairCost;
+    } else {
+      updatedChild.points = child.points - repairCost;
+    }
+
+    const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        savings_pot: updatedChild.savings_pot,
+        points: updatedChild.points,
+        savings_pot_damaged: false,
+        savings_damage_date: null
+      }).eq('id', childId);
+    }
+  };
+
   const handleSavingsDeposit = async (childId: string, amount: number) => {
     const child = children.find(c => c.id === childId);
     if (!child || amount <= 0 || amount > child.points) return;
@@ -1776,6 +1880,8 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
+              onPaySavingsMaintenance={handlePaySavingsMaintenance}
+              onRepairSavingsPot={handleRepairSavingsPot}
               onSavingsDeposit={handleSavingsDeposit}
               onSavingsWithdraw={handleSavingsWithdraw}
               onSavingsGoal={handleSavingsGoal}
