@@ -585,7 +585,13 @@ export default function App() {
           last_hunger_check_date: updatedChild.last_hunger_check_date,
           gifting_pot: updatedChild.gifting_pot,
           gifting_unlocked: updatedChild.gifting_unlocked,
-          gifting_unlock_seen: updatedChild.gifting_unlock_seen
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen,
+          maintenance_pot: updatedChild.maintenance_pot,
+          maintenance_unlocked: updatedChild.maintenance_unlocked,
+          maintenance_unlock_seen: updatedChild.maintenance_unlock_seen,
+          main_last_maintenance_date: updatedChild.main_last_maintenance_date,
+          main_pot_damaged: updatedChild.main_pot_damaged,
+          main_damage_date: updatedChild.main_damage_date
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
