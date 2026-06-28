@@ -1946,6 +1946,7 @@ export default function App() {
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
+              onMaintenanceUnlockSeen={handleMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               theme={activeTheme}
             />
