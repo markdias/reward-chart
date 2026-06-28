@@ -12,7 +12,7 @@ import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, FamilyMessage, GiftingRequest } from './types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
@@ -48,7 +48,7 @@ export default function App() {
   // Profile state
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
-  const [familyMessages, setFamilyMessages] = useState<FamilyMessage[]>([]);
+
 
   // Core records lists
   const [children, setChildren] = useState<Child[]>([]);
@@ -317,15 +317,6 @@ export default function App() {
             setLinkedParents(linkedProfiles);
           }
 
-          // Fetch family messages
-          const { data: messages } = await supabase
-            .from('family_messages')
-            .select('*')
-            .eq('family_id', currentFamilyId)
-            .order('created_at', { ascending: false });
-          if (messages) {
-            setFamilyMessages(messages);
-          }
 
           const keyChildren = `RCH_CHILDREN_${currentFamilyId}`;
           const keyTasks = `RCH_TASKS_${currentFamilyId}`;
@@ -533,33 +524,6 @@ export default function App() {
     }
   }, [parentEmail]);
 
-  // Handle instant family messages via Broadcast
-  useEffect(() => {
-    if (!parentProfile?.family_id) return;
-    
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-
-    const channel = supabase.channel(`family-${parentProfile.family_id}`)
-      .on('broadcast', { event: 'new_message' }, (payload) => {
-        const newMessage = payload.payload.message as FamilyMessage;
-        
-        // Don't duplicate if we sent it (optimistic update handles ours)
-        if (newMessage.sender_id !== parentProfile.user_id) {
-          playSound.success();
-          setFamilyMessages(prev => {
-            // Check if it already exists to prevent duplicates
-            if (prev.find(m => m.id === newMessage.id)) return prev;
-            return [newMessage, ...prev];
-          });
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [parentProfile?.family_id, parentProfile?.user_id]);
 
   // Sync state helpers to update local storage
   const syncChildren = (newList: Child[]) => {
@@ -2017,13 +1981,10 @@ export default function App() {
               onParentCompleteTask={handleParentCompleteTask}
               parentProfile={parentProfile}
               linkedParents={linkedParents}
-              familyMessages={familyMessages}
               onResetData={handleResetData}
               onRunSetup={handleRunSetup}
               onDeleteAccount={handleDeleteAccount}
               parentEmail={parentEmail}
-              onFamilyMessageSent={(msg) => setFamilyMessages(prev => [msg, ...prev])}
-              onFamilyMessageUpdated={(msgId, updates) => setFamilyMessages(prev => prev.map(m => m.id === msgId ? { ...m, ...updates } : m))}
               onRequireAccount={() => setShowCreateAccount(true)}
               theme={activeTheme}
             />
