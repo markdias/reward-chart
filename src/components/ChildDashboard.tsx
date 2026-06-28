@@ -121,6 +121,7 @@ export default function ChildDashboard({
   const [foodDepositAmount, setFoodDepositAmount] = useState<number>(7);
   const [showFoodReplayVideo, setShowFoodReplayVideo] = useState(false);
   const [penaltyMessage, setPenaltyMessage] = useState<string | null>(null);
+  const [showFeedReminder, setShowFeedReminder] = useState(false);
 
   // Gifting Pot UI State
   const [showGiftingDepositModal, setShowGiftingDepositModal] = useState(false);
@@ -225,6 +226,23 @@ export default function ChildDashboard({
       onUpdateChildStats(child.id, updates);
     }
   }, [selectedChildId, children, onUpdateChildStats]);
+
+  // Feed Reminder Check
+  useEffect(() => {
+    if (!selectedChildId || !activeChild) return;
+    
+    // Only check if they have the food pot unlocked, haven't fed today, and no penalty modal is showing
+    if (activeChild.food_pot_unlocked && !activeChild.pet_fed_today && !penaltyMessage) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const storageKey = `feed_reminder_${activeChild.id}`;
+      const lastAsked = localStorage.getItem(storageKey);
+      
+      if (lastAsked !== todayStr) {
+        // We haven't asked them today yet!
+        setShowFeedReminder(true);
+      }
+    }
+  }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.pet_fed_today, penaltyMessage]);
 
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
@@ -834,6 +852,70 @@ export default function ChildDashboard({
               >
                 I Promise to Feed Them! 🥺
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Feed Reminder Modal */}
+      <AnimatePresence>
+        {showFeedReminder && !penaltyMessage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
+            id="feed-reminder-modal"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 30 }}
+              className="relative w-full max-w-md bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+            >
+              <div className="mx-auto w-16 h-16 bg-orange-100 border border-orange-300 rounded-2xl flex items-center justify-center">
+                <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
+              </div>
+
+              <h2 className="text-2.5xl font-black font-display text-orange-500">
+                TIME TO FEED!
+              </h2>
+
+              <p className="text-sm text-stone-600 leading-relaxed">
+                Don't forget to feed <strong className="text-stone-900">{activeChildPack?.name.split(' the ')[0] || 'your pet'}</strong> today! A happy pet is a good companion.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { 
+                    playSound.success(); 
+                    setShowFeedReminder(false);
+                    if (activeChild) {
+                      localStorage.setItem(`feed_reminder_${activeChild.id}`, new Date().toISOString().split('T')[0]);
+                    }
+                    if ((activeChild?.pet_food || 0) > 0) {
+                      handleFeedCompanion();
+                    } else {
+                      setActiveChildTab('pots');
+                    }
+                  }}
+                  className="w-full gamepad-button py-3 bg-orange-400 hover:bg-orange-350 border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                >
+                  {(activeChild?.pet_food || 0) > 0 ? "Feed Now! 🍖" : "Get Food! 🛒"}
+                </button>
+                <button
+                  onClick={() => { 
+                    playSound.click(); 
+                    setShowFeedReminder(false); 
+                    if (activeChild) {
+                      localStorage.setItem(`feed_reminder_${activeChild.id}`, new Date().toISOString().split('T')[0]);
+                    }
+                  }}
+                  className="w-full py-3 bg-transparent text-stone-500 font-bold rounded-2xl uppercase tracking-widest text-sm hover:text-stone-700 transition-colors cursor-pointer"
+                >
+                  Maybe Later
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
