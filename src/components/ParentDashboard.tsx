@@ -1060,6 +1060,7 @@ export default function ParentDashboard({
                                         }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day rent check">Trigger Rent</button>
                                         <button onClick={() => { 
                                           playSound.click(); 
+                                          localStorage.setItem(`pending_maintenance_popup_${child.id}`, 'broken');
                                           onUpdateChildStats(child.id, { main_pot_damaged: true, main_damage_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }); 
                                         }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Break the main pot and start leaking">Break Pot</button>
                                       </div>

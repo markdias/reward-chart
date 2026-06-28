@@ -308,11 +308,13 @@ export default function App() {
                 if ((updated.maintenance_pot || 0) >= 20) {
                   updated.maintenance_pot = (updated.maintenance_pot || 0) - 20;
                   updated.main_last_maintenance_date = now.toISOString();
+                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'paid');
                   changed = true;
                 } else if (!updated.main_pot_damaged) {
                   // Not enough in maintenance pot! Break the main pot
                   updated.main_pot_damaged = true;
                   updated.main_damage_date = now.toISOString();
+                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
                   changed = true;
                 }
               }

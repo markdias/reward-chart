@@ -105,6 +105,8 @@ export default function ChildDashboard({
   const [avatarView, setAvatarView] = useState<'character' | 'main_pot'>('character');
   const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
   const [maintenanceDepositAmount, setMaintenanceDepositAmount] = useState<number>(5);
+  const [showMaintenanceEventPopup, setShowMaintenanceEventPopup] = useState(false);
+  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | null>(null);
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
@@ -243,6 +245,16 @@ export default function ChildDashboard({
       }
     }
   }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.food_pot_unlock_seen, activeChild?.pet_fed_today, penaltyMessage]);
+
+  // Maintenance Event Check
+  useEffect(() => {
+    if (!selectedChildId || !activeChild) return;
+    const pendingEvent = localStorage.getItem(`pending_maintenance_popup_${activeChild.id}`);
+    if (pendingEvent === 'paid' || pendingEvent === 'broken') {
+      setMaintenanceEventType(pendingEvent);
+      setShowMaintenanceEventPopup(true);
+    }
+  }, [selectedChildId, activeChild?.id]);
 
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
@@ -2395,8 +2407,8 @@ export default function ChildDashboard({
                                     <label className="text-xs font-bold text-slate-800 block text-center mb-1">Deposit how many coins?</label>
                                     <div className="flex items-center justify-center gap-4 py-2">
                                       <button
-                                        onClick={() => { setMaintenanceDepositAmount(Math.max(1, maintenanceDepositAmount - 1)); playSound.click(); }}
-                                        disabled={maintenanceDepositAmount <= 1}
+                                        onClick={() => { setMaintenanceDepositAmount(Math.max(5, maintenanceDepositAmount - 5)); playSound.click(); }}
+                                        disabled={maintenanceDepositAmount <= 5}
                                         className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                       >
                                         <Minus className="w-4 h-4" />
@@ -2407,7 +2419,7 @@ export default function ChildDashboard({
                                       </div>
                                 
                                       <button
-                                        onClick={() => { setMaintenanceDepositAmount(Math.min(activeChild.points, maintenanceDepositAmount + 1)); playSound.click(); }}
+                                        onClick={() => { setMaintenanceDepositAmount(Math.min(activeChild.points, maintenanceDepositAmount + 5)); playSound.click(); }}
                                         disabled={maintenanceDepositAmount >= activeChild.points}
                                         className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                       >
@@ -2485,7 +2497,51 @@ export default function ChildDashboard({
             )}
 
           </AnimatePresence>
-        </div>
+
+      {/* Maintenance Event Popup */}
+      <AnimatePresence>
+        {showMaintenanceEventPopup && maintenanceEventType && activeChild && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
+            id="maintenance-event-modal"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' ? 'border-emerald-400' : 'border-red-500'}`}
+            >
+              <div className="text-6xl mb-4">
+                {maintenanceEventType === 'paid' ? '🛡️' : '💥'}
+              </div>
+              <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
+                {maintenanceEventType === 'paid' ? 'Rent Paid!' : 'Pot Broken!'}
+              </h2>
+              <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
+                {maintenanceEventType === 'paid' 
+                  ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
+                  : 'Oh no! It was time to pay your 20 gold coins for rent, but your Maintenance Pot was empty! Your Main Pot is now broken and will leak 1 coin per day until repaired.'}
+              </p>
+              <button
+                onClick={() => {
+                  playSound.success();
+                  setShowMaintenanceEventPopup(false);
+                  setTimeout(() => setMaintenanceEventType(null), 500);
+                  localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
+                }}
+                className={`w-full gamepad-button py-3 ${maintenanceEventType === 'paid' ? 'bg-emerald-400 hover:bg-emerald-350' : 'bg-red-400 hover:bg-red-350'} border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all`}
+              >
+                GOT IT!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+    </div>
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
