@@ -303,23 +303,28 @@ export default function App() {
                 : new Date();
               const daysSinceMaintenance = Math.floor(Math.abs(now.getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
               
-              // Automatically deduct rent if it's been 30 days
-              if (daysSinceMaintenance >= 30) {
-                if ((updated.maintenance_pot || 0) >= 20) {
-                  updated.maintenance_pot = (updated.maintenance_pot || 0) - 20;
-                  updated.main_last_maintenance_date = now.toISOString();
-                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'paid');
-                  changed = true;
-                } else if (!updated.main_pot_damaged) {
-                  // Not enough in maintenance pot! Break the main pot
-                  updated.main_pot_damaged = true;
-                  updated.main_damage_date = now.toISOString();
-                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
+              if (daysSinceMaintenance >= 30 && !updated.is_rent_due) {
+                updated.is_rent_due = true;
+                updated.rent_due_date = now.toISOString();
+                localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'rent_due');
+                changed = true;
+              }
+
+              // 1b. Rent overdue penalty (5 coins/day)
+              if (updated.is_rent_due && updated.rent_due_date) {
+                const rentDate = new Date(updated.rent_due_date);
+                const diffTime = Math.abs(now.getTime() - rentDate.getTime());
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 0) {
+                  const leaked = diffDays * 5; // 5 points per day overdue
+                  updated.points = Math.max(0, updated.points - leaked);
+                  updated.rent_due_date = now.toISOString(); // Reset date
                   changed = true;
                 }
               }
 
-              // 2. Process Leak (1 coin per day since damage date, from main points)
+              // 2. Process Leak for Random Damage (1 coin per day since damage date, from main points)
               if (updated.main_pot_damaged && updated.main_damage_date) {
                 const damageDate = new Date(updated.main_damage_date);
                 const diffTime = Math.abs(now.getTime() - damageDate.getTime());
@@ -338,6 +343,7 @@ export default function App() {
                 if (!updated.main_pot_damaged && Math.random() < 0.033) {
                   updated.main_pot_damaged = true;
                   updated.main_damage_date = now.toISOString();
+                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
                   changed = true;
                 }
               }
@@ -565,7 +571,9 @@ export default function App() {
           maintenance_unlock_seen: updatedChild.maintenance_unlock_seen,
           main_last_maintenance_date: updatedChild.main_last_maintenance_date,
           main_pot_damaged: updatedChild.main_pot_damaged,
-          main_damage_date: updatedChild.main_damage_date
+          main_damage_date: updatedChild.main_damage_date,
+          is_rent_due: updatedChild.is_rent_due,
+          rent_due_date: updatedChild.rent_due_date
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -620,6 +628,8 @@ export default function App() {
       maintenance_pot: 0,
       maintenance_unlocked: false,
       maintenance_unlock_seen: false,
+      is_rent_due: false,
+      rent_due_date: null,
       last_active_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     })) as Child[];
@@ -857,6 +867,8 @@ export default function App() {
       maintenance_pot: 0,
       maintenance_unlocked: false,
       maintenance_unlock_seen: false,
+      is_rent_due: false,
+      rent_due_date: null,
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -1475,22 +1487,64 @@ export default function App() {
     }
   };
 
-  const handleRepairMainPot = async (childId: string) => {
+  const handlePayRent = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
 
-    const repairCost = 50;
-    if (child.points < repairCost) {
-      alert("Not enough points to repair the pot!");
+    if ((child.maintenance_pot || 0) < 20) {
+      alert("Not enough coins in the maintenance pot to pay rent!");
       return;
     }
 
     const updatedChild = {
       ...child,
-      points: child.points - repairCost,
+      maintenance_pot: (child.maintenance_pot || 0) - 20,
+      is_rent_due: false,
+      rent_due_date: null,
+      main_last_maintenance_date: new Date().toISOString()
+    };
+    
+    localStorage.removeItem(`pending_maintenance_popup_${child.id}`);
+
+    const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        maintenance_pot: updatedChild.maintenance_pot,
+        is_rent_due: updatedChild.is_rent_due,
+        rent_due_date: updatedChild.rent_due_date,
+        main_last_maintenance_date: updatedChild.main_last_maintenance_date
+      }).eq('id', childId);
+    }
+  };
+
+  const handleRepairMainPot = async (childId: string, source: 'maintenance' | 'wallet') => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const repairCost = 5;
+    let newMaintenancePot = child.maintenance_pot || 0;
+    let newPoints = child.points;
+
+    if (source === 'maintenance') {
+      if (newMaintenancePot < repairCost) return;
+      newMaintenancePot -= repairCost;
+    } else {
+      if (newPoints < repairCost) return;
+      newPoints -= repairCost;
+    }
+
+    const updatedChild = {
+      ...child,
+      points: newPoints,
+      maintenance_pot: newMaintenancePot,
       main_pot_damaged: false,
       main_damage_date: null
     };
+
+    localStorage.removeItem(`pending_maintenance_popup_${child.id}`);
 
     const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
     syncChildren(updatedChildren);
@@ -1499,6 +1553,7 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       await supabase.from('children').update({
         points: updatedChild.points,
+        maintenance_pot: updatedChild.maintenance_pot,
         main_pot_damaged: false,
         main_damage_date: null
       }).eq('id', childId);
@@ -1970,6 +2025,7 @@ export default function App() {
               onMaintenanceDeposit={handleMaintenanceDeposit}
               onMaintenanceWithdraw={handleMaintenanceWithdraw}
               onRepairMainPot={handleRepairMainPot}
+              onPayRent={handlePayRent}
               onSavingsDeposit={handleSavingsDeposit}
               onSavingsWithdraw={handleSavingsWithdraw}
               onSavingsGoal={handleSavingsGoal}

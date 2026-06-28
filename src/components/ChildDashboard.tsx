@@ -39,7 +39,8 @@ interface ChildDashboardProps {
   onFeedPet: (childId: string) => void;
   onMaintenanceDeposit: (childId: string, amount: number) => void;
   onMaintenanceWithdraw: (childId: string) => void;
-  onRepairMainPot: (childId: string) => void;
+  onRepairMainPot: (childId: string, source: 'maintenance' | 'wallet') => void;
+  onPayRent: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
   onSavingsWithdraw: (childId: string) => void;
   onSavingsGoal: (childId: string, rewardId: string) => void;
@@ -73,6 +74,7 @@ export default function ChildDashboard({
   onMaintenanceDeposit,
   onMaintenanceWithdraw,
   onRepairMainPot,
+  onPayRent,
   onSavingsDeposit,
   onSavingsWithdraw,
   onSavingsGoal,
@@ -106,7 +108,7 @@ export default function ChildDashboard({
   const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
   const [maintenanceDepositAmount, setMaintenanceDepositAmount] = useState<number>(5);
   const [showMaintenanceEventPopup, setShowMaintenanceEventPopup] = useState(false);
-  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | null>(null);
+  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | 'rent_due' | 'fixed_maintenance' | 'fixed_wallet' | null>(null);
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
@@ -250,8 +252,8 @@ export default function ChildDashboard({
   useEffect(() => {
     if (!selectedChildId || !activeChild) return;
     const pendingEvent = localStorage.getItem(`pending_maintenance_popup_${activeChild.id}`);
-    if (pendingEvent === 'paid' || pendingEvent === 'broken') {
-      setMaintenanceEventType(pendingEvent);
+    if (pendingEvent === 'paid' || pendingEvent === 'broken' || pendingEvent === 'rent_due') {
+      setMaintenanceEventType(pendingEvent as any);
       setShowMaintenanceEventPopup(true);
     }
   }, [selectedChildId, activeChild?.id]);
@@ -1159,12 +1161,29 @@ export default function ChildDashboard({
                         Click above to toggle view!
                       </div>
                       
-                      {activeChild.main_pot_damaged && (
+                      {(activeChild.main_pot_damaged || activeChild.is_rent_due) && (
                         <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4">
-                          <span className="font-bold text-sm mb-1">⚠️ MAIN POT BROKEN! ⚠️</span>
-                          <span className="text-[10px] font-mono leading-tight mb-2">You are losing 1 point per day! Pay 50 points to repair it. If your Maintenance Pot is empty, fill it with 20 points so it doesn't break again!</span>
-                          <button onClick={() => { onRepairMainPot(activeChild.id); playSound.purchase(); }} className="bg-red-500 text-white font-bold py-1 px-4 rounded-xl text-[10px] hover:bg-red-600 transition-colors">
-                            Repair (50 Points)
+                          <span className="font-bold text-sm mb-1">
+                            {activeChild.is_rent_due ? "⚠️ RENT OVERDUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
+                          </span>
+                          <span className="text-[10px] font-mono leading-tight mb-2">
+                            {activeChild.is_rent_due 
+                              ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Rent button."
+                              : "You are losing 1 point per day! Pay 5 points to repair it. If your Maintenance Pot has 5 coins, it will be used!"}
+                          </span>
+                          <button 
+                            onClick={() => { 
+                              if (activeChild.is_rent_due) {
+                                onPayRent(activeChild.id);
+                              } else {
+                                const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
+                                onRepairMainPot(activeChild.id, source); 
+                              }
+                              playSound.purchase(); 
+                            }} 
+                            className="bg-red-500 text-white font-bold py-1 px-4 rounded-xl text-[10px] hover:bg-red-600 transition-colors"
+                          >
+                            {activeChild.is_rent_due ? "Pay Rent (20 Coins)" : "Repair (5 Coins)"}
                           </button>
                         </div>
                       )}
@@ -2362,13 +2381,16 @@ export default function ChildDashboard({
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                                  {(activeChild.maintenance_pot || 0) < 20 && (
+                                    <span title="Warning: Insufficient rent!" className="text-lg">⚠️</span>
+                                  )}
                                   <span className="text-lg"><GoldCoinIcon /></span>
                                   <span className="text-lg font-mono font-black text-slate-700">{activeChild.maintenance_pot || 0}</span>
                                 </div>
                               </div>
                         
                               <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Keep at least 20 coins in here! Every month, 20 coins will be automatically used to maintain your Main Gold Pot. If this pot is empty when rent is due, your Main Gold Pot will break!
+                                Keep at least 20 coins in here! Rent is due exactly 30 days after your last payment. You will get a popup to pay 20 coins to maintain your Main Gold Pot. If you don't pay, you lose 5 points a day!
                               </p>
 
                               <div className="flex gap-2">
@@ -2515,27 +2537,57 @@ export default function ChildDashboard({
               className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' ? 'border-emerald-400' : 'border-red-500'}`}
             >
               <div className="text-6xl mb-4">
-                {maintenanceEventType === 'paid' ? '🛡️' : '💥'}
+                {maintenanceEventType === 'paid' ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : '💥'}
               </div>
               <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
-                {maintenanceEventType === 'paid' ? 'Rent Paid!' : 'Pot Broken!'}
+                {maintenanceEventType === 'paid' ? 'Rent Paid!' : maintenanceEventType === 'rent_due' ? 'Rent Due!' : 'Pot Broken!'}
               </h2>
               <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
                 {maintenanceEventType === 'paid' 
                   ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
-                  : 'Oh no! It was time to pay your 20 gold coins for rent, but your Maintenance Pot was empty! Your Main Pot is now broken and will leak 1 coin per day until repaired.'}
+                  : maintenanceEventType === 'rent_due'
+                  ? 'It is time to pay your rent of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
+                  : 'Your pot has randomly broken! It will leak 1 coin per day until repaired. It costs 5 coins to fix.'}
               </p>
-              <button
-                onClick={() => {
-                  playSound.success();
-                  setShowMaintenanceEventPopup(false);
-                  setTimeout(() => setMaintenanceEventType(null), 500);
-                  localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
-                }}
-                className={`w-full gamepad-button py-3 ${maintenanceEventType === 'paid' ? 'bg-emerald-400 hover:bg-emerald-350' : 'bg-red-400 hover:bg-red-350'} border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all`}
-              >
-                GOT IT!
-              </button>
+              {maintenanceEventType === 'rent_due' || maintenanceEventType === 'broken' ? (
+                <button
+                  onClick={() => {
+                    playSound.purchase();
+                    if (maintenanceEventType === 'rent_due') {
+                      onPayRent(activeChild.id);
+                    } else {
+                      const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
+                      onRepairMainPot(activeChild.id, source);
+                      alert(`Fixed for 5 coins using your ${source === 'maintenance' ? 'Maintenance Pot' : 'Wallet'}.`);
+                    }
+                    setShowMaintenanceEventPopup(false);
+                    setTimeout(() => setMaintenanceEventType(null), 500);
+                    localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
+                  }}
+                  disabled={maintenanceEventType === 'rent_due' && (activeChild.maintenance_pot || 0) < 20}
+                  className={`w-full gamepad-button py-3 ${
+                    (maintenanceEventType === 'rent_due' && (activeChild.maintenance_pot || 0) < 20)
+                      ? 'bg-stone-300 cursor-not-allowed opacity-50'
+                      : 'bg-amber-400 hover:bg-amber-350 cursor-pointer'
+                  } border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] transition-all`}
+                >
+                  {maintenanceEventType === 'rent_due' 
+                    ? ((activeChild.maintenance_pot || 0) >= 20 ? 'PAY NOW (20)' : 'DEPOSIT 20 FIRST')
+                    : 'FIX NOW (5)'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    playSound.success();
+                    setShowMaintenanceEventPopup(false);
+                    setTimeout(() => setMaintenanceEventType(null), 500);
+                    localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
+                  }}
+                  className={`w-full gamepad-button py-3 bg-emerald-400 hover:bg-emerald-350 border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all`}
+                >
+                  GOT IT!
+                </button>
+              )}
             </motion.div>
           </motion.div>
         )}
