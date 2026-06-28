@@ -18,6 +18,16 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
   const [monthlyXpTarget, setMonthlyXpTarget] = useState(parentProfile?.monthly_xp_target ?? 1200);
   const [monthlyRewardPoints, setMonthlyRewardPoints] = useState(parentProfile?.monthly_reward_points ?? 1000);
   
+  const [xpToLevelUp, setXpToLevelUp] = useState(parentProfile?.xp_to_level_up ?? 100);
+  const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 1);
+  const [savingsPotUnlockXp, setSavingsPotUnlockXp] = useState(parentProfile?.savings_pot_unlock_xp ?? 50);
+  const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 2);
+  const [foodPotUnlockXp, setFoodPotUnlockXp] = useState(parentProfile?.food_pot_unlock_xp ?? 50);
+  const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 3);
+  const [giftingPotUnlockXp, setGiftingPotUnlockXp] = useState(parentProfile?.gifting_pot_unlock_xp ?? 50);
+  const [maintenancePotUnlockLevel, setMaintenancePotUnlockLevel] = useState(parentProfile?.maintenance_pot_unlock_level ?? 4);
+  const [maintenancePotUnlockXp, setMaintenancePotUnlockXp] = useState(parentProfile?.maintenance_pot_unlock_xp ?? 50);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -53,6 +63,15 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
           weekly_reward_points: weeklyRewardPoints,
           monthly_xp_target: monthlyXpTarget,
           monthly_reward_points: monthlyRewardPoints,
+          xp_to_level_up: xpToLevelUp,
+          savings_pot_unlock_level: savingsPotUnlockLevel,
+          savings_pot_unlock_xp: savingsPotUnlockXp,
+          food_pot_unlock_level: foodPotUnlockLevel,
+          food_pot_unlock_xp: foodPotUnlockXp,
+          gifting_pot_unlock_level: giftingPotUnlockLevel,
+          gifting_pot_unlock_xp: giftingPotUnlockXp,
+          maintenance_pot_unlock_level: maintenancePotUnlockLevel,
+          maintenance_pot_unlock_xp: maintenancePotUnlockXp,
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -137,6 +156,100 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
             </div>
           </div>
           
+          <div className="pt-8 border-t border-stone-200 mt-8">
+            <h3 className={`text-lg font-black font-display uppercase tracking-wide ${c.text} mb-6`}>Levels & Pots Configuration</h3>
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>XP to Level Up</label>
+                <input 
+                  type="number" 
+                  value={xpToLevelUp}
+                  onChange={(e) => setXpToLevelUp(Number(e.target.value))}
+                  className={`w-full px-4 py-2 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-emerald-600`}>Savings Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={savingsPotUnlockLevel}
+                    onChange={(e) => setSavingsPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-emerald-200 text-stone-700 bg-emerald-50 focus:ring-2 focus:ring-emerald-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-emerald-600`}>Savings Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={savingsPotUnlockXp}
+                    onChange={(e) => setSavingsPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-emerald-200 text-stone-700 bg-emerald-50 focus:ring-2 focus:ring-emerald-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-orange-600`}>Food Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={foodPotUnlockLevel}
+                    onChange={(e) => setFoodPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-orange-200 text-stone-700 bg-orange-50 focus:ring-2 focus:ring-orange-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-orange-600`}>Food Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={foodPotUnlockXp}
+                    onChange={(e) => setFoodPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-orange-200 text-stone-700 bg-orange-50 focus:ring-2 focus:ring-orange-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-rose-600`}>Gifting Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={giftingPotUnlockLevel}
+                    onChange={(e) => setGiftingPotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-rose-600`}>Gifting Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={giftingPotUnlockXp}
+                    onChange={(e) => setGiftingPotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-slate-600`}>Maintenance Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={maintenancePotUnlockLevel}
+                    onChange={(e) => setMaintenancePotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-slate-200 text-stone-700 bg-slate-50 focus:ring-2 focus:ring-slate-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-slate-600`}>Maintenance Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={maintenancePotUnlockXp}
+                    onChange={(e) => setMaintenancePotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-slate-200 text-stone-700 bg-slate-50 focus:ring-2 focus:ring-slate-500 outline-none`} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
           <button 
             onClick={handleSave}
             disabled={isSaving}
