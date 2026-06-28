@@ -575,8 +575,14 @@ export default function App() {
           is_rent_due: updatedChild.is_rent_due,
           rent_due_date: updatedChild.rent_due_date
         })
+        .eq('id', updatedChild.id);
       if (error) {
-        console.warn('Failed to sync child update to Supabase:', error.message);
+        console.warn('Failed to sync child update to Supabase:', error);
+        console.warn('Payload was:', {
+          points: updatedChild.points, level: updatedChild.level,
+          is_rent_due: updatedChild.is_rent_due, rent_due_date: updatedChild.rent_due_date
+        });
+        console.warn('ID was:', updatedChild.id);
         alert(`DATABASE ERROR: ${error.message}\n\nPlease run combined_patch.sql in your Supabase SQL Editor.`);
       }
     }
@@ -1528,6 +1534,13 @@ export default function App() {
       }).eq('id', childId);
       if (error) {
         console.error("handlePayRent Supabase Error:", error);
+        console.error("Payload was:", {
+          maintenance_pot: finalUpdatedChild.maintenance_pot,
+          is_rent_due: finalUpdatedChild.is_rent_due,
+          rent_due_date: finalUpdatedChild.rent_due_date,
+          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
+        });
+        console.error("childId was:", childId);
         alert(`DATABASE ERROR: ${error.message}\n\nPlease run combined_patch.sql in your Supabase SQL Editor.`);
       }
     }
