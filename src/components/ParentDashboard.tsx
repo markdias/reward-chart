@@ -1057,7 +1057,7 @@ export default function ParentDashboard({
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           onUpdateChildStats(child.id, { main_last_maintenance_date: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString() }); 
-                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day rent check">Trigger Rent</button>
+                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day maintenance check">TRIGGER MAINT</button>
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           localStorage.setItem(`pending_maintenance_popup_${child.id}`, 'broken');

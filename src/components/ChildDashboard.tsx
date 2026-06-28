@@ -810,8 +810,8 @@ export default function ChildDashboard({
                 🎉 MAINTENANCE POT UNLOCKED!
               </h2>
 
-              <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
-                You've unlocked the <strong className="text-slate-600">Maintenance Pot</strong>! You must keep at least 20 coins in here. Every month, rent will be paid from this pot to keep your Main Pot from breaking.
+              <p className="text-sm font-mono text-stone-600 leading-relaxed mb-6">
+                You've unlocked the <strong className="text-slate-600">Maintenance Pot</strong>! You must keep at least 20 coins in here. Every month, a maintenance fee will be paid from this pot to keep your Main Pot from breaking.
               </p>
 
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner flex flex-col items-center justify-center">
@@ -1165,15 +1165,15 @@ export default function ChildDashboard({
                         <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4">
                           <span className="font-bold text-sm mb-1">
                             {activeChild.is_rent_due && activeChild.main_pot_damaged 
-                              ? "⚠️ RENT OVERDUE & POT BROKEN! ⚠️" 
-                              : activeChild.is_rent_due ? "⚠️ RENT OVERDUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
+                              ? "⚠️ MAINTENANCE DUE & POT BROKEN! ⚠️" 
+                              : activeChild.is_rent_due ? "⚠️ MAINTENANCE DUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
                           </span>
-                          <span className="text-[10px] font-mono leading-tight mb-2">
+                          <span className="text-xs opacity-90 max-w-md mx-auto">
                             {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "You are losing 6 points per day (5 for rent, 1 for damage)! Pay 20 coins for rent, and 5 to repair the pot!"
+                              ? "You are losing 6 points per day (5 for maintenance, 1 for damage)! Pay 20 coins for maintenance, and 5 to repair the pot!"
                               : activeChild.is_rent_due 
-                                ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Rent button."
-                                : "You are losing 1 point per day! Pay 5 points to repair it. If your Maintenance Pot has 5 coins, it will be used!"}
+                                ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Maintenance button."
+                                : "You are losing 1 point per day! Pay 5 coins from your Maintenance Pot to repair the leak."}
                           </span>
                           <button 
                             onClick={() => { 
@@ -1199,8 +1199,8 @@ export default function ChildDashboard({
                             className="w-auto px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
                           >
                             {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "Pay Rent First (20 Coins)"
-                              : activeChild.is_rent_due ? "Pay Rent (20 Coins)" : "Repair Pot (5 Coins)"}
+                              ? "Pay Maintenance First (20 Coins)"
+                              : activeChild.is_rent_due ? "Pay Maintenance (20 Coins)" : "Repair Pot (5 Coins)"}
                           </button>
                         </div>
                       )}
@@ -2558,11 +2558,11 @@ export default function ChildDashboard({
               </div>
               <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
                 {maintenanceEventType === 'paid' 
-                  ? 'Rent Paid!' 
+                  ? 'Maintenance Paid!' 
                   : (activeChild.is_rent_due && activeChild.main_pot_damaged && maintenanceEventType === 'rent_due')
-                    ? 'Rent Due & Pot Broken!'
+                    ? 'Maintenance Due & Pot Broken!'
                     : maintenanceEventType === 'rent_due' 
-                      ? 'Rent Due!' 
+                      ? 'Maintenance Due!' 
                     : maintenanceEventType === 'rent_failed'
                       ? 'Not Enough Coins!'
                       : maintenanceEventType === 'broken' 
@@ -2571,13 +2571,13 @@ export default function ChildDashboard({
               </h2>
               <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
                 {maintenanceEventType === 'paid' 
-                  ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
+                  ? 'Your monthly maintenance fee of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
                   : (activeChild.is_rent_due && activeChild.main_pot_damaged && maintenanceEventType === 'rent_due')
-                    ? 'It is time to pay your rent of 20 gold coins, AND your Main Pot is broken! You must pay the rent first to avoid losing 5 points a day, then repair the pot for 5 points.'
+                    ? 'It is time to pay your maintenance fee of 20 gold coins, AND your Main Pot is broken! You must pay the maintenance first to avoid losing 5 points a day, then repair the pot for 5 points.'
                   : maintenanceEventType === 'rent_due'
-                  ? 'It is time to pay your rent of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
+                  ? 'It is time to pay your maintenance fee of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
                   : maintenanceEventType === 'rent_failed'
-                  ? 'You do not have enough coins in your Maintenance Pot to pay the rent! Please deposit at least 20 coins into your Maintenance Pot first.'
+                  ? 'You do not have enough coins in your Maintenance Pot to pay the maintenance fee! Please deposit at least 20 coins into your Maintenance Pot first.'
                   : maintenanceEventType === 'fixed_maintenance'
                   ? 'You fixed your pot for 5 coins using your Maintenance Pot!'
                   : maintenanceEventType === 'fixed_wallet'
