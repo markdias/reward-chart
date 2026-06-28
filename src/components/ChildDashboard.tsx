@@ -2594,12 +2594,7 @@ export default function ChildDashboard({
                     }
                     localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
                   }}
-                  disabled={maintenanceEventType === 'rent_due' && (activeChild.maintenance_pot || 0) < 20}
-                  className={`w-full gamepad-button py-3 ${
-                    (maintenanceEventType === 'rent_due' && (activeChild.maintenance_pot || 0) < 20)
-                      ? 'bg-stone-300 cursor-not-allowed opacity-50'
-                      : 'bg-amber-400 hover:bg-amber-350 cursor-pointer'
-                  } border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] transition-all`}
+                  className="w-full gamepad-button py-3 bg-amber-400 hover:bg-amber-350 cursor-pointer border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] transition-all"
                 >
                   {maintenanceEventType === 'rent_due' 
                     ? ((activeChild.maintenance_pot || 0) >= 20 ? 'PAY NOW (20)' : 'DEPOSIT 20 FIRST')
