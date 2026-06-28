@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, Coins, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ThemeId, ParentProfile } from '../types';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
