@@ -54,6 +54,8 @@ interface ChildDashboardProps {
   onGiftingUnlockSeen: (childId: string) => void;
   onMaintenanceUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
+  lockedChildId?: string | null;
+  onLockChild?: (childId: string) => void;
   theme: ThemeId;
 }
 
@@ -85,9 +87,20 @@ export default function ChildDashboard({
   onGiftingUnlockSeen,
   onMaintenanceUnlockSeen,
   onUpdateChildStats,
+  lockedChildId,
+  onLockChild,
   theme
 }: ChildDashboardProps) {
-  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
+
+  useEffect(() => {
+    if (lockedChildId) {
+      setSelectedChildId(lockedChildId);
+    } else {
+      setSelectedChildId(null);
+    }
+  }, [lockedChildId]);
+
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'pots'>('companion');
   const [avatarView, setAvatarView] = useState<'character' | 'main_pot'>('character');
   const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
@@ -830,15 +843,21 @@ export default function ChildDashboard({
       <header className={`p-3 sm:p-5 border-b ${styles.divider} flex justify-between items-center ${styles.headerBg} relative z-30`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {selectedChildId ? (
-            <button
-              onClick={() => { playSound.click(); setSelectedChildId(null); }}
-              className={`p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold ${
-                'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
-              }`}
-              id="back-to-profiles-btn"
-            >
-              <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
-            </button>
+            lockedChildId ? (
+              <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
+                <Lock className="w-4 h-4 text-white" />
+              </div>
+            ) : (
+              <button
+                onClick={() => { playSound.click(); setSelectedChildId(null); }}
+                className={`p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold ${
+                  'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
+                }`}
+                id="back-to-profiles-btn"
+              >
+                <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
+              </button>
+            )
           ) : (
             <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
               🎮
@@ -852,15 +871,28 @@ export default function ChildDashboard({
           </div>
         </div>
 
-        <button
-          onClick={() => { playSound.click(); onEnterParentMode(); }}
-          className={`flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
-            'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
-          }`}
-          id="parent-gate-lock-btn"
-        >
-          <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span className="text-rose-600">SWITCH TO PARENT</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedChildId && !lockedChildId && onLockChild && (
+            <button
+              onClick={() => { playSound.success(); onLockChild(selectedChildId); }}
+              className={`hidden sm:flex items-center gap-1.5 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
+                'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm'
+              }`}
+              title="Lock device to this child's profile"
+            >
+              <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-500`} /> <span>LOCK DEVICE</span>
+            </button>
+          )}
+          <button
+            onClick={() => { playSound.click(); onEnterParentMode(); }}
+            className={`flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
+              'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
+            }`}
+            id="parent-gate-lock-btn"
+          >
+            <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span className="text-rose-600">SWITCH TO PARENT</span>
+          </button>
+        </div>
       </header>
 
       {/* Central HUD Viewport */}
@@ -1353,7 +1385,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={task.id}
-                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3 ${
+                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-1.5 sm:gap-2 ${
                                     isApproved 
                                       ? 'bg-slate-900/40 border-slate-950/50 opacity-45' 
                                       : isPending 
@@ -1363,56 +1395,56 @@ export default function ChildDashboard({
                                           : `${styles.cardBg} ${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg`
                                   }`}
                                 >
-                                  <div className="space-y-1.5">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
+                                  <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
                                         {task.category.toUpperCase()}
                                       </span>
-                                      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded`}>
+                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded`}>
                                         {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
                                       </span>
                                       {isPending && (
-                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded animate-pulse`}>
-                                          PENDING VERIFICATION
+                                        <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded animate-pulse`}>
+                                          PENDING
                                         </span>
                                       )}
                                       {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
-                                        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded`}>
-                                          <GoldCoinIcon /> Completed {completedTodayCount}x today
+                                        <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
+                                          <GoldCoinIcon /> Completed {completedTodayCount}x
                                         </span>
                                       )}
                                     </div>
-                                    <h4 className={`font-black font-display text-base tracking-wide ${isApproved ? 'line-through text-slate-500' : styles.titleColor}`}>
+                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide ${isApproved ? 'line-through text-slate-500' : styles.titleColor}`}>
                                       {task.title}
                                     </h4>
                                   </div>
 
-                                  <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                                    <div className="flex gap-2">
-                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
-                                        <Coins className="w-3.5 h-3.5" /> +{task.points}
+                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end md:self-center mt-1 md:mt-0">
+                                    <div className="flex gap-1.5 sm:gap-2">
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
+                                        <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> +{task.points}
                                       </span>
-                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-xs px-3 py-1.5 rounded-xl border text-cyan-700 bg-cyan-50 border-cyan-200`}>
-                                        <TrendingUp className="w-3.5 h-3.5" /> +{task.xp ?? task.points}
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border text-cyan-700 bg-cyan-50 border-cyan-200`}>
+                                        <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> +{task.xp ?? task.points}
                                       </span>
                                     </div>
 
                                     {isApproved ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
+                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
                                         VERIFIED
                                       </span>
                                     ) : isPending ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
-                                        AWAITING CHECK
+                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
+                                        AWAITING
                                       </span>
                                     ) : isOnCooldown ? (
-                                      <span className={`px-3.5 py-2 rounded-xl font-mono text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
+                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
                                         COOLDOWN ({cooldownTimeLeftStr})
                                       </span>
                                     ) : (
                                       <button
                                         onClick={() => handleTaskCheck(task.id)}
-                                        className={`bg-indigo-600 hover:bg-indigo-500 hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-stone-900 hover:bg-stone-800 shadow-[0_3px_0_0_#1c1917]`}
+                                        className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-stone-900 hover:bg-stone-800 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]`}
                                         id={`claim-task-${task.id}`}
                                       >
                                         COMPLETE!
@@ -1468,25 +1500,25 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={rew.id}
-                                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2 sm:gap-3 ${
+                                  className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 ${
                                     isSavingFor
                                       ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)]'
                                       : `${styles.cardBg} ${canDispense ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` : 'opacity-60 border-slate-800/30'}`
                                   }`}
                                 >
-                                  <div className="flex gap-3.5 items-center">
-                                    <div className={`h-12 w-12 rounded-2xl bg-stone-150 border border-stone-200 flex items-center justify-center text-3xl`}>
+                                  <div className="flex gap-2.5 sm:gap-3 items-center">
+                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-stone-150 border border-stone-200 flex items-center justify-center text-2xl sm:text-3xl shrink-0`}>
                                       🎁
                                     </div>
                                     <div>
-                                      <h4 className={`font-extrabold text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
-                                      <p className={`text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD COINS</p>
+                                      <h4 className={`font-extrabold text-xs sm:text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
+                                      <p className={`text-[9px] sm:text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD</p>
                                     </div>
                                   </div>
 
-                                  <div className="flex flex-col items-end gap-2 shrink-0">
-                                    <span className={`text-[10px] font-mono font-black ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
-                                      <GoldCoinIcon /> {rew.cost_points} GOLD COINS
+                                  <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
+                                    <span className={`text-[9px] sm:text-[10px] font-mono font-black hidden sm:inline-block ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
+                                      <GoldCoinIcon /> {rew.cost_points} GOLD
                                     </span>
 
                                     <div className="flex flex-col gap-1.5 items-end">
@@ -1494,14 +1526,14 @@ export default function ChildDashboard({
                                         <button
                                           disabled={!canDispense}
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points)}
-                                          className={`font-black font-mono py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
+                                          className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                             canDispense
-                                              ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_3px_0_0_#1c1917]'
+                                              ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
                                               : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                           }`}
                                           id={`claim-reward-${rew.id}`}
                                         >
-                                          {!availability.available ? availability.reason : hasPendingRequest ? 'AWAITING APPROVAL' : 'BUY'}
+                                          {!availability.available ? availability.reason : hasPendingRequest ? 'PENDING' : 'BUY'}
                                         </button>
                                       )}
                                       

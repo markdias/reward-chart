@@ -139,18 +139,9 @@ export const PREDEFINED_CHARITIES = [
   'World Wildlife Fund (WWF)',
   'Local Food Bank',
   'Make-A-Wish Foundation',
-  'St. Jude Children\\'s Research Hospital'
+  'St. Jude Children\'s Research Hospital'
 ];
 
-export interface FamilyMessage {
-  id: string;
-  family_id: string;
-  sender_id: string;
-  receiver_id: string | null;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-}
 
 export interface CharacterEvolutionStage {
   stage_number: number;
