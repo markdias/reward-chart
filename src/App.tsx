@@ -74,15 +74,26 @@ export default function App() {
         CapacitorApp.addListener('appUrlOpen', (event: any) => {
           try {
             const url = new URL(event.url);
-            const pathParts = url.pathname.split('/');
+            let childIdToLock = null;
+
+            // Handle custom URL scheme: rewardchart://child/123
+            if (url.protocol === 'rewardchart:' && url.host === 'child') {
+              childIdToLock = url.pathname.replace(/^\//, ''); 
+            } 
+            // Handle universal links: https://domain.com/child/123
+            else {
+              const pathParts = url.pathname.split('/');
+              if (pathParts[1] === 'child' && pathParts[2]) {
+                childIdToLock = pathParts[2];
+              }
+            }
             
-            // Check for /child/:id
-            if (pathParts[1] === 'child' && pathParts[2]) {
-              const childIdToLock = pathParts[2];
+            if (childIdToLock) {
+              const cleanId = decodeURIComponent(childIdToLock);
               setIsParentMode(false);
               localStorage.setItem('RCH_PARENT_MODE', 'false');
-              setLockedChildId(childIdToLock);
-              localStorage.setItem('RCH_LOCKED_CHILD_ID', childIdToLock);
+              setLockedChildId(cleanId);
+              localStorage.setItem('RCH_LOCKED_CHILD_ID', cleanId);
             }
           } catch (e) {
             console.error("Error parsing deep link", e);

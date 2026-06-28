@@ -241,7 +241,7 @@ export default function ParentDashboard({
       await CapacitorNfc.startScanning({ invalidateAfterFirstRead: true, alertMessage: "Hold an NFC tag near your phone..." });
       
       const textEncoder = new TextEncoder();
-      const uriStr = `https://rewardchart.app/child/${childId}`;
+      const uriStr = `rewardchart://child/${childId}`;
       const uriBytes = Array.from(textEncoder.encode(uriStr));
       const payload = [0x00, ...uriBytes]; // 0x00 prefix for complete URI
       
