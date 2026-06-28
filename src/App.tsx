@@ -341,6 +341,31 @@ export default function App() {
                 }
               }
               
+              // 4. Retroactive Unlock Sync
+              const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+              const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
+              if (!updated.maintenance_unlocked && (updated.level > maintenanceLvl || (updated.level === maintenanceLvl && (updated.xp_in_level || 0) >= maintenanceXpReq))) {
+                updated.maintenance_unlocked = true;
+                updated.maintenance_unlock_seen = false;
+                changed = true;
+              }
+              
+              const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+              const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
+              if (!updated.food_pot_unlocked && (updated.level > foodLvl || (updated.level === foodLvl && (updated.xp_in_level || 0) >= foodXpReq))) {
+                updated.food_pot_unlocked = true;
+                updated.food_pot_unlock_seen = false;
+                changed = true;
+              }
+              
+              const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+              const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
+              if (!updated.gifting_unlocked && (updated.level > giftingLvl || (updated.level === giftingLvl && (updated.xp_in_level || 0) >= giftingXpReq))) {
+                updated.gifting_unlocked = true;
+                updated.gifting_unlock_seen = false;
+                changed = true;
+              }
+              
               if (changed) needsDbUpdate = true;
               return updated;
             });
@@ -991,8 +1016,8 @@ export default function App() {
     targetChild = { ...targetChild, ...updates };
 
     // Check if maintenance pot requirements are met
-    const maintenanceLvl = targetChild.maintenance_pot_unlock_level ?? 4;
-    const maintenanceXpReq = targetChild.maintenance_pot_unlock_xp ?? 50;
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
     if (!targetChild.maintenance_unlocked && (targetChild.level > maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) >= maintenanceXpReq))) {
       targetChild.maintenance_unlocked = true;
       targetChild.maintenance_unlock_seen = false;
@@ -1002,8 +1027,8 @@ export default function App() {
     }
 
     // Check if food pot requirements are met
-    const foodLvl = targetChild.food_pot_unlock_level ?? 2;
-    const foodXpReq = targetChild.food_pot_unlock_xp ?? 50;
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
     if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
@@ -1013,8 +1038,8 @@ export default function App() {
     }
 
     // Check if gifting pot requirements are met
-    const giftingLvl = targetChild.gifting_pot_unlock_level ?? 3;
-    const giftingXpReq = targetChild.gifting_pot_unlock_xp ?? 50;
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
     if (!targetChild.gifting_unlocked && (targetChild.level > giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) >= giftingXpReq))) {
       targetChild.gifting_unlocked = true;
       targetChild.gifting_unlock_seen = false;
