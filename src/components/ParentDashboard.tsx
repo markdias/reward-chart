@@ -556,8 +556,8 @@ export default function ParentDashboard({
             {[
               { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
               { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
-              { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.length },
-              { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.length },
+              { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
+              { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'TARGETS & POTS', icon: Target },
               { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck },
               { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
