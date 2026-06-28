@@ -1492,7 +1492,6 @@ export default function App() {
     if (!child) return;
 
     if ((child.maintenance_pot || 0) < 20) {
-      alert("Not enough coins in the maintenance pot to pay rent!");
       return;
     }
 

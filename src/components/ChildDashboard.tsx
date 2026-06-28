@@ -108,7 +108,7 @@ export default function ChildDashboard({
   const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
   const [maintenanceDepositAmount, setMaintenanceDepositAmount] = useState<number>(5);
   const [showMaintenanceEventPopup, setShowMaintenanceEventPopup] = useState(false);
-  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | 'rent_due' | 'fixed_maintenance' | 'fixed_wallet' | null>(null);
+  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | 'rent_due' | 'rent_failed' | 'fixed_maintenance' | 'fixed_wallet' | null>(null);
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
@@ -1174,16 +1174,23 @@ export default function ChildDashboard({
                           <button 
                             onClick={() => { 
                               if (activeChild.is_rent_due) {
-                                onPayRent(activeChild.id);
-                                setMaintenanceEventType('paid');
-                                setShowMaintenanceEventPopup(true);
+                                if ((activeChild.maintenance_pot || 0) < 20) {
+                                  setMaintenanceEventType('rent_failed');
+                                  setShowMaintenanceEventPopup(true);
+                                  playSound.pinError();
+                                } else {
+                                  onPayRent(activeChild.id);
+                                  setMaintenanceEventType('paid');
+                                  setShowMaintenanceEventPopup(true);
+                                  playSound.purchase(); 
+                                }
                               } else {
                                 const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
                                 onRepairMainPot(activeChild.id, source); 
                                 setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
                                 setShowMaintenanceEventPopup(true);
+                                playSound.purchase(); 
                               }
-                              playSound.purchase(); 
                             }} 
                             className="bg-red-500 text-white font-bold py-1 px-4 rounded-xl text-[10px] hover:bg-red-600 transition-colors"
                           >
@@ -2541,22 +2548,26 @@ export default function ChildDashboard({
               className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? 'border-emerald-400' : 'border-red-500'}`}
             >
               <div className="text-6xl mb-4">
-                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : '💥'}
+                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : maintenanceEventType === 'rent_failed' ? '⚠️' : '💥'}
               </div>
               <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
                 {maintenanceEventType === 'paid' 
                   ? 'Rent Paid!' 
                   : maintenanceEventType === 'rent_due' 
                     ? 'Rent Due!' 
-                    : maintenanceEventType === 'broken' 
-                      ? 'Pot Broken!' 
-                      : 'Pot Fixed!'}
+                    : maintenanceEventType === 'rent_failed'
+                      ? 'Not Enough Coins!'
+                      : maintenanceEventType === 'broken' 
+                        ? 'Pot Broken!' 
+                        : 'Pot Fixed!'}
               </h2>
               <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
                 {maintenanceEventType === 'paid' 
                   ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
                   : maintenanceEventType === 'rent_due'
                   ? 'It is time to pay your rent of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
+                  : maintenanceEventType === 'rent_failed'
+                  ? 'You do not have enough coins in your Maintenance Pot to pay the rent! Please deposit at least 20 coins into your Maintenance Pot first.'
                   : maintenanceEventType === 'fixed_maintenance'
                   ? 'You fixed your pot for 5 coins using your Maintenance Pot!'
                   : maintenanceEventType === 'fixed_wallet'
@@ -2566,11 +2577,17 @@ export default function ChildDashboard({
               {maintenanceEventType === 'rent_due' || maintenanceEventType === 'broken' ? (
                 <button
                   onClick={() => {
-                    playSound.purchase();
                     if (maintenanceEventType === 'rent_due') {
-                      onPayRent(activeChild.id);
-                      setMaintenanceEventType('paid');
+                      if ((activeChild.maintenance_pot || 0) < 20) {
+                        setMaintenanceEventType('rent_failed');
+                        playSound.pinError();
+                      } else {
+                        onPayRent(activeChild.id);
+                        setMaintenanceEventType('paid');
+                        playSound.purchase();
+                      }
                     } else {
+                      playSound.purchase();
                       const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
                       onRepairMainPot(activeChild.id, source);
                       setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
