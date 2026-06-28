@@ -2348,6 +2348,14 @@ export default function ChildDashboard({
                                   className="h-full rounded-full bg-gradient-to-r from-slate-400 to-gray-400"
                                 />
                               </div>
+                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                                {(() => {
+                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
+                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
+                                  const xpReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * xpPerLvl + (parentProfile?.maintenance_pot_unlock_xp ?? 50);
+                                  return `${xpEarned} / ${xpReq} XP`;
+                                })()}
+                              </span>
                             </div>
                           )}
 
