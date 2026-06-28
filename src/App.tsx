@@ -60,6 +60,11 @@ export default function App() {
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
+  
+  // Guided Access Lock
+  const [lockedChildId, setLockedChildId] = useState<string | null>(
+    localStorage.getItem('RCH_LOCKED_CHILD_ID')
+  );
 
   // Helper fallback to load local storage state or blank state
   const loadLocalStorageFallback = (isDemo: boolean) => {
@@ -771,6 +776,7 @@ export default function App() {
     localStorage.removeItem('RCH_REWARDS');
     localStorage.removeItem('RCH_REDEMPTIONS');
     localStorage.removeItem('RCH_GIFTING');
+    localStorage.removeItem('RCH_LOCKED_CHILD_ID');
     window.location.reload();
   };
 
@@ -845,6 +851,8 @@ export default function App() {
     setShowLockScreen(false);
     setIsParentMode(true);
     localStorage.setItem('RCH_PARENT_MODE', 'true');
+    setLockedChildId(null);
+    localStorage.removeItem('RCH_LOCKED_CHILD_ID');
   };
 
   const handleExitParentMode = () => {
@@ -2009,6 +2017,11 @@ export default function App() {
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
               onMaintenanceUnlockSeen={handleMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
+              lockedChildId={lockedChildId}
+              onLockChild={(childId) => {
+                setLockedChildId(childId);
+                localStorage.setItem('RCH_LOCKED_CHILD_ID', childId);
+              }}
               theme={activeTheme}
             />
           </motion.div>

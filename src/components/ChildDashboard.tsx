@@ -54,6 +54,8 @@ interface ChildDashboardProps {
   onGiftingUnlockSeen: (childId: string) => void;
   onMaintenanceUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
+  lockedChildId?: string | null;
+  onLockChild?: (childId: string) => void;
   theme: ThemeId;
 }
 
@@ -85,9 +87,20 @@ export default function ChildDashboard({
   onGiftingUnlockSeen,
   onMaintenanceUnlockSeen,
   onUpdateChildStats,
+  lockedChildId,
+  onLockChild,
   theme
 }: ChildDashboardProps) {
-  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
+
+  useEffect(() => {
+    if (lockedChildId) {
+      setSelectedChildId(lockedChildId);
+    } else {
+      setSelectedChildId(null);
+    }
+  }, [lockedChildId]);
+
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'pots'>('companion');
   const [avatarView, setAvatarView] = useState<'character' | 'main_pot'>('character');
   const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
@@ -830,15 +843,21 @@ export default function ChildDashboard({
       <header className={`p-3 sm:p-5 border-b ${styles.divider} flex justify-between items-center ${styles.headerBg} relative z-30`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {selectedChildId ? (
-            <button
-              onClick={() => { playSound.click(); setSelectedChildId(null); }}
-              className={`p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold ${
-                'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
-              }`}
-              id="back-to-profiles-btn"
-            >
-              <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
-            </button>
+            lockedChildId ? (
+              <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
+                <Lock className="w-4 h-4 text-white" />
+              </div>
+            ) : (
+              <button
+                onClick={() => { playSound.click(); setSelectedChildId(null); }}
+                className={`p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold ${
+                  'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
+                }`}
+                id="back-to-profiles-btn"
+              >
+                <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
+              </button>
+            )
           ) : (
             <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
               🎮
@@ -852,15 +871,28 @@ export default function ChildDashboard({
           </div>
         </div>
 
-        <button
-          onClick={() => { playSound.click(); onEnterParentMode(); }}
-          className={`flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
-            'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
-          }`}
-          id="parent-gate-lock-btn"
-        >
-          <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span className="text-rose-600">SWITCH TO PARENT</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedChildId && !lockedChildId && onLockChild && (
+            <button
+              onClick={() => { playSound.success(); onLockChild(selectedChildId); }}
+              className={`hidden sm:flex items-center gap-1.5 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
+                'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm'
+              }`}
+              title="Lock device to this child's profile"
+            >
+              <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-500`} /> <span>LOCK DEVICE</span>
+            </button>
+          )}
+          <button
+            onClick={() => { playSound.click(); onEnterParentMode(); }}
+            className={`flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
+              'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
+            }`}
+            id="parent-gate-lock-btn"
+          >
+            <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span className="text-rose-600">SWITCH TO PARENT</span>
+          </button>
+        </div>
       </header>
 
       {/* Central HUD Viewport */}
