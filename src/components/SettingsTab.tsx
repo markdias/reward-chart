@@ -33,6 +33,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [foodPotUnlockXp, setFoodPotUnlockXp] = useState(parentProfile?.food_pot_unlock_xp ?? 50);
   const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 3);
   const [giftingPotUnlockXp, setGiftingPotUnlockXp] = useState(parentProfile?.gifting_pot_unlock_xp ?? 50);
+  const [maintenancePotUnlockLevel, setMaintenancePotUnlockLevel] = useState(parentProfile?.maintenance_pot_unlock_level ?? 4);
+  const [maintenancePotUnlockXp, setMaintenancePotUnlockXp] = useState(parentProfile?.maintenance_pot_unlock_xp ?? 50);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,7 +99,9 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           food_pot_unlock_level: foodPotUnlockLevel,
           food_pot_unlock_xp: foodPotUnlockXp,
           gifting_pot_unlock_level: giftingPotUnlockLevel,
-          gifting_pot_unlock_xp: giftingPotUnlockXp
+          gifting_pot_unlock_xp: giftingPotUnlockXp,
+          maintenance_pot_unlock_level: maintenancePotUnlockLevel,
+          maintenance_pot_unlock_xp: maintenancePotUnlockXp
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -393,6 +397,26 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                     value={giftingPotUnlockXp}
                     onChange={(e) => setGiftingPotUnlockXp(Number(e.target.value))}
                     className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-slate-600`}>Maintenance Pot Lvl</label>
+                  <input 
+                    type="number" 
+                    value={maintenancePotUnlockLevel}
+                    onChange={(e) => setMaintenancePotUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-slate-200 text-stone-700 bg-slate-50 focus:ring-2 focus:ring-slate-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-slate-600`}>Maintenance Pot XP</label>
+                  <input 
+                    type="number" 
+                    value={maintenancePotUnlockXp}
+                    onChange={(e) => setMaintenancePotUnlockXp(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-slate-200 text-stone-700 bg-slate-50 focus:ring-2 focus:ring-slate-500 outline-none`} 
                   />
                 </div>
               </div>

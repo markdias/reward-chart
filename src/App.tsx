@@ -287,8 +287,99 @@ export default function App() {
             .eq('parent_id', currentFamilyId);
           
           if (!errChildren) {
-            setChildren(dbChildren || []);
-            localStorage.setItem(keyChildren, JSON.stringify(dbChildren || []));
+            let processedChildren = dbChildren || [];
+            
+            // --- Main Money Daily/Monthly Logic ---
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            let needsDbUpdate = false;
+            
+            processedChildren = processedChildren.map(child => {
+              let updated = { ...child };
+              let changed = false;
+              
+              // 1. Check if Monthly Maintenance is Due
+              const lastMaintenance = updated.main_last_maintenance_date 
+                ? new Date(updated.main_last_maintenance_date) 
+                : new Date();
+              const daysSinceMaintenance = Math.floor(Math.abs(now.getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+              
+              // Automatically deduct rent if it's been 30 days
+              if (daysSinceMaintenance >= 30) {
+                if ((updated.maintenance_pot || 0) >= 20) {
+                  updated.maintenance_pot = (updated.maintenance_pot || 0) - 20;
+                  updated.main_last_maintenance_date = now.toISOString();
+                  changed = true;
+                } else if (!updated.main_pot_damaged) {
+                  // Not enough in maintenance pot! Break the main pot
+                  updated.main_pot_damaged = true;
+                  updated.main_damage_date = now.toISOString();
+                  changed = true;
+                }
+              }
+
+              // 2. Process Leak (1 coin per day since damage date, from main points)
+              if (updated.main_pot_damaged && updated.main_damage_date) {
+                const damageDate = new Date(updated.main_damage_date);
+                const diffTime = Math.abs(now.getTime() - damageDate.getTime());
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays > 0) {
+                  const leaked = diffDays * 1; // 1 point per day
+                  updated.points = Math.max(0, updated.points - leaked);
+                  updated.main_damage_date = now.toISOString(); // Reset date
+                  changed = true;
+                }
+              }
+              
+              // 3. Random Damage Event (~1/30 chance per day)
+              if (updated.last_hunger_check_date !== todayStr) {
+                if (!updated.main_pot_damaged && Math.random() < 0.033) {
+                  updated.main_pot_damaged = true;
+                  updated.main_damage_date = now.toISOString();
+                  changed = true;
+                }
+              }
+              
+              // 4. Retroactive Unlock Sync
+              const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+              const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
+              if (!updated.maintenance_unlocked && (updated.level > maintenanceLvl || (updated.level === maintenanceLvl && (updated.xp_in_level || 0) >= maintenanceXpReq))) {
+                updated.maintenance_unlocked = true;
+                updated.maintenance_unlock_seen = false;
+                changed = true;
+              }
+              
+              const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+              const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
+              if (!updated.food_pot_unlocked && (updated.level > foodLvl || (updated.level === foodLvl && (updated.xp_in_level || 0) >= foodXpReq))) {
+                updated.food_pot_unlocked = true;
+                updated.food_pot_unlock_seen = false;
+                changed = true;
+              }
+              
+              const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+              const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
+              if (!updated.gifting_unlocked && (updated.level > giftingLvl || (updated.level === giftingLvl && (updated.xp_in_level || 0) >= giftingXpReq))) {
+                updated.gifting_unlocked = true;
+                updated.gifting_unlock_seen = false;
+                changed = true;
+              }
+              
+              if (changed) needsDbUpdate = true;
+              return updated;
+            });
+            
+            if (needsDbUpdate) {
+              // Fire and forget updates to DB so we don't block load
+              processedChildren.forEach(child => {
+                 supabase.from('children').update(child).eq('id', child.id).then();
+              });
+            }
+            // ---------------------------------------
+
+            setChildren(processedChildren);
+            localStorage.setItem(keyChildren, JSON.stringify(processedChildren));
           } else {
             console.warn('Could not load children from Supabase, using localStorage:', errChildren.message);
             loadLocalStorageFallback(isDemo);
@@ -494,7 +585,13 @@ export default function App() {
           last_hunger_check_date: updatedChild.last_hunger_check_date,
           gifting_pot: updatedChild.gifting_pot,
           gifting_unlocked: updatedChild.gifting_unlocked,
-          gifting_unlock_seen: updatedChild.gifting_unlock_seen
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen,
+          maintenance_pot: updatedChild.maintenance_pot,
+          maintenance_unlocked: updatedChild.maintenance_unlocked,
+          maintenance_unlock_seen: updatedChild.maintenance_unlock_seen,
+          main_last_maintenance_date: updatedChild.main_last_maintenance_date,
+          main_pot_damaged: updatedChild.main_pot_damaged,
+          main_damage_date: updatedChild.main_damage_date
         })
         .eq('id', updatedChild.id);
       if (error) console.warn('Failed to sync child update to Supabase:', error.message);
@@ -546,6 +643,10 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
+      maintenance_pot: 0,
+      maintenance_unlocked: false,
+      maintenance_unlock_seen: false,
+      last_active_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     })) as Child[];
 
@@ -759,6 +860,9 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
+      maintenance_pot: 0,
+      maintenance_unlocked: false,
+      maintenance_unlock_seen: false,
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -854,13 +958,13 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Savings Pot
-    let savingsUnlocked = child.savings_unlocked || false;
-    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
-    if ((newLevel > savingsLvl || (newLevel === savingsLvl && newXp >= savingsXpReq)) && !savingsUnlocked) {
-      savingsUnlocked = true;
-      setTimeout(() => playSound.evolution(), 600);
+    // 3. Auto-unlock Maintenance Pot
+    let maintenanceUnlocked = child.maintenance_unlocked || false;
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
+    if ((newLevel > maintenanceLvl || (newLevel === maintenanceLvl && newXp >= maintenanceXpReq)) && !maintenanceUnlocked) {
+      maintenanceUnlocked = true;
+      setTimeout(() => playSound.evolution(), 1500);
     }
 
     // 4. Auto-unlock Food Pot
@@ -893,7 +997,7 @@ export default function App() {
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
       last_monthly_bonus_awarded: lastMonthlyBonus,
-      savings_unlocked: savingsUnlocked,
+      maintenance_unlocked: maintenanceUnlocked,
       food_pot_unlocked: foodPotUnlocked,
       food_pot_weekly_contribution: foodPotWeeklyContribution,
       gifting_unlocked: giftingPotUnlocked
@@ -917,20 +1021,20 @@ export default function App() {
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
 
-    // Check if savings pot requirements are met
-    const savingsLvl = targetChild.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = targetChild.savings_pot_unlock_xp ?? 50;
-    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
-      targetChild.savings_unlocked = true;
-      targetChild.savings_unlock_seen = false;
-    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
-      targetChild.savings_unlocked = false;
-      targetChild.savings_unlock_seen = false;
+    // Check if maintenance pot requirements are met
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
+    if (!targetChild.maintenance_unlocked && (targetChild.level > maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) >= maintenanceXpReq))) {
+      targetChild.maintenance_unlocked = true;
+      targetChild.maintenance_unlock_seen = false;
+    } else if (targetChild.maintenance_unlocked && (targetChild.level < maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) < maintenanceXpReq))) {
+      targetChild.maintenance_unlocked = false;
+      targetChild.maintenance_unlock_seen = false;
     }
 
     // Check if food pot requirements are met
-    const foodLvl = targetChild.food_pot_unlock_level ?? 2;
-    const foodXpReq = targetChild.food_pot_unlock_xp ?? 50;
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
+    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
     if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
@@ -940,8 +1044,8 @@ export default function App() {
     }
 
     // Check if gifting pot requirements are met
-    const giftingLvl = targetChild.gifting_pot_unlock_level ?? 3;
-    const giftingXpReq = targetChild.gifting_pot_unlock_xp ?? 50;
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
+    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
     if (!targetChild.gifting_unlocked && (targetChild.level > giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) >= giftingXpReq))) {
       targetChild.gifting_unlocked = true;
       targetChild.gifting_unlock_seen = false;
@@ -1323,7 +1427,89 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  // Operations: Savings Pot
+  // Operations: Maintenance & Main Pot
+  const handleMaintenanceDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      maintenance_pot: (child.maintenance_pot || 0) + amount
+    };
+    
+    // Check if depositing allows an automatic rent payment
+    const lastMaintenance = targetChild.main_last_maintenance_date ? new Date(targetChild.main_last_maintenance_date) : new Date();
+    const daysSince = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince >= 30 && targetChild.maintenance_pot >= 20) {
+      targetChild.maintenance_pot -= 20;
+      targetChild.main_last_maintenance_date = new Date().toISOString();
+    }
+
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        points: targetChild.points,
+        maintenance_pot: targetChild.maintenance_pot,
+        main_last_maintenance_date: targetChild.main_last_maintenance_date
+      }).eq('id', childId);
+    }
+  };
+
+  const handleMaintenanceWithdraw = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.maintenance_pot || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + (child.maintenance_pot || 0),
+      maintenance_pot: 0
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        points: targetChild.points,
+        maintenance_pot: targetChild.maintenance_pot
+      }).eq('id', childId);
+    }
+  };
+
+  const handleRepairMainPot = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const repairCost = 50;
+    if (child.points < repairCost) {
+      alert("Not enough points to repair the pot!");
+      return;
+    }
+
+    const updatedChild = {
+      ...child,
+      points: child.points - repairCost,
+      main_pot_damaged: false,
+      main_damage_date: null
+    };
+
+    const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        points: updatedChild.points,
+        main_pot_damaged: false,
+        main_damage_date: null
+      }).eq('id', childId);
+    }
+  };
+
   const handleSavingsDeposit = async (childId: string, amount: number) => {
     const child = children.find(c => c.id === childId);
     if (!child || amount <= 0 || amount > child.points) return;
@@ -1666,6 +1852,19 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
+  const handleMaintenanceUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      maintenance_unlock_seen: true
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
   return (
     <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
       
@@ -1776,6 +1975,9 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
+              onMaintenanceDeposit={handleMaintenanceDeposit}
+              onMaintenanceWithdraw={handleMaintenanceWithdraw}
+              onRepairMainPot={handleRepairMainPot}
               onSavingsDeposit={handleSavingsDeposit}
               onSavingsWithdraw={handleSavingsWithdraw}
               onSavingsGoal={handleSavingsGoal}
@@ -1788,6 +1990,7 @@ export default function App() {
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
+              onMaintenanceUnlockSeen={handleMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               theme={activeTheme}
             />
