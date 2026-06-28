@@ -1049,6 +1049,18 @@ export default function ParentDashboard({
                                         }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Streak to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: Math.max(0, (child.streak_days || 0) - 1) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 1 Streak Day"><MinusCircle className="w-3.5 h-3.5" /></button>
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 border-t border-stone-200 pt-2 mt-2">
+                                      <span className={`text-[10px] font-mono font-bold text-rose-600`}>Maintenance (Debug):</span>
+                                      <div className="flex gap-1">
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          onUpdateChildStats(child.id, { main_last_maintenance_date: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString() }); 
+                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day rent check">Trigger Rent</button>
+                                        <button onClick={() => { 
+                                          playSound.click(); 
+                                          onUpdateChildStats(child.id, { main_pot_damaged: true, main_damage_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }); 
+                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Break the main pot and start leaking">Break Pot</button>
                                       </div>
                                     </div>
                                   </div>
