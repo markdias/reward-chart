@@ -289,7 +289,7 @@ export default function App() {
           if (!errChildren) {
             let processedChildren = dbChildren || [];
             
-            // --- Savings Pot Daily/Monthly Logic ---
+            // --- Main Money Daily/Monthly Logic ---
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
             let needsDbUpdate = false;
@@ -298,25 +298,45 @@ export default function App() {
               let updated = { ...child };
               let changed = false;
               
-              // 1. Process Leak (1 coin per day since damage date)
-              if (updated.savings_pot_damaged && updated.savings_damage_date) {
-                const damageDate = new Date(updated.savings_damage_date);
+              // 1. Check if Monthly Maintenance is Due
+              const lastMaintenance = updated.main_last_maintenance_date 
+                ? new Date(updated.main_last_maintenance_date) 
+                : new Date();
+              const daysSinceMaintenance = Math.floor(Math.abs(now.getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+              
+              // Automatically deduct rent if it's been 30 days
+              if (daysSinceMaintenance >= 30) {
+                if ((updated.maintenance_pot || 0) >= 20) {
+                  updated.maintenance_pot = (updated.maintenance_pot || 0) - 20;
+                  updated.main_last_maintenance_date = now.toISOString();
+                  changed = true;
+                } else if (!updated.main_pot_damaged) {
+                  // Not enough in maintenance pot! Break the main pot
+                  updated.main_pot_damaged = true;
+                  updated.main_damage_date = now.toISOString();
+                  changed = true;
+                }
+              }
+
+              // 2. Process Leak (1 coin per day since damage date, from main points)
+              if (updated.main_pot_damaged && updated.main_damage_date) {
+                const damageDate = new Date(updated.main_damage_date);
                 const diffTime = Math.abs(now.getTime() - damageDate.getTime());
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (diffDays > 0) {
-                  const leaked = diffDays * 1; // 1 coin per day
-                  updated.savings_pot = Math.max(0, (updated.savings_pot || 0) - leaked);
-                  updated.savings_damage_date = now.toISOString(); // Reset date to avoid double charging
+                  const leaked = diffDays * 1; // 1 point per day
+                  updated.points = Math.max(0, updated.points - leaked);
+                  updated.main_damage_date = now.toISOString(); // Reset date
                   changed = true;
                 }
               }
               
-              // 2. Random Damage Event (~1/30 chance per day), trigger on hunger check reset to ensure once a day
+              // 3. Random Damage Event (~1/30 chance per day)
               if (updated.last_hunger_check_date !== todayStr) {
-                if (updated.savings_unlocked && !updated.savings_pot_damaged && Math.random() < 0.033) {
-                  updated.savings_pot_damaged = true;
-                  updated.savings_damage_date = now.toISOString();
+                if (!updated.main_pot_damaged && Math.random() < 0.033) {
+                  updated.main_pot_damaged = true;
+                  updated.main_damage_date = now.toISOString();
                   changed = true;
                 }
               }
@@ -592,6 +612,10 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
+      maintenance_pot: 0,
+      maintenance_unlocked: false,
+      maintenance_unlock_seen: false,
+      last_active_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     })) as Child[];
 
@@ -805,6 +829,9 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
+      maintenance_pot: 0,
+      maintenance_unlocked: false,
+      maintenance_unlock_seen: false,
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -900,13 +927,13 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Savings Pot
-    let savingsUnlocked = child.savings_unlocked || false;
-    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
-    if ((newLevel > savingsLvl || (newLevel === savingsLvl && newXp >= savingsXpReq)) && !savingsUnlocked) {
-      savingsUnlocked = true;
-      setTimeout(() => playSound.evolution(), 600);
+    // 3. Auto-unlock Maintenance Pot
+    let maintenanceUnlocked = child.maintenance_unlocked || false;
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
+    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
+    if ((newLevel > maintenanceLvl || (newLevel === maintenanceLvl && newXp >= maintenanceXpReq)) && !maintenanceUnlocked) {
+      maintenanceUnlocked = true;
+      setTimeout(() => playSound.evolution(), 1500);
     }
 
     // 4. Auto-unlock Food Pot
@@ -939,7 +966,7 @@ export default function App() {
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
       last_monthly_bonus_awarded: lastMonthlyBonus,
-      savings_unlocked: savingsUnlocked,
+      maintenance_unlocked: maintenanceUnlocked,
       food_pot_unlocked: foodPotUnlocked,
       food_pot_weekly_contribution: foodPotWeeklyContribution,
       gifting_unlocked: giftingPotUnlocked
@@ -963,15 +990,15 @@ export default function App() {
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
 
-    // Check if savings pot requirements are met
-    const savingsLvl = targetChild.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = targetChild.savings_pot_unlock_xp ?? 50;
-    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
-      targetChild.savings_unlocked = true;
-      targetChild.savings_unlock_seen = false;
-    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
-      targetChild.savings_unlocked = false;
-      targetChild.savings_unlock_seen = false;
+    // Check if maintenance pot requirements are met
+    const maintenanceLvl = targetChild.maintenance_pot_unlock_level ?? 4;
+    const maintenanceXpReq = targetChild.maintenance_pot_unlock_xp ?? 50;
+    if (!targetChild.maintenance_unlocked && (targetChild.level > maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) >= maintenanceXpReq))) {
+      targetChild.maintenance_unlocked = true;
+      targetChild.maintenance_unlock_seen = false;
+    } else if (targetChild.maintenance_unlocked && (targetChild.level < maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) < maintenanceXpReq))) {
+      targetChild.maintenance_unlocked = false;
+      targetChild.maintenance_unlock_seen = false;
     }
 
     // Check if food pot requirements are met
@@ -1369,50 +1396,75 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  // Operations: Savings Pot
-  const handlePaySavingsMaintenance = async (childId: string) => {
+  // Operations: Maintenance & Main Pot
+  const handleMaintenanceDeposit = async (childId: string, amount: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || amount <= 0 || amount > child.points) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points - amount,
+      maintenance_pot: (child.maintenance_pot || 0) + amount
+    };
+    
+    // Check if depositing allows an automatic rent payment
+    const lastMaintenance = targetChild.main_last_maintenance_date ? new Date(targetChild.main_last_maintenance_date) : new Date();
+    const daysSince = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince >= 30 && targetChild.maintenance_pot >= 20) {
+      targetChild.maintenance_pot -= 20;
+      targetChild.main_last_maintenance_date = new Date().toISOString();
+    }
+
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        points: targetChild.points,
+        maintenance_pot: targetChild.maintenance_pot,
+        main_last_maintenance_date: targetChild.main_last_maintenance_date
+      }).eq('id', childId);
+    }
+  };
+
+  const handleMaintenanceWithdraw = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.maintenance_pot || 0) <= 0) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + (child.maintenance_pot || 0),
+      maintenance_pot: 0
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      await supabase.from('children').update({
+        points: targetChild.points,
+        maintenance_pot: targetChild.maintenance_pot
+      }).eq('id', childId);
+    }
+  };
+
+  const handleRepairMainPot = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
 
-    const maintenanceCost = Math.ceil((child.savings_pot || 0) * 0.05); // 5%
-    if ((child.savings_pot || 0) < maintenanceCost) {
-      alert("Not enough coins in Savings Pot to pay maintenance!");
+    const repairCost = 50;
+    if (child.points < repairCost) {
+      alert("Not enough points to repair the pot!");
       return;
     }
 
     const updatedChild = {
       ...child,
-      savings_pot: (child.savings_pot || 0) - maintenanceCost,
-      savings_last_maintenance_date: new Date().toISOString()
+      points: child.points - repairCost,
+      main_pot_damaged: false,
+      main_damage_date: null
     };
-    const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
-    syncChildren(updatedChildren);
-    
-    const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      await supabase.from('children').update({
-        savings_pot: updatedChild.savings_pot,
-        savings_last_maintenance_date: updatedChild.savings_last_maintenance_date
-      }).eq('id', childId);
-    }
-  };
-
-  const handleRepairSavingsPot = async (childId: string) => {
-    const child = children.find(c => c.id === childId);
-    if (!child) return;
-
-    const repairCost = 50;
-    if (child.points < repairCost && (child.savings_pot || 0) < repairCost) {
-      alert("Not enough coins in Pocket or Savings to repair the pot!");
-      return;
-    }
-
-    let updatedChild = { ...child, savings_pot_damaged: false, savings_damage_date: null };
-    if ((child.savings_pot || 0) >= repairCost) {
-      updatedChild.savings_pot = (child.savings_pot || 0) - repairCost;
-    } else {
-      updatedChild.points = child.points - repairCost;
-    }
 
     const updatedChildren = children.map(c => c.id === childId ? updatedChild : c);
     syncChildren(updatedChildren);
@@ -1420,10 +1472,9 @@ export default function App() {
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       await supabase.from('children').update({
-        savings_pot: updatedChild.savings_pot,
         points: updatedChild.points,
-        savings_pot_damaged: false,
-        savings_damage_date: null
+        main_pot_damaged: false,
+        main_damage_date: null
       }).eq('id', childId);
     }
   };
@@ -1880,8 +1931,9 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
-              onPaySavingsMaintenance={handlePaySavingsMaintenance}
-              onRepairSavingsPot={handleRepairSavingsPot}
+              onMaintenanceDeposit={handleMaintenanceDeposit}
+              onMaintenanceWithdraw={handleMaintenanceWithdraw}
+              onRepairMainPot={handleRepairMainPot}
               onSavingsDeposit={handleSavingsDeposit}
               onSavingsWithdraw={handleSavingsWithdraw}
               onSavingsGoal={handleSavingsGoal}
