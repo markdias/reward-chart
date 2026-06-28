@@ -1175,9 +1175,13 @@ export default function ChildDashboard({
                             onClick={() => { 
                               if (activeChild.is_rent_due) {
                                 onPayRent(activeChild.id);
+                                setMaintenanceEventType('paid');
+                                setShowMaintenanceEventPopup(true);
                               } else {
                                 const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
                                 onRepairMainPot(activeChild.id, source); 
+                                setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
+                                setShowMaintenanceEventPopup(true);
                               }
                               playSound.purchase(); 
                             }} 
@@ -2534,19 +2538,29 @@ export default function ChildDashboard({
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' ? 'border-emerald-400' : 'border-red-500'}`}
+              className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? 'border-emerald-400' : 'border-red-500'}`}
             >
               <div className="text-6xl mb-4">
-                {maintenanceEventType === 'paid' ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : '💥'}
+                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : '💥'}
               </div>
               <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
-                {maintenanceEventType === 'paid' ? 'Rent Paid!' : maintenanceEventType === 'rent_due' ? 'Rent Due!' : 'Pot Broken!'}
+                {maintenanceEventType === 'paid' 
+                  ? 'Rent Paid!' 
+                  : maintenanceEventType === 'rent_due' 
+                    ? 'Rent Due!' 
+                    : maintenanceEventType === 'broken' 
+                      ? 'Pot Broken!' 
+                      : 'Pot Fixed!'}
               </h2>
               <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
                 {maintenanceEventType === 'paid' 
                   ? 'Your monthly rent of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
                   : maintenanceEventType === 'rent_due'
                   ? 'It is time to pay your rent of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
+                  : maintenanceEventType === 'fixed_maintenance'
+                  ? 'You fixed your pot for 5 coins using your Maintenance Pot!'
+                  : maintenanceEventType === 'fixed_wallet'
+                  ? 'You fixed your pot for 5 coins using your Main Wallet! (Your Maintenance Pot did not have enough coins)'
                   : 'Your pot has randomly broken! It will leak 1 coin per day until repaired. It costs 5 coins to fix.'}
               </p>
               {maintenanceEventType === 'rent_due' || maintenanceEventType === 'broken' ? (
@@ -2555,13 +2569,12 @@ export default function ChildDashboard({
                     playSound.purchase();
                     if (maintenanceEventType === 'rent_due') {
                       onPayRent(activeChild.id);
+                      setMaintenanceEventType('paid');
                     } else {
                       const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
                       onRepairMainPot(activeChild.id, source);
-                      alert(`Fixed for 5 coins using your ${source === 'maintenance' ? 'Maintenance Pot' : 'Wallet'}.`);
+                      setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
                     }
-                    setShowMaintenanceEventPopup(false);
-                    setTimeout(() => setMaintenanceEventType(null), 500);
                     localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
                   }}
                   disabled={maintenanceEventType === 'rent_due' && (activeChild.maintenance_pot || 0) < 20}
