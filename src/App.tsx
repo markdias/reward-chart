@@ -1030,6 +1030,7 @@ export default function App() {
     if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
+      targetChild.pet_fed_today = false;
     } else if (targetChild.food_pot_unlocked && (targetChild.level < foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) < foodXpReq))) {
       targetChild.food_pot_unlocked = false;
       targetChild.food_pot_unlock_seen = false;

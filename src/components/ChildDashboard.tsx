@@ -232,7 +232,7 @@ export default function ChildDashboard({
     if (!selectedChildId || !activeChild) return;
     
     // Only check if they have the food pot unlocked, haven't fed today, and no penalty modal is showing
-    if (activeChild.food_pot_unlocked && !activeChild.pet_fed_today && !penaltyMessage) {
+    if (activeChild.food_pot_unlocked && activeChild.food_pot_unlock_seen && !activeChild.pet_fed_today && !penaltyMessage) {
       const todayStr = new Date().toISOString().split('T')[0];
       const storageKey = `feed_reminder_${activeChild.id}`;
       const lastAsked = localStorage.getItem(storageKey);
@@ -242,7 +242,7 @@ export default function ChildDashboard({
         setShowFeedReminder(true);
       }
     }
-  }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.pet_fed_today, penaltyMessage]);
+  }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.food_pot_unlock_seen, activeChild?.pet_fed_today, penaltyMessage]);
 
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
