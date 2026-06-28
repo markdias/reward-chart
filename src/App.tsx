@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { App as CapacitorApp } from '@capacitor/app';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
 import ParentDashboard from './components/ParentDashboard';
@@ -65,6 +66,41 @@ export default function App() {
   const [lockedChildId, setLockedChildId] = useState<string | null>(
     localStorage.getItem('RCH_LOCKED_CHILD_ID')
   );
+
+  // Initialize Deep Links for NFC
+  useEffect(() => {
+    const initDeepLinks = async () => {
+      try {
+        CapacitorApp.addListener('appUrlOpen', (event: any) => {
+          try {
+            const url = new URL(event.url);
+            const pathParts = url.pathname.split('/');
+            
+            // Check for /child/:id
+            if (pathParts[1] === 'child' && pathParts[2]) {
+              const childIdToLock = pathParts[2];
+              setIsParentMode(false);
+              localStorage.setItem('RCH_PARENT_MODE', 'false');
+              setLockedChildId(childIdToLock);
+              localStorage.setItem('RCH_LOCKED_CHILD_ID', childIdToLock);
+            }
+          } catch (e) {
+            console.error("Error parsing deep link", e);
+          }
+        });
+      } catch (e) {
+        // May fail if not running in a Capacitor native environment
+        console.warn("Capacitor App plugin not available:", e);
+      }
+    };
+    initDeepLinks();
+    
+    return () => {
+      try {
+        CapacitorApp.removeAllListeners();
+      } catch (e) {}
+    };
+  }, []);
 
   // Helper fallback to load local storage state or blank state
   const loadLocalStorageFallback = (isDemo: boolean) => {
