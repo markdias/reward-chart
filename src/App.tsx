@@ -678,12 +678,29 @@ export default function App() {
     localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
     localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
     
-    const initialRewards = PREMADE_REWARDS.map((r, index) => ({ 
-      ...r, 
-      id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-      created_at: new Date().toISOString(),
-      parent_id: emailToUse 
-    }));
+    const initialRewards: Reward[] = [];
+    data.selectedRewards.forEach((r, index) => {
+      const templateId = `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
+      // Add as a blueprint
+      initialRewards.push({
+        ...r,
+        id: templateId,
+        created_at: new Date().toISOString(),
+        parent_id: emailToUse,
+        is_template: true
+      });
+      // Assign to all children immediately
+      initialChildren.forEach((child, cIdx) => {
+        initialRewards.push({
+          ...r,
+          id: `reward_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`,
+          created_at: new Date().toISOString(),
+          parent_id: emailToUse,
+          is_template: false,
+          child_id: child.id
+        });
+      });
+    });
     localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
 
     // Update React state immediately so it's available without waiting for useEffect

@@ -5,12 +5,13 @@ import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import LandingPage from '../LandingPage'; // Using this as the welcome step
 import StepChildrenSetup from './StepChildrenSetup';
 import StepTasksSelection from './StepTasksSelection';
+import StepRewardsSelection from './StepRewardsSelection';
 import StepPinSetup from './StepPinSetup';
 import StepCreateAccount from './StepCreateAccount';
 import StepHandover from './StepHandover';
 import StepParentDetails from './StepParentDetails';
 import { Child, Task, Reward } from '../../types';
-import { PREMADE_TASKS } from '../../data/premadeTemplates';
+import { PREMADE_TASKS, PREMADE_REWARDS } from '../../data/premadeTemplates';
 
 interface OnboardingWizardProps {
   theme: ThemeId;
@@ -23,12 +24,13 @@ export interface OnboardingData {
   parentName: string;
   familyName: string;
   selectedTasks: Task[];
+  selectedRewards: Reward[];
   pin: string;
   skippedAccount: boolean;
   email?: string;
 }
 
-type WizardStep = 'welcome' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'pin' | 'account';
+type WizardStep = 'welcome' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'pin' | 'account';
 
 export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>('welcome');
@@ -38,6 +40,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
     parentName: '',
     familyName: '',
     selectedTasks: [],
+    selectedRewards: [],
     pin: '',
     skippedAccount: false,
   });
@@ -66,8 +69,14 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
   };
 
   const handleTasksSelectionComplete = (selectedTaskIds: string[]) => {
-    const tasks = PREMADE_TASKS.filter(t => selectedTaskIds.includes(t.id));
-    setOnboardingData(prev => ({ ...prev, selectedTasks: tasks }));
+    const tasks = PREMADE_TASKS.filter(t => selectedTaskIds.includes(t.id as string));
+    setOnboardingData(prev => ({ ...prev, selectedTasks: tasks as Task[] }));
+    setStep('rewards');
+  };
+
+  const handleRewardsSelectionComplete = (selectedRewardIds: string[]) => {
+    const rewards = PREMADE_REWARDS.filter(r => selectedRewardIds.includes(r.id as string));
+    setOnboardingData(prev => ({ ...prev, selectedRewards: rewards as Reward[] }));
     setStep('pin');
   };
 
@@ -126,12 +135,21 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
             initialSelectedTaskIds={onboardingData.selectedTasks.map(t => t.id)}
           />
         );
+      case 'rewards':
+        return (
+          <StepRewardsSelection
+            theme={theme}
+            onNext={handleRewardsSelectionComplete}
+            onBack={() => setStep('tasks')}
+            initialSelectedRewardIds={onboardingData.selectedRewards.map(r => r.id)}
+          />
+        );
       case 'pin':
         return (
           <StepPinSetup
             theme={theme}
             onNext={handlePinSetupComplete}
-            onBack={() => setStep('tasks')}
+            onBack={() => setStep('rewards')}
           />
         );
       case 'account':

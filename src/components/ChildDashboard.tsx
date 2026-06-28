@@ -938,7 +938,7 @@ export default function ChildDashboard({
               </motion.div>
             ) : (
               
-              /* ACTIVE PILOT ARCADE HUDS */
+              /* ACTIVE CHILD ARCADE HUDS */
                 <motion.div
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
