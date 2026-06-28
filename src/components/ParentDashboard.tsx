@@ -52,6 +52,7 @@ interface ParentDashboardProps {
   onResetData?: (keepBlueprints: boolean) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
+  onLogout?: () => void;
 }
 
 export default function ParentDashboard({
@@ -88,7 +89,8 @@ export default function ParentDashboard({
   onDeleteAccount,
   giftingRequests = [],
   onApproveGiftingRequest,
-  onRejectGiftingRequest
+  onRejectGiftingRequest,
+  onLogout
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
@@ -475,6 +477,20 @@ export default function ParentDashboard({
               )}
             </AnimatePresence>
           </div>
+
+          {onLogout && (
+            <button
+              onClick={() => {
+                playSound.click();
+                onLogout();
+              }}
+              className="flex items-center gap-1 sm:gap-2 bg-white hover:bg-stone-50 text-stone-700 font-extrabold border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
+              id="global-logout-btn"
+            >
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600" />
+              <span>SIGN OUT</span>
+            </button>
+          )}
 
           <button
             onClick={() => {

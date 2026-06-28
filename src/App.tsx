@@ -2053,6 +2053,7 @@ export default function App() {
               parentEmail={parentEmail}
               onRequireAccount={() => setShowCreateAccount(true)}
               theme={activeTheme}
+              onLogout={handleLogout}
             />
           </motion.div>
         ) : (
@@ -2145,16 +2146,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Silent Floating Logout button for Parent Mode when in Child Mode to return to Landing */}
-      {parentEmail && !isParentMode && (
-        <button
-          onClick={handleLogout}
-          className="fixed bottom-4 right-4 p-3 rounded-full transition-all cursor-pointer text-xs z-30 flex items-center gap-1.5 border-2 border-stone-300 bg-white hover:bg-stone-50 text-stone-600 shadow-sm font-bold"
-          id="global-logout-btn"
-        >
-          Sign Out App
-        </button>
-      )}
+
     </div>
   );
 }
