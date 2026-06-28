@@ -12,7 +12,6 @@ import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
-import { CapacitorNfc } from '@capgo/capacitor-nfc';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
@@ -96,7 +95,6 @@ export default function ParentDashboard({
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
   const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
-  const [isWritingNfc, setIsWritingNfc] = useState<boolean>(false);
 
 
 
@@ -163,52 +161,7 @@ export default function ParentDashboard({
     onApproveCompletion(id);
   };
 
-  const handleWriteNfc = async (childId: string) => {
-    if (!Capacitor.isNativePlatform()) {
-      alert("NFC writing is only available on actual mobile devices.");
-      return;
-    }
 
-    try {
-      setIsWritingNfc(true);
-      playSound.click();
-      
-      const { supported } = await CapacitorNfc.isSupported();
-      if (!supported) {
-        alert("NFC is not supported on this device.");
-        setIsWritingNfc(false);
-        return;
-      }
-
-      await CapacitorNfc.startScanning({ invalidateAfterFirstRead: true, alertMessage: "Hold an NFC tag near your phone..." });
-      
-      const textEncoder = new TextEncoder();
-      const uriStr = `rewardchart://child/${childId}`;
-      const uriBytes = Array.from(textEncoder.encode(uriStr));
-      const payload = [0x00, ...uriBytes]; // 0x00 prefix for complete URI
-      
-      await CapacitorNfc.write({
-        records: [{
-          tnf: 1, // TNF_WELL_KNOWN
-          type: [0x55], // 'U' (URI)
-          id: [],
-          payload: payload
-        }]
-      });
-      
-      playSound.success();
-      alert("NFC Tag successfully programmed!");
-    } catch (error: any) {
-      console.error("NFC Write Error:", error);
-      playSound.pinError();
-      alert(`Failed to write NFC tag: ${error?.message || "Unknown error"}`);
-    } finally {
-      setIsWritingNfc(false);
-      try {
-        await CapacitorNfc.stopScanning();
-      } catch (e) {}
-    }
-  };
 
   const handleImportDefaultTasks = async () => {
     if (!parentProfile?.family_id) return;
@@ -1098,14 +1051,6 @@ export default function ParentDashboard({
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
-                                    <button 
-                                      onClick={() => handleWriteNfc(child.id)} 
-                                      disabled={isWritingNfc}
-                                      className="w-full mt-2 bg-indigo-100 border border-indigo-200 text-indigo-700 p-2 rounded-xl text-xs font-bold shadow-sm hover:bg-indigo-200 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                      <Activity className="w-4 h-4" />
-                                      {isWritingNfc ? 'Scanning...' : 'Program NFC Tag'}
-                                    </button>
                                   </div>
                                 </motion.div>
                               )}
