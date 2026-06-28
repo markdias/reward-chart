@@ -737,6 +737,55 @@ export default function ChildDashboard({
         )}
       </AnimatePresence>
 
+      {/* Maintenance Pot Unlock Celebration Overlay */}
+      <AnimatePresence>
+        {activeChild && activeChild.maintenance_unlocked && (!activeChild.maintenance_unlock_seen || showMaintenanceReplayVideo) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
+            id="maintenance-pot-unlock-cinematic"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 30 }}
+              transition={{ type: 'spring', damping: 15 }}
+              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-slate-400/20 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-300 text-slate-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+                <Sparkles className="w-4 h-4 text-slate-500 animate-pulse" />
+                NEW FEATURE UNLOCKED
+              </div>
+
+              <h2 className="text-3xl font-black font-display text-stone-900">
+                🎉 MAINTENANCE POT UNLOCKED!
+              </h2>
+
+              <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
+                You've unlocked the <strong className="text-slate-600">Maintenance Pot</strong>! You must keep at least 20 coins in here. Every month, rent will be paid from this pot to keep your Main Pot from breaking.
+              </p>
+
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner flex flex-col items-center justify-center">
+                <ShieldAlert className="w-24 h-24 text-slate-400 mb-4 animate-pulse" />
+                <p className="font-mono text-slate-500 font-bold text-sm">VIDEO PLACEHOLDER</p>
+              </div>
+
+              <button
+                onClick={() => { playSound.success(); onMaintenanceUnlockSeen(activeChild.id); setShowMaintenanceReplayVideo(false); }}
+                className="w-full gamepad-button py-4 bg-slate-400 hover:bg-slate-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                id="maintenance-pot-unlock-dismiss-btn"
+              >
+                GOT IT! 🎉
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Unhappy Pet Warning Modal */}
       <AnimatePresence>
         {penaltyMessage && (
