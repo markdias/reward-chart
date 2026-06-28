@@ -555,7 +555,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
-              { id: 'children', label: 'CHILDREN PILOTS', icon: Users, count: children.length },
+              { id: 'children', label: 'CHILDREN', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'TARGETS & POTS', icon: Target },
@@ -620,7 +620,7 @@ export default function ParentDashboard({
               </div>
               <div className="w-full">
                 <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">PILOTS</span></span>
+                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">CHILDREN</span></span>
               </div>
             </div>
             <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
@@ -954,7 +954,7 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>CHILDREN PILOTS REGISTER</h2>
+                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>CHILDREN REGISTER</h2>
                     <p className={`text-xs ${styles.textMuted}`}>Initialize new operators and monitor active companion level caps.</p>
                   </div>
                   <button
@@ -962,7 +962,7 @@ export default function ParentDashboard({
                     className={`bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
                     id="add-child-btn-top"
                   >
-                    <UserPlus className="w-4 h-4" /> REGISTER NEW PILOT
+                    <UserPlus className="w-4 h-4" /> REGISTER NEW CHILD
                   </button>
                 </div>
 
@@ -974,12 +974,12 @@ export default function ParentDashboard({
                     id="add-child-box"
                   >
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingChildId ? '✏️ Edit Pilot' : '👶 Register Family Child'}
+                      {editingChildId ? '✏️ Edit Child' : '👶 Register Family Child'}
                     </h3>
                     <form onSubmit={handleChildSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Pilot Name</label>
+                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
                           <input
                             type="text"
                             value={newChildName}
@@ -1026,7 +1026,7 @@ export default function ParentDashboard({
                           type="submit"
                           className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-stone-900 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
                         >
-                          {editingChildId ? 'SAVE CHANGES' : 'SPAWN PILOT & HATCH EGG'}
+                          {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
                         </button>
                         <button
                           type="button"
@@ -1439,7 +1439,7 @@ export default function ParentDashboard({
                                 className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
                               >
                                 <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
-                                  Select pilots to assign this quest:
+                                  Select children to assign this quest:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                   {children.map(child => {
@@ -1504,7 +1504,7 @@ export default function ParentDashboard({
                             </div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-base mt-2 font-display`}>{task.title}</h3>
                             <p className={`text-xs ${styles.textMuted} mt-1`}>
-                              Pilot assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
+                              Child assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
                             </p>
                           </div>
 
@@ -1769,7 +1769,7 @@ export default function ParentDashboard({
                                 className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
                               >
                                 <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
-                                  Select pilots to assign this reward:
+                                  Select children to assign this reward:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                   {children.map(child => {
