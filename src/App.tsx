@@ -1953,7 +1953,6 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
-              onMaintenanceWithdraw={handleMaintenanceWithdraw}
               onRepairMainPot={handleRepairMainPot}
               onPayRent={handlePayRent}
               onSavingsDeposit={handleSavingsDeposit}

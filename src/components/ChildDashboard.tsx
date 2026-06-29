@@ -1956,21 +1956,10 @@ export default function ChildDashboard({
                               {/* Action Buttons */}
                               <div className="flex gap-2">
                                 <button
-                                  onClick={() => { setShowFoodDepositModal(true); setFoodDepositAmount(Math.min(7, activeChild.points || 7)); playSound.click(); }}
-                                  disabled={activeChild.points <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    activeChild.points > 0
-                                      ? 'bg-orange-500 border border-orange-700 text-white shadow-[0_3px_0_0_#c2410c]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  💰 Add Gold
-                                </button>
-                                <button
                                   onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
-                                  disabled={(activeChild.food_pot || 0) < 1}
+                                  disabled={(activeChild.points || 0) < 1}
                                   className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    (activeChild.food_pot || 0) >= 1
+                                    (activeChild.points || 0) >= 1
                                       ? 'bg-amber-100 border border-amber-300 text-amber-800 shadow-[0_3px_0_0_#d97706]'
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
@@ -1979,61 +1968,6 @@ export default function ChildDashboard({
                                 </button>
                               </div>
 
-                              {/* Food Pot Deposit Modal */}
-                              <AnimatePresence>
-                                {showFoodDepositModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-orange-50 border border-orange-200 space-y-2"
-                                  >
-                                    <label className="text-xs font-bold text-orange-800 block text-center mb-1">Add how many gold coins to Food Pot?</label>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setFoodDepositAmount(Math.max(1, foodDepositAmount - 1)); playSound.click(); }}
-                                        disabled={foodDepositAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-orange-205 text-orange-700 flex items-center justify-center cursor-pointer hover:bg-orange-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
-                                
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-250 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{foodDepositAmount}</span>
-                                      </div>
-                                
-                                      <button
-                                        onClick={() => { setFoodDepositAmount(Math.min(activeChild.points, foodDepositAmount + 1)); playSound.click(); }}
-                                        disabled={foodDepositAmount >= activeChild.points}
-                                        className="w-8 h-8 rounded-full bg-orange-205 text-orange-755 flex items-center justify-center cursor-pointer hover:bg-orange-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="flex gap-2 mt-2">
-                                      <button
-                                        onClick={() => {
-                                          if (foodDepositAmount > 0 && foodDepositAmount <= activeChild.points) {
-                                            onFoodPotDeposit(activeChild.id, foodDepositAmount);
-                                            setShowFoodDepositModal(false);
-                                            playSound.purchase();
-                                          }
-                                        }}
-                                        disabled={foodDepositAmount <= 0 || foodDepositAmount > activeChild.points}
-                                        className="flex-1 py-2 rounded-lg bg-orange-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-orange-400 active:translate-y-0.5 transition-all"
-                                      >
-                                        Confirm
-                                      </button>
-                                      <button
-                                        onClick={() => { setShowFoodDepositModal(false); playSound.click(); }}
-                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
                             </div>
                           )}
 
