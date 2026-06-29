@@ -1149,51 +1149,58 @@ export default function ChildDashboard({
                         Click above to toggle view!
                       </div>
                       
-                      {(activeChild.main_pot_damaged || activeChild.is_rent_due) && (
+                      {activeChild.is_rent_due && (
                         <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4 mt-4">
                           <span className="font-bold text-sm mb-1">
-                            {activeChild.is_rent_due && activeChild.main_pot_damaged 
-                              ? "⚠️ BILLS DUE & POT BROKEN! ⚠️" 
-                              : activeChild.is_rent_due ? "⚠️ BILLS DUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
+                            ⚠️ BILLS DUE! ⚠️
                           </span>
                           <span className="text-xs opacity-90 max-w-md mx-auto mb-2 mt-1 block">
-                            {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "You are losing 6 points per day (5 for bills, 1 for damage)! Pay 20 coins for bills, and 5 to repair the pot!"
-                              : activeChild.is_rent_due 
-                                ? "You are losing 5 points per day! Click the Pay Bills button to pay 20 coins."
-                                : "You are losing 1 point per day! Click the Repair Pot button to pay 5 coins."}
+                            You are losing 5 points per day! Click the Pay Bills button to pay 20 coins.
                           </span>
                           <button 
                             onClick={() => { 
-                              if (activeChild.is_rent_due) {
-                                if ((activeChild.points || 0) < 20) {
-                                  setMaintenanceEventType('rent_failed');
-                                  setShowMaintenanceEventPopup(true);
-                                  playSound.pinError();
-                                } else {
-                                  onPayRent(activeChild.id);
-                                  setMaintenanceEventType('paid');
-                                  setShowMaintenanceEventPopup(true);
-                                  playSound.purchase(); 
-                                }
+                              if ((activeChild.points || 0) < 20) {
+                                setMaintenanceEventType('rent_failed');
+                                setShowMaintenanceEventPopup(true);
+                                playSound.pinError();
                               } else {
-                                if (activeChild.points < 5) {
-                                  setMaintenanceEventType('repair_failed');
-                                  setShowMaintenanceEventPopup(true);
-                                  playSound.pinError();
-                                } else {
-                                  onRepairMainPot(activeChild.id, 'wallet'); 
-                                  setMaintenanceEventType('fixed_wallet');
-                                  setShowMaintenanceEventPopup(true);
-                                  playSound.purchase(); 
-                                }
+                                onPayRent(activeChild.id);
+                                setMaintenanceEventType('paid');
+                                setShowMaintenanceEventPopup(true);
+                                playSound.purchase(); 
                               }
                             }} 
                             className="w-auto px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
                           >
-                            {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "Pay Bills First (20 Coins)"
-                              : activeChild.is_rent_due ? "Pay Bills (20 Coins)" : "Repair Pot (5 Coins)"}
+                            Pay Bills (20 Coins)
+                          </button>
+                        </div>
+                      )}
+
+                      {activeChild.main_pot_damaged && (
+                        <div className="w-full bg-orange-100 border-2 border-orange-400 text-orange-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4 mt-4">
+                          <span className="font-bold text-sm mb-1">
+                            ⚠️ MAIN POT BROKEN! ⚠️
+                          </span>
+                          <span className="text-xs opacity-90 max-w-md mx-auto mb-2 mt-1 block">
+                            You are losing 1 point per day! Click the Repair Pot button to pay 5 coins.
+                          </span>
+                          <button 
+                            onClick={() => { 
+                              if ((activeChild.points || 0) < 5) {
+                                setMaintenanceEventType('repair_failed');
+                                setShowMaintenanceEventPopup(true);
+                                playSound.pinError();
+                              } else {
+                                onRepairMainPot(activeChild.id, 'wallet'); 
+                                setMaintenanceEventType('fixed_wallet');
+                                setShowMaintenanceEventPopup(true);
+                                playSound.purchase(); 
+                              }
+                            }} 
+                            className="w-auto px-4 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
+                          >
+                            Repair Pot (5 Coins)
                           </button>
                         </div>
                       )}
