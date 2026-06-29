@@ -1207,12 +1207,12 @@ export default function ChildDashboard({
                           <motion.div 
                             className={`h-full ${activeChild.level >= 10 ? 'bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500' : 'bg-gradient-to-r from-cyan-400 to-purple-500'}`}
                             initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(100, ((activeChild.lifetime_points % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
+                            animate={{ width: `${Math.min(100, (((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
                           />
                         </div>
                         <div className="flex justify-between items-center w-full px-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>GOLD BAR: {activeChild.lifetime_points % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
+                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
                         </div>
                       </div>
 
@@ -1256,13 +1256,13 @@ export default function ChildDashboard({
                       const now = new Date();
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
                       const isWeeklyReset = !nextWeekly || now >= nextWeekly;
-                      const dispWeeklyXp = isWeeklyReset ? 0 : (activeChild.weekly_xp || 0);
-                      const weeklyPct = Math.min(100, Math.round((dispWeeklyXp / (parentProfile?.weekly_xp_target || 300)) * 100));
+                      const dispWeeklyPts = isWeeklyReset ? 0 : (activeChild.weekly_points || 0);
+                      const weeklyPct = Math.min(100, Math.round((dispWeeklyPts / (parentProfile?.weekly_points_target || 300)) * 100));
 
                       const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
                       const isMonthlyReset = !nextMonthly || now >= nextMonthly;
-                      const dispMonthlyXp = isMonthlyReset ? 0 : (activeChild.monthly_xp || 0);
-                      const monthlyPct = Math.min(100, Math.round((dispMonthlyXp / (parentProfile?.monthly_xp_target || 1000)) * 100));
+                      const dispMonthlyPts = isMonthlyReset ? 0 : (activeChild.monthly_points || 0);
+                      const monthlyPct = Math.min(100, Math.round((dispMonthlyPts / (parentProfile?.monthly_points_target || 1000)) * 100));
 
                       return (
                         <>
@@ -1353,7 +1353,7 @@ export default function ChildDashboard({
                                       />
                                     </div>
                                     <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispWeeklyXp} / {(parentProfile?.weekly_xp_target || 300)} XP</span>
+                                      <span>{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} PTS</span>
                                       <span>{weeklyPct}% COMPLETED</span>
                                     </div>
                                   </>
@@ -1378,7 +1378,7 @@ export default function ChildDashboard({
                                       />
                                     </div>
                                     <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispMonthlyXp} / {(parentProfile?.monthly_xp_target || 1000)} XP</span>
+                                      <span>{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} PTS</span>
                                       <span>{monthlyPct}% COMPLETED</span>
                                     </div>
                                   </>
@@ -1546,10 +1546,7 @@ export default function ChildDashboard({
                                       <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
                                         <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> +{task.points}
                                       </span>
-                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border text-cyan-700 bg-cyan-50 border-cyan-200`}>
-                                        <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> +{task.xp ?? task.points}
-                                      </span>
-                                    </div>
+                                      </div>
 
                                     {isApproved ? (
                                       <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
@@ -1878,7 +1875,7 @@ export default function ChildDashboard({
                                   animate={{
                                     width: `${(() => {
                                       const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
+                                      return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
                                   className="h-full bg-stone-400"
@@ -1887,7 +1884,7 @@ export default function ChildDashboard({
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
+                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -1984,7 +1981,7 @@ export default function ChildDashboard({
                                   animate={{
                                     width: `${(() => {
                                       const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
+                                      return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
                                   className="h-full bg-stone-400"
@@ -1993,7 +1990,7 @@ export default function ChildDashboard({
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
+                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -2215,7 +2212,7 @@ export default function ChildDashboard({
                                   animate={{
                                     width: `${(() => {
                                       const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
+                                      return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
                                   className="h-full bg-stone-400"
@@ -2224,7 +2221,7 @@ export default function ChildDashboard({
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
+                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -2274,7 +2271,7 @@ export default function ChildDashboard({
                                   animate={{
                                     width: `${(() => {
                                       const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
+                                      return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
                                   className="h-full bg-stone-400"
@@ -2283,7 +2280,7 @@ export default function ChildDashboard({
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
+                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>

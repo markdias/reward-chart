@@ -42,5 +42,5 @@ ALTER TABLE children
 ALTER TABLE tasks
   DROP COLUMN IF EXISTS xp;
 
-ALTER TABLE task_completions
+ALTER TABLE completions
   DROP COLUMN IF EXISTS xp_awarded;
