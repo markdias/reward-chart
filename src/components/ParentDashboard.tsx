@@ -1009,14 +1009,14 @@ export default function ParentDashboard({
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono ${styles.textColor}`}>XP:</span>
-                                      <div className="flex gap-1">
+                                      <span className={`text-xs font-mono ${styles.textColor}`}>Lifetime Gold:</span>
+                                      <div className="flex gap-1.5 justify-end">
                                         <button onClick={() => { 
                                           playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'XP'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: Math.max(0, (child.xp_in_level || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: (child.xp_in_level || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">

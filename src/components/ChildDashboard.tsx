@@ -1969,18 +1969,18 @@ export default function ChildDashboard({
                           )}
 
                           {/* Food Pot Locked Preview */}
-                          {!activeChild.food_pot_unlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 2) && (
+                          {!activeChild.food_pot_unlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 2}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      const goldReq = ((parentProfile?.food_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                       return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
@@ -1989,7 +1989,7 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  const goldReq = ((parentProfile?.food_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
@@ -2200,18 +2200,18 @@ export default function ChildDashboard({
                           )}
 
                           {/* Gifting Pot Locked Preview */}
-                          {!activeChild.gifting_unlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 3) && (
+                          {!activeChild.gifting_unlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 3}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                       return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
@@ -2220,7 +2220,7 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
@@ -2259,18 +2259,18 @@ export default function ChildDashboard({
                             </div>
                           )}
 
-                          {!activeChild.maintenance_unlocked && activeChild.level < (parentProfile?.maintenance_pot_unlock_level ?? 4) && (
+                          {!activeChild.maintenance_unlocked && activeChild.level < (parentProfile?.maintenance_pot_unlock_level ?? 8) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🛡️ Bills & Repairs — Unlock at Level {parentProfile?.maintenance_pot_unlock_level ?? 4}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🛡️ Bills & Repairs — Unlock at Level {parentProfile?.maintenance_pot_unlock_level ?? 8}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                       return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
@@ -2279,7 +2279,7 @@ export default function ChildDashboard({
                               </div>
                               <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>

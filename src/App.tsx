@@ -349,33 +349,29 @@ export default function App() {
               }
               
               // 4. Retroactive Unlock Sync
-              const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
-              const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
-              if (!updated.savings_unlocked && (updated.level > savingsLvl || (updated.level === savingsLvl && (updated.xp_in_level || 0) >= savingsXpReq))) {
+              const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;
+              if (!updated.savings_unlocked && updated.level >= savingsLvl) {
                 updates.savings_unlocked = true;
                 updates.savings_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
 
-              const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
-              const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
-              if (!updated.maintenance_unlocked && (updated.level > maintenanceLvl || (updated.level === maintenanceLvl && (updated.xp_in_level || 0) >= maintenanceXpReq))) {
+              const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
+              if (!updated.maintenance_unlocked && updated.level >= maintenanceLvl) {
                 updates.maintenance_unlocked = true;
                 updates.maintenance_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
               
-              const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
-              const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
-              if (!updated.food_pot_unlocked && (updated.level > foodLvl || (updated.level === foodLvl && (updated.xp_in_level || 0) >= foodXpReq))) {
+              const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
+              if (!updated.food_pot_unlocked && updated.level >= foodLvl) {
                 updates.food_pot_unlocked = true;
                 updates.food_pot_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
               
-              const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
-              const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
-              if (!updated.gifting_unlocked && (updated.level > giftingLvl || (updated.level === giftingLvl && (updated.xp_in_level || 0) >= giftingXpReq))) {
+              const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 6;
+              if (!updated.gifting_unlocked && updated.level >= giftingLvl) {
                 updates.gifting_unlocked = true;
                 updates.gifting_unlock_seen = false;
                 updated = { ...updated, ...updates };

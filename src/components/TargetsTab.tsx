@@ -19,10 +19,10 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
   const [monthlyRewardPoints, setMonthlyRewardPoints] = useState(parentProfile?.monthly_reward_points ?? 1000);
   
   const [pointsToLevelUp, setPointsToLevelUp] = useState(parentProfile?.points_to_level_up ?? 500);
-  const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 1);
-  const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 2);
-  const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 3);
-  const [maintenancePotUnlockLevel, setMaintenancePotUnlockLevel] = useState(parentProfile?.maintenance_pot_unlock_level ?? 4);
+  const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 2);
+  const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 4);
+  const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 6);
+  const [maintenancePotUnlockLevel, setMaintenancePotUnlockLevel] = useState(parentProfile?.maintenance_pot_unlock_level ?? 8);
   
   const [isSaving, setIsSaving] = useState(false);
   const [msg, setMsg] = useState('');
