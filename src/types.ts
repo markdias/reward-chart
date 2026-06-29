@@ -64,6 +64,7 @@ export interface Child {
   main_damage_date?: string | null;
   is_rent_due?: boolean;
   rent_due_date?: string | null;
+  main_last_repair_date?: string | null;
   created_at: string;
 }
 

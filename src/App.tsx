@@ -337,8 +337,19 @@ export default function App() {
                   updated = { ...updated, ...updates };
                 }
               }
+
+              // 2b. Check if Pot Break is Due (Every 10 days since last repair)
+              const lastRepair = updated.main_last_repair_date 
+                ? new Date(updated.main_last_repair_date) 
+                : new Date(updated.created_at || Date.now());
+              const daysSinceRepair = Math.floor(Math.abs(now.getTime() - lastRepair.getTime()) / (1000 * 60 * 60 * 24));
               
-              // 3. Random Damage Event (~1/30 chance per day) - moved to ChildDashboard.tsx daily rollover check to prevent duplicate/accidental triggers on parent refresh
+              if (daysSinceRepair >= 10 && !updated.main_pot_damaged && updated.maintenance_unlocked) {
+                updates.main_pot_damaged = true;
+                updates.main_damage_date = now.toISOString();
+                localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
+                updated = { ...updated, ...updates };
+              }
               
               // 4. Retroactive Unlock Sync
               const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;
@@ -568,7 +579,8 @@ export default function App() {
           main_pot_damaged: updatedChild.main_pot_damaged,
           main_damage_date: updatedChild.main_damage_date,
           is_rent_due: updatedChild.is_rent_due,
-          rent_due_date: updatedChild.rent_due_date
+          rent_due_date: updatedChild.rent_due_date,
+          main_last_repair_date: updatedChild.main_last_repair_date
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -633,6 +645,11 @@ export default function App() {
       maintenance_unlock_seen: false,
       is_rent_due: false,
       rent_due_date: null,
+      main_last_maintenance_date: new Date().toISOString(),
+      main_last_repair_date: new Date().toISOString(),
+      lifetime_points: 0,
+      weekly_points: 0,
+      monthly_points: 0,
       last_active_date: new Date().toISOString().split('T')[0],
       created_at: new Date().toISOString()
     })) as Child[];
@@ -849,6 +866,11 @@ export default function App() {
       maintenance_unlock_seen: false,
       is_rent_due: false,
       rent_due_date: null,
+      main_last_maintenance_date: new Date().toISOString(),
+      main_last_repair_date: new Date().toISOString(),
+      lifetime_points: 0,
+      weekly_points: 0,
+      monthly_points: 0,
       created_at: new Date().toISOString()
     };
     syncChildren([...children, newChild]);
@@ -1465,7 +1487,8 @@ export default function App() {
         ...child,
         points: child.points - 5,
         main_pot_damaged: false,
-        main_damage_date: null
+        main_damage_date: null,
+        main_last_repair_date: new Date().toISOString()
       };
 
       const newList = prevChildren.map(c => c.id === childId ? finalUpdatedChild! : c);
@@ -1484,7 +1507,8 @@ export default function App() {
       const { error } = await supabase.from('children').update({
         points: finalUpdatedChild.points,
         main_pot_damaged: finalUpdatedChild.main_pot_damaged,
-        main_damage_date: finalUpdatedChild.main_damage_date
+        main_damage_date: finalUpdatedChild.main_damage_date,
+        main_last_repair_date: finalUpdatedChild.main_last_repair_date
       }).eq('id', childId);
       if (error) console.error("handleRepairMainPot Supabase Error:", error);
     }
