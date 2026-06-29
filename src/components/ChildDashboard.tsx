@@ -37,7 +37,6 @@ interface ChildDashboardProps {
   onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings') => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
-  onMaintenanceDeposit: (childId: string, amount: number) => void;
   onMaintenanceWithdraw: (childId: string) => void;
   onRepairMainPot: (childId: string, source: 'maintenance' | 'wallet') => void;
   onPayRent: (childId: string) => void;
@@ -46,10 +45,8 @@ interface ChildDashboardProps {
   onSavingsGoal: (childId: string, rewardId: string) => void;
   onClearSavingsGoal: (childId: string) => void;
   onSavingsUnlockSeen: (childId: string) => void;
-  onFoodPotDeposit: (childId: string, amount: number) => void;
   onBuyPetFood: (childId: string) => void;
   onFoodPotUnlockSeen: (childId: string) => void;
-  onGiftingDeposit: (childId: string, amount: number) => void;
   onGiftingRequestCharity: (childId: string, amount: number, charityId: string) => void;
   onGiftingRequestSibling: (childId: string, amount: number, siblingId: string) => void;
   onGiftingUnlockSeen: (childId: string) => void;
@@ -71,7 +68,6 @@ export default function ChildDashboard({
   onClaimReward,
   onEnterParentMode,
   onFeedPet,
-  onMaintenanceDeposit,
   onMaintenanceWithdraw,
   onRepairMainPot,
   onPayRent,
@@ -80,10 +76,8 @@ export default function ChildDashboard({
   onSavingsGoal,
   onClearSavingsGoal,
   onSavingsUnlockSeen,
-  onFoodPotDeposit,
   onBuyPetFood,
   onFoodPotUnlockSeen,
-  onGiftingDeposit,
   onGiftingRequestCharity,
   onGiftingRequestSibling,
   onGiftingUnlockSeen,
@@ -105,8 +99,6 @@ export default function ChildDashboard({
 
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'pots'>('companion');
   const [avatarView, setAvatarView] = useState<'character' | 'main_pot'>('character');
-  const [showMaintenanceDepositModal, setShowMaintenanceDepositModal] = useState(false);
-  const [maintenanceDepositAmount, setMaintenanceDepositAmount] = useState<number>(5);
   const [showMaintenanceEventPopup, setShowMaintenanceEventPopup] = useState(false);
   const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | 'rent_due' | 'rent_failed' | 'fixed_maintenance' | 'fixed_wallet' | null>(null);
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
@@ -121,15 +113,11 @@ export default function ChildDashboard({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Food Pot UI State
-  const [showFoodDepositModal, setShowFoodDepositModal] = useState(false);
-  const [foodDepositAmount, setFoodDepositAmount] = useState<number>(7);
   const [showFoodReplayVideo, setShowFoodReplayVideo] = useState(false);
   const [penaltyMessage, setPenaltyMessage] = useState<string | null>(null);
   const [showFeedReminder, setShowFeedReminder] = useState(false);
 
   // Gifting Pot UI State
-  const [showGiftingDepositModal, setShowGiftingDepositModal] = useState(false);
-  const [giftingDepositAmount, setGiftingDepositAmount] = useState<number>(5);
   const [showGiftingReplayVideo, setShowGiftingReplayVideo] = useState(false);
   const [showMaintenanceReplayVideo, setShowMaintenanceReplayVideo] = useState(false);
   
@@ -1162,23 +1150,23 @@ export default function ChildDashboard({
                       </div>
                       
                       {(activeChild.main_pot_damaged || activeChild.is_rent_due) && (
-                        <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4">
+                        <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4 mt-4">
                           <span className="font-bold text-sm mb-1">
                             {activeChild.is_rent_due && activeChild.main_pot_damaged 
-                              ? "⚠️ MAINTENANCE DUE & POT BROKEN! ⚠️" 
-                              : activeChild.is_rent_due ? "⚠️ MAINTENANCE DUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
+                              ? "⚠️ BILLS DUE & POT BROKEN! ⚠️" 
+                              : activeChild.is_rent_due ? "⚠️ BILLS DUE! ⚠️" : "⚠️ MAIN POT BROKEN! ⚠️"}
                           </span>
-                          <span className="text-xs opacity-90 max-w-md mx-auto">
+                          <span className="text-xs opacity-90 max-w-md mx-auto mb-2 mt-1 block">
                             {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "You are losing 6 points per day (5 for maintenance, 1 for damage)! Pay 20 coins for maintenance, and 5 to repair the pot!"
+                              ? "You are losing 6 points per day (5 for bills, 1 for damage)! Pay 20 coins for bills, and 5 to repair the pot!"
                               : activeChild.is_rent_due 
-                                ? "You are losing 5 points per day! Pay 20 coins into your Maintenance Pot and click the Pay Maintenance button."
-                                : "You are losing 1 point per day! Pay 5 coins from your Maintenance Pot to repair the leak."}
+                                ? "You are losing 5 points per day! Click the Pay Bills button to pay 20 coins."
+                                : "You are losing 1 point per day! Click the Repair Pot button to pay 5 coins."}
                           </span>
                           <button 
                             onClick={() => { 
                               if (activeChild.is_rent_due) {
-                                if ((activeChild.maintenance_pot || 0) < 20) {
+                                if ((activeChild.points || 0) < 20) {
                                   setMaintenanceEventType('rent_failed');
                                   setShowMaintenanceEventPopup(true);
                                   playSound.pinError();
@@ -1189,14 +1177,13 @@ export default function ChildDashboard({
                                   playSound.purchase(); 
                                 }
                               } else {
-                                const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
-                                if (source === 'wallet' && activeChild.points < 5) {
+                                if (activeChild.points < 5) {
                                   setMaintenanceEventType('repair_failed');
                                   setShowMaintenanceEventPopup(true);
                                   playSound.pinError();
                                 } else {
-                                  onRepairMainPot(activeChild.id, source); 
-                                  setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
+                                  onRepairMainPot(activeChild.id, 'wallet'); 
+                                  setMaintenanceEventType('fixed_wallet');
                                   setShowMaintenanceEventPopup(true);
                                   playSound.purchase(); 
                                 }
@@ -1205,28 +1192,27 @@ export default function ChildDashboard({
                             className="w-auto px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
                           >
                             {activeChild.is_rent_due && activeChild.main_pot_damaged
-                              ? "Pay Maintenance First (20 Coins)"
-                              : activeChild.is_rent_due ? "Pay Maintenance (20 Coins)" : "Repair Pot (5 Coins)"}
+                              ? "Pay Bills First (20 Coins)"
+                              : activeChild.is_rent_due ? "Pay Bills (20 Coins)" : "Repair Pot (5 Coins)"}
                           </button>
                         </div>
                       )}
-
                       {/* Level and evolution progression */}
                       <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
                         <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                          <span>XP PROGRESS</span>
+                          <span>GOLD BAR</span>
                           <span className={`text-cyan-500 font-extrabold`}>LEVEL {activeChild.level}</span>
                         </div>
-                        <div className={`w-full h-3 ${styles.innerCard} rounded-full overflow-hidden p-0.5`}>
+                        <div className={`w-full h-3 ${styles.cardBg} ${styles.borderStyle} rounded-full overflow-hidden mb-1 relative`}>
                           <motion.div 
+                            className={`h-full ${activeChild.level >= 10 ? 'bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500' : 'bg-gradient-to-r from-cyan-400 to-purple-500'}`}
                             initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(100, ((activeChild.xp_in_level || 0) / (parentProfile?.xp_to_level_up ?? 100)) * 100)}%` }}
-                            transition={{ duration: 1 }}
-                            className={`h-full rounded-full bg-gradient-to-r ${activeChildStage.color_theme}`}
+                            animate={{ width: `${Math.min(100, ((activeChild.lifetime_points % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
                           />
                         </div>
-                        <div className="flex justify-between items-center pt-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>XP BAR: {activeChild.xp_in_level} / {parentProfile?.xp_to_level_up ?? 100}</span>
+                        <div className="flex justify-between items-center w-full px-1">
+                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>GOLD BAR: {activeChild.lifetime_points % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
                         </div>
                       </div>
 
@@ -1880,33 +1866,28 @@ export default function ChildDashboard({
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
-                          {!activeChild.savings_unlocked && (activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 1) || (activeChild.level === (parentProfile?.savings_pot_unlock_level ?? 1) && activeChild.xp_in_level < (parentProfile?.savings_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.savings_unlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 1}, {parentProfile?.savings_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((parentProfile?.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (parentProfile?.savings_pot_unlock_xp ?? 50);
-                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
+                                      const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
-                                  transition={{ duration: 0.8 }}
-                                  className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-400"
+                                  className="h-full bg-stone-400"
                                 />
                               </div>
-                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                              <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((parentProfile?.savings_pot_unlock_level ?? 1) - 1) * xpPerLvl + (parentProfile?.savings_pot_unlock_xp ?? 50);
-                                  return `${xpEarned} / ${xpReq} XP`;
+                                  const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -2057,33 +2038,28 @@ export default function ChildDashboard({
                           )}
 
                           {/* Food Pot Locked Preview */}
-                          {!activeChild.food_pot_unlocked && (activeChild.level < (parentProfile?.food_pot_unlock_level ?? 2) || (activeChild.level === (parentProfile?.food_pot_unlock_level ?? 2) && activeChild.xp_in_level < (parentProfile?.food_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.food_pot_unlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 2) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 2}, {parentProfile?.food_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 2}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((parentProfile?.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (parentProfile?.food_pot_unlock_xp ?? 50);
-                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
+                                      const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
-                                  transition={{ duration: 0.8 }}
-                                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-500"
+                                  className="h-full bg-stone-400"
                                 />
                               </div>
-                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                              <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((parentProfile?.food_pot_unlock_level ?? 2) - 1) * xpPerLvl + (parentProfile?.food_pot_unlock_xp ?? 50);
-                                  return `${xpEarned} / ${xpReq} XP`;
+                                  const goldReq = ((parentProfile?.food_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -2115,34 +2091,36 @@ export default function ChildDashboard({
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl">
-                                  <span className="text-lg"><GoldCoinIcon /></span>
-                                  <span className="text-lg font-mono font-black text-rose-700">{activeChild.gifting_pot || 0}</span>
-                                </div>
                               </div>
 
                               <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Add gold coins to your Gifting Pot to donate to charity or gift to a sibling. It feels good to give!
+                                Donate to charity or gift to a sibling directly from your Main Gold Pot. It feels good to give!
                               </p>
+
+                              {/* Gifting Reminder */}
+                              {(() => {
+                                const lastGiftingDate = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
+                                const daysSinceGifting = lastGiftingDate ? Math.floor((new Date().getTime() - lastGiftingDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+                                if (daysSinceGifting > 14) {
+                                  return (
+                                    <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
+                                      <span className="text-rose-500">❤️</span>
+                                      <p className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
+                                        It's been a while since your last gift! Giving makes everyone happy.
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
 
                               {/* Action Buttons */}
                               <div className="flex flex-wrap gap-2">
                                 <button
-                                  onClick={() => { setShowGiftingDepositModal(true); setGiftingDepositAmount(Math.min(5, activeChild.points || 5)); playSound.click(); }}
+                                  onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
                                   disabled={activeChild.points <= 0}
                                   className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
                                     activeChild.points > 0
-                                      ? 'bg-rose-500 border border-rose-700 text-white shadow-[0_3px_0_0_#be123c]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  💰 Add Gold
-                                </button>
-                                <button
-                                  onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.gifting_pot || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
-                                  disabled={(activeChild.gifting_pot || 0) <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    (activeChild.gifting_pot || 0) > 0
                                       ? 'bg-emerald-100 border border-emerald-300 text-emerald-800 shadow-[0_3px_0_0_#059669]'
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
@@ -2150,10 +2128,10 @@ export default function ChildDashboard({
                                   🌍 Donate
                                 </button>
                                 <button
-                                  onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.gifting_pot || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
-                                  disabled={(activeChild.gifting_pot || 0) <= 0 || children.length <= 1}
+                                  onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
+                                  disabled={activeChild.points <= 0 || children.length <= 1}
                                   className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    (activeChild.gifting_pot || 0) > 0 && children.length > 1
+                                    activeChild.points > 0 && children.length > 1
                                       ? 'bg-pink-100 border border-pink-300 text-pink-800 shadow-[0_3px_0_0_#be185d]'
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
@@ -2161,62 +2139,6 @@ export default function ChildDashboard({
                                   🎁 Gift Sibling
                                 </button>
                               </div>
-
-                              {/* Gifting Pot Deposit Modal */}
-                              <AnimatePresence>
-                                {showGiftingDepositModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2"
-                                  >
-                                    <label className="text-xs font-bold text-rose-800 block text-center mb-1">Add how many gold coins to Gifting Pot?</label>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setGiftingDepositAmount(Math.max(1, giftingDepositAmount - 1)); playSound.click(); }}
-                                        disabled={giftingDepositAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center cursor-pointer hover:bg-rose-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
-                                
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{giftingDepositAmount}</span>
-                                      </div>
-                                
-                                      <button
-                                        onClick={() => { setGiftingDepositAmount(Math.min(activeChild.points, giftingDepositAmount + 1)); playSound.click(); }}
-                                        disabled={giftingDepositAmount >= activeChild.points}
-                                        className="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center cursor-pointer hover:bg-rose-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="flex gap-2 mt-2">
-                                      <button
-                                        onClick={() => {
-                                          if (giftingDepositAmount > 0 && giftingDepositAmount <= activeChild.points) {
-                                            onGiftingDeposit(activeChild.id, giftingDepositAmount);
-                                            setShowGiftingDepositModal(false);
-                                            playSound.purchase();
-                                          }
-                                        }}
-                                        disabled={giftingDepositAmount <= 0 || giftingDepositAmount > activeChild.points}
-                                        className="flex-1 py-2 rounded-lg bg-rose-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-rose-400 active:translate-y-0.5 transition-all"
-                                      >
-                                        Confirm
-                                      </button>
-                                      <button
-                                        onClick={() => { setShowGiftingDepositModal(false); playSound.click(); }}
-                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
 
                               {/* Charity Modal */}
                               <AnimatePresence>
@@ -2347,33 +2269,28 @@ export default function ChildDashboard({
                           )}
 
                           {/* Gifting Pot Locked Preview */}
-                          {!activeChild.gifting_unlocked && (activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 3) || (activeChild.level === (parentProfile?.gifting_pot_unlock_level ?? 3) && activeChild.xp_in_level < (parentProfile?.gifting_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.gifting_unlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 3) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 3}, {parentProfile?.gifting_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 3}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (parentProfile?.gifting_pot_unlock_xp ?? 50);
-                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
+                                      const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
-                                  transition={{ duration: 0.8 }}
-                                  className="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500"
+                                  className="h-full bg-stone-400"
                                 />
                               </div>
-                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                              <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * xpPerLvl + (parentProfile?.gifting_pot_unlock_xp ?? 50);
-                                  return `${xpEarned} / ${xpReq} XP`;
+                                  const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 3) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>
@@ -2391,9 +2308,9 @@ export default function ChildDashboard({
                                     <ShieldAlert className="w-5 h-5 text-slate-600" />
                                   </div>
                                   <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>MAINTENANCE POT</span>
+                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>BILLS & REPAIRS</span>
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                                            <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Maintenance</h4>
+                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Bills & Repairs</h4>
                                       <button 
                                         onClick={() => setShowMaintenanceReplayVideo(true)}
                                         className="text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-300 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
@@ -2403,128 +2320,36 @@ export default function ChildDashboard({
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-                                  {(activeChild.maintenance_pot || 0) < 20 && (
-                                    <span title="Warning: Insufficient rent!" className="text-lg">⚠️</span>
-                                  )}
-                                  <span className="text-lg"><GoldCoinIcon /></span>
-                                  <span className="text-lg font-mono font-black text-slate-700">{activeChild.maintenance_pot || 0}</span>
-                                </div>
                               </div>
                         
                               <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Keep at least 20 coins in here! Rent is due exactly 30 days after your last payment. You will get a popup to pay 20 coins to maintain your Main Gold Pot. If you don't pay, you lose 5 points a day!
+                                A Weekly Bill will pop up every 30 days. You will need to pay 20 coins to maintain your Main Gold Pot. If you don't pay, you lose 5 points a day! Make sure your Main Gold Pot has enough coins!
                               </p>
-
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => { setShowMaintenanceDepositModal(true); setMaintenanceDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
-                                  disabled={activeChild.points <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    activeChild.points > 0
-                                      ? 'bg-slate-500 border border-slate-700 text-white shadow-[0_3px_0_0_#334155]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  💰 Deposit
-                                </button>
-                                <button
-                                  onClick={() => { onMaintenanceWithdraw(activeChild.id); playSound.purchase(); }}
-                                  disabled={(activeChild.maintenance_pot || 0) <= 0}
-                                  className={`flex-1 py-2.5 rounded-xl font-mono text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all ${
-                                    (activeChild.maintenance_pot || 0) > 0
-                                      ? 'bg-white border border-stone-300 text-stone-700 shadow-[0_3px_0_0_#d6d3d1]'
-                                      : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
-                                  }`}
-                                >
-                                  Withdraw All
-                                </button>
-                              </div>
-
-                              <AnimatePresence>
-                                {showMaintenanceDepositModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 relative z-20"
-                                  >
-                                    <label className="text-xs font-bold text-slate-800 block text-center mb-1">Deposit how many coins?</label>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setMaintenanceDepositAmount(Math.max(5, maintenanceDepositAmount - 5)); playSound.click(); }}
-                                        disabled={maintenanceDepositAmount <= 5}
-                                        className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
-                                
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-250 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{maintenanceDepositAmount}</span>
-                                      </div>
-                                
-                                      <button
-                                        onClick={() => { setMaintenanceDepositAmount(Math.min(activeChild.points, maintenanceDepositAmount + 5)); playSound.click(); }}
-                                        disabled={maintenanceDepositAmount >= activeChild.points}
-                                        className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="flex gap-2 mt-2">
-                                      <button
-                                        onClick={() => {
-                                          if (maintenanceDepositAmount > 0 && maintenanceDepositAmount <= activeChild.points) {
-                                            onMaintenanceDeposit(activeChild.id, maintenanceDepositAmount);
-                                            setShowMaintenanceDepositModal(false);
-                                            playSound.purchase();
-                                          }
-                                        }}
-                                        disabled={maintenanceDepositAmount <= 0 || maintenanceDepositAmount > activeChild.points}
-                                        className="flex-1 py-2 rounded-lg bg-slate-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-slate-400 active:translate-y-0.5 transition-all"
-                                      >
-                                        Confirm
-                                      </button>
-                                      <button
-                                        onClick={() => { setShowMaintenanceDepositModal(false); playSound.click(); }}
-                                        className="px-4 py-2 rounded-lg bg-stone-200 text-stone-600 text-xs font-bold uppercase tracking-wider cursor-pointer"
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
                             </div>
                           )}
 
-                          {!activeChild.maintenance_unlocked && (activeChild.level < (parentProfile?.maintenance_pot_unlock_level ?? 4) || (activeChild.level === (parentProfile?.maintenance_pot_unlock_level ?? 4) && activeChild.xp_in_level < (parentProfile?.maintenance_pot_unlock_xp ?? 50))) && (
+                          {!activeChild.maintenance_unlocked && activeChild.level < (parentProfile?.maintenance_pot_unlock_level ?? 4) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🛡️ Maintenance Pot — Unlock at Level {parentProfile?.maintenance_pot_unlock_level ?? 4}, {parentProfile?.maintenance_pot_unlock_xp ?? 50} XP!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider">🛡️ Bills & Repairs — Unlock at Level {parentProfile?.maintenance_pot_unlock_level ?? 4}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{
                                     width: `${(() => {
-                                      const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                      const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                      const xpReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * xpPerLvl + (parentProfile?.maintenance_pot_unlock_xp ?? 50);
-                                      return Math.min(100, Math.round((xpEarned / Math.max(1, xpReq)) * 100));
+                                      const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                      return Math.min(100, Math.round((activeChild.lifetime_points / Math.max(1, goldReq)) * 100));
                                     })()}%`
                                   }}
-                                  transition={{ duration: 0.8 }}
-                                  className="h-full rounded-full bg-gradient-to-r from-slate-400 to-gray-400"
+                                  className="h-full bg-stone-400"
                                 />
                               </div>
-                              <span className="text-[10px] font-mono text-stone-500 font-bold">
+                              <span className="text-[10px] font-mono text-stone-400 font-bold">
                                 {(() => {
-                                  const xpPerLvl = parentProfile?.xp_to_level_up ?? 100;
-                                  const xpEarned = (activeChild.level - 1) * xpPerLvl + (activeChild.xp_in_level || 0);
-                                  const xpReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * xpPerLvl + (parentProfile?.maintenance_pot_unlock_xp ?? 50);
-                                  return `${xpEarned} / ${xpReq} XP`;
+                                  const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return `${activeChild.lifetime_points} / ${goldReq} GOLD`;
                                 })()}
                               </span>
                             </div>

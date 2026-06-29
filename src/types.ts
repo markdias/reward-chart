@@ -7,18 +7,14 @@ export interface ParentProfile {
   pin: string;
   share_token: string | null;
   level_up_gold_reward?: number;
-  xp_to_level_up?: number;
+  points_to_level_up?: number;
   savings_pot_unlock_level?: number;
-  savings_pot_unlock_xp?: number;
   food_pot_unlock_level?: number;
-  food_pot_unlock_xp?: number;
   gifting_pot_unlock_level?: number;
-  gifting_pot_unlock_xp?: number;
   maintenance_pot_unlock_level?: number;
-  maintenance_pot_unlock_xp?: number;
-  weekly_xp_target?: number;
+  weekly_points_target?: number;
   weekly_reward_points?: number;
-  monthly_xp_target?: number;
+  monthly_points_target?: number;
   monthly_reward_points?: number;
 }
 
@@ -29,16 +25,16 @@ export interface Child {
   avatar_url: string;
   character_id: string; // Selected character template ID (e.g. 'unicorn', 'robot')
   points: number;
+  lifetime_points: number;
   level: number;
-  xp_in_level: number; // Progress within the current level (0-100)
   pet_food: number;
   streak_days: number;
   level_up_preference?: 'points' | 'reward'; // Deprecated, keeping for backwards compatibility
   level_up_bonuses_received?: number; // Count of bonuses given
   last_weekly_bonus_awarded?: string; // e.g. "2026-W25"
   last_monthly_bonus_awarded?: string; // e.g. "2026-06"
-  weekly_xp?: number;
-  monthly_xp?: number;
+  weekly_points?: number;
+  monthly_points?: number;
   last_active_week?: string;
   last_active_month?: string;
   weekly_reset_date?: string; // ISO date of next reset
@@ -50,7 +46,6 @@ export interface Child {
   savings_goal_name?: string | null;
   savings_goal_amount?: number | null;
   savings_goal_reward_id?: string | null;
-  food_pot?: number;
   food_pot_unlocked?: boolean;
   food_pot_unlock_seen?: boolean;
   food_pot_weekly_contribution?: number;
@@ -59,10 +54,9 @@ export interface Child {
   pet_unhappy?: boolean;
   last_fed_date?: string | null;
   last_hunger_check_date?: string | null;
-  gifting_pot?: number;
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
-  maintenance_pot?: number;
+  last_gifting_date?: string | null;
   maintenance_unlocked?: boolean;
   maintenance_unlock_seen?: boolean;
   main_last_maintenance_date?: string | null;
@@ -79,7 +73,6 @@ export interface Task {
   child_id: string;
   title: string;
   points: number;
-  xp?: number;
   category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
   recurrence: 'daily' | 'weekly' | 'one_time' | 'repeatable';
   cooldown_minutes?: number;
@@ -96,7 +89,6 @@ export interface TaskCompletion {
   completed_at: string;
   status: 'pending' | 'approved' | 'rejected';
   points_awarded: number;
-  xp_awarded?: number;
   notes?: string;
 }
 

@@ -892,68 +892,64 @@ export default function App() {
       if (error) console.warn('Failed to update child in Supabase:', error.message);
     }
   };
-  const processXpGains = (child: Child, addedXp: number): Child => {
+  const processLifetimePoints = (child: Child, addedPoints: number): Child => {
     let newLevel = child.level || 1;
-    let newXp = (child.xp_in_level || 0) + addedXp;
+    let newLifetimePoints = (child.lifetime_points || 0) + addedPoints;
     let newPoints = child.points;
     let bonusesReceived = child.level_up_bonuses_received || 0;
-    const xpToLevelUp = parentProfile?.xp_to_level_up ?? 100;
+    const pointsToLevelUp = parentProfile?.points_to_level_up ?? 500;
 
     // 1. Level up check
-    while (newXp >= xpToLevelUp) {
+    while (newLifetimePoints >= (newLevel * pointsToLevelUp)) {
       newLevel++;
-      newXp -= xpToLevelUp;
-      
       const levelUpBonus = parentProfile?.level_up_gold_reward ?? 500;
       newPoints += levelUpBonus;
       bonusesReceived++;
-      
       setTimeout(() => playSound.levelUp(), 300);
     }
 
     // 2. Weekly / Monthly Tracking (Explicit Reset Logging)
     const now = new Date();
 
-    let weeklyXp = child.weekly_xp || 0;
+    let weeklyPoints = child.weekly_points || 0;
     let foodPotWeeklyContribution = child.food_pot_weekly_contribution || 0;
     let nextWeeklyReset = child.weekly_reset_date ? new Date(child.weekly_reset_date) : null;
     
     if (!nextWeeklyReset || now >= nextWeeklyReset) {
-      weeklyXp = 0; // The week rolled over!
+      weeklyPoints = 0; // The week rolled over!
       foodPotWeeklyContribution = 0; // Reset food pot weekly contribution!
       nextWeeklyReset = getNextWeeklyResetDate(now);
     }
-    weeklyXp += addedXp;
+    weeklyPoints += addedPoints;
 
-    let monthlyXp = child.monthly_xp || 0;
+    let monthlyPoints = child.monthly_points || 0;
     let nextMonthlyReset = child.monthly_reset_date ? new Date(child.monthly_reset_date) : null;
     
     if (!nextMonthlyReset || now >= nextMonthlyReset) {
-      monthlyXp = 0; // The month rolled over!
+      monthlyPoints = 0; // The month rolled over!
       nextMonthlyReset = getNextMonthlyResetDate(now);
     }
-    monthlyXp += addedXp;
+    monthlyPoints += addedPoints;
 
     // Check Weekly Goal
-    const weeklyTarget = parentProfile?.weekly_xp_target || 300;
+    const weeklyTarget = parentProfile?.weekly_points_target || 100;
     const weeklyReward = parentProfile?.weekly_reward_points || 200;
     let lastWeeklyBonus = child.last_weekly_bonus_awarded;
 
-    // The bonus key is the ISO string of the reset date, to uniquely identify the week cycle!
     const currentWeekCycleId = nextWeeklyReset.toISOString();
-    if (weeklyXp >= weeklyTarget && lastWeeklyBonus !== currentWeekCycleId) {
+    if (weeklyPoints >= weeklyTarget && lastWeeklyBonus !== currentWeekCycleId) {
       newPoints += weeklyReward;
       lastWeeklyBonus = currentWeekCycleId;
       setTimeout(() => playSound.purchase(), 500);
     }
 
     // Check Monthly Goal
-    const monthlyTarget = parentProfile?.monthly_xp_target || 1000;
+    const monthlyTarget = parentProfile?.monthly_points_target || 500;
     const monthlyReward = parentProfile?.monthly_reward_points || 1000;
     let lastMonthlyBonus = child.last_monthly_bonus_awarded;
 
     const currentMonthCycleId = nextMonthlyReset.toISOString();
-    if (monthlyXp >= monthlyTarget && lastMonthlyBonus !== currentMonthCycleId) {
+    if (monthlyPoints >= monthlyTarget && lastMonthlyBonus !== currentMonthCycleId) {
       newPoints += monthlyReward;
       lastMonthlyBonus = currentMonthCycleId;
       setTimeout(() => playSound.purchase(), 800);
@@ -961,27 +957,24 @@ export default function App() {
 
     // 3. Auto-unlock Maintenance Pot
     let maintenanceUnlocked = child.maintenance_unlocked || false;
-    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
-    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
-    if ((newLevel > maintenanceLvl || (newLevel === maintenanceLvl && newXp >= maintenanceXpReq)) && !maintenanceUnlocked) {
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
+    if (newLevel >= maintenanceLvl && !maintenanceUnlocked) {
       maintenanceUnlocked = true;
       setTimeout(() => playSound.evolution(), 1500);
     }
 
     // 4. Auto-unlock Food Pot
     let foodPotUnlocked = child.food_pot_unlocked || false;
-    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
-    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
-    if ((newLevel > foodLvl || (newLevel === foodLvl && newXp >= foodXpReq)) && !foodPotUnlocked) {
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
+    if (newLevel >= foodLvl && !foodPotUnlocked) {
       foodPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 900);
     }
 
     // 5. Auto-unlock Gifting Pot
     let giftingPotUnlocked = child.gifting_unlocked || false;
-    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
-    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
-    if ((newLevel > giftingLvl || (newLevel === giftingLvl && newXp >= giftingXpReq)) && !giftingPotUnlocked) {
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 6;
+    if (newLevel >= giftingLvl && !giftingPotUnlocked) {
       giftingPotUnlocked = true;
       setTimeout(() => playSound.evolution(), 1200);
     }
@@ -989,11 +982,11 @@ export default function App() {
     return {
       ...child,
       level: newLevel,
-      xp_in_level: newXp,
+      lifetime_points: newLifetimePoints,
       points: newPoints,
       level_up_bonuses_received: bonusesReceived,
-      weekly_xp: weeklyXp,
-      monthly_xp: monthlyXp,
+      weekly_points: weeklyPoints,
+      monthly_points: monthlyPoints,
       weekly_reset_date: nextWeeklyReset.toISOString(),
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
@@ -1012,57 +1005,54 @@ export default function App() {
     
     let targetChild = { ...child };
     
-    // If we are manually adding XP, use the processXpGains pipeline to trigger rollovers and bonuses!
-    if (updates.xp_in_level !== undefined && updates.xp_in_level > (child.xp_in_level || 0)) {
-      const addedXp = updates.xp_in_level - (child.xp_in_level || 0);
-      targetChild = processXpGains(targetChild, addedXp);
-      delete updates.xp_in_level; // already handled
+    // If we are manually adding points, use the processLifetimePoints pipeline to trigger rollovers and bonuses!
+    if (updates.points !== undefined && updates.points > child.points) {
+      const addedPoints = updates.points - child.points;
+      targetChild = processLifetimePoints(targetChild, addedPoints);
+      // Let it update points through the pipeline, but we still apply the exact updates below
+      delete updates.points; 
     }
 
-    // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
+    // Apply any remaining explicit updates
     targetChild = { ...targetChild, ...updates };
 
     // Check if savings pot requirements are met
-    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
-    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
-    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
+    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;
+    if (!targetChild.savings_unlocked && targetChild.level >= savingsLvl) {
       targetChild.savings_unlocked = true;
       targetChild.savings_unlock_seen = false;
-    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
+    } else if (targetChild.savings_unlocked && targetChild.level < savingsLvl) {
       targetChild.savings_unlocked = false;
       targetChild.savings_unlock_seen = false;
     }
 
     // Check if maintenance pot requirements are met
-    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
-    const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
-    if (!targetChild.maintenance_unlocked && (targetChild.level > maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) >= maintenanceXpReq))) {
+    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
+    if (!targetChild.maintenance_unlocked && targetChild.level >= maintenanceLvl) {
       targetChild.maintenance_unlocked = true;
       targetChild.maintenance_unlock_seen = false;
-    } else if (targetChild.maintenance_unlocked && (targetChild.level < maintenanceLvl || (targetChild.level === maintenanceLvl && (targetChild.xp_in_level || 0) < maintenanceXpReq))) {
+    } else if (targetChild.maintenance_unlocked && targetChild.level < maintenanceLvl) {
       targetChild.maintenance_unlocked = false;
       targetChild.maintenance_unlock_seen = false;
     }
 
     // Check if food pot requirements are met
-    const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
-    const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
-    if (!targetChild.food_pot_unlocked && (targetChild.level > foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) >= foodXpReq))) {
+    const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
+    if (!targetChild.food_pot_unlocked && targetChild.level >= foodLvl) {
       targetChild.food_pot_unlocked = true;
       targetChild.food_pot_unlock_seen = false;
       targetChild.pet_fed_today = false;
-    } else if (targetChild.food_pot_unlocked && (targetChild.level < foodLvl || (targetChild.level === foodLvl && (targetChild.xp_in_level || 0) < foodXpReq))) {
+    } else if (targetChild.food_pot_unlocked && targetChild.level < foodLvl) {
       targetChild.food_pot_unlocked = false;
       targetChild.food_pot_unlock_seen = false;
     }
 
     // Check if gifting pot requirements are met
-    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
-    const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
-    if (!targetChild.gifting_unlocked && (targetChild.level > giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) >= giftingXpReq))) {
+    const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 6;
+    if (!targetChild.gifting_unlocked && targetChild.level >= giftingLvl) {
       targetChild.gifting_unlocked = true;
       targetChild.gifting_unlock_seen = false;
-    } else if (targetChild.gifting_unlocked && (targetChild.level < giftingLvl || (targetChild.level === giftingLvl && (targetChild.xp_in_level || 0) < giftingXpReq))) {
+    } else if (targetChild.gifting_unlocked && targetChild.level < giftingLvl) {
       targetChild.gifting_unlocked = false;
       targetChild.gifting_unlock_seen = false;
     }
@@ -1076,7 +1066,6 @@ export default function App() {
   const handleAddTask = async (
     title: string, 
     points: number,
-    xp: number,
     category: any, 
     recurrence: any, 
     cooldownMinutes?: number
@@ -1087,7 +1076,6 @@ export default function App() {
       child_id: 'directory',
       title,
       points,
-      xp,
       category,
       recurrence,
       cooldown_minutes: cooldownMinutes,
@@ -1253,7 +1241,6 @@ export default function App() {
       task_id: taskId,
       child_id: childId,
       points_awarded: task.points,
-      xp_awarded: task.xp ?? task.points, // default to points if xp isn't set (for old tasks)
       status: 'pending',
       completed_at: new Date().toISOString()
     };
@@ -1398,29 +1385,15 @@ export default function App() {
   };
 
   // Operations: Food Pot
-  const handleFoodPotDeposit = async (childId: string, amount: number) => {
-    const child = children.find(c => c.id === childId);
-    if (!child || amount <= 0 || amount > child.points) return;
-
-    const targetChild = {
-      ...child,
-      points: child.points - amount,
-      food_pot: (child.food_pot || 0) + amount,
-      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + amount
-    };
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
-    updateChildInSupabase(targetChild);
-  };
-
   const handleBuyPetFood = async (childId: string) => {
     const child = children.find(c => c.id === childId);
-    if (!child || (child.food_pot || 0) < 1) return;
+    if (!child || child.points < 1) return;
 
     const targetChild = {
       ...child,
-      food_pot: (child.food_pot || 0) - 1,
-      pet_food: (child.pet_food || 0) + 1
+      points: child.points - 1,
+      pet_food: (child.pet_food || 0) + 1,
+      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1440,91 +1413,7 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  // Operations: Maintenance & Main Pot
-  const handleMaintenanceDeposit = async (childId: string, amount: number) => {
-    let finalUpdatedChild: Child | null = null;
-    let autoPaid = false;
-
-    setChildren(prev => {
-      const child = prev.find(c => c.id === childId);
-      if (!child || amount <= 0 || amount > child.points) return prev;
-
-      finalUpdatedChild = {
-        ...child,
-        points: child.points - amount,
-        maintenance_pot: (child.maintenance_pot || 0) + amount
-      };
-      
-      const lastMaintenance = finalUpdatedChild.main_last_maintenance_date ? new Date(finalUpdatedChild.main_last_maintenance_date) : new Date();
-      const daysSince = Math.floor(Math.abs(new Date().getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysSince >= 30 && finalUpdatedChild.maintenance_pot >= 20) {
-        finalUpdatedChild.maintenance_pot -= 20;
-        finalUpdatedChild.main_last_maintenance_date = new Date().toISOString();
-        finalUpdatedChild.is_rent_due = false;
-        finalUpdatedChild.rent_due_date = null;
-        autoPaid = true;
-      }
-
-      const newList = prev.map(c => c.id === childId ? finalUpdatedChild! : c);
-      syncChildren(newList);
-      return newList;
-    });
-
-    if (!finalUpdatedChild) return;
-
-    if (autoPaid) {
-      localStorage.removeItem(`pending_maintenance_popup_${childId}`);
-      const supabase = getSupabaseClient();
-      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-        await supabase.from('children').update({
-          points: finalUpdatedChild.points,
-          maintenance_pot: finalUpdatedChild.maintenance_pot,
-          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
-          is_rent_due: finalUpdatedChild.is_rent_due,
-          rent_due_date: finalUpdatedChild.rent_due_date
-        }).eq('id', childId);
-      }
-    } else {
-      const supabase = getSupabaseClient();
-      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-        await supabase.from('children').update({
-          points: finalUpdatedChild.points,
-          maintenance_pot: finalUpdatedChild.maintenance_pot,
-          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
-        }).eq('id', childId);
-      }
-    }
-  };
-
-  const handleMaintenanceWithdraw = async (childId: string) => {
-    let finalUpdatedChild: Child | null = null;
-    
-    setChildren(prev => {
-      const child = prev.find(c => c.id === childId);
-      if (!child || (child.maintenance_pot || 0) <= 0) return prev;
-
-      finalUpdatedChild = {
-        ...child,
-        points: child.points + (child.maintenance_pot || 0),
-        maintenance_pot: 0
-      };
-
-      const newList = prev.map(c => c.id === childId ? finalUpdatedChild! : c);
-      syncChildren(newList);
-      return newList;
-    });
-
-    if (!finalUpdatedChild) return;
-
-    const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      await supabase.from('children').update({
-        points: finalUpdatedChild.points,
-        maintenance_pot: finalUpdatedChild.maintenance_pot
-      }).eq('id', childId);
-    }
-  };
-
+  // Operations: Bills & Repairs
   const handlePayRent = async (childId: string) => {
     let finalUpdatedChild: Child | null = null;
     let oldChild: Child | null = null;
@@ -1532,12 +1421,12 @@ export default function App() {
     setChildren(prevChildren => {
       const child = prevChildren.find(c => c.id === childId);
       if (!child) return prevChildren;
-      if ((child.maintenance_pot || 0) < 20) return prevChildren;
+      if (child.points < 20) return prevChildren;
 
       oldChild = child;
       finalUpdatedChild = {
         ...child,
-        maintenance_pot: (child.maintenance_pot || 0) - 20,
+        points: child.points - 20,
         is_rent_due: false,
         rent_due_date: null,
         main_last_maintenance_date: new Date().toISOString()
@@ -1557,7 +1446,7 @@ export default function App() {
     const supabase = getSupabaseClient();
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('children').update({
-        maintenance_pot: finalUpdatedChild.maintenance_pot,
+        points: finalUpdatedChild.points,
         is_rent_due: finalUpdatedChild.is_rent_due,
         rent_due_date: finalUpdatedChild.rent_due_date,
         main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
@@ -1565,7 +1454,7 @@ export default function App() {
       if (error) {
         console.error("handlePayRent Supabase Error:", error);
         console.error("Payload was:", {
-          maintenance_pot: finalUpdatedChild.maintenance_pot,
+          points: finalUpdatedChild.points,
           is_rent_due: finalUpdatedChild.is_rent_due,
           rent_due_date: finalUpdatedChild.rent_due_date,
           main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
@@ -1584,14 +1473,12 @@ export default function App() {
       const child = prevChildren.find(c => c.id === childId);
       if (!child) return prevChildren;
 
-      if (source === 'maintenance' && (child.maintenance_pot || 0) < 5) return prevChildren;
-      if (source === 'wallet' && child.points < 5) return prevChildren;
+      if (child.points < 5) return prevChildren;
 
       oldChild = child;
       finalUpdatedChild = {
         ...child,
-        points: source === 'wallet' ? child.points - 5 : child.points,
-        maintenance_pot: source === 'maintenance' ? (child.maintenance_pot || 0) - 5 : child.maintenance_pot,
+        points: child.points - 5,
         main_pot_damaged: false,
         main_damage_date: null
       };
@@ -1611,7 +1498,6 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('children').update({
         points: finalUpdatedChild.points,
-        maintenance_pot: finalUpdatedChild.maintenance_pot,
         main_pot_damaged: finalUpdatedChild.main_pot_damaged,
         main_damage_date: finalUpdatedChild.main_damage_date
       }).eq('id', childId);
@@ -1729,7 +1615,6 @@ export default function App() {
       task_id: taskId,
       child_id: childId,
       points_awarded: task.points,
-      xp_awarded: task.xp ?? task.points,
       status: 'approved',
       completed_at: new Date().toISOString()
     };
@@ -1745,7 +1630,7 @@ export default function App() {
     // Award points and update Child stats
     const child = children.find(c => c.id === childId);
     if (child) {
-      let targetChild = processXpGains(child, newCompletion.xp_awarded);
+      let targetChild = processLifetimePoints(child, newCompletion.points_awarded);
       
       const todayStr = new Date().toISOString().split('T')[0];
       const lastActiveStr = targetChild.last_active_date ? targetChild.last_active_date.split('T')[0] : '';
@@ -1792,8 +1677,8 @@ export default function App() {
     // 2. Award points and update Child stats
     const child = children.find(c => c.id === comp.child_id);
     if (child) {
-      // Process XP
-      let targetChild = processXpGains(child, comp.xp_awarded ?? comp.points_awarded);
+      // Process points
+      let targetChild = processLifetimePoints(child, comp.points_awarded);
       
       // Update Streak Logic (Once per day)
       const todayStr = new Date().toISOString().split('T')[0];
@@ -1834,23 +1719,9 @@ export default function App() {
   };
 
   // Operations: Gifting Pot
-  const handleGiftingDeposit = async (childId: string, amount: number) => {
-    const child = children.find(c => c.id === childId);
-    if (!child || amount <= 0 || amount > child.points) return;
-
-    const targetChild = {
-      ...child,
-      points: child.points - amount,
-      gifting_pot: (child.gifting_pot || 0) + amount
-    };
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
-    updateChildInSupabase(targetChild);
-  };
-
   const handleGiftingRequestCharity = async (childId: string, amount: number, charityName: string) => {
     const child = children.find(c => c.id === childId);
-    if (!child || amount <= 0 || amount > (child.gifting_pot || 0)) return;
+    if (!child || amount <= 0 || amount > child.points) return;
 
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -1873,7 +1744,7 @@ export default function App() {
 
   const handleGiftingRequestSibling = async (childId: string, amount: number, siblingId: string) => {
     const child = children.find(c => c.id === childId);
-    if (!child || amount <= 0 || amount > (child.gifting_pot || 0)) return;
+    if (!child || amount <= 0 || amount > child.points) return;
 
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -1899,12 +1770,13 @@ export default function App() {
     if (!request || request.status !== 'pending') return;
 
     const child = children.find(c => c.id === request.child_id);
-    if (!child || (child.gifting_pot || 0) < request.amount) return;
+    if (!child || child.points < request.amount) return;
 
-    // Deduct from sender's pot
+    // Deduct from sender's points
     let targetChild = {
       ...child,
-      gifting_pot: (child.gifting_pot || 0) - request.amount
+      points: child.points - request.amount,
+      last_gifting_date: new Date().toISOString()
     };
     let updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
     
@@ -2081,7 +1953,6 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
-              onMaintenanceDeposit={handleMaintenanceDeposit}
               onMaintenanceWithdraw={handleMaintenanceWithdraw}
               onRepairMainPot={handleRepairMainPot}
               onPayRent={handlePayRent}
@@ -2090,10 +1961,8 @@ export default function App() {
               onSavingsGoal={handleSavingsGoal}
               onClearSavingsGoal={handleClearSavingsGoal}
               onSavingsUnlockSeen={handleSavingsUnlockSeen}
-              onFoodPotDeposit={handleFoodPotDeposit}
               onBuyPetFood={handleBuyPetFood}
               onFoodPotUnlockSeen={handleFoodPotUnlockSeen}
-              onGiftingDeposit={handleGiftingDeposit}
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
