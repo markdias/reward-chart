@@ -291,11 +291,11 @@ export default function App() {
             // --- Main Money Daily/Monthly Logic ---
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
-            let needsDbUpdate = false;
+            const updatesByChildId: Record<string, Partial<Child>> = {};
             
             processedChildren = processedChildren.map(child => {
               let updated = { ...child };
-              let changed = false;
+              let updates: Partial<Child> = {};
               
               // 1. Check if Monthly Maintenance is Due
               const lastMaintenance = updated.main_last_maintenance_date 
@@ -304,10 +304,10 @@ export default function App() {
               const daysSinceMaintenance = Math.floor(Math.abs(now.getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
               
               if (daysSinceMaintenance >= 30 && !updated.is_rent_due) {
-                updated.is_rent_due = true;
-                updated.rent_due_date = now.toISOString();
+                updates.is_rent_due = true;
+                updates.rent_due_date = now.toISOString();
                 localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'rent_due');
-                changed = true;
+                updated = { ...updated, ...updates };
               }
 
               // 1b. Rent overdue penalty (5 coins/day)
@@ -318,9 +318,9 @@ export default function App() {
                 
                 if (diffDays > 0) {
                   const leaked = diffDays * 5; // 5 points per day overdue
-                  updated.points = Math.max(0, updated.points - leaked);
-                  updated.rent_due_date = now.toISOString(); // Reset date
-                  changed = true;
+                  updates.points = Math.max(0, updated.points - leaked);
+                  updates.rent_due_date = now.toISOString(); // Reset date
+                  updated = { ...updated, ...updates };
                 }
               }
 
@@ -332,55 +332,65 @@ export default function App() {
                 
                 if (diffDays > 0) {
                   const leaked = diffDays * 1; // 1 point per day
-                  updated.points = Math.max(0, updated.points - leaked);
-                  updated.main_damage_date = now.toISOString(); // Reset date
-                  changed = true;
+                  updates.points = Math.max(0, updated.points - leaked);
+                  updates.main_damage_date = now.toISOString(); // Reset date
+                  updated = { ...updated, ...updates };
                 }
               }
               
               // 3. Random Damage Event (~1/30 chance per day)
               if (updated.last_hunger_check_date !== todayStr) {
                 if (!updated.main_pot_damaged && Math.random() < 0.033) {
-                  updated.main_pot_damaged = true;
-                  updated.main_damage_date = now.toISOString();
+                  updates.main_pot_damaged = true;
+                  updates.main_damage_date = now.toISOString();
                   localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
-                  changed = true;
+                  updated = { ...updated, ...updates };
                 }
               }
               
               // 4. Retroactive Unlock Sync
+              const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
+              const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
+              if (!updated.savings_unlocked && (updated.level > savingsLvl || (updated.level === savingsLvl && (updated.xp_in_level || 0) >= savingsXpReq))) {
+                updates.savings_unlocked = true;
+                updates.savings_unlock_seen = false;
+                updated = { ...updated, ...updates };
+              }
+
               const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
               const maintenanceXpReq = parentProfile?.maintenance_pot_unlock_xp ?? 50;
               if (!updated.maintenance_unlocked && (updated.level > maintenanceLvl || (updated.level === maintenanceLvl && (updated.xp_in_level || 0) >= maintenanceXpReq))) {
-                updated.maintenance_unlocked = true;
-                updated.maintenance_unlock_seen = false;
-                changed = true;
+                updates.maintenance_unlocked = true;
+                updates.maintenance_unlock_seen = false;
+                updated = { ...updated, ...updates };
               }
               
               const foodLvl = parentProfile?.food_pot_unlock_level ?? 2;
               const foodXpReq = parentProfile?.food_pot_unlock_xp ?? 50;
               if (!updated.food_pot_unlocked && (updated.level > foodLvl || (updated.level === foodLvl && (updated.xp_in_level || 0) >= foodXpReq))) {
-                updated.food_pot_unlocked = true;
-                updated.food_pot_unlock_seen = false;
-                changed = true;
+                updates.food_pot_unlocked = true;
+                updates.food_pot_unlock_seen = false;
+                updated = { ...updated, ...updates };
               }
               
               const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 3;
               const giftingXpReq = parentProfile?.gifting_pot_unlock_xp ?? 50;
               if (!updated.gifting_unlocked && (updated.level > giftingLvl || (updated.level === giftingLvl && (updated.xp_in_level || 0) >= giftingXpReq))) {
-                updated.gifting_unlocked = true;
-                updated.gifting_unlock_seen = false;
-                changed = true;
+                updates.gifting_unlocked = true;
+                updates.gifting_unlock_seen = false;
+                updated = { ...updated, ...updates };
               }
               
-              if (changed) needsDbUpdate = true;
+              if (Object.keys(updates).length > 0) {
+                updatesByChildId[updated.id] = updates;
+              }
               return updated;
             });
             
-            if (needsDbUpdate) {
+            if (Object.keys(updatesByChildId).length > 0) {
               // Fire and forget updates to DB so we don't block load
-              processedChildren.forEach(child => {
-                 supabase.from('children').update(child).eq('id', child.id).then();
+              Object.entries(updatesByChildId).forEach(([id, updates]) => {
+                 supabase.from('children').update(updates).eq('id', id).then();
               });
             }
             // ---------------------------------------
@@ -709,29 +719,6 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_MODE', 'true');
   };
 
-  const handleStartDemo = () => {
-    // Clear old localStorage to ensure fresh demo mode load
-    localStorage.removeItem('RCH_CHILDREN');
-    localStorage.removeItem('RCH_TASKS');
-    localStorage.removeItem('RCH_COMPLETIONS');
-    localStorage.removeItem('RCH_REWARDS');
-    
-    // Clear specific demo keys to reset state on clicking Start Demo
-    localStorage.removeItem('RCH_CHILDREN_demo_parent@rewardchart.app');
-    localStorage.removeItem('RCH_TASKS_demo_parent@rewardchart.app');
-    localStorage.removeItem('RCH_COMPLETIONS_demo_parent@rewardchart.app');
-    localStorage.removeItem('RCH_REWARDS_demo_parent@rewardchart.app');
-    localStorage.removeItem('RCH_REDEMPTIONS_demo_parent@rewardchart.app');
-    localStorage.removeItem('RCH_GIFTING_demo_parent@rewardchart.app');
-    
-    setParentEmail('demo_parent@rewardchart.app');
-    localStorage.setItem('RCH_PARENT_EMAIL', 'demo_parent@rewardchart.app');
-    setIsParentMode(false); // Kids view by default, let them select child
-    localStorage.setItem('RCH_PARENT_MODE', 'false');
-    setParentPin('1234');
-    localStorage.setItem('RCH_PARENT_PIN', '1234');
-  };
-
   const handleLoginReal = (email: string) => {
     // Clear old state to prepare fresh real/blank dashboard loads
     localStorage.removeItem('RCH_CHILDREN');
@@ -1034,6 +1021,17 @@ export default function App() {
 
     // Apply any remaining explicit updates (e.g. manual level, manual points subtraction)
     targetChild = { ...targetChild, ...updates };
+
+    // Check if savings pot requirements are met
+    const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 1;
+    const savingsXpReq = parentProfile?.savings_pot_unlock_xp ?? 50;
+    if (!targetChild.savings_unlocked && (targetChild.level > savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) >= savingsXpReq))) {
+      targetChild.savings_unlocked = true;
+      targetChild.savings_unlock_seen = false;
+    } else if (targetChild.savings_unlocked && (targetChild.level < savingsLvl || (targetChild.level === savingsLvl && (targetChild.xp_in_level || 0) < savingsXpReq))) {
+      targetChild.savings_unlocked = false;
+      targetChild.savings_unlock_seen = false;
+    }
 
     // Check if maintenance pot requirements are met
     const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 4;
@@ -1476,7 +1474,16 @@ export default function App() {
 
     if (autoPaid) {
       localStorage.removeItem(`pending_maintenance_popup_${childId}`);
-      updateChildInSupabase(finalUpdatedChild);
+      const supabase = getSupabaseClient();
+      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+        await supabase.from('children').update({
+          points: finalUpdatedChild.points,
+          maintenance_pot: finalUpdatedChild.maintenance_pot,
+          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
+          is_rent_due: finalUpdatedChild.is_rent_due,
+          rent_due_date: finalUpdatedChild.rent_due_date
+        }).eq('id', childId);
+      }
     } else {
       const supabase = getSupabaseClient();
       if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
@@ -2001,7 +2008,6 @@ export default function App() {
             className="w-full"
           >
             <AuthPage 
-              onStartDemo={handleStartDemo}
               onLoginReal={handleLoginReal}
               onBackToLanding={() => {
                 setHasCompletedOnboarding(false);
