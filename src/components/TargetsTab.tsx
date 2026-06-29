@@ -22,7 +22,6 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
   const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 2);
   const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 4);
   const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 6);
-  const [maintenancePotUnlockLevel, setMaintenancePotUnlockLevel] = useState(parentProfile?.maintenance_pot_unlock_level ?? 8);
   
   const [isSaving, setIsSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -63,7 +62,6 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
           savings_pot_unlock_level: savingsPotUnlockLevel,
           food_pot_unlock_level: foodPotUnlockLevel,
           gifting_pot_unlock_level: giftingPotUnlockLevel,
-          maintenance_pot_unlock_level: maintenancePotUnlockLevel,
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -188,15 +186,7 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
                     className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
                   />
                 </div>
-                <div>
-                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-slate-600`}>Bills & Repairs Lvl</label>
-                  <input 
-                    type="number" 
-                    value={maintenancePotUnlockLevel}
-                    onChange={(e) => setMaintenancePotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-2 rounded-xl border border-slate-200 text-stone-700 bg-slate-50 focus:ring-2 focus:ring-slate-500 outline-none`} 
-                  />
-                </div>
+
               </div>
             </div>
           </div>

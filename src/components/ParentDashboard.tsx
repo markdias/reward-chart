@@ -1030,20 +1030,7 @@ export default function ParentDashboard({
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-between gap-2 border-t border-stone-200 pt-2 mt-2">
-                                      <span className={`text-[10px] font-mono font-bold text-rose-600`}>Maintenance (Debug):</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          onUpdateChildStats(child.id, { next_maintenance_due_date: new Date().toISOString() }); 
-                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day maintenance check">TRIGGER MAINT</button>
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          localStorage.setItem(`pending_maintenance_popup_${child.id}`, 'broken');
-                                          onUpdateChildStats(child.id, { next_pot_break_date: new Date().toISOString() }); 
-                                        }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Break the main pot and start leaking">Break Pot</button>
-                                      </div>
-                                    </div>
+
                                   </div>
                                 </motion.div>
                               )}

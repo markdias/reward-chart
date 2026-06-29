@@ -11,7 +11,6 @@ export interface ParentProfile {
   savings_pot_unlock_level?: number;
   food_pot_unlock_level?: number;
   gifting_pot_unlock_level?: number;
-  maintenance_pot_unlock_level?: number;
   weekly_points_target?: number;
   weekly_reward_points?: number;
   monthly_points_target?: number;
@@ -57,16 +56,6 @@ export interface Child {
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
   last_gifting_date?: string | null;
-  maintenance_unlocked?: boolean;
-  maintenance_unlock_seen?: boolean;
-  main_last_maintenance_date?: string | null;
-  main_pot_damaged?: boolean;
-  main_damage_date?: string | null;
-  is_rent_due?: boolean;
-  rent_due_date?: string | null;
-  main_last_repair_date?: string | null;
-  next_maintenance_due_date?: string | null;
-  next_pot_break_date?: string | null;
   created_at: string;
 }
 

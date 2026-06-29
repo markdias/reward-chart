@@ -297,74 +297,11 @@ export default function App() {
               let updated = { ...child };
               let updates: Partial<Child> = {};
               
-              // 1. Check if Monthly Maintenance is Due
-              if (!updated.next_maintenance_due_date) {
-                updates.next_maintenance_due_date = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-                updated = { ...updated, ...updates };
-              }
-              const maintenanceDueTime = new Date(updated.next_maintenance_due_date).getTime();
-              
-              if (now.getTime() >= maintenanceDueTime && !updated.is_rent_due) {
-                updates.is_rent_due = true;
-                updates.rent_due_date = now.toISOString();
-                localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'rent_due');
-                updated = { ...updated, ...updates };
-              }
-
-              // 1b. Rent overdue penalty (5 coins/day)
-              if (updated.is_rent_due && updated.rent_due_date) {
-                const rentDate = new Date(updated.rent_due_date);
-                const diffTime = Math.abs(now.getTime() - rentDate.getTime());
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays > 0) {
-                  const leaked = diffDays * 5; // 5 points per day overdue
-                  updates.points = Math.max(0, updated.points - leaked);
-                  updates.rent_due_date = now.toISOString(); // Reset date
-                  updated = { ...updated, ...updates };
-                }
-              }
-
-              // 2. Process Leak for Random Damage (1 coin per day since damage date, from main points)
-              if (updated.main_pot_damaged && updated.main_damage_date) {
-                const damageDate = new Date(updated.main_damage_date);
-                const diffTime = Math.abs(now.getTime() - damageDate.getTime());
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                if (diffDays > 0) {
-                  const leaked = diffDays * 1; // 1 point per day
-                  updates.points = Math.max(0, updated.points - leaked);
-                  updates.main_damage_date = now.toISOString(); // Reset date
-                  updated = { ...updated, ...updates };
-                }
-              }
-
-              // 2b. Check if Pot Break is Due (Every 10 days)
-              if (!updated.next_pot_break_date) {
-                updates.next_pot_break_date = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString();
-                updated = { ...updated, ...updates };
-              }
-              const potBreakTime = new Date(updated.next_pot_break_date).getTime();
-              
-              if (now.getTime() >= potBreakTime && !updated.main_pot_damaged && updated.maintenance_unlocked) {
-                updates.main_pot_damaged = true;
-                updates.main_damage_date = now.toISOString();
-                localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
-                updated = { ...updated, ...updates };
-              }
-              
               // 4. Retroactive Unlock Sync
               const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;
               if (!updated.savings_unlocked && updated.level >= savingsLvl) {
                 updates.savings_unlocked = true;
                 updates.savings_unlock_seen = false;
-                updated = { ...updated, ...updates };
-              }
-
-              const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
-              if (!updated.maintenance_unlocked && updated.level >= maintenanceLvl) {
-                updates.maintenance_unlocked = true;
-                updates.maintenance_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
               
@@ -574,17 +511,7 @@ export default function App() {
           last_fed_date: updatedChild.last_fed_date,
           last_hunger_check_date: updatedChild.last_hunger_check_date,
           gifting_unlocked: updatedChild.gifting_unlocked,
-          gifting_unlock_seen: updatedChild.gifting_unlock_seen,
-          maintenance_unlocked: updatedChild.maintenance_unlocked,
-          maintenance_unlock_seen: updatedChild.maintenance_unlock_seen,
-          main_last_maintenance_date: updatedChild.main_last_maintenance_date,
-          main_pot_damaged: updatedChild.main_pot_damaged,
-          main_damage_date: updatedChild.main_damage_date,
-          is_rent_due: updatedChild.is_rent_due,
-          rent_due_date: updatedChild.rent_due_date,
-          main_last_repair_date: updatedChild.main_last_repair_date,
-          next_maintenance_due_date: updatedChild.next_maintenance_due_date,
-          next_pot_break_date: updatedChild.next_pot_break_date
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -644,13 +571,6 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
-      maintenance_pot: 0,
-      maintenance_unlocked: false,
-      maintenance_unlock_seen: false,
-      is_rent_due: false,
-      rent_due_date: null,
-      main_last_maintenance_date: new Date().toISOString(),
-      main_last_repair_date: new Date().toISOString(),
       lifetime_points: 0,
       weekly_points: 0,
       monthly_points: 0,
@@ -865,13 +785,6 @@ export default function App() {
       gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
-      maintenance_pot: 0,
-      maintenance_unlocked: false,
-      maintenance_unlock_seen: false,
-      is_rent_due: false,
-      rent_due_date: null,
-      main_last_maintenance_date: new Date().toISOString(),
-      main_last_repair_date: new Date().toISOString(),
       lifetime_points: 0,
       weekly_points: 0,
       monthly_points: 0,
@@ -966,14 +879,6 @@ export default function App() {
       setTimeout(() => playSound.purchase(), 800);
     }
 
-    // 3. Auto-unlock Maintenance Pot
-    let maintenanceUnlocked = child.maintenance_unlocked || false;
-    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
-    if (newLevel >= maintenanceLvl && !maintenanceUnlocked) {
-      maintenanceUnlocked = true;
-      setTimeout(() => playSound.evolution(), 1500);
-    }
-
     // 4. Auto-unlock Food Pot
     let foodPotUnlocked = child.food_pot_unlocked || false;
     const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
@@ -1002,7 +907,6 @@ export default function App() {
       monthly_reset_date: nextMonthlyReset.toISOString(),
       last_weekly_bonus_awarded: lastWeeklyBonus,
       last_monthly_bonus_awarded: lastMonthlyBonus,
-      maintenance_unlocked: maintenanceUnlocked,
       food_pot_unlocked: foodPotUnlocked,
       food_pot_weekly_contribution: foodPotWeeklyContribution,
       gifting_unlocked: giftingPotUnlocked
@@ -1037,15 +941,6 @@ export default function App() {
       targetChild.savings_unlock_seen = false;
     }
 
-    // Check if maintenance pot requirements are met
-    const maintenanceLvl = parentProfile?.maintenance_pot_unlock_level ?? 8;
-    if (!targetChild.maintenance_unlocked && targetChild.level >= maintenanceLvl) {
-      targetChild.maintenance_unlocked = true;
-      targetChild.maintenance_unlock_seen = false;
-    } else if (targetChild.maintenance_unlocked && targetChild.level < maintenanceLvl) {
-      targetChild.maintenance_unlocked = false;
-      targetChild.maintenance_unlock_seen = false;
-    }
 
     // Check if food pot requirements are met
     const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
@@ -1425,103 +1320,7 @@ export default function App() {
   };
 
   // Operations: Bills & Repairs
-  const handlePayRent = async (childId: string) => {
-    let finalUpdatedChild: Child | null = null;
-    let oldChild: Child | null = null;
 
-    setChildren(prevChildren => {
-      const child = prevChildren.find(c => c.id === childId);
-      if (!child) return prevChildren;
-      if (child.points < 20) return prevChildren;
-
-      oldChild = child;
-      finalUpdatedChild = {
-        ...child,
-        points: child.points - 20,
-        is_rent_due: false,
-        rent_due_date: null,
-        main_last_maintenance_date: new Date().toISOString(),
-        next_maintenance_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      };
-
-      const newList = prevChildren.map(c => c.id === childId ? finalUpdatedChild! : c);
-      
-      if (!parentEmail || parentEmail === 'demo_parent@rewardchart.app') {
-        localStorage.setItem('children', JSON.stringify(newList));
-      }
-      return newList;
-    });
-
-    if (!finalUpdatedChild || !oldChild) return;
-    localStorage.removeItem(`pending_maintenance_popup_${childId}`);
-
-    const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('children').update({
-        points: finalUpdatedChild.points,
-        is_rent_due: finalUpdatedChild.is_rent_due,
-        rent_due_date: finalUpdatedChild.rent_due_date,
-        main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
-        next_maintenance_due_date: finalUpdatedChild.next_maintenance_due_date
-      }).eq('id', childId);
-      if (error) {
-        console.error("handlePayRent Supabase Error:", error);
-        console.error("Payload was:", {
-          points: finalUpdatedChild.points,
-          is_rent_due: finalUpdatedChild.is_rent_due,
-          rent_due_date: finalUpdatedChild.rent_due_date,
-          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
-          next_maintenance_due_date: finalUpdatedChild.next_maintenance_due_date
-        });
-        console.error("childId was:", childId);
-        alert(`DATABASE ERROR: ${error.message}\n\nPlease run combined_patch.sql in your Supabase SQL Editor.`);
-      }
-    }
-  };
-
-  const handleRepairMainPot = async (childId: string, source: 'maintenance' | 'wallet') => {
-    let finalUpdatedChild: Child | null = null;
-    let oldChild: Child | null = null;
-
-    setChildren(prevChildren => {
-      const child = prevChildren.find(c => c.id === childId);
-      if (!child) return prevChildren;
-
-      if (child.points < 5) return prevChildren;
-
-      oldChild = child;
-      finalUpdatedChild = {
-        ...child,
-        points: child.points - 5,
-        main_pot_damaged: false,
-        main_damage_date: null,
-        main_last_repair_date: new Date().toISOString(),
-        next_pot_break_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
-      };
-
-      const newList = prevChildren.map(c => c.id === childId ? finalUpdatedChild! : c);
-      
-      if (!parentEmail || parentEmail === 'demo_parent@rewardchart.app') {
-        localStorage.setItem('children', JSON.stringify(newList));
-      }
-      return newList;
-    });
-
-    if (!finalUpdatedChild || !oldChild) return;
-    localStorage.removeItem(`pending_maintenance_popup_${childId}`);
-
-    const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
-      const { error } = await supabase.from('children').update({
-        points: finalUpdatedChild.points,
-        main_pot_damaged: finalUpdatedChild.main_pot_damaged,
-        main_damage_date: finalUpdatedChild.main_damage_date,
-        main_last_repair_date: finalUpdatedChild.main_last_repair_date,
-        next_pot_break_date: finalUpdatedChild.next_pot_break_date
-      }).eq('id', childId);
-      if (error) console.error("handleRepairMainPot Supabase Error:", error);
-    }
-  };
 
   const handleSavingsDeposit = async (childId: string, amount: number) => {
     const child = children.find(c => c.id === childId);
@@ -1851,18 +1650,6 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  const handleMaintenanceUnlockSeen = async (childId: string) => {
-    const child = children.find(c => c.id === childId);
-    if (!child) return;
-
-    const targetChild = {
-      ...child,
-      maintenance_unlock_seen: true
-    };
-    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-    syncChildren(updatedChildren);
-    updateChildInSupabase(targetChild);
-  };
 
   return (
     <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
@@ -1971,8 +1758,6 @@ export default function App() {
               onClaimReward={handleClaimReward}
               onEnterParentMode={handleEnterParentModeRequest}
               onFeedPet={handleFeedPet}
-              onRepairMainPot={handleRepairMainPot}
-              onPayRent={handlePayRent}
               onSavingsDeposit={handleSavingsDeposit}
               onSavingsWithdraw={handleSavingsWithdraw}
               onSavingsGoal={handleSavingsGoal}
@@ -1983,7 +1768,6 @@ export default function App() {
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
-              onMaintenanceUnlockSeen={handleMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               lockedChildId={lockedChildId}
               onLockChild={(childId) => {

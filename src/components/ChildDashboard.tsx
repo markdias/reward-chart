@@ -37,9 +37,6 @@ interface ChildDashboardProps {
   onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings') => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
-  onMaintenanceWithdraw: (childId: string) => void;
-  onRepairMainPot: (childId: string, source: 'maintenance' | 'wallet') => void;
-  onPayRent: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
   onSavingsWithdraw: (childId: string) => void;
   onSavingsGoal: (childId: string, rewardId: string) => void;
@@ -50,7 +47,6 @@ interface ChildDashboardProps {
   onGiftingRequestCharity: (childId: string, amount: number, charityId: string) => void;
   onGiftingRequestSibling: (childId: string, amount: number, siblingId: string) => void;
   onGiftingUnlockSeen: (childId: string) => void;
-  onMaintenanceUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
   lockedChildId?: string | null;
   onLockChild?: (childId: string) => void;
@@ -68,9 +64,6 @@ export default function ChildDashboard({
   onClaimReward,
   onEnterParentMode,
   onFeedPet,
-  onMaintenanceWithdraw,
-  onRepairMainPot,
-  onPayRent,
   onSavingsDeposit,
   onSavingsWithdraw,
   onSavingsGoal,
@@ -81,7 +74,6 @@ export default function ChildDashboard({
   onGiftingRequestCharity,
   onGiftingRequestSibling,
   onGiftingUnlockSeen,
-  onMaintenanceUnlockSeen,
   onUpdateChildStats,
   lockedChildId,
   onLockChild,
@@ -98,9 +90,7 @@ export default function ChildDashboard({
   }, [lockedChildId]);
 
   const [activeChildTab, setActiveChildTab] = useState<'companion' | 'tasks' | 'rewards' | 'pots'>('companion');
-  const [avatarView, setAvatarView] = useState<'character' | 'main_pot'>('character');
-  const [showMaintenanceEventPopup, setShowMaintenanceEventPopup] = useState(false);
-  const [maintenanceEventType, setMaintenanceEventType] = useState<'paid' | 'broken' | 'rent_due' | 'rent_failed' | 'fixed_maintenance' | 'fixed_wallet' | null>(null);
+
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
@@ -119,7 +109,7 @@ export default function ChildDashboard({
 
   // Gifting Pot UI State
   const [showGiftingReplayVideo, setShowGiftingReplayVideo] = useState(false);
-  const [showMaintenanceReplayVideo, setShowMaintenanceReplayVideo] = useState(false);
+
   
   const [showCharityModal, setShowCharityModal] = useState(false);
   const [charityAmount, setCharityAmount] = useState<number>(1);
@@ -166,8 +156,7 @@ export default function ChildDashboard({
     const showUnlock = activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo);
     const showFoodUnlock = activeChild && activeChild.food_pot_unlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo);
     const showGiftingUnlock = activeChild && activeChild.gifting_unlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo);
-    const showMaintenanceUnlock = activeChild && activeChild.maintenance_unlocked && (!activeChild.maintenance_unlock_seen || showMaintenanceReplayVideo);
-    if (!showUnlock && !showFoodUnlock && !showGiftingUnlock && !showMaintenanceUnlock) {
+    if (!showUnlock && !showFoodUnlock && !showGiftingUnlock) {
       setIsVideoPlaying(false);
     }
   }, [activeChild, showReplayVideo, showFoodReplayVideo, showGiftingReplayVideo]);
@@ -236,15 +225,7 @@ export default function ChildDashboard({
     }
   }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.food_pot_unlock_seen, activeChild?.pet_fed_today, penaltyMessage]);
 
-  // Maintenance Event Check
-  useEffect(() => {
-    if (!selectedChildId || !activeChild) return;
-    const pendingEvent = localStorage.getItem(`pending_maintenance_popup_${activeChild.id}`);
-    if (pendingEvent === 'paid' || pendingEvent === 'broken' || pendingEvent === 'rent_due') {
-      setMaintenanceEventType(pendingEvent as any);
-      setShowMaintenanceEventPopup(true);
-    }
-  }, [selectedChildId, activeChild?.id]);
+
 
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
@@ -770,54 +751,7 @@ export default function ChildDashboard({
         )}
       </AnimatePresence>
 
-      {/* Maintenance Pot Unlock Celebration Overlay */}
-      <AnimatePresence>
-        {activeChild && activeChild.maintenance_unlocked && (!activeChild.maintenance_unlock_seen || showMaintenanceReplayVideo) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
-            id="maintenance-pot-unlock-cinematic"
-          >
-            <motion.div
-              initial={{ scale: 0.8, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 30 }}
-              transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-slate-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-300 text-slate-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
-                <Sparkles className="w-4 h-4 text-slate-500 animate-pulse" />
-                NEW FEATURE UNLOCKED
-              </div>
-
-              <h2 className="text-3xl font-black font-display text-stone-900">
-                🎉 MAINTENANCE POT UNLOCKED!
-              </h2>
-
-              <p className="text-sm font-mono text-stone-600 leading-relaxed mb-6">
-                You've unlocked the <strong className="text-slate-600">Maintenance Pot</strong>! You must keep at least 20 coins in here. Every month, a maintenance fee will be paid from this pot to keep your Main Pot from breaking.
-              </p>
-
-              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner flex flex-col items-center justify-center">
-                <ShieldAlert className="w-24 h-24 text-slate-400 mb-4 animate-pulse" />
-                <p className="font-mono text-slate-500 font-bold text-sm">VIDEO PLACEHOLDER</p>
-              </div>
-
-              <button
-                onClick={() => { playSound.success(); onMaintenanceUnlockSeen(activeChild.id); setShowMaintenanceReplayVideo(false); }}
-                className="w-full gamepad-button py-4 bg-slate-400 hover:bg-slate-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
-                id="maintenance-pot-unlock-dismiss-btn"
-              >
-                GOT IT! 🎉
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Unhappy Pet Warning Modal */}
       <AnimatePresence>
@@ -1128,82 +1062,17 @@ export default function ChildDashboard({
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                           transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                          onClick={() => setAvatarView(prev => prev === 'character' ? 'main_pot' : 'character')}
-                          className={`h-20 w-20 sm:h-36 sm:w-36 rounded-full cursor-pointer ${avatarView === 'character' && activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-20 w-20 sm:h-36 sm:w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
-                          {avatarView === 'main_pot' ? (
-                            <img src={activeChild.main_pot_damaged ? "/savings_pot_cracked.png" : (activeChild.points > 0 ? "/savings_pot_full.png" : "/savings_pot_empty.png")} alt="Main Money Pot" className="w-full h-full object-cover animate-float" />
+                          {activeChildStage.image_url ? (
+                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
                           ) : (
-                            activeChildStage.image_url ? (
-                              <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
-                            ) : (
-                              <span className="text-4xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
-                                {activeChildStage.emoji}
-                              </span>
-                            )
+                            <span className="text-4xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
+                              {activeChildStage.emoji}
+                            </span>
                           )}
                         </motion.div>
                       </div>
-                      
-                      <div className="text-[10px] text-center text-stone-500 font-mono mt-1 mb-3">
-                        Click above to toggle view!
-                      </div>
-                      
-                      {activeChild.is_rent_due && (
-                        <div className="w-full bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4 mt-4">
-                          <span className="font-bold text-sm mb-1">
-                            ⚠️ BILLS DUE! ⚠️
-                          </span>
-                          <span className="text-xs opacity-90 max-w-md mx-auto mb-2 mt-1 block">
-                            You are losing 5 points per day! Click the Pay Bills button to pay 20 coins.
-                          </span>
-                          <button 
-                            onClick={() => { 
-                              if ((activeChild.points || 0) < 20) {
-                                setMaintenanceEventType('rent_failed');
-                                setShowMaintenanceEventPopup(true);
-                                playSound.pinError();
-                              } else {
-                                onPayRent(activeChild.id);
-                                setMaintenanceEventType('paid');
-                                setShowMaintenanceEventPopup(true);
-                                playSound.purchase(); 
-                              }
-                            }} 
-                            className="w-auto px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
-                          >
-                            Pay Bills (20 Coins)
-                          </button>
-                        </div>
-                      )}
-
-                      {activeChild.main_pot_damaged && (
-                        <div className="w-full bg-orange-100 border-2 border-orange-400 text-orange-800 p-3 rounded-2xl flex flex-col items-center justify-center text-center mb-4 mt-4">
-                          <span className="font-bold text-sm mb-1">
-                            ⚠️ MAIN POT BROKEN! ⚠️
-                          </span>
-                          <span className="text-xs opacity-90 max-w-md mx-auto mb-2 mt-1 block">
-                            You are losing 1 point per day! Click the Repair Pot button to pay 5 coins.
-                          </span>
-                          <button 
-                            onClick={() => { 
-                              if ((activeChild.points || 0) < 5) {
-                                setMaintenanceEventType('repair_failed');
-                                setShowMaintenanceEventPopup(true);
-                                playSound.pinError();
-                              } else {
-                                onRepairMainPot(activeChild.id, 'wallet'); 
-                                setMaintenanceEventType('fixed_wallet');
-                                setShowMaintenanceEventPopup(true);
-                                playSound.purchase(); 
-                              }
-                            }} 
-                            className="w-auto px-4 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-full text-sm shadow-md transition-colors cursor-pointer"
-                          >
-                            Repair Pot (5 Coins)
-                          </button>
-                        </div>
-                      )}
                       {/* Level and evolution progression */}
                       <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
                         <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
@@ -2235,63 +2104,7 @@ export default function ChildDashboard({
                           )}
 
 
-                          {/* === MAINTENANCE POT SECTION === */}
-                          {activeChild.maintenance_unlocked && activeChild.maintenance_unlock_seen && (
-                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
-                              <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-slate-400 via-gray-400 to-slate-500`} />
-                        
-                              <div className="flex items-center justify-between mb-3 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-100 to-gray-100 border border-slate-200 flex items-center justify-center">
-                                    <ShieldAlert className="w-5 h-5 text-slate-600" />
-                                  </div>
-                                  <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>BILLS & REPAIRS</span>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Bills & Repairs</h4>
-                                      <button 
-                                        onClick={() => setShowMaintenanceReplayVideo(true)}
-                                        className="text-[9px] bg-slate-200 text-slate-700 hover:bg-slate-300 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-                                      >
-                                        <Play className="w-2.5 h-2.5 fill-slate-700" /> Play Video
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                        
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                A Weekly Bill will pop up every 30 days. You will need to pay 20 coins to maintain your Main Gold Pot. If you don't pay, you lose 5 points a day! Make sure your Main Gold Pot has enough coins!
-                              </p>
-                            </div>
-                          )}
 
-                          {!activeChild.maintenance_unlocked && activeChild.level < (parentProfile?.maintenance_pot_unlock_level ?? 8) && (
-                            <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
-                              <div className="flex items-center gap-2 text-stone-500">
-                                <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🛡️ Bills & Repairs — Unlock at Level {parentProfile?.maintenance_pot_unlock_level ?? 8}!</span>
-                              </div>
-                              <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{
-                                    width: `${(() => {
-                                      const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.min(100, Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100));
-                                    })()}%`
-                                  }}
-                                  className="h-full bg-stone-400"
-                                />
-                              </div>
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
-                                {(() => {
-                                  const goldReq = ((parentProfile?.maintenance_pot_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
-                                })()}
-                              </span>
-                            </div>
-                          )}
 
 
 
@@ -2306,99 +2119,7 @@ export default function ChildDashboard({
 
           </AnimatePresence>
 
-      {/* Maintenance Event Popup */}
-      <AnimatePresence>
-        {showMaintenanceEventPopup && maintenanceEventType && activeChild && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center"
-            id="maintenance-event-modal"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className={`max-w-xs w-full bg-stone-50 rounded-3xl p-6 shadow-2xl border-4 ${maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? 'border-emerald-400' : 'border-red-500'}`}
-            >
-              <div className="text-6xl mb-4">
-                {maintenanceEventType === 'paid' || maintenanceEventType?.startsWith('fixed') ? '🛡️' : maintenanceEventType === 'rent_due' ? '💸' : (maintenanceEventType === 'rent_failed' || maintenanceEventType === 'repair_failed') ? '⚠️' : '💥'}
-              </div>
-              <h2 className="text-xl font-black font-display text-stone-900 uppercase tracking-wider mb-2">
-                {maintenanceEventType === 'paid' 
-                  ? 'Maintenance Paid!' 
-                  : maintenanceEventType === 'rent_due' 
-                    ? 'Maintenance Due!' 
-                  : (maintenanceEventType === 'rent_failed' || maintenanceEventType === 'repair_failed')
-                    ? 'Not Enough Coins!'
-                    : maintenanceEventType === 'broken' 
-                      ? 'Pot Broken!' 
-                      : 'Pot Fixed!'}
-              </h2>
-              <p className="text-sm font-mono text-stone-600 mb-6 leading-relaxed">
-                {maintenanceEventType === 'paid' 
-                  ? 'Your monthly maintenance fee of 20 gold coins has been successfully deducted from your Maintenance Pot to keep your Main Pot safe!'
-                  : maintenanceEventType === 'rent_due'
-                  ? 'It is time to pay your maintenance fee of 20 gold coins. If you don\'t pay, you will lose 5 points a day!'
-                  : maintenanceEventType === 'rent_failed'
-                  ? 'You do not have enough coins in your Maintenance Pot to pay the maintenance fee! Please deposit at least 20 coins into your Maintenance Pot first.'
-                  : maintenanceEventType === 'repair_failed'
-                  ? 'You do not have enough coins in your Maintenance Pot or Main Wallet to repair the pot! It costs 5 coins to fix.'
-                  : maintenanceEventType === 'fixed_maintenance'
-                  ? 'You fixed your pot for 5 coins using your Maintenance Pot!'
-                  : maintenanceEventType === 'fixed_wallet'
-                  ? 'You fixed your pot for 5 coins using your Main Wallet! (Your Maintenance Pot did not have enough coins)'
-                  : 'Your pot has randomly broken! It will leak 1 coin per day until repaired. It costs 5 coins to fix.'}
-              </p>
-              {maintenanceEventType === 'rent_due' || maintenanceEventType === 'broken' ? (
-                <button
-                  onClick={() => {
-                    if (maintenanceEventType === 'rent_due') {
-                      if ((activeChild.maintenance_pot || 0) < 20) {
-                        setMaintenanceEventType('rent_failed');
-                        playSound.pinError();
-                      } else {
-                        onPayRent(activeChild.id);
-                        setMaintenanceEventType('paid');
-                        playSound.purchase();
-                      }
-                    } else {
-                      const source = (activeChild.maintenance_pot || 0) >= 5 ? 'maintenance' : 'wallet';
-                      if (source === 'wallet' && activeChild.points < 5) {
-                        setMaintenanceEventType('repair_failed');
-                        playSound.pinError();
-                      } else {
-                        onRepairMainPot(activeChild.id, source);
-                        setMaintenanceEventType(source === 'maintenance' ? 'fixed_maintenance' : 'fixed_wallet');
-                        playSound.purchase();
-                      }
-                    }
-                    localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
-                  }}
-                  className="w-full gamepad-button py-3 bg-amber-400 hover:bg-amber-350 cursor-pointer border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] transition-all"
-                >
-                  {maintenanceEventType === 'rent_due' 
-                    ? ((activeChild.maintenance_pot || 0) >= 20 ? 'PAY NOW (20)' : 'DEPOSIT 20 FIRST')
-                    : 'FIX NOW (5)'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    playSound.success();
-                    setShowMaintenanceEventPopup(false);
-                    setTimeout(() => setMaintenanceEventType(null), 500);
-                    localStorage.removeItem(`pending_maintenance_popup_${activeChild.id}`);
-                  }}
-                  className={`w-full gamepad-button py-3 bg-emerald-400 hover:bg-emerald-350 border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all`}
-                >
-                  GOT IT!
-                </button>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
     </div>
 
