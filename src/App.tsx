@@ -338,15 +338,7 @@ export default function App() {
                 }
               }
               
-              // 3. Random Damage Event (~1/30 chance per day)
-              if (updated.last_hunger_check_date !== todayStr) {
-                if (!updated.main_pot_damaged && Math.random() < 0.033) {
-                  updates.main_pot_damaged = true;
-                  updates.main_damage_date = now.toISOString();
-                  localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
-                  updated = { ...updated, ...updates };
-                }
-              }
+              // 3. Random Damage Event (~1/30 chance per day) - moved to ChildDashboard.tsx daily rollover check to prevent duplicate/accidental triggers on parent refresh
               
               // 4. Retroactive Unlock Sync
               const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;

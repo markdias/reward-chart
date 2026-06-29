@@ -197,6 +197,11 @@ export default function ChildDashboard({
         updates.pet_unhappy = false;
       } else {
         // Daily rollover
+        if (child.maintenance_unlocked && !child.main_pot_damaged && Math.random() < 0.033) {
+          updates.main_pot_damaged = true;
+          updates.main_damage_date = new Date().toISOString();
+          localStorage.setItem(`pending_maintenance_popup_${child.id}`, 'broken');
+        }
         if (child.food_pot_unlocked) {
           if (petFedToday === false) {
             petUnhappy = true;
