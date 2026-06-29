@@ -4,6 +4,7 @@ import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
+import { hashPassword } from '../utils/security';
 
 interface AuthPageProps {
   onLoginReal: (email: string) => void;
@@ -15,7 +16,6 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [pin, setPin] = useState('');
   const [familyName, setFamilyName] = useState('');
   const searchParams = new URLSearchParams(window.location.search);
   const hasShareToken = searchParams.has('share');
@@ -81,26 +81,34 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
     return finalMsg;
   };
 
-  const handleLocalFallback = (emailVal: string, passVal: string, action: 'signup' | 'signin') => {
+  const handleLocalFallback = async (emailVal: string, passVal: string, action: 'signup' | 'signin') => {
     const trimmedEmail = emailVal.trim().toLowerCase();
     const stored = localStorage.getItem('RCH_LOCAL_CREDENTIALS');
     const creds = stored ? JSON.parse(stored) : {};
 
+    const hashedVal = await hashPassword(passVal, trimmedEmail);
+
     if (action === 'signup') {
-      creds[trimmedEmail] = passVal;
+      creds[trimmedEmail] = hashedVal;
       localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
       playSound.pinSuccess();
       onLoginReal(trimmedEmail);
     } else {
       const savedPass = creds[trimmedEmail];
-      if (savedPass && savedPass === passVal) {
+      const matched = (savedPass && savedPass === hashedVal) || (savedPass && savedPass === passVal);
+
+      if (matched) {
+        if (savedPass === passVal) {
+          creds[trimmedEmail] = hashedVal;
+          localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
+        }
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
       } else if (savedPass) {
-        setRealAuthError('Incorrect PIN or password for this local account.');
+        setRealAuthError('Incorrect password for this local account.');
         playSound.pinError();
       } else {
-        creds[trimmedEmail] = passVal;
+        creds[trimmedEmail] = hashedVal;
         localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
@@ -126,7 +134,7 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
     }
 
     if (!isSupabaseConfigured()) {
-      handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
+      await handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
       return;
     }
 
@@ -140,7 +148,6 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
             options: {
               data: {
                 name,
-                pin,
                 family_name: familyName
               }
             }
@@ -300,21 +307,6 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
                       />
                     </div>
                   )}
-
-                  <div>
-                    <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                      4-Digit App PIN (For Dashboard Lock)
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={4}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="1234"
-                      required
-                      className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border tracking-widest ${styles.inputBg}`}
-                    />
-                  </div>
                 </>
               )}
 

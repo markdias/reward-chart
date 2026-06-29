@@ -16,7 +16,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, G
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
-import { getSupabaseClient, getCurrentUserEmail, signOut } from './utils/supabase';
+import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate } from './utils/date';
 
 export default function App() {
@@ -26,9 +26,7 @@ export default function App() {
   const [parentEmail, setParentEmail] = useState<string | null>(
     localStorage.getItem('RCH_PARENT_EMAIL')
   );
-  const [isParentMode, setIsParentMode] = useState<boolean>(
-    localStorage.getItem('RCH_PARENT_MODE') === 'true'
-  );
+  const [isParentMode, setIsParentMode] = useState<boolean>(false);
   
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
     localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
@@ -38,11 +36,6 @@ export default function App() {
 
   const [showLogin, setShowLogin] = useState<boolean>(
     new URLSearchParams(window.location.search).has('share')
-  );
-  
-  // Security PIN state (default is 1234)
-  const [parentPin, setParentPin] = useState<string>(
-    localStorage.getItem('RCH_PARENT_PIN') || '1234'
   );
   
   // Profile state
@@ -170,15 +163,7 @@ export default function App() {
                 await supabase.from('parent_profiles').update({ share_token: profile.share_token }).eq('user_id', profile.user_id);
               }
               setParentProfile(profile);
-              
-              if (profile.pin) {
-                setParentPin(profile.pin);
-                localStorage.setItem('RCH_PARENT_PIN', profile.pin);
-              }
-
               currentFamilyId = profile.family_id;
-              setParentPin(profile.pin);
-              localStorage.setItem('RCH_PARENT_PIN', profile.pin);
             } else {
               // Creating a new profile
               let familyId = parentEmail;
@@ -206,7 +191,6 @@ export default function App() {
                 email: sessionData.session.user.email || parentEmail,
                 family_id: familyId,
                 family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
-                pin: meta.pin || localProfileObj.pin || '1234',
                 name: meta.name || localProfileObj.name || null,
                 share_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
               };
@@ -256,10 +240,6 @@ export default function App() {
               }
               
               setParentProfile(newProfile as ParentProfile);
-              
-              setParentPin(newProfile.pin);
-              localStorage.setItem('RCH_PARENT_PIN', newProfile.pin);
-
               currentFamilyId = familyId;
             }
           }
@@ -533,16 +513,12 @@ export default function App() {
 
     const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || 'local_parent@rewardchart.app');
     
-    setParentPin(data.pin);
-    localStorage.setItem('RCH_PARENT_PIN', data.pin);
-
     // Save parent profile locally so it persists in local mode
     const localProfile = {
       user_id: '',
       email: emailToUse,
       family_id: emailToUse,
       family_name: data.familyName,
-      pin: data.pin,
       name: data.parentName,
       share_token: null
     };
@@ -642,7 +618,6 @@ export default function App() {
     setParentEmail(emailToUse);
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
     setIsParentMode(true);
-    localStorage.setItem('RCH_PARENT_MODE', 'true');
   };
 
   const handleLoginReal = (email: string) => {
@@ -655,7 +630,6 @@ export default function App() {
     setParentEmail(email);
     localStorage.setItem('RCH_PARENT_EMAIL', email);
     setIsParentMode(false); // Default to Child scoreboard, parent enters PIN to manage
-    localStorage.setItem('RCH_PARENT_MODE', 'false');
     setHasCompletedOnboarding(true);
     localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
   };
@@ -669,7 +643,6 @@ export default function App() {
     setParentEmail(null);
     setIsParentMode(false);
     localStorage.removeItem('RCH_PARENT_EMAIL');
-    localStorage.removeItem('RCH_PARENT_MODE');
     localStorage.removeItem('RCH_CHILDREN');
     localStorage.removeItem('RCH_TASKS');
     localStorage.removeItem('RCH_COMPLETIONS');
@@ -750,14 +723,12 @@ export default function App() {
   const handleParentLockSuccess = () => {
     setShowLockScreen(false);
     setIsParentMode(true);
-    localStorage.setItem('RCH_PARENT_MODE', 'true');
     setLockedChildId(null);
     localStorage.removeItem('RCH_LOCKED_CHILD_ID');
   };
 
   const handleExitParentMode = () => {
     setIsParentMode(false);
-    localStorage.setItem('RCH_PARENT_MODE', 'false');
   };
 
   // Operations: Children
@@ -1791,7 +1762,6 @@ export default function App() {
           >
             <StepCreateAccount 
               theme={activeTheme}
-              pin={parentPin}
               onComplete={(skipped, email) => {
                 setShowCreateAccount(false);
                 if (!skipped && email) {
@@ -1810,11 +1780,11 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Parental PIN Gate popup lock */}
+      {/* Parental Password Gate popup lock */}
       <AnimatePresence>
         {showLockScreen && (
           <LockScreen
-            correctPin={parentPin}
+            parentEmail={parentEmail}
             onSuccess={handleParentLockSuccess}
             onClose={() => setShowLockScreen(false)}
             theme={activeTheme}

@@ -4,7 +4,7 @@ export interface ParentProfile {
   name: string | null;
   family_id: string;
   family_name?: string | null;
-  pin: string;
+  pin?: string;
   share_token: string | null;
   level_up_gold_reward?: number;
   points_to_level_up?: number;
