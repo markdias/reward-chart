@@ -1035,16 +1035,12 @@ export default function ParentDashboard({
                                       <div className="flex gap-1">
                                         <button onClick={() => { 
                                           playSound.click(); 
-                                          onUpdateChildStats(child.id, { main_last_maintenance_date: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString() }); 
+                                          onUpdateChildStats(child.id, { next_maintenance_due_date: new Date().toISOString() }); 
                                         }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Trigger 30-day maintenance check">TRIGGER MAINT</button>
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           localStorage.setItem(`pending_maintenance_popup_${child.id}`, 'broken');
-                                          onUpdateChildStats(child.id, { 
-                                            main_pot_damaged: true, 
-                                            main_damage_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                                            main_last_repair_date: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString()
-                                          }); 
+                                          onUpdateChildStats(child.id, { next_pot_break_date: new Date().toISOString() }); 
                                         }} className={`px-2 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] uppercase font-bold`} title="Break the main pot and start leaking">Break Pot</button>
                                       </div>
                                     </div>

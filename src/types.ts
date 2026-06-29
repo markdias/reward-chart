@@ -65,6 +65,8 @@ export interface Child {
   is_rent_due?: boolean;
   rent_due_date?: string | null;
   main_last_repair_date?: string | null;
+  next_maintenance_due_date?: string | null;
+  next_pot_break_date?: string | null;
   created_at: string;
 }
 

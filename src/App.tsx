@@ -298,12 +298,13 @@ export default function App() {
               let updates: Partial<Child> = {};
               
               // 1. Check if Monthly Maintenance is Due
-              const lastMaintenance = updated.main_last_maintenance_date 
-                ? new Date(updated.main_last_maintenance_date) 
-                : new Date();
-              const daysSinceMaintenance = Math.floor(Math.abs(now.getTime() - lastMaintenance.getTime()) / (1000 * 60 * 60 * 24));
+              if (!updated.next_maintenance_due_date) {
+                updates.next_maintenance_due_date = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                updated = { ...updated, ...updates };
+              }
+              const maintenanceDueTime = new Date(updated.next_maintenance_due_date).getTime();
               
-              if (daysSinceMaintenance >= 30 && !updated.is_rent_due) {
+              if (now.getTime() >= maintenanceDueTime && !updated.is_rent_due) {
                 updates.is_rent_due = true;
                 updates.rent_due_date = now.toISOString();
                 localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'rent_due');
@@ -338,13 +339,14 @@ export default function App() {
                 }
               }
 
-              // 2b. Check if Pot Break is Due (Every 10 days since last repair)
-              const lastRepair = updated.main_last_repair_date 
-                ? new Date(updated.main_last_repair_date) 
-                : new Date();
-              const daysSinceRepair = Math.floor(Math.abs(now.getTime() - lastRepair.getTime()) / (1000 * 60 * 60 * 24));
+              // 2b. Check if Pot Break is Due (Every 10 days)
+              if (!updated.next_pot_break_date) {
+                updates.next_pot_break_date = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString();
+                updated = { ...updated, ...updates };
+              }
+              const potBreakTime = new Date(updated.next_pot_break_date).getTime();
               
-              if (daysSinceRepair >= 10 && !updated.main_pot_damaged && updated.maintenance_unlocked) {
+              if (now.getTime() >= potBreakTime && !updated.main_pot_damaged && updated.maintenance_unlocked) {
                 updates.main_pot_damaged = true;
                 updates.main_damage_date = now.toISOString();
                 localStorage.setItem(`pending_maintenance_popup_${updated.id}`, 'broken');
@@ -580,7 +582,9 @@ export default function App() {
           main_damage_date: updatedChild.main_damage_date,
           is_rent_due: updatedChild.is_rent_due,
           rent_due_date: updatedChild.rent_due_date,
-          main_last_repair_date: updatedChild.main_last_repair_date
+          main_last_repair_date: updatedChild.main_last_repair_date,
+          next_maintenance_due_date: updatedChild.next_maintenance_due_date,
+          next_pot_break_date: updatedChild.next_pot_break_date
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -1436,7 +1440,8 @@ export default function App() {
         points: child.points - 20,
         is_rent_due: false,
         rent_due_date: null,
-        main_last_maintenance_date: new Date().toISOString()
+        main_last_maintenance_date: new Date().toISOString(),
+        next_maintenance_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
 
       const newList = prevChildren.map(c => c.id === childId ? finalUpdatedChild! : c);
@@ -1456,7 +1461,8 @@ export default function App() {
         points: finalUpdatedChild.points,
         is_rent_due: finalUpdatedChild.is_rent_due,
         rent_due_date: finalUpdatedChild.rent_due_date,
-        main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
+        main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
+        next_maintenance_due_date: finalUpdatedChild.next_maintenance_due_date
       }).eq('id', childId);
       if (error) {
         console.error("handlePayRent Supabase Error:", error);
@@ -1464,7 +1470,8 @@ export default function App() {
           points: finalUpdatedChild.points,
           is_rent_due: finalUpdatedChild.is_rent_due,
           rent_due_date: finalUpdatedChild.rent_due_date,
-          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date
+          main_last_maintenance_date: finalUpdatedChild.main_last_maintenance_date,
+          next_maintenance_due_date: finalUpdatedChild.next_maintenance_due_date
         });
         console.error("childId was:", childId);
         alert(`DATABASE ERROR: ${error.message}\n\nPlease run combined_patch.sql in your Supabase SQL Editor.`);
@@ -1488,7 +1495,8 @@ export default function App() {
         points: child.points - 5,
         main_pot_damaged: false,
         main_damage_date: null,
-        main_last_repair_date: new Date().toISOString()
+        main_last_repair_date: new Date().toISOString(),
+        next_pot_break_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
       };
 
       const newList = prevChildren.map(c => c.id === childId ? finalUpdatedChild! : c);
@@ -1508,7 +1516,8 @@ export default function App() {
         points: finalUpdatedChild.points,
         main_pot_damaged: finalUpdatedChild.main_pot_damaged,
         main_damage_date: finalUpdatedChild.main_damage_date,
-        main_last_repair_date: finalUpdatedChild.main_last_repair_date
+        main_last_repair_date: finalUpdatedChild.main_last_repair_date,
+        next_pot_break_date: finalUpdatedChild.next_pot_break_date
       }).eq('id', childId);
       if (error) console.error("handleRepairMainPot Supabase Error:", error);
     }
