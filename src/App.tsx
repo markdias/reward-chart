@@ -341,7 +341,7 @@ export default function App() {
               // 2b. Check if Pot Break is Due (Every 10 days since last repair)
               const lastRepair = updated.main_last_repair_date 
                 ? new Date(updated.main_last_repair_date) 
-                : new Date(updated.created_at || Date.now());
+                : new Date();
               const daysSinceRepair = Math.floor(Math.abs(now.getTime() - lastRepair.getTime()) / (1000 * 60 * 60 * 24));
               
               if (daysSinceRepair >= 10 && !updated.main_pot_damaged && updated.maintenance_unlocked) {
