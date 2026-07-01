@@ -8,11 +8,12 @@ import { hashPassword } from '../utils/security';
 
 interface AuthPageProps {
   onLoginReal: (email: string) => void;
+  onSignUpReal?: (email: string, name: string, familyName: string) => void;
   onBackToLanding: () => void;
   theme: ThemeId;
 }
 
-export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPageProps) {
+export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -167,7 +168,8 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
 
             if (!signInError && signInData?.session) {
               playSound.pinSuccess();
-              onLoginReal(email);
+              if (onSignUpReal) onSignUpReal(email, name, familyName);
+              else onLoginReal(email);
               return;
             }
 
@@ -201,7 +203,11 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
     }
     
     playSound.pinSuccess();
-    onLoginReal(email);
+    if (isSignUp && onSignUpReal) {
+      onSignUpReal(email, name, familyName);
+    } else {
+      onLoginReal(email);
+    }
   };
 
   const styles = THEME_PRESETS[theme];

@@ -525,7 +525,7 @@ export default function ParentDashboard({
               { id: 'tasks', label: 'QUEST TEMPLATES', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'PRIZE DISPENSERS', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'TARGETS & POTS', icon: Target },
-              { id: 'compliance', label: 'COPPA SECURITY', icon: ShieldCheck },
+
               { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -1764,47 +1764,6 @@ export default function ParentDashboard({
               </motion.div>
             )}
 
-            {/* 5. COPPA & Privacy Rules */}
-            {activeTab === 'compliance' && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                key="compliance-tab"
-                className="space-y-6"
-                id="compliance-view"
-              >
-                <div>
-                  <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>COPPA PRIVACY LEDGER</h2>
-                  <p className={`text-xs ${styles.textMuted}`}>Information assurance protocols for digital children safeguards.</p>
-                </div>
-
-                <div className={`p-6 rounded-3xl border ${styles.cardBg} ${styles.borderStyle} space-y-4 text-xs ${styles.textColor} leading-relaxed font-sans`}>
-                  <div className={`flex items-center gap-2 text-stone-900 font-bold text-sm font-display`}>
-                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                    Children's Online Privacy Protection Rule (COPPA)
-                  </div>
-                  <p>
-                    Reward Chart is strictly dedicated to ensuring top-tier safety. We do not transmit child behavioural, performance, or identity data to third-party advertisers or cloud syndications. All child names and custom profiles can be held in local browser state sandbox blocks, bypassing general tracking networks.
-                  </p>
-                  <p>
-                    As parents, you hold total sovereignty. You can delete individual child profiles, rewrite task records, or disable cloud synchronisation options instantly from these dashboards.
-                  </p>
-                  <p>
-                    For inquiries regarding family data rights or physical regulatory safety logs, please contact markdias1984@gmail.com.
-                  </p>
-                  
-                  <div className={`p-4 rounded-2xl border space-y-2 bg-stone-50 border-stone-200`}>
-                    <h4 className={`text-amber-700 font-bold text-xs flex items-center gap-1.5 font-display`}>
-                      <Info className="w-4 h-4" /> SECURE CONSOLE SECURITY
-                    </h4>
-                    <p className={`text-[11px] ${styles.textMuted} leading-normal`}>
-                      We ensure kids do not bypass their scoring thresholds by gating parent layouts behind a 4-digit passcode lock. Always keep your parent security PIN confidential!
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
             {activeTab === 'settings' && (
               <motion.div

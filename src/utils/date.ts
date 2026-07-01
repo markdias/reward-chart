@@ -28,3 +28,16 @@ export const getNextMonthlyResetDate = (d = new Date()): Date => {
   return new Date(d.getFullYear(), d.getMonth() + 1, 1, 0, 0, 0, 0);
 };
 
+/** 
+ * Returns the timestamp for the start of the current "day" cycle.
+ * The daily reset happens at 4:00 AM local time instead of midnight,
+ * allowing late-night activities to count towards the previous day.
+ */
+export const getStartOfDailyReset = (d = new Date()): number => {
+  const result = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 4, 0, 0, 0);
+  if (d.getTime() < result.getTime()) {
+    result.setDate(result.getDate() - 1);
+  }
+  return result.getTime();
+};
+

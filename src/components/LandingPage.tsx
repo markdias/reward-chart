@@ -70,7 +70,7 @@ const CAROUSEL_CHARACTERS = [
     color: 'from-violet-600 via-indigo-600 to-fuchsia-700', 
     glow: 'shadow-violet-500/30 border-violet-500/40', 
     stats: { power: 92, fun: 95, brains: 90 }, 
-    greeting: 'Riding a mini cosmic speeder, charting new chore systems across the universe.' 
+    greeting: 'Riding a mini cosmic speeder, charting new habit systems across the universe.' 
   },
 ];
 
@@ -115,7 +115,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
             <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
               REWARD CHART
             </span>
-            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
+            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE HABITS FUN</span>
           </div>
         </div>
 
@@ -140,11 +140,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
         {/* Left Column: Marketing Info and CTA */}
         <div className="lg:col-span-6 flex flex-col space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-widest font-mono">
-              <Sparkles className="w-4 h-4 text-amber-400 animate-spin-slow" /> HOLOGRAPHIC LAUNCHER
-            </div>
             <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
-              A Chore Chart That Feels Like a <br className="hidden sm:block" />
+              A Reward System That Feels Like a <br className="hidden sm:block" />
               <span className={styles.titleGradient}>
                 Magical Adventure
               </span>
@@ -173,7 +170,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           </div>
 
           {/* Value Badges */}
-          <div className="grid grid-cols-3 gap-3 max-w-lg">
+          <div className="grid grid-cols-2 gap-3 max-w-lg">
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
@@ -183,15 +180,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
               </div>
             </div>
-            <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-              <div className="p-2 rounded-xl bg-red-100 text-red-500">
-                <Heart className="w-4 h-4" />
-              </div>
-              <div>
-                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>COMPLIANCE</span>
-                <span className={`text-[11px] font-bold ${styles.textColor}`}>COPPA Encrypted</span>
-              </div>
-            </div>
+
             <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
               <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
                 <PiggyBank className="w-4 h-4" />
@@ -263,14 +252,16 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <div className="flex justify-between items-end">
                   <div>
                     <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
-                      HOW IT WORKS
+                      LEVEL UP TO EVOLVE
                     </span>
                     <span className={`text-sm font-bold font-display ${styles.textColor}`}>
                       Level 4 <ArrowRight className="inline w-3 h-3 mx-1 text-stone-400" /> Level 5
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-amber-500 animate-pulse">+50 XP</span>
+                    <span className="text-[10px] font-bold text-amber-500 animate-pulse flex items-center gap-1 justify-end">
+                      <Coins className="w-3 h-3" /> +50 Coins
+                    </span>
                   </div>
                 </div>
                 
@@ -286,7 +277,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 </div>
                 
                 <p className={`text-[11px] leading-tight ${styles.textMuted}`}>
-                  Complete real-world tasks to earn XP. Leveling up unlocks new pots and evolves your companion!
+                  Complete real-world tasks to earn Gold Coins. Leveling up unlocks new pots and evolves your companion!
                 </p>
               </div>
             </div>
@@ -349,7 +340,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 A Financial Journey for Kids
               </h2>
               <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-2xl mx-auto">
-                Reward Chart isn't just about finishing chores. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
+                Reward Chart isn't just about finishing tasks. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
               </p>
             </div>
 

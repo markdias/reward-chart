@@ -16,7 +16,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } 
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
-import { getCurrentWeekKey } from '../utils/date';
+import { getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
 
 const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`inline-block drop-shadow-sm ${className}`}>
@@ -320,7 +320,7 @@ export default function ChildDashboard({
     if (!reward.limit_type || reward.limit_type === 'unlimited') return { available: true };
 
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfDay = getStartOfDailyReset(now);
 
     if (reward.limit_type === 'daily') {
       const todayClaims = childRedemptions.filter(r => 
