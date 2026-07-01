@@ -742,9 +742,9 @@ export default function ParentDashboard({
                                         playSound.success();
                                         onDeliverReward(delivery.id);
                                       }}
-                                      className={`px-4 py-2 bg-emerald-400 hover:bg-emerald-300 border border-gray-200 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                      className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
                                     >
-                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
+                                      APPROVE
                                     </button>
                                     <button
                                       onClick={() => {
@@ -1586,11 +1586,9 @@ export default function ParentDashboard({
                                   playSound.click();
                                   setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
                                 }}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md ${
-                                  'bg-stone-900 hover:bg-stone-800 text-white shadow-[0_2.5px_0_0_#1c1917]'
-                                }`}
+                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
                               >
-                                <PlusCircle className="w-4 h-4" /> Assign...
+                                ASSIGN
                               </button>
 
                               <div className="flex gap-2">
