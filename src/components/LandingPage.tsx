@@ -100,23 +100,26 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
   };
 
   return (
-    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-hidden transition-colors duration-300`} id="landing-page-root">
+    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="landing-page-root">
+      
+      {/* Sweeping Curved Header Background */}
+      <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+
       {/* High-Tech Animated Background */}
-      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Retro Header Console */}
-      <header className={`w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b ${styles.divider} relative z-20`}>
+      <header className={`w-full max-w-7xl mx-auto px-6 pt-safe-top pt-6 pb-6 flex items-center justify-between border-none relative z-40`}>
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-            <Gamepad2 className="w-6 h-6 text-white animate-pulse" />
+          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/20">
+            <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
           </div>
           <div>
-            <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
+            <span className={`text-2xl font-black font-display tracking-wider text-white drop-shadow-sm`}>
               REWARD CHART
             </span>
-            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE HABITS FUN</span>
+            <span className="block text-[9px] text-orange-100 font-mono tracking-widest font-extrabold">MAKE HABITS FUN</span>
           </div>
         </div>
 
@@ -129,7 +132,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               handleEnterClick('parent');
             }
           }}
-          className={`btn-primary ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
+          className={`bg-white text-orange-600 hover:bg-orange-50 shadow-md shadow-orange-500/20 py-2 px-5 rounded-2xl text-xs font-bold uppercase font-display tracking-wide flex items-center gap-1.5 transition-all`}
           id="landing-signin-btn"
         >
           Sign In
@@ -137,10 +140,11 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center relative z-20">
-        {/* Left Column: Marketing Info and CTA */}
-        <div className="lg:col-span-6 flex flex-col space-y-8">
-          <div className="space-y-4">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 -mt-10 sm:-mt-20">
+        <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-xl shadow-orange-900/10 border border-white/50 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+          {/* Left Column: Marketing Info and CTA */}
+          <div className="lg:col-span-6 flex flex-col space-y-8">
+            <div className="space-y-4">
             <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
               A Reward System That Feels Like a <br className="hidden sm:block" />
               <span className={styles.titleGradient}>
@@ -321,12 +325,13 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               })}
             </div>
           </div>
+          </div>
         </div>
       </main>
 
       {/* Financial Literacy Journey Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
-        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-white border-4 border-stone-200 shadow-xl relative overflow-hidden`}>
+        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-white border border-stone-100 shadow-xl shadow-orange-900/5 relative overflow-hidden`}>
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
