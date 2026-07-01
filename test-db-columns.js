@@ -1,5 +1,8 @@
-const url = "https://qnbpenvudqrngbxelvnx.supabase.co/rest/v1/parent_profiles?user_id=eq.00000000-0000-0000-0000-000000000000";
-const anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuYnBlbnZ1ZHFybmdieGVsdm54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjEzMTEsImV4cCI6MjA5Nzg5NzMxMX0.cyhwH_AlkBR-xZ82VbFgYtI9V4_VZp9D_fGO24f8OW4";
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const url = `${process.env.VITE_SUPABASE_URL}/rest/v1/parent_profiles?user_id=eq.00000000-0000-0000-0000-000000000000`;
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 fetch(url, {
   method: "PATCH",
