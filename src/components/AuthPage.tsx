@@ -304,7 +304,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
             <form onSubmit={handleRealAuthSubmit} className="space-y-3">
               {realAuthError && (
                 <div className="space-y-2">
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs flex items-center gap-2">
+                  <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{realAuthError}</span>
                   </div>
@@ -371,7 +371,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
               <button
                 type="submit"
-                className="w-full btn-primary py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
+                className="w-full btn-dark py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest mt-4"
                 id="real-login-submit"
               >
                 {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
@@ -396,7 +396,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+            <div className="p-2 rounded-xl bg-warning/15 text-dark">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -405,7 +405,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className="p-2 rounded-xl bg-red-100 text-red-500">
+            <div className="p-2 rounded-xl bg-danger/10 text-danger">
               <Heart className="w-4 h-4" />
             </div>
             <div>

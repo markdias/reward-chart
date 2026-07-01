@@ -19,8 +19,8 @@ export default function StepHandover({ theme, onNext }: StepHandoverProps) {
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-[100dvh]`}>
       <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-6 shadow-xl relative z-10 text-center`}>
-        <div className="w-20 h-20 rounded-3xl bg-indigo-100 flex items-center justify-center mx-auto shadow-sm mb-4">
-          <User className="w-10 h-10 text-indigo-500" />
+        <div className="w-20 h-20 rounded-3xl bg-info/15 flex items-center justify-center mx-auto shadow-sm mb-4">
+          <User className="w-10 h-10 text-info" />
         </div>
         
         <h2 className={`text-2xl font-display font-black ${styles.titleColor}`}>Great job!</h2>
@@ -29,15 +29,15 @@ export default function StepHandover({ theme, onNext }: StepHandoverProps) {
           You've picked your companion! Now it's time to get your quests set up.
         </p>
         
-        <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl my-6">
-          <p className="text-sm font-bold text-indigo-800 uppercase tracking-widest font-mono">
+        <div className="p-4 bg-info/10 border border-info/30 rounded-xl my-6">
+          <p className="text-sm font-bold text-dark uppercase tracking-widest font-mono">
             Hand the device to a grown-up!
           </p>
         </div>
 
         <button
           onClick={handleNext}
-          className={`w-full bg-indigo-500 hover:bg-indigo-400 text-white border-2 border-indigo-900 shadow-[0_4px_0_0_#312e81] active:translate-y-1 active:shadow-none active:scale-95 transition-all py-4 rounded-2xl flex items-center justify-center gap-2 font-display uppercase tracking-wider text-base mt-4`}
+          className={`w-full btn-info py-4 rounded-2xl flex items-center justify-center gap-2 font-display uppercase tracking-wider text-base mt-4`}
         >
           I'm the grown-up, let's go <ArrowRight className="w-5 h-5" />
         </button>

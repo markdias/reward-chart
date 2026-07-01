@@ -1,21 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Nunito", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  /* Unified OKLCH Color Palette */
+  --color-primary: oklch(65% 0.22 142);
+  --color-primary-hover: oklch(70% 0.22 142);
+  --color-primary-shadow: oklch(53% 0.22 142);
+  
+  --color-danger: oklch(60% 0.22 25);
+  --color-danger-hover: oklch(65% 0.22 25);
+  --color-danger-shadow: oklch(48% 0.22 25);
+  
+  --color-info: oklch(60% 0.20 250);
+  --color-info-hover: oklch(65% 0.20 250);
+  --color-info-shadow: oklch(48% 0.20 250);
+  
+  --color-accent-purple: oklch(60% 0.22 300);
+  --color-accent-purple-hover: oklch(65% 0.22 300);
+  --color-accent-purple-shadow: oklch(48% 0.22 300);
+  
+  --color-warning: oklch(75% 0.18 70);
+  --color-warning-hover: oklch(80% 0.18 70);
+  --color-warning-shadow: oklch(63% 0.18 70);
+  
+  --color-dark: oklch(20% 0.015 30);
+  --color-dark-hover: oklch(30% 0.015 30);
+  --color-dark-shadow: oklch(12% 0.015 30);
+  
+  --color-page: oklch(96% 0.012 85);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-alt: oklch(98.5% 0.006 85);
+  --color-neutral-border: oklch(90% 0.01 85);
 }
 
 @layer utilities {
   /* Duolingo UI Styles */
 
   .btn-primary {
-    @apply bg-green-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
-    box-shadow: 0 4px 0 0 #46A302;
+    @apply bg-primary hover:bg-primary-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-primary-shadow);
   }
   .btn-primary:active {
-    box-shadow: 0 0px 0 0 #46A302;
+    box-shadow: 0 0px 0 0 var(--color-primary-shadow);
   }
   .btn-primary:disabled {
     @apply bg-gray-300 text-gray-500 opacity-100 cursor-not-allowed;
@@ -27,39 +57,63 @@
   }
 
   .btn-secondary {
-    @apply bg-white text-gray-500 border-2 border-gray-200 font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
-    box-shadow: 0 4px 0 0 #E5E7EB;
+    @apply bg-surface hover:bg-surface-alt text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-neutral-border);
   }
   .btn-secondary:active {
-    box-shadow: 0 0px 0 0 #E5E7EB;
+    box-shadow: 0 0px 0 0 var(--color-neutral-border);
   }
 
   .btn-danger {
-    @apply bg-red-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
-    box-shadow: 0 4px 0 0 #D12F2F;
+    @apply bg-danger hover:bg-danger-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-danger-shadow);
   }
   .btn-danger:active {
-    box-shadow: 0 0px 0 0 #D12F2F;
+    box-shadow: 0 0px 0 0 var(--color-danger-shadow);
   }
 
   .btn-blue {
-    @apply bg-blue-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
-    box-shadow: 0 4px 0 0 #1D4ED8;
+    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-info-shadow);
   }
   .btn-blue:active {
-    box-shadow: 0 0px 0 0 #1D4ED8;
+    box-shadow: 0 0px 0 0 var(--color-info-shadow);
+  }
+
+  .btn-info {
+    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-info-shadow);
+  }
+  .btn-info:active {
+    box-shadow: 0 0px 0 0 var(--color-info-shadow);
   }
 
   .btn-purple {
-    @apply bg-purple-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
-    box-shadow: 0 4px 0 0 #7E22CE;
+    @apply bg-accent-purple hover:bg-accent-purple-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-accent-purple-shadow);
   }
   .btn-purple:active {
-    box-shadow: 0 0px 0 0 #7E22CE;
+    box-shadow: 0 0px 0 0 var(--color-accent-purple-shadow);
+  }
+
+  .btn-warning {
+    @apply bg-warning hover:bg-warning-hover text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-warning-shadow);
+  }
+  .btn-warning:active {
+    box-shadow: 0 0px 0 0 var(--color-warning-shadow);
+  }
+
+  .btn-dark {
+    @apply bg-dark hover:bg-dark-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
+    box-shadow: 0 4px 0 0 var(--color-dark-shadow);
+  }
+  .btn-dark:active {
+    box-shadow: 0 0px 0 0 var(--color-dark-shadow);
   }
 
   .duo-card {
-    @apply bg-white border-2 border-gray-200 rounded-3xl p-5;
+    @apply bg-surface border-2 border-neutral-border rounded-3xl p-5;
   }
 
   .flame-active {
@@ -83,8 +137,8 @@
 }
 
 body {
-  background-color: #ffffff;
-  color: #374151; /* gray-700 */
+  background-color: var(--color-page);
+  color: var(--color-dark);
 }
 
 /* iOS Safe Area Support */

@@ -345,15 +345,15 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-[#F5F2EA] flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="child-root">
+    <div className={`min-h-screen bg-page flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="child-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
 
       {/* Immersive Starry Grid Backdrop */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
@@ -803,7 +803,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); setPenaltyMessage(null); }}
-                className="w-full btn-primary py-3 bg-rose-500 hover:bg-rose-450 border-2 border-gray-200 text-white font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-danger py-3 text-sm"
                 id="pet-penalty-dismiss-btn"
               >
                 I Promise to Feed Them! <FaFaceSadTear className="inline-block ml-2 text-yellow-500" />
@@ -855,7 +855,7 @@ export default function ChildDashboard({
                       setActiveChildTab('pots');
                     }
                   }}
-                  className="w-full btn-primary py-3 bg-orange-400 hover:bg-orange-350 border-2 border-gray-200 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                  className="w-full btn-warning py-3 text-sm"
                 >
                   {(activeChild?.pet_food || 0) > 0 ? <span>Feed Now! <FaBone className="inline-block ml-2" /></span> : <span>Get Food! <FaCartShopping className="inline-block ml-2" /></span>}
                 </button>
@@ -1114,8 +1114,8 @@ export default function ChildDashboard({
                               activeChild.pet_fed_today
                                 ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
                                 : (activeChild.pet_food || 0) > 0
-                                  ? 'bg-orange-500 border-2 border-gray-200 text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_#1c1917] active:translate-y-1 active:shadow-none'
-                                  : 'bg-stone-200 text-stone-400 border border-stone-300 cursor-not-allowed'
+                                  ? 'bg-warning border-2 border-neutral-border text-dark shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
+                                  : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
                             }`}
                           >
                             {isFeeding ? (
@@ -1453,7 +1453,7 @@ export default function ChildDashboard({
                                       ) : (
                                         <button
                                           onClick={() => handleTaskCheck(task.id)}
-                                          className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-stone-900 hover:bg-stone-800 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]`}
+                                          className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-dark hover:bg-dark-hover shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]`}
                                           id={`claim-task-${task.id}`}
                                         >
                                           COMPLETE!
@@ -1538,8 +1538,8 @@ export default function ChildDashboard({
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points, 'savings')}
                                           className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                             canDispense && (activeChild.savings_pot || 0) >= rew.cost_points
-                                              ? 'bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                              ? 'bg-primary hover:bg-primary-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
                                           }`}
                                           id={`claim-reward-savings-${rew.id}`}
                                         >
@@ -1551,8 +1551,8 @@ export default function ChildDashboard({
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points)}
                                           className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                             canDispense
-                                              ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                              ? 'bg-warning hover:bg-warning-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
                                           }`}
                                           id={`claim-reward-${rew.id}`}
                                         >

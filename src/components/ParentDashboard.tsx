@@ -382,10 +382,10 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-[#F5F2EA] text-stone-900 flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-page text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
 
       <header className={`relative z-40 px-4 sm:px-8 pt-safe-top pt-6 pb-6 flex items-center justify-between gap-2`}>
         <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -407,7 +407,7 @@ export default function ParentDashboard({
                 playSound.click();
                 setShowNotifications(!showNotifications);
               }}
-              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white border-2 border-[#E7E5E4] text-stone-700 hover:bg-stone-50 transition-all cursor-pointer relative shadow-[0_3px_0_0_#E7E5E4] active:translate-y-[2px] active:shadow-none"
+              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-surface border-2 border-neutral-border text-dark hover:bg-surface-alt transition-all cursor-pointer relative shadow-[0_3px_0_0_var(--color-neutral-border)] active:translate-y-[2px] active:shadow-none"
               id="notifications-bell-btn"
             >
               <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
@@ -424,7 +424,7 @@ export default function ParentDashboard({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border-3 border-[#E7E5E4] shadow-[0_6px_0_0_#E7E5E4] overflow-hidden p-4 space-y-3 z-50 text-[#292524]"
+                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-surface border-3 border-neutral-border shadow-[0_6px_0_0_var(--color-neutral-border)] overflow-hidden p-4 space-y-3 z-50 text-dark"
                   id="notifications-box"
                 >
                   <div className="flex items-center justify-between border-b border-stone-200 pb-2">
@@ -440,7 +440,7 @@ export default function ParentDashboard({
                           const child = children.find(c => c.id === appr.child_id);
                           const task = tasks.find(t => t.id === appr.task_id);
                           return (
-                            <div key={appr.id} className="p-2.5 bg-[#F5F2EA] rounded-xl text-xs flex gap-2 border border-stone-200 text-stone-850">
+                            <div key={appr.id} className="p-2.5 bg-page rounded-xl text-xs flex gap-2 border border-neutral-border text-dark">
                               <span className="text-lg"><FaBullhorn /></span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
@@ -452,7 +452,7 @@ export default function ParentDashboard({
                         {pendingRedemptions.map(req => {
                           const child = children.find(c => c.id === req.child_id);
                           return (
-                            <div key={req.id} className="p-2.5 bg-rose-50 rounded-xl text-xs flex gap-2 border border-rose-200 text-stone-850">
+                            <div key={req.id} className="p-2.5 bg-danger/10 rounded-xl text-xs flex gap-2 border border-danger/30 text-dark">
                               <span className="text-lg"><FaGift /></span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
@@ -466,7 +466,7 @@ export default function ParentDashboard({
                           const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
                           const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
                           return (
-                            <div key={req.id} className="p-2.5 bg-blue-50 rounded-xl text-xs flex gap-2 border border-blue-200 text-stone-850">
+                            <div key={req.id} className="p-2.5 bg-info/10 rounded-xl text-xs flex gap-2 border border-info/30 text-dark">
                               <span className="text-lg">{typeIcon}</span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
@@ -489,7 +489,7 @@ export default function ParentDashboard({
                 playSound.click();
                 onLogout();
               }}
-              className="flex items-center gap-1 sm:gap-2 bg-white hover:bg-stone-50 text-stone-700 font-extrabold border-2 border-gray-200 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
+              className="flex items-center gap-1 sm:gap-2 bg-surface hover:bg-surface-alt text-dark font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
               id="global-logout-btn"
             >
               <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600" />
@@ -502,7 +502,7 @@ export default function ParentDashboard({
               playSound.click();
               onExitParentMode();
             }}
-            className="flex items-center gap-1 sm:gap-2 bg-rose-500 hover:bg-rose-450 text-white font-extrabold border-2 border-gray-200 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
+            className="flex items-center gap-1 sm:gap-2 bg-danger hover:bg-danger-hover text-white font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
             id="exit-to-child-view-btn"
           >
             <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>SWITCH TO KID VIEW</span>
@@ -692,7 +692,7 @@ export default function ParentDashboard({
                                     </button>
                                     <button
                                       onClick={() => handleApprove(appr.id)}
-                                      className={`px-4 py-2 bg-emerald-500 hover:bg-emerald-400 border border-gray-200 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
                                     >
                                       <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
                                     </button>
@@ -743,7 +743,7 @@ export default function ParentDashboard({
                                         playSound.success();
                                         onDeliverReward(delivery.id);
                                       }}
-                                      className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
+                                      className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
                                     >
                                       APPROVE
                                     </button>
@@ -802,7 +802,7 @@ export default function ParentDashboard({
                                         playSound.success();
                                         onApproveGiftingRequest(req.id);
                                       }}
-                                      className={`px-4 py-2 bg-emerald-400 hover:bg-emerald-300 border border-gray-200 text-stone-950 shadow-[0_2.5px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_#1c1917] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
+                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
                                     >
                                       <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
                                     </button>
@@ -844,7 +844,7 @@ export default function ParentDashboard({
                   </div>
                   <button
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
-                    className={`bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
+                    className={`bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
                     id="add-child-btn-top"
                   >
                     <UserPlus className="w-4 h-4" /> REGISTER NEW CHILD
@@ -909,7 +909,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-gray-200 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
+                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
                         >
                           {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
                         </button>
@@ -1154,7 +1154,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-gray-200 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
                           {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
                         </button>
@@ -1212,7 +1212,7 @@ export default function ParentDashboard({
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-chore-btn-top"
                     >
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> CREATE <span className="hidden sm:inline">TEMPLATE</span>
@@ -1257,7 +1257,7 @@ export default function ParentDashboard({
                                   playSound.click();
                                   setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
                                 }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
+                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
                               >
                                 ASSIGN
                               </button>
@@ -1306,7 +1306,7 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-amber-400 border-gray-200 text-stone-900 shadow-[0_2px_0_0_#1c1917]')
+                                            ? ('bg-warning border-neutral-border text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)]')
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
@@ -1366,7 +1366,7 @@ export default function ParentDashboard({
                                 playSound.success();
                                 onParentCompleteTask(task.id, task.child_id);
                               }}
-                              className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
+                              className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
                               id={`parent-complete-${task.id}`}
                             >
                               COMPLETE
@@ -1491,7 +1491,7 @@ export default function ParentDashboard({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className={`flex-1 bg-amber-400 hover:bg-amber-300 border border-gray-200 shadow-[0_3px_0_0_#1c1917] text-stone-950 py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
                         >
                           {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
                         </button>
@@ -1548,7 +1548,7 @@ export default function ParentDashboard({
                     </button>
                     <button
                       onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
+                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-reward-btn-top"
                     >
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> ADD <span className="hidden sm:inline">REWARD</span>
@@ -1591,7 +1591,7 @@ export default function ParentDashboard({
                                   playSound.click();
                                   setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
                                 }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1c1917] active:translate-y-1"
+                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
                               >
                                 ASSIGN
                               </button>
@@ -1640,7 +1640,7 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-stone-900 border-gray-200 text-white shadow-[0_2px_0_0_#1c1917]')
+                                            ? ('bg-dark border-neutral-border text-white shadow-[0_2px_0_0_var(--color-dark-shadow)]')
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >

@@ -304,8 +304,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                     key={char.id}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected 
-                        ? 'bg-amber-100 border-2 border-gray-200 shadow-[0_3px_0_0_#1c1917]'
-                        : 'bg-white border-2 border-[#E7E5E4] text-stone-700 hover:border-stone-300'
+                        ? 'bg-warning/15 border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)]'
+                        : 'bg-surface border-2 border-neutral-border text-dark hover:border-dark'
                     }`}
                   >
                     {char.image ? (
