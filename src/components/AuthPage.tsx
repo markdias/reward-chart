@@ -30,15 +30,20 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
     if (!err) return 'Unknown connection or authentication error';
     if (typeof err === 'string') return err;
     
-    const parts: string[] = [];
+    const code = err.code || err.status || (err.error && err.error.code);
     const directMsg = err.message || err.error_description || err.error || (err.error && err.error.message);
+    
+    if (code === 'invalid_credentials' || (typeof directMsg === 'string' && directMsg.toLowerCase().includes('invalid login credentials'))) {
+      return "Incorrect email or password. Please try again or create a new account.";
+    }
+
+    const parts: string[] = [];
     if (directMsg && typeof directMsg === 'string') {
       parts.push(directMsg);
     } else if (directMsg && typeof directMsg === 'object') {
       parts.push(directMsg.message || JSON.stringify(directMsg));
     }
     
-    const code = err.code || err.status || (err.error && err.error.code);
     if (code) {
       parts.push(`(Code/Status: ${code})`);
     }
@@ -166,7 +171,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           });
           if (error) {
             console.warn('Supabase signup error:', error);
-            setRealAuthError(`${getErrorMessage(error)}. If your server is having issues, you can register locally below instead!`);
+            setRealAuthError(getErrorMessage(error));
             playSound.pinError();
             return;
           }
@@ -196,14 +201,14 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           });
           if (error) {
             console.warn('Supabase signin error:', error);
-            setRealAuthError(`${getErrorMessage(error)}. You can also log in locally below!`);
+            setRealAuthError(getErrorMessage(error));
             playSound.pinError();
             return;
           }
         }
       } catch (err: any) {
         console.warn('Exception during auth submission:', err);
-        setRealAuthError(`${getErrorMessage(err)}. Fall back to offline mode below if this persists.`);
+        setRealAuthError(getErrorMessage(err));
         playSound.pinError();
         return;
       }
