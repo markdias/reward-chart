@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Lock, X, Play, ShieldAlert, ArrowLeft, Terminal } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Lock, ShieldAlert, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { ThemeId } from '../utils/theme';
+import { getSupabaseClient } from '../utils/supabase';
+import { hashPassword } from '../utils/security';
 
 interface LockScreenProps {
-  correctPin: string;
+  parentEmail: string | null;
   onSuccess: () => void;
   onClose: () => void;
   title?: string;
@@ -14,43 +16,73 @@ interface LockScreenProps {
 }
 
 export default function LockScreen({
-  correctPin,
+  parentEmail,
   onSuccess,
   onClose,
   title = "SECURE DECRYPTION CHECK",
-  subtitle = "Provide your 4-digit parent clearance PIN to unlock mission variables",
+  subtitle = "Provide your parent account password to unlock mission variables",
   theme
 }: LockScreenProps) {
-  const [pin, setPin] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleKeyPress = (num: string) => {
-    if (pin.length < 4) {
-      playSound.click();
-      const newPin = pin + num;
-      setPin(newPin);
-      
-      if (newPin.length === 4) {
-        if (newPin === correctPin) {
-          setTimeout(() => {
-            playSound.pinSuccess();
-            onSuccess();
-          }, 150);
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return;
+    setError(false);
+    setLoading(true);
+
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase && parentEmail && parentEmail !== 'demo_parent@rewardchart.app') {
+        const { error: authError } = await supabase.auth.signInWithPassword({
+          email: parentEmail,
+          password: password,
+        });
+
+        if (authError) {
+          setError(true);
+          playSound.pinError();
         } else {
-          setTimeout(() => {
-            playSound.pinError();
-            setError(true);
-            setPin('');
-            setTimeout(() => setError(false), 600);
-          }, 150);
+          playSound.pinSuccess();
+          onSuccess();
+        }
+      } else {
+        // Offline / Local / Demo fallback
+        const emailKey = (parentEmail || 'demo_parent@rewardchart.app').trim().toLowerCase();
+        const stored = localStorage.getItem('RCH_LOCAL_CREDENTIALS');
+        const creds = stored ? JSON.parse(stored) : {};
+        const savedPass = creds[emailKey];
+
+        const isCorrect = (savedPass && savedPass === password) ||
+                          (emailKey === 'demo_parent@rewardchart.app' && (password === 'password' || password === '1234'));
+
+        // Check if the stored credentials contains a SHA-256 hash (64 hex characters)
+        let matched = false;
+        if (savedPass && savedPass.length === 64) {
+          const computedHash = await hashPassword(password, emailKey);
+          matched = computedHash === savedPass;
+        } else {
+          // Fallback to legacy plaintext check
+          matched = isCorrect;
+        }
+
+        if (matched) {
+          playSound.pinSuccess();
+          onSuccess();
+        } else {
+          setError(true);
+          playSound.pinError();
         }
       }
+    } catch (err) {
+      setError(true);
+      playSound.pinError();
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleClear = () => {
-    playSound.click();
-    setPin('');
   };
 
   return (
@@ -85,77 +117,64 @@ export default function LockScreen({
           <p className="font-mono text-[9px] tracking-widest mt-1 uppercase text-stone-500 font-bold">{subtitle}</p>
         </div>
 
-        {/* PIN Indicators */}
-        <div className="p-8 flex flex-col items-center">
-          <motion.div 
-            animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
-            transition={{ duration: 0.3 }}
-            className="flex gap-4 justify-center mb-6"
-            id="pin-dots"
-          >
-            {[0, 1, 2, 3].map((idx) => (
-              <div
-                key={idx}
-                className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-                  error 
-                    ? 'bg-rose-500 border-rose-500 scale-125' 
-                    : idx < pin.length 
-                      ? 'bg-amber-400 border-stone-900 scale-125 shadow-sm' 
-                      : 'border-stone-200 bg-stone-100'
-                }`}
-              />
-            ))}
-          </motion.div>
+        {/* Password Entry Form */}
+        <form onSubmit={handleVerify} className="p-8 flex flex-col items-center w-full">
+          <div className="w-full max-w-sm mb-6 relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(false);
+              }}
+              placeholder="ENTER PASSWORD"
+              className="w-full px-4 py-3.5 pr-12 rounded-2xl border bg-white border-stone-900 text-stone-900 font-mono text-center text-sm tracking-wide shadow-[0_3px_0_0_#1c1917] focus:ring-2 focus:ring-amber-500 outline-none"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => {
+                playSound.click();
+                setShowPassword(!showPassword);
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
 
           {error && (
             <motion.p 
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-rose-400 font-mono font-bold text-xs mb-4 flex items-center gap-1.5 uppercase tracking-wide bg-rose-950/20 px-3 py-1 rounded-lg border border-rose-900/30"
+              className="text-rose-450 font-mono font-bold text-xs mb-6 flex items-center gap-1.5 uppercase tracking-wide bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700"
             >
               <ShieldAlert className="w-4 h-4 animate-bounce" /> PASSWORD DECRYPTION FAILURE
             </motion.p>
           )}
 
-          {/* Keypad */}
-          <div className="grid grid-cols-3 gap-3 w-full max-w-xs" id="keypad">
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                key={num}
-                onClick={() => handleKeyPress(num)}
-                className="h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
-              >
-                {num}
-              </motion.button>
-            ))}
+          {/* Action Buttons */}
+          <div className="flex gap-4 w-full max-w-sm">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleClear}
-              className="h-16 rounded-2xl font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center border bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-900 font-bold hover:bg-stone-100"
-            >
-              CLEAR
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleKeyPress('0')}
-              className="h-16 rounded-2xl text-xl font-bold font-mono transition-all flex items-center justify-center cursor-pointer border bg-white border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-stone-50 active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
-            >
-              0
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
               onClick={onClose}
-              className="h-16 rounded-2xl border transition-all cursor-pointer flex items-center justify-center text-xs font-mono font-bold bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e]"
+              className="flex-1 h-12 rounded-xl border transition-all cursor-pointer flex items-center justify-center text-xs font-mono font-bold bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e]"
             >
               ABORT
             </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading || !password}
+              className="flex-1 h-12 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer border bg-amber-400 border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
+            >
+              {loading ? 'VERIFYING...' : 'DECRYPT'}
+            </motion.button>
           </div>
-        </div>
+        </form>
       </motion.div>
     </div>
   );

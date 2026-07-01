@@ -5,6 +5,7 @@ import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
+import { hashPassword } from '../utils/security';
 
 interface SettingsTabProps {
   theme: ThemeId;
@@ -20,15 +21,26 @@ interface SettingsTabProps {
 export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
-  const [pin, setPin] = useState(parentProfile?.pin || '');
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
-  const [weeklyXpTarget, setWeeklyXpTarget] = useState(parentProfile?.weekly_xp_target ?? 300);
+  const [weeklyPointsTarget, setWeeklyPointsTarget] = useState(parentProfile?.weekly_points_target ?? 100);
   const [weeklyRewardPoints, setWeeklyRewardPoints] = useState(parentProfile?.weekly_reward_points ?? 200);
-  const [monthlyXpTarget, setMonthlyXpTarget] = useState(parentProfile?.monthly_xp_target ?? 1200);
+  const [monthlyPointsTarget, setMonthlyPointsTarget] = useState(parentProfile?.monthly_points_target ?? 500);
   const [monthlyRewardPoints, setMonthlyRewardPoints] = useState(parentProfile?.monthly_reward_points ?? 1000);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  React.useEffect(() => {
+    if (parentProfile) {
+      setName(parentProfile.name || '');
+      setFamilyName(parentProfile.family_name || '');
+      setLevelUpGoldReward(parentProfile.level_up_gold_reward ?? 500);
+      setWeeklyPointsTarget(parentProfile.weekly_points_target ?? 100);
+      setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
+      setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 500);
+      setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
+    }
+  }, [parentProfile]);
   
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
@@ -79,7 +91,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         .update({ 
           name,
           level_up_gold_reward: levelUpGoldReward,
-          weekly_xp_target: weeklyXpTarget,
+          weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
           monthly_reward_points: monthlyRewardPoints
         })
@@ -113,28 +125,40 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
     try {
       // Local mode fallback
       if (!parentProfile?.user_id || !supabase) {
-        if (pin) {
-          localStorage.setItem('RCH_PARENT_PIN', pin);
-          setSecurityMsg('PIN updated locally!');
+        if (newPassword) {
+          if (newPassword !== confirmPassword) throw new Error("New passwords do not match");
+          if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
+          
+          const emailKey = (parentProfile?.email || 'local_parent@rewardchart.app').trim().toLowerCase();
+          const stored = localStorage.getItem('RCH_LOCAL_CREDENTIALS');
+          const creds = stored ? JSON.parse(stored) : {};
+          
+          // Verify current password if one was set
+          const savedPass = creds[emailKey];
+          if (savedPass) {
+            const hashedCurrent = await hashPassword(currentPassword, emailKey);
+            const isMatch = hashedCurrent === savedPass || currentPassword === savedPass;
+            if (!isMatch) {
+              throw new Error("Invalid current password");
+            }
+          }
+          
+          const hashedNew = await hashPassword(newPassword, emailKey);
+          creds[emailKey] = hashedNew;
+          localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
+          
+          setSecurityMsg('Local password updated successfully!');
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
           playSound.success();
+          setIsSavingSecurity(false);
+          return;
         }
-        if (currentPassword || newPassword) {
-           throw new Error("Cannot change password without an account.");
-        }
-        setIsSavingSecurity(false);
-        return;
+        throw new Error("Cannot change settings. Provide a new password to update.");
       }
 
-      // 1. Update PIN in DB
-      if (pin !== parentProfile.pin) {
-        const { error: pinError } = await supabase
-          .from('parent_profiles')
-          .update({ pin })
-          .eq('user_id', parentProfile.user_id);
-        if (pinError) throw pinError;
-      }
-
-      // 2. Update Password
+      // Update Password for Supabase Cloud accounts
       if (currentPassword || newPassword || confirmPassword) {
         if (!currentPassword) throw new Error("Current password is required");
         if (newPassword !== confirmPassword) throw new Error("New passwords do not match");
@@ -310,55 +334,38 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </div>
           <div>
             <h3 className={`text-lg font-black font-display uppercase tracking-wide ${c.text}`}>Security</h3>
-            <p className={`text-sm ${c.textMuted}`}>Update your PIN and password.</p>
+            <p className={`text-sm ${c.textMuted}`}>Update your parent portal password.</p>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Parent Dashboard PIN</h4>
-            <div>
-              <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>4-Digit PIN</label>
-              <input 
-                type="text" 
-                maxLength={4}
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                className={`w-full px-4 py-3 rounded-xl border font-mono tracking-[0.5em] text-center text-lg ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-              />
-              <p className={`text-xs mt-2 ${c.textMuted}`}>Used to switch from Child Mode to Parent Dashboard.</p>
-            </div>
+        <div className="max-w-md space-y-4">
+          <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Account Password</h4>
+          <div>
+            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Current Password</label>
+            <input 
+              type="password" 
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
+            />
           </div>
-          
-          <div className="space-y-4">
-            <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Account Password</h4>
-            <div>
-              <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Current Password</label>
-              <input 
-                type="password" 
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-              />
-            </div>
-            <div>
-              <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>New Password</label>
-              <input 
-                type="password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-              />
-            </div>
-            <div>
-              <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Confirm New Password</label>
-              <input 
-                type="password" 
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-              />
-            </div>
+          <div>
+            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>New Password</label>
+            <input 
+              type="password" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
+            />
+          </div>
+          <div>
+            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Confirm New Password</label>
+            <input 
+              type="password" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
+            />
           </div>
         </div>
         

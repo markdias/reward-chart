@@ -54,7 +54,7 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
                   <span className={`block font-bold text-sm ${isSelected ? 'text-amber-900' : 'text-stone-700'}`}>
                     {task.title}
                   </span>
-                  <span className="text-xs text-stone-500">{task.points} Gold • {task.xp} XP</span>
+                  <span className="text-xs text-stone-500">{task.points} Gold</span>
                 </div>
                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${
                   isSelected ? 'bg-amber-400 border-amber-400' : 'border-stone-300'

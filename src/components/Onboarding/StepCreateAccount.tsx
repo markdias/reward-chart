@@ -6,7 +6,6 @@ import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
 
 interface StepCreateAccountProps {
   theme: ThemeId;
-  pin: string;
   name?: string;
   familyName?: string;
   onComplete: (skipped: boolean, email?: string) => void;
@@ -14,7 +13,7 @@ interface StepCreateAccountProps {
   onLoginInstead: () => void;
 }
 
-export default function StepCreateAccount({ theme, pin, name = '', familyName = '', onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
+export default function StepCreateAccount({ theme, name = '', familyName = '', onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
   const styles = THEME_PRESETS[theme];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,7 +54,6 @@ export default function StepCreateAccount({ theme, pin, name = '', familyName = 
           options: {
             data: {
               name,
-              pin,
               family_name: familyName
             }
           }

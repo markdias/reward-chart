@@ -26,7 +26,7 @@ interface ParentDashboardProps {
   onAddChild: (name: string, characterId: string, avatarUrl: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
-  onAddTask: (title: string, points: number, xp: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
+  onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
   onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
@@ -52,6 +52,8 @@ interface ParentDashboardProps {
   onResetData?: (keepBlueprints: boolean) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
+  onLogout?: () => void;
+  onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
 }
 
 export default function ParentDashboard({
@@ -88,7 +90,9 @@ export default function ParentDashboard({
   onDeleteAccount,
   giftingRequests = [],
   onApproveGiftingRequest,
-  onRejectGiftingRequest
+  onRejectGiftingRequest,
+  onLogout,
+  onUpdateParentProfile
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
@@ -102,7 +106,7 @@ export default function ParentDashboard({
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
   
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'XP' | 'Level' | 'Weekly XP' | 'Monthly XP' | 'Streak'} | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak'} | null>(null);
   
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -115,7 +119,6 @@ export default function ParentDashboard({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPoints, setTaskPoints] = useState(15);
-  const [taskXp, setTaskXp] = useState(15);
   const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
   const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time' | 'repeatable'>('daily');
   const [taskCooldownMinutes, setTaskCooldownMinutes] = useState<number | undefined>(undefined);
@@ -304,20 +307,18 @@ export default function ParentDashboard({
       onEditTask(editingTaskId, {
         title: taskTitle,
         points: taskPoints,
-        xp: taskXp,
         category: taskCategory,
         recurrence: taskRecurrence,
         cooldown_minutes: taskCooldownMinutes
       });
     } else {
-      onAddTask(taskTitle, taskPoints, taskXp, taskCategory, taskRecurrence, taskCooldownMinutes);
+      onAddTask(taskTitle, taskPoints, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
     setShowAddTask(false);
     setTaskSubTab('directory');
     setEditingTaskId(null);
     setTaskTitle('');
     setTaskPoints(15);
-    setTaskXp(15);
     setTaskCategory('chores');
     setTaskRecurrence('daily');
     setTaskCooldownMinutes(undefined);
@@ -356,7 +357,6 @@ export default function ParentDashboard({
     setEditingTaskId(task.id);
     setTaskTitle(task.title);
     setTaskPoints(task.points);
-    setTaskXp(task.xp ?? task.points);
     setTaskCategory(task.category);
     setTaskRecurrence(task.recurrence);
     setTaskCooldownMinutes(task.cooldown_minutes ?? undefined);
@@ -449,7 +449,7 @@ export default function ParentDashboard({
                               <span className="text-lg">🎁</span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
-                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{req.reward_name}</p>
+                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
                               </div>
                             </div>
                           );
@@ -475,6 +475,20 @@ export default function ParentDashboard({
               )}
             </AnimatePresence>
           </div>
+
+          {onLogout && (
+            <button
+              onClick={() => {
+                playSound.click();
+                onLogout();
+              }}
+              className="flex items-center gap-1 sm:gap-2 bg-white hover:bg-stone-50 text-stone-700 font-extrabold border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
+              id="global-logout-btn"
+            >
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600" />
+              <span>SIGN OUT</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
@@ -658,7 +672,7 @@ export default function ParentDashboard({
                                     </div>
                                     <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
                                       <TrendingUp className="w-3.5 h-3.5 text-cyan-500" />
-                                      {task?.xp ?? task?.points ?? 0} XP
+                                      {task?.points ?? 0} Gold
                                     </div>
                                   </div>
                                   <div className="flex gap-2">
@@ -713,7 +727,7 @@ export default function ParentDashboard({
                                 </div>
                                 <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
                                   <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs text-rose-700`}>-{reward?.cost_points || 0} XP</span>
+                                    <span className={`font-mono font-black text-xs text-rose-700`}>-{reward?.cost_points || 0} Gold</span>
                                   </div>
                                   <div className="flex gap-2">
                                     <button
@@ -942,7 +956,7 @@ export default function ParentDashboard({
                               )}
                               <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
                                 <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({child.xp_in_level || 0}/{parentProfile?.xp_to_level_up ?? 100} XP)</span></span>
+                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)}/{parentProfile?.points_to_level_up ?? 500} Gold)</span></span>
                               </div>
                             </div>
                           </div>
@@ -997,14 +1011,14 @@ export default function ParentDashboard({
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono ${styles.textColor}`}>XP:</span>
-                                      <div className="flex gap-1">
+                                      <span className={`text-xs font-mono ${styles.textColor}`}>Lifetime Gold:</span>
+                                      <div className="flex gap-1.5 justify-end">
                                         <button onClick={() => { 
                                           playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'XP'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: Math.max(0, (child.xp_in_level || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { xp_in_level: (child.xp_in_level || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 XP"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
+                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
@@ -1018,39 +1032,7 @@ export default function ParentDashboard({
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Weekly XP:</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Weekly XP'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Weekly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: Math.max(0, (child.weekly_xp || 0) - 50) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 50 Weekly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { weekly_xp: (child.weekly_xp || 0) + 50 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 50 Weekly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Monthly XP:</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Monthly XP'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Monthly XP to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: Math.max(0, (child.monthly_xp || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Monthly XP"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { monthly_xp: (child.monthly_xp || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Monthly XP"><PlusCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-[10px] font-mono ${styles.textColor}`}>Streak Days:</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Streak'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Streak to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: Math.max(0, (child.streak_days || 0) - 1) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 1 Streak Day"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { streak_days: (child.streak_days || 0) + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 1 Streak Day"><PlusCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
+
                                   </div>
                                 </motion.div>
                               )}
@@ -1061,12 +1043,12 @@ export default function ParentDashboard({
                         <div className="space-y-2">
                           <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
                             <span className="uppercase">LEVEL {child.level} PROGRESS</span>
-                            <span className={`font-extrabold ${styles.titleColor}`}>{child.xp_in_level} / {parentProfile?.xp_to_level_up ?? 100} XP</span>
+                            <span className={`font-extrabold ${styles.titleColor}`}>{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
                           </div>
                           <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
                             <div 
                               className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
-                              style={{ width: `${Math.min(100, ((child.xp_in_level || 0) / (parentProfile?.xp_to_level_up ?? 100)) * 100)}%` }}
+                              style={{ width: `${Math.min(100, (((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
                             />
                           </div>
                         </div>
@@ -1147,16 +1129,6 @@ export default function ParentDashboard({
                               className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             />
                           </div>
-                          <div className="flex-1">
-                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>XP Reward</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={taskXp}
-                              onChange={e => setTaskXp(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
-                            />
-                          </div>
                         </div>
 
                         <div>
@@ -1201,7 +1173,6 @@ export default function ParentDashboard({
                             setEditingTaskId(null);
                             setTaskTitle('');
                             setTaskPoints(15);
-                            setTaskXp(15);
                             setTaskCooldownMinutes(undefined);
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
@@ -1258,7 +1229,7 @@ export default function ParentDashboard({
                                 </span>
                                 <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
                                   <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                                  <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
+                                  <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.points}</span>
                                 </div>
                               </div>
                               <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
@@ -1866,6 +1837,7 @@ export default function ParentDashboard({
                 <TargetsTab
                   theme={theme}
                   parentProfile={parentProfile}
+                  onUpdateParentProfile={onUpdateParentProfile}
                 />
               </motion.div>
             )}
@@ -1914,10 +1886,6 @@ export default function ParentDashboard({
                     onClick={() => {
                       playSound.purchase();
                       if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
-                      if (resetConfirmation.type === 'XP') onUpdateChildStats(resetConfirmation.childId, { xp_in_level: 0 });
-                      if (resetConfirmation.type === 'Level') onUpdateChildStats(resetConfirmation.childId, { level: 1 });
-                      if (resetConfirmation.type === 'Weekly XP') onUpdateChildStats(resetConfirmation.childId, { weekly_xp: 0 });
-                      if (resetConfirmation.type === 'Monthly XP') onUpdateChildStats(resetConfirmation.childId, { monthly_xp: 0 });
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}

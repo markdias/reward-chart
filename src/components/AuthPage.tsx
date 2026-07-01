@@ -4,30 +4,24 @@ import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
+import { hashPassword } from '../utils/security';
 
 interface AuthPageProps {
-  onStartDemo: () => void;
   onLoginReal: (email: string) => void;
   onBackToLanding: () => void;
   theme: ThemeId;
 }
 
-export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, theme }: AuthPageProps) {
+export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [pin, setPin] = useState('');
   const [familyName, setFamilyName] = useState('');
   const searchParams = new URLSearchParams(window.location.search);
   const hasShareToken = searchParams.has('share');
 
   const [isSignUp, setIsSignUp] = useState(hasShareToken);
   const [realAuthError, setRealAuthError] = useState('');
-  
-  const handleDemoClick = () => {
-    playSound.levelUp();
-    onStartDemo();
-  };
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'Unknown connection or authentication error';
@@ -87,26 +81,34 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
     return finalMsg;
   };
 
-  const handleLocalFallback = (emailVal: string, passVal: string, action: 'signup' | 'signin') => {
+  const handleLocalFallback = async (emailVal: string, passVal: string, action: 'signup' | 'signin') => {
     const trimmedEmail = emailVal.trim().toLowerCase();
     const stored = localStorage.getItem('RCH_LOCAL_CREDENTIALS');
     const creds = stored ? JSON.parse(stored) : {};
 
+    const hashedVal = await hashPassword(passVal, trimmedEmail);
+
     if (action === 'signup') {
-      creds[trimmedEmail] = passVal;
+      creds[trimmedEmail] = hashedVal;
       localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
       playSound.pinSuccess();
       onLoginReal(trimmedEmail);
     } else {
       const savedPass = creds[trimmedEmail];
-      if (savedPass && savedPass === passVal) {
+      const matched = (savedPass && savedPass === hashedVal) || (savedPass && savedPass === passVal);
+
+      if (matched) {
+        if (savedPass === passVal) {
+          creds[trimmedEmail] = hashedVal;
+          localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
+        }
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
       } else if (savedPass) {
-        setRealAuthError('Incorrect PIN or password for this local account.');
+        setRealAuthError('Incorrect password for this local account.');
         playSound.pinError();
       } else {
-        creds[trimmedEmail] = passVal;
+        creds[trimmedEmail] = hashedVal;
         localStorage.setItem('RCH_LOCAL_CREDENTIALS', JSON.stringify(creds));
         playSound.pinSuccess();
         onLoginReal(trimmedEmail);
@@ -132,7 +134,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
     }
 
     if (!isSupabaseConfigured()) {
-      handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
+      await handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
       return;
     }
 
@@ -146,7 +148,6 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
             options: {
               data: {
                 name,
-                pin,
                 family_name: familyName
               }
             }
@@ -227,9 +228,9 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
           </div>
           <div>
             <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
-              KIDARCADE
+              REWARD CHART
             </span>
-            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">SUPERHERO CHORE PROTOCOL</span>
+            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
           </div>
         </div>
       </header>
@@ -245,10 +246,10 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
-                {isSignUp ? 'REGISTER MISSION CONTROL' : 'DECRYPT PARENT ACCESS'}
+                {isSignUp ? 'CREATE PARENT ACCOUNT' : 'SECURE PARENT LOGIN'}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
-                Requires parent permission to adjust point allocations
+                Requires parent credentials to manage quests and rewards
               </p>
             </div>
 
@@ -264,7 +265,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
 
               <div>
                 <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                  Parent Identity (Email)
+                  Parent Email Address
                 </label>
                 <input
                   type="email"
@@ -285,7 +286,7 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="E.g. Mummy, Daddy, Commander"
+                      placeholder="E.g. Mum, Dad, etc."
                       required
                       className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
                     />
@@ -306,27 +307,12 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
                       />
                     </div>
                   )}
-
-                  <div>
-                    <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                      4-Digit App PIN (For Child Lock)
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={4}
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="1234"
-                      required
-                      className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border tracking-widest ${styles.inputBg}`}
-                    />
-                  </div>
                 </>
               )}
 
               <div>
                 <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                  Secure Key / Password
+                  Password
                 </label>
                 <input
                   type="password"
@@ -342,17 +328,9 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
                 className="w-full gamepad-button py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
                 id="real-login-submit"
               >
-                {isSignUp ? 'ESTABLISH FAMILY ZONE' : 'AUTHENTICATE SECURE ZONE'}
+                {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
               </button>
             </form>
-
-            {isSignUp && (
-              <div className="p-3 border rounded-xl text-[11px] leading-relaxed space-y-1 bg-amber-50 border-amber-200 text-amber-800">
-                <p className="font-bold flex items-center gap-1">💡 Supabase Setup Tip:</p>
-                <p>1. Make sure you have executed the <strong>SQL Table Setup Script</strong> in your Supabase SQL Editor so the tables exist.</p>
-                <p>2. Disable <strong>Confirm email</strong> in your Supabase Dashboard under <strong>Auth ➔ Providers ➔ Email</strong> to allow instant logins.</p>
-              </div>
-            )}
 
             <div className="text-center pt-2">
               <button
@@ -363,27 +341,8 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
                 className="text-xs text-stone-600 hover:text-stone-950 font-bold font-medium font-mono"
                 id="toggle-sign-up"
               >
-                {isSignUp ? '← USE EXISTING KEY' : 'CREATE SECURE KEYZONE'}
+                {isSignUp ? '← USE EXISTING ACCOUNT' : 'CREATE A NEW ACCOUNT'}
               </button>
-            </div>
-
-            {/* Sandbox Demo access placed directly under standard login controls */}
-            <div className={`mt-6 pt-6 border-t ${styles.divider} space-y-4`}>
-              <div className="text-center">
-                <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase`}>
-                  OR RUN CORE SIMULATION
-                </span>
-              </div>
-              <button
-                onClick={handleDemoClick}
-                className={`w-full gamepad-button ${styles.btnPrimary} py-3.5 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-xs uppercase font-display tracking-wide`}
-                id="try-demo-btn"
-              >
-                <Play className="w-4 h-4 fill-current animate-pulse" /> EXECUTE SANDBOX RUN
-              </button>
-              <p className={`text-[10px] text-center ${styles.textMuted} leading-relaxed`}>
-                Test the arcade instantly with Leo & Chloe, pre-loaded gold, and sample chores.
-              </p>
             </div>
           </motion.div>
         </div>
@@ -395,8 +354,8 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>OFFLINE ZONE</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>Local Sandbox Save</span>
+              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>LOCAL STORAGE</span>
+              <span className={`text-[11px] font-bold ${styles.textColor}`}>Local Offline Save</span>
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
@@ -404,8 +363,8 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
               <Heart className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>COMPLIANCE</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>COPPA Encrypted</span>
+              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>PRIVACY SAFE</span>
+              <span className={`text-[11px] font-bold ${styles.textColor}`}>Safe & Family Friendly</span>
             </div>
           </div>
         </div>
@@ -414,13 +373,13 @@ export default function AuthPage({ onStartDemo, onLoginReal, onBackToLanding, th
       {/* Footer Console */}
       <footer className={`w-full max-w-7xl mx-auto px-6 py-6 border-t ${styles.divider} text-center text-xs ${styles.textMuted} mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 relative z-20`}>
         <div>
-          © 2026 KIDARCADE Corp. Transforming family responsibilities into magical digital conquests.
+          © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-mono text-[10px]">
-          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY_LEDGER</a>
-          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS_OF_SERVICE</a>
+          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
+          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className="text-emerald-600 font-bold animate-pulse">● ENGINE_ONLINE_V2.0</span>
+          <span className="text-emerald-600 font-bold animate-pulse">● SYSTEM ONLINE</span>
         </div>
       </footer>
     </div>
