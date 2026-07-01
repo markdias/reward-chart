@@ -88,6 +88,14 @@ export default function ChildDashboard({
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
 
+  // Helper to offset dates by 4 hours for a "4 AM daily reset"
+  // This ensures tasks completed at 1 AM count towards the previous day
+  const getLogicalDateString = (date: Date | string) => {
+    const d = new Date(date);
+    d.setHours(d.getHours() - 4);
+    return d.toDateString();
+  };
+
   useEffect(() => {
     if (lockedChildId) {
       setSelectedChildId(lockedChildId);
@@ -1353,8 +1361,9 @@ export default function ChildDashboard({
                               // Filter completions by recurrence type
                               let compl = null;
                               if (task.recurrence === 'daily') {
-                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && new Date(c.completed_at).toDateString() === new Date().toDateString());
+                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
                               } else if (task.recurrence === 'weekly') {
+                                // For weekly, we could also use logical date, but getCurrentWeekKey is fine for now
                                 compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
                               } else if (task.recurrence === 'one_time') {
                                 compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
@@ -1363,11 +1372,11 @@ export default function ChildDashboard({
                               const isPending = compl && compl.status === 'pending';
                               const isApproved = compl && compl.status === 'approved';
 
-                              // Count how many times repeatable quest was completed today
+                              // Count how many times repeatable quest was completed today (using logical day)
                               const completedTodayCount = completions.filter(c => 
                                 c.task_id === task.id && 
                                 c.child_id === activeChild.id && 
-                                new Date(c.completed_at).toDateString() === new Date().toDateString()
+                                getLogicalDateString(c.completed_at) === getLogicalDateString(new Date())
                               ).length;
 
                               // Cooldown logic
