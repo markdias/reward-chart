@@ -1236,7 +1236,6 @@ export default function ParentDashboard({
                                 </span>
                                 <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
                                   <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                                  <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.points}</span>
                                 </div>
                               </div>
                               <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
@@ -1348,7 +1347,6 @@ export default function ParentDashboard({
                               </span>
                               <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
                                 <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                                <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500" /> {task.xp ?? task.points}</span>
                               </div>
                             </div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
