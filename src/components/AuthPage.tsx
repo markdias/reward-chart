@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 'lucide-react';
 import { playSound } from '../utils/sound';
@@ -25,6 +25,27 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
   const [isSignUp, setIsSignUp] = useState(hasShareToken);
   const [realAuthError, setRealAuthError] = useState('');
+  const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string } | null>(null);
+
+  useEffect(() => {
+    if (hasShareToken && isSupabaseConfigured()) {
+      const fetchInviter = async () => {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const shareToken = searchParams.get('share');
+          const { data } = await supabase
+            .from('parent_profiles')
+            .select('name, family_name')
+            .eq('share_token', shareToken)
+            .maybeSingle();
+          if (data) {
+            setInviterInfo({ name: data.name || 'A Parent', familyName: data.family_name || 'Their Family' });
+          }
+        }
+      };
+      fetchInviter();
+    }
+  }, [hasShareToken]);
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'Unknown connection or authentication error';
@@ -270,10 +291,13 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
-                {isSignUp ? 'CREATE PARENT ACCOUNT' : 'SECURE PARENT LOGIN'}
+                {isSignUp ? (hasShareToken ? 'JOIN FAMILY' : 'CREATE PARENT ACCOUNT') : 'SECURE PARENT LOGIN'}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
-                Requires parent credentials to manage quests and rewards
+                {hasShareToken && isSignUp && inviterInfo 
+                  ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}`
+                  : 'Requires parent credentials to manage quests and rewards'
+                }
               </p>
             </div>
 
