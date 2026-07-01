@@ -5,10 +5,10 @@ import {
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert
 } from 'lucide-react';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, ThemeId, ParentProfile } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } from '../types';
+import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
-import { THEME_PRESETS } from '../utils/theme';
 import { getCurrentWeekKey } from '../utils/date';
 
 const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string }) => (
@@ -153,9 +153,9 @@ export default function ChildDashboard({
 
   // Reset video play state when popup is closed
   useEffect(() => {
-    const showUnlock = activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo);
-    const showFoodUnlock = activeChild && activeChild.food_pot_unlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo);
-    const showGiftingUnlock = activeChild && activeChild.gifting_unlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo);
+    const showUnlock = activeChild && isSavingsUnlocked && (!activeChild.savings_unlock_seen || showReplayVideo);
+    const showFoodUnlock = activeChild && isFoodPotUnlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo);
+    const showGiftingUnlock = activeChild && isGiftingUnlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo);
     if (!showUnlock && !showFoodUnlock && !showGiftingUnlock) {
       setIsVideoPlaying(false);
     }
@@ -213,7 +213,7 @@ export default function ChildDashboard({
     if (!selectedChildId || !activeChild) return;
     
     // Only check if they have the food pot unlocked, haven't fed today, and no penalty modal is showing
-    if (activeChild.food_pot_unlocked && activeChild.food_pot_unlock_seen && !activeChild.pet_fed_today && !penaltyMessage) {
+    if (isFoodPotUnlocked && activeChild.food_pot_unlock_seen && !activeChild.pet_fed_today && !penaltyMessage) {
       const todayStr = new Date().toISOString().split('T')[0];
       const storageKey = `feed_reminder_${activeChild.id}`;
       const lastAsked = localStorage.getItem(storageKey);
@@ -225,8 +225,9 @@ export default function ChildDashboard({
     }
   }, [selectedChildId, activeChild?.id, activeChild?.food_pot_unlocked, activeChild?.food_pot_unlock_seen, activeChild?.pet_fed_today, penaltyMessage]);
 
-
-
+  const isSavingsUnlocked = activeChild ? (activeChild.savings_unlocked || activeChild.level >= (parentProfile?.savings_pot_unlock_level ?? 2)) : false;
+  const isFoodPotUnlocked = activeChild ? (activeChild.food_pot_unlocked || activeChild.level >= (parentProfile?.food_pot_unlock_level ?? 4)) : false;
+  const isGiftingUnlocked = activeChild ? (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6)) : false;
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
@@ -251,14 +252,15 @@ export default function ChildDashboard({
     onCompleteTask(taskId, selectedChildId);
   };
 
-  const handleClaimReward = (rewardId: string, cost: number) => {
+  const handleClaimReward = (rewardId: string, cost: number, paymentSource: 'main' | 'savings' = 'main') => {
     if (!activeChild) return;
-    if (availablePoints < cost) {
+    const available = paymentSource === 'savings' ? (activeChild.savings_pot || 0) : availablePoints;
+    if (available < cost) {
       playSound.pinError();
       return;
     }
     playSound.success();
-    onClaimReward(rewardId, activeChild.id);
+    onClaimReward(rewardId, activeChild.id, paymentSource);
   };
 
   // Fun interactive "Feed Companion" action with sound & scaling state!
@@ -528,7 +530,7 @@ export default function ChildDashboard({
 
       {/* Savings Pot Unlock Celebration Overlay */}
       <AnimatePresence>
-        {activeChild && activeChild.savings_unlocked && (!activeChild.savings_unlock_seen || showReplayVideo) && (
+        {activeChild && isSavingsUnlocked && (!activeChild.savings_unlock_seen || showReplayVideo) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -603,7 +605,7 @@ export default function ChildDashboard({
 
       {/* Food Pot Unlock Celebration Overlay */}
       <AnimatePresence>
-        {activeChild && activeChild.food_pot_unlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo) && (
+        {activeChild && isFoodPotUnlocked && (!activeChild.food_pot_unlock_seen || showFoodReplayVideo) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -678,7 +680,7 @@ export default function ChildDashboard({
 
       {/* Gifting Pot Unlock Celebration Overlay */}
       <AnimatePresence>
-        {activeChild && activeChild.gifting_unlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo) && (
+        {activeChild && isGiftingUnlocked && (!activeChild.gifting_unlock_seen || showGiftingReplayVideo) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1036,7 +1038,7 @@ export default function ChildDashboard({
                         </div>
                       </div>
 
-                      {activeChild.food_pot_unlocked && (
+                      {isFoodPotUnlocked && (
                         <div className="mt-4 flex items-center justify-center w-full">
                           {activeChild.pet_unhappy ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
@@ -1092,7 +1094,7 @@ export default function ChildDashboard({
                         </div>
                       </div>
 
-                      {activeChild.food_pot_unlocked && (
+                      {isFoodPotUnlocked && (
                         <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 flex flex-col gap-2">
                           <button
                             onClick={handleFeedCompanion}
@@ -1218,7 +1220,7 @@ export default function ChildDashboard({
                                         {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
-                                        {activeChild.weekly_reward_points || 200} GOLD BONUS
+                                        {parentProfile?.weekly_reward_points || 200} GOLD BONUS
                                       </span>
                                     </div>
                                     <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
@@ -1243,7 +1245,7 @@ export default function ChildDashboard({
                                         {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
-                                        {activeChild.monthly_reward_points || 1000} GOLD BONUS
+                                        {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
                                       </span>
                                     </div>
                                     <div className={`w-full h-3 rounded-full overflow-hidden border bg-stone-100 border-stone-200 mt-2`}>
@@ -1484,7 +1486,7 @@ export default function ChildDashboard({
                               const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                               const isAffordable = availablePoints >= rew.cost_points;
                               const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                              const isSavingFor = activeChild.savings_unlocked && activeChild.savings_goal_reward_id === rew.id;
+                              const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
                               const canDispense = isAffordable && availability.available && !hasPendingRequest;
                               
                               // Hide claimed one_time rewards entirely
@@ -1517,7 +1519,20 @@ export default function ChildDashboard({
                                     </span>
 
                                     <div className="flex flex-col gap-1.5 items-end">
-                                      {isSavingFor ? null : (
+                                      {isSavingFor ? (
+                                        <button
+                                          disabled={!canDispense || (activeChild.savings_pot || 0) < rew.cost_points}
+                                          onClick={() => handleClaimReward(rew.id, rew.cost_points, 'savings')}
+                                          className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
+                                            canDispense && (activeChild.savings_pot || 0) >= rew.cost_points
+                                              ? 'bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                          }`}
+                                          id={`claim-reward-savings-${rew.id}`}
+                                        >
+                                          {!availability.available ? availability.reason : hasPendingRequest ? 'PENDING' : 'BUY (SAVINGS)'}
+                                        </button>
+                                      ) : (
                                         <button
                                           disabled={!canDispense}
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points)}
@@ -1532,7 +1547,7 @@ export default function ChildDashboard({
                                         </button>
                                       )}
                                       
-                                      {activeChild.savings_unlocked && (
+                                      {isSavingsUnlocked && (
                                         isSavingFor ? (
                                           <span className="text-[10px] sm:text-xs text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1.5 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300 shadow-sm mt-1">
                                             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> SAVING FOR
@@ -1568,7 +1583,7 @@ export default function ChildDashboard({
                           {/* === SAVINGS POT SECTION === */}
 
                           {/* Savings Pot Unlocked Card */}
-                          {activeChild.savings_unlocked && activeChild.savings_unlock_seen && (
+                          {isSavingsUnlocked && activeChild.savings_unlock_seen && (
                             <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
                               <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500`} />
                         
@@ -1619,6 +1634,14 @@ export default function ChildDashboard({
                                       className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
                                     />
                                   </div>
+                                  {(activeChild.savings_pot || 0) >= (activeChild.savings_goal_amount || 0) && activeChild.savings_goal_reward_id && (
+                                    <button
+                                      onClick={() => handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings')}
+                                      className="mt-3 w-full py-2 bg-emerald-500 text-white font-black uppercase tracking-wider rounded-lg shadow-[0_3px_0_0_#047857] hover:bg-emerald-400 active:translate-y-1 active:shadow-none text-[10px] sm:text-xs transition-all"
+                                    >
+                                      🎉 CLAIM GOAL!
+                                    </button>
+                                  )}
                                 </div>
                               )}
 
@@ -1739,7 +1762,7 @@ export default function ChildDashboard({
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
-                          {!activeChild.savings_unlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
+                          {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
@@ -1767,7 +1790,7 @@ export default function ChildDashboard({
                           )}                          {/* === FOOD POT SECTION === */}
 
                           {/* Food Pot Unlocked Card */}
-                          {activeChild.food_pot_unlocked && activeChild.food_pot_unlock_seen && (
+                          {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
                             <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
                               <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-500`} />
                         
@@ -1792,7 +1815,7 @@ export default function ChildDashboard({
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl">
                                   <span className="text-lg"><GoldCoinIcon /></span>
-                                  <span className="text-lg font-mono font-black text-orange-700">{activeChild.food_pot || 0}</span>
+                                  <span className="text-lg font-mono font-black text-orange-700">{(activeChild as any).food_pot || 0}</span>
                                 </div>
                               </div>
 
@@ -1845,7 +1868,7 @@ export default function ChildDashboard({
                           )}
 
                           {/* Food Pot Locked Preview */}
-                          {!activeChild.food_pot_unlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
+                          {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
@@ -1875,7 +1898,7 @@ export default function ChildDashboard({
                           {/* === GIFTING POT SECTION === */}
 
                           {/* Gifting Pot Unlocked Card */}
-                          {activeChild.gifting_unlocked && activeChild.gifting_unlock_seen && (
+                          {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
                             <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
                               <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-rose-400 via-pink-400 to-fuchsia-500`} />
                         
@@ -1978,8 +2001,8 @@ export default function ChildDashboard({
                                         <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{charityAmount}</span>
                                       </div>
                                       <button
-                                        onClick={() => { setCharityAmount(Math.min((activeChild.gifting_pot || 0), charityAmount + 1)); playSound.click(); }}
-                                        disabled={charityAmount >= (activeChild.gifting_pot || 0)}
+                                        onClick={() => { setCharityAmount(Math.min(((activeChild as any).gifting_pot || 0), charityAmount + 1)); playSound.click(); }}
+                                        disabled={charityAmount >= ((activeChild as any).gifting_pot || 0)}
                                         className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                       >
                                         <Plus className="w-4 h-4" />
@@ -1988,13 +2011,13 @@ export default function ChildDashboard({
                                     <div className="flex gap-2 mt-2">
                                       <button
                                         onClick={() => {
-                                          if (charityAmount > 0 && charityAmount <= (activeChild.gifting_pot || 0) && selectedCharityId) {
+                                          if (charityAmount > 0 && charityAmount <= ((activeChild as any).gifting_pot || 0) && selectedCharityId) {
                                             onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
                                             setShowCharityModal(false);
                                             playSound.success();
                                           }
                                         }}
-                                        disabled={charityAmount <= 0 || charityAmount > (activeChild.gifting_pot || 0) || !selectedCharityId}
+                                        disabled={charityAmount <= 0 || charityAmount > ((activeChild as any).gifting_pot || 0) || !selectedCharityId}
                                         className="flex-1 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-emerald-400 active:translate-y-0.5 transition-all"
                                       >
                                         Ask to Donate
@@ -2041,8 +2064,8 @@ export default function ChildDashboard({
                                         <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{siblingAmount}</span>
                                       </div>
                                       <button
-                                        onClick={() => { setSiblingAmount(Math.min((activeChild.gifting_pot || 0), siblingAmount + 1)); playSound.click(); }}
-                                        disabled={siblingAmount >= (activeChild.gifting_pot || 0)}
+                                        onClick={() => { setSiblingAmount(Math.min(((activeChild as any).gifting_pot || 0), siblingAmount + 1)); playSound.click(); }}
+                                        disabled={siblingAmount >= ((activeChild as any).gifting_pot || 0)}
                                         className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
                                       >
                                         <Plus className="w-4 h-4" />
@@ -2051,13 +2074,13 @@ export default function ChildDashboard({
                                     <div className="flex gap-2 mt-2">
                                       <button
                                         onClick={() => {
-                                          if (siblingAmount > 0 && siblingAmount <= (activeChild.gifting_pot || 0) && selectedSiblingId) {
+                                          if (siblingAmount > 0 && siblingAmount <= ((activeChild as any).gifting_pot || 0) && selectedSiblingId) {
                                             onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
                                             setShowSiblingModal(false);
                                             playSound.success();
                                           }
                                         }}
-                                        disabled={siblingAmount <= 0 || siblingAmount > (activeChild.gifting_pot || 0) || !selectedSiblingId}
+                                        disabled={siblingAmount <= 0 || siblingAmount > ((activeChild as any).gifting_pot || 0) || !selectedSiblingId}
                                         className="flex-1 py-2 rounded-lg bg-pink-500 text-white text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:bg-pink-400 active:translate-y-0.5 transition-all"
                                       >
                                         Ask to Gift
@@ -2076,7 +2099,7 @@ export default function ChildDashboard({
                           )}
 
                           {/* Gifting Pot Locked Preview */}
-                          {!activeChild.gifting_unlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
+                          {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />

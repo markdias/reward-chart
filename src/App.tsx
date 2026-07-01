@@ -497,8 +497,7 @@ export default function App() {
       if (error) {
         console.warn('Failed to sync child update to Supabase:', error);
         console.warn('Payload was:', {
-          points: updatedChild.points, level: updatedChild.level,
-          is_rent_due: updatedChild.is_rent_due, rent_due_date: updatedChild.rent_due_date
+          points: updatedChild.points, level: updatedChild.level
         });
         console.warn('ID was:', updatedChild.id);
         alert(`DATABASE ERROR: ${error.message}\n\nPlease run combined_patch.sql in your Supabase SQL Editor.`);
@@ -532,10 +531,8 @@ export default function App() {
       parent_id: emailToUse,
       points: 0,
       level: 1,
-      xp_in_level: 0,
       streak_days: 0,
       pet_food: 0,
-      food_pot: 0,
       food_pot_unlocked: false,
       food_pot_unlock_seen: false,
       food_pot_weekly_contribution: 0,
@@ -544,7 +541,6 @@ export default function App() {
       pet_unhappy: false,
       last_fed_date: null,
       last_hunger_check_date: new Date().toISOString().split('T')[0],
-      gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
       lifetime_points: 0,
@@ -678,9 +674,8 @@ export default function App() {
         ...c,
         points: 0,
         level: 1,
-        xp_in_level: 0,
-        weekly_xp: 0,
-        monthly_xp: 0
+        streak_days: 0,
+        monthly_points: 0
       }));
       syncChildren(updatedChildren);
       for (const child of updatedChildren) {
@@ -741,10 +736,8 @@ export default function App() {
       character_id: characterId,
       points: 0,
       level: 1,
-      xp_in_level: 0,
       streak_days: 0,
       pet_food: 0,
-      food_pot: 0,
       food_pot_unlocked: false,
       food_pot_unlock_seen: false,
       food_pot_weekly_contribution: 0,
@@ -753,7 +746,6 @@ export default function App() {
       pet_unhappy: false,
       last_fed_date: null,
       last_hunger_check_date: new Date().toISOString().split('T')[0],
-      gifting_pot: 0,
       gifting_unlocked: false,
       gifting_unlock_seen: false,
       lifetime_points: 0,
@@ -1307,6 +1299,12 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
+  const handleUpdateParentProfile = (updates: Partial<ParentProfile>) => {
+    if (parentProfile) {
+      setParentProfile({ ...parentProfile, ...updates });
+    }
+  };
+
   const handleSavingsWithdraw = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child || (child.savings_pot || 0) <= 0) return;
@@ -1686,6 +1684,7 @@ export default function App() {
               onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
+              onUpdateParentProfile={handleUpdateParentProfile}
               onAddReward={handleAddReward}
               onAssignReward={handleAssignReward}
               onEditReward={handleEditReward}

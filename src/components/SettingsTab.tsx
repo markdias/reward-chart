@@ -22,13 +22,25 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
-  const [weeklyXpTarget, setWeeklyXpTarget] = useState(parentProfile?.weekly_xp_target ?? 300);
+  const [weeklyPointsTarget, setWeeklyPointsTarget] = useState(parentProfile?.weekly_points_target ?? 100);
   const [weeklyRewardPoints, setWeeklyRewardPoints] = useState(parentProfile?.weekly_reward_points ?? 200);
-  const [monthlyXpTarget, setMonthlyXpTarget] = useState(parentProfile?.monthly_xp_target ?? 1200);
+  const [monthlyPointsTarget, setMonthlyPointsTarget] = useState(parentProfile?.monthly_points_target ?? 500);
   const [monthlyRewardPoints, setMonthlyRewardPoints] = useState(parentProfile?.monthly_reward_points ?? 1000);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  React.useEffect(() => {
+    if (parentProfile) {
+      setName(parentProfile.name || '');
+      setFamilyName(parentProfile.family_name || '');
+      setLevelUpGoldReward(parentProfile.level_up_gold_reward ?? 500);
+      setWeeklyPointsTarget(parentProfile.weekly_points_target ?? 100);
+      setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
+      setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 500);
+      setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
+    }
+  }, [parentProfile]);
   
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
@@ -79,7 +91,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         .update({ 
           name,
           level_up_gold_reward: levelUpGoldReward,
-          weekly_xp_target: weeklyXpTarget,
+          weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
           monthly_reward_points: monthlyRewardPoints
         })

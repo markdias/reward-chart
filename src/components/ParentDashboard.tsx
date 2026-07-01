@@ -53,6 +53,7 @@ interface ParentDashboardProps {
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onLogout?: () => void;
+  onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
 }
 
 export default function ParentDashboard({
@@ -90,7 +91,8 @@ export default function ParentDashboard({
   giftingRequests = [],
   onApproveGiftingRequest,
   onRejectGiftingRequest,
-  onLogout
+  onLogout,
+  onUpdateParentProfile
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
@@ -447,7 +449,7 @@ export default function ParentDashboard({
                               <span className="text-lg">🎁</span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
-                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{req.reward_name}</p>
+                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
                               </div>
                             </div>
                           );
@@ -1171,7 +1173,6 @@ export default function ParentDashboard({
                             setEditingTaskId(null);
                             setTaskTitle('');
                             setTaskPoints(15);
-                            setTaskXp(15);
                             setTaskCooldownMinutes(undefined);
                           }}
                           className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
@@ -1836,6 +1837,7 @@ export default function ParentDashboard({
                 <TargetsTab
                   theme={theme}
                   parentProfile={parentProfile}
+                  onUpdateParentProfile={onUpdateParentProfile}
                 />
               </motion.div>
             )}

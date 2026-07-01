@@ -9,9 +9,10 @@ import { playSound } from '../utils/sound';
 interface TargetsTabProps {
   theme: ThemeId;
   parentProfile?: ParentProfile | null;
+  onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
 }
 
-export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
+export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile }: TargetsTabProps) {
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
   const [weeklyPointsTarget, setWeeklyPointsTarget] = useState(parentProfile?.weekly_points_target ?? 300);
   const [weeklyRewardPoints, setWeeklyRewardPoints] = useState(parentProfile?.weekly_reward_points ?? 200);
@@ -22,6 +23,20 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
   const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 2);
   const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 4);
   const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 6);
+
+  React.useEffect(() => {
+    if (parentProfile) {
+      setLevelUpGoldReward(parentProfile.level_up_gold_reward ?? 500);
+      setWeeklyPointsTarget(parentProfile.weekly_points_target ?? 300);
+      setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
+      setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 1200);
+      setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
+      setPointsToLevelUp(parentProfile.points_to_level_up ?? 500);
+      setSavingsPotUnlockLevel(parentProfile.savings_pot_unlock_level ?? 2);
+      setFoodPotUnlockLevel(parentProfile.food_pot_unlock_level ?? 4);
+      setGiftingPotUnlockLevel(parentProfile.gifting_pot_unlock_level ?? 6);
+    }
+  }, [parentProfile]);
   
   const [isSaving, setIsSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -66,6 +81,20 @@ export default function TargetsTab({ theme, parentProfile }: TargetsTabProps) {
         .eq('user_id', parentProfile.user_id);
         
       if (error) throw error;
+      
+      if (onUpdateParentProfile) {
+        onUpdateParentProfile({
+          level_up_gold_reward: levelUpGoldReward,
+          weekly_points_target: weeklyPointsTarget,
+          weekly_reward_points: weeklyRewardPoints,
+          monthly_points_target: monthlyPointsTarget,
+          monthly_reward_points: monthlyRewardPoints,
+          points_to_level_up: pointsToLevelUp,
+          savings_pot_unlock_level: savingsPotUnlockLevel,
+          food_pot_unlock_level: foodPotUnlockLevel,
+          gifting_pot_unlock_level: giftingPotUnlockLevel,
+        });
+      }
         
       setMsg('Targets updated successfully!');
       playSound.success();
