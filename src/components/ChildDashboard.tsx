@@ -1,3 +1,10 @@
+import { 
+  FaSparkles, FaComet, FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
+  FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
+  FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
+  FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
+  FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
+} from 'react-icons/fa6';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -5,6 +12,9 @@ import {
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert
 } from 'lucide-react';
+import { 
+  FaPaw, FaBullseye, FaGift, FaJar
+} from 'react-icons/fa6';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } from '../types';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
@@ -554,7 +564,7 @@ export default function ChildDashboard({
               </div>
 
               <h2 className="text-3xl font-black font-display text-stone-900">
-                🎉 SAVINGS POT UNLOCKED!
+                <FaWandMagicSparkles className="inline-block mr-2 text-pink-500" /> SAVINGS POT UNLOCKED!
               </h2>
 
               <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
@@ -596,7 +606,7 @@ export default function ChildDashboard({
                 className="w-full btn-primary w-full"
                 id="savings-unlock-dismiss-btn"
               >
-                GOT IT! 🎉
+                GOT IT! <FaWandMagicSparkles className="inline-block ml-2 text-pink-500" />
               </button>
             </motion.div>
           </motion.div>
@@ -629,7 +639,7 @@ export default function ChildDashboard({
               </div>
 
               <h2 className="text-3xl font-black font-display text-stone-900">
-                🎉 FOOD POT UNLOCKED!
+                <FaWandMagicSparkles className="inline-block mr-2 text-orange-500" /> FOOD POT UNLOCKED!
               </h2>
 
               <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
@@ -671,7 +681,7 @@ export default function ChildDashboard({
                 className="w-full btn-primary w-full"
                 id="food-pot-unlock-dismiss-btn"
               >
-                GOT IT! 🎉
+                GOT IT! <FaWandMagicSparkles className="inline-block ml-2 text-pink-500" />
               </button>
             </motion.div>
           </motion.div>
@@ -704,7 +714,7 @@ export default function ChildDashboard({
               </div>
 
               <h2 className="text-3xl font-black font-display text-stone-900">
-                🎉 GIFTING POT UNLOCKED!
+                <FaWandMagicSparkles className="inline-block mr-2 text-purple-500" /> GIFTING POT UNLOCKED!
               </h2>
 
               <p className="text-sm text-stone-600 max-w-sm mx-auto leading-relaxed">
@@ -746,7 +756,7 @@ export default function ChildDashboard({
                 className="w-full btn-danger w-full"
                 id="gifting-pot-unlock-dismiss-btn"
               >
-                GOT IT! 🎉
+                GOT IT! <FaWandMagicSparkles className="inline-block ml-2 text-pink-500" />
               </button>
             </motion.div>
           </motion.div>
@@ -776,7 +786,7 @@ export default function ChildDashboard({
               </div>
 
               <h2 className="text-2.5xl font-black font-display text-rose-600">
-                💔 PET IS UNHAPPY!
+                <FaHeartCrack className="inline-block mr-2 text-red-500" /> PET IS UNHAPPY!
               </h2>
 
               <p className="text-sm text-stone-600 leading-relaxed">
@@ -788,7 +798,7 @@ export default function ChildDashboard({
                 className="w-full btn-primary py-3 bg-rose-500 hover:bg-rose-450 border-2 border-gray-200 text-white font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 id="pet-penalty-dismiss-btn"
               >
-                I Promise to Feed Them! 🥺
+                I Promise to Feed Them! <FaFaceSadTear className="inline-block ml-2 text-yellow-500" />
               </button>
             </motion.div>
           </motion.div>
@@ -839,7 +849,7 @@ export default function ChildDashboard({
                   }}
                   className="w-full btn-primary py-3 bg-orange-400 hover:bg-orange-350 border-2 border-gray-200 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 >
-                  {(activeChild?.pet_food || 0) > 0 ? "Feed Now! 🍖" : "Get Food! 🛒"}
+                  {(activeChild?.pet_food || 0) > 0 ? <span>Feed Now! <FaBone className="inline-block ml-2" /></span> : <span>Get Food! <FaCartShopping className="inline-block ml-2" /></span>}
                 </button>
                 <button
                   onClick={() => { 
@@ -1042,15 +1052,15 @@ export default function ChildDashboard({
                         <div className="mt-4 flex items-center justify-center w-full">
                           {activeChild.pet_unhappy ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
-                              😢 Pet Unhappy & Hungry
+                              <FaFaceFrown className="inline-block mr-2 text-blue-500" /> Pet Unhappy & Hungry
                             </span>
                           ) : activeChild.pet_fed_today ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
-                              💚 Pet Fed & Happy!
+                              <FaHeart className="inline-block mr-2 text-green-500" /> Pet Fed & Happy!
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold animate-bounce">
-                              🍖 Hungry! Needs Food
+                              <FaBone className="inline-block mr-2 text-amber-700" /> Hungry! Needs Food
                             </span>
                           )}
                         </div>
@@ -1108,11 +1118,11 @@ export default function ChildDashboard({
                             }`}
                           >
                             {isFeeding ? (
-                              <span>🍖 Chomp Chomp...</span>
+                              <span><FaBone className="inline-block mr-2 text-amber-700" /> Chomp Chomp...</span>
                             ) : activeChild.pet_fed_today ? (
-                              <span>✅ Fed for Today!</span>
+                              <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Fed for Today!</span>
                             ) : (
-                              <span>🍖 Feed Pet (1 Food)</span>
+                              <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
                             )}
                           </button>
                           <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
@@ -1121,7 +1131,7 @@ export default function ChildDashboard({
                           </div>
                           {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
                             <span className="text-[9px] text-red-500 font-bold text-center mt-1">
-                              ⚠️ No food left! Buy food from your Food Pot below.
+                              <FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> No food left! Buy food from your Food Pot below.
                             </span>
                           )}
                         </div>
@@ -1286,7 +1296,7 @@ export default function ChildDashboard({
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <span className="text-xl sm:text-base">🎯</span> <span className="hidden sm:inline">QUESTS</span>
+                        <FaBullseye className="text-xl sm:text-base text-red-500" /> <span className="hidden sm:inline">QUESTS</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
@@ -1296,7 +1306,7 @@ export default function ChildDashboard({
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <span className="text-xl sm:text-base">🎁</span> <span className="hidden sm:inline">PRIZES</span>
+                        <span className="text-xl sm:text-base"><FaGift className="text-purple-500" /></span> <span className="hidden sm:inline">PRIZES</span>
                       </button>
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
@@ -1306,7 +1316,7 @@ export default function ChildDashboard({
                             : 'text-stone-600 hover:text-stone-900 font-bold'
                         }`}
                       >
-                        <span className="text-xl sm:text-base">🍯</span> <span className="hidden sm:inline">POTS</span>
+                        <FaJar className="text-xl sm:text-base text-amber-500" /> <span className="hidden sm:inline">POTS</span>
                       </button>
                     </div>
 
@@ -1329,7 +1339,7 @@ export default function ChildDashboard({
                             return true;
                           }).length === 0 ? (
                             <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
-                              <span className="text-5xl block animate-bounce-slow">🎉</span>
+                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500" /></span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
                               <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
@@ -1477,7 +1487,7 @@ export default function ChildDashboard({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
-                              <span className="text-5xl block animate-bounce-slow">🎁</span>
+                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500" /></span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>
@@ -1639,7 +1649,7 @@ export default function ChildDashboard({
                                       onClick={() => handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings')}
                                       className="mt-3 w-full py-2 bg-emerald-500 text-white font-black uppercase tracking-wider rounded-lg shadow-[0_3px_0_0_#047857] hover:bg-emerald-400 active:translate-y-1 active:shadow-none text-[10px] sm:text-xs transition-all"
                                     >
-                                      🎉 CLAIM GOAL!
+                                      <FaWandMagicSparkles className="inline-block mr-2" /> CLAIM GOAL!
                                     </button>
                                   )}
                                 </div>
@@ -1656,7 +1666,7 @@ export default function ChildDashboard({
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
                                 >
-                                  💰 Deposit
+                                  <FaCoins className="inline-block mr-2 text-yellow-500" /> Deposit
                                 </button>
                                 <button
                                   onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
@@ -1766,7 +1776,7 @@ export default function ChildDashboard({
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🐷 Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider"><FaPiggyBank className="inline-block mr-2 text-pink-400" /> Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
@@ -1839,8 +1849,8 @@ export default function ChildDashboard({
                                 </div>
                                 <span className={`text-[9px] font-mono ${styles.textMuted} mt-1.5 block`}>
                                   {activeChild.food_pot_weekly_contribution >= 7 
-                                    ? "✅ Weekly contribution requirement met! Great job." 
-                                    : `⚠️ Need ${7 - (activeChild.food_pot_weekly_contribution || 0)} more gold coins in the pot this week.`
+                                    ? <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Weekly contribution requirement met! Great job.</span> 
+                                    : <span><FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more gold coins in the pot this week.</span>
                                   }
                                 </span>
                               </div>
@@ -1860,7 +1870,7 @@ export default function ChildDashboard({
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
                                 >
-                                  🍖 Buy Food (1g)
+                                  <FaBone className="inline-block mr-2" /> Buy Food (1g)
                                 </button>
                               </div>
 
@@ -1872,7 +1882,7 @@ export default function ChildDashboard({
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">🥣 Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider"><FaBowlFood className="inline-block mr-2 text-orange-400" /> Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
@@ -1934,7 +1944,7 @@ export default function ChildDashboard({
                                 if (daysSinceGifting > 14) {
                                   return (
                                     <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
-                                      <span className="text-rose-500">❤️</span>
+                                      <span className="text-rose-500"><FaHeart /></span>
                                       <p className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
                                         It's been a while since your last gift! Giving makes everyone happy.
                                       </p>
@@ -1955,7 +1965,7 @@ export default function ChildDashboard({
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
                                 >
-                                  🌍 Donate
+                                  <FaGlobe className="inline-block mr-2" /> Donate
                                 </button>
                                 <button
                                   onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
@@ -1966,7 +1976,7 @@ export default function ChildDashboard({
                                       : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
                                   }`}
                                 >
-                                  🎁 Gift Sibling
+                                  <FaGift className="inline-block mr-2" /> Gift Sibling
                                 </button>
                               </div>
 
@@ -1985,9 +1995,9 @@ export default function ChildDashboard({
                                       onChange={(e) => setSelectedCharityId(e.target.value)}
                                       className="w-full bg-white border border-emerald-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                                     >
-                                      <option value="CH-WILDLIFE">🦁 Global Wildlife Fund</option>
-                                      <option value="CH-OCEAN">🌊 Save the Oceans</option>
-                                      <option value="CH-CHILDREN">📚 Kids Education Charity</option>
+                                      <option value="CH-WILDLIFE"><FaCat className="inline-block mr-2" /> Global Wildlife Fund</option>
+                                      <option value="CH-OCEAN"><FaWater className="inline-block mr-2" /> Save the Oceans</option>
+                                      <option value="CH-CHILDREN"><FaBook className="inline-block mr-2" /> Kids Education Charity</option>
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
                                       <button
@@ -2049,7 +2059,7 @@ export default function ChildDashboard({
                                       className="w-full bg-white border border-pink-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                                     >
                                       {children.filter(c => c.id !== activeChild.id).map(c => (
-                                        <option key={c.id} value={c.id}>👧👦 {c.name}</option>
+                                        <option key={c.id} value={c.id}><FaChildDress className="inline-block mr-1" /><FaChild className="inline-block mr-2" /> {c.name}</option>
                                       ))}
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
@@ -2103,7 +2113,7 @@ export default function ChildDashboard({
                             <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
-                                <span className="text-xs font-black font-mono uppercase tracking-wider">💖 Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</span>
+                                <span className="text-xs font-black font-mono uppercase tracking-wider"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</span>
                               </div>
                               <div className="w-full max-w-[200px] h-2 bg-stone-200 rounded-full overflow-hidden">
                                 <motion.div
@@ -2150,10 +2160,10 @@ export default function ChildDashboard({
         {selectedChildId && (
           <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
             {[
-              { id: 'companion', label: 'PET', icon: null, emoji: '✨' },
-              { id: 'tasks', label: 'QUESTS', icon: null, emoji: '🎯' },
-              { id: 'rewards', label: 'PRIZES', icon: null, emoji: '🎁' },
-              { id: 'pots', label: 'POTS', icon: null, emoji: '🍯' }
+              { id: 'companion', label: 'PET', icon: FaPaw },
+              { id: 'tasks', label: 'QUESTS', icon: FaBullseye },
+              { id: 'rewards', label: 'PRIZES', icon: FaGift },
+              { id: 'pots', label: 'POTS', icon: FaJar }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeChildTab === tab.id;
@@ -2167,11 +2177,7 @@ export default function ChildDashboard({
                       : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
                   }`}
                 >
-                  {Icon ? (
-                    <Icon className="w-6 h-6" />
-                  ) : (
-                    <span className="text-2xl">{tab.emoji}</span>
-                  )}
+                  {Icon && <Icon className="w-6 h-6" />}
                   <span className={`text-[9px] font-bold font-mono tracking-widest uppercase ${isSelected ? 'text-cyan-600' : 'text-stone-500'}`}>
                     {tab.label}
                   </span>

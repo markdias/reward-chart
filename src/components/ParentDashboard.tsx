@@ -1,3 +1,10 @@
+import { 
+  FaSparkles, FaComet, FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
+  FaFacePleading, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
+  FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
+  FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
+  FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
+} from 'react-icons/fa6';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -434,7 +441,7 @@ export default function ParentDashboard({
                           const task = tasks.find(t => t.id === appr.task_id);
                           return (
                             <div key={appr.id} className="p-2.5 bg-[#F5F2EA] rounded-xl text-xs flex gap-2 border border-stone-200 text-stone-850">
-                              <span className="text-lg">📢</span>
+                              <span className="text-lg"><FaBullhorn /></span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
                                 <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
@@ -446,7 +453,7 @@ export default function ParentDashboard({
                           const child = children.find(c => c.id === req.child_id);
                           return (
                             <div key={req.id} className="p-2.5 bg-rose-50 rounded-xl text-xs flex gap-2 border border-rose-200 text-stone-850">
-                              <span className="text-lg">🎁</span>
+                              <span className="text-lg"><FaGift /></span>
                               <div>
                                 <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
                                 <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
@@ -456,7 +463,7 @@ export default function ParentDashboard({
                         })}
                         {pendingGiftingRequests.map(req => {
                           const child = children.find(c => c.id === req.child_id);
-                          const typeIcon = req.type === 'charity' ? '🌍' : '💝';
+                          const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
                           const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
                           return (
                             <div key={req.id} className="p-2.5 bg-blue-50 rounded-xl text-xs flex gap-2 border border-blue-200 text-stone-850">
@@ -618,7 +625,7 @@ export default function ParentDashboard({
 
                 {totalPending === 0 ? (
                   <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
-                    <span className="text-5xl inline-block animate-bounce-slow">🚀</span>
+                    <span className="text-5xl inline-block animate-bounce-slow"><FaRocket className="text-purple-500" /></span>
                     <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
                     <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
                       Whenever kids finish tasks or claim prizes, they will cascade here for parent authorisation.
@@ -629,7 +636,7 @@ export default function ParentDashboard({
                     {pendingApprovals.length > 0 && (
                       <div className="space-y-4">
                         <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          🧹 Pending Chores ({pendingApprovals.length})
+                          <FaBroom className="inline-block mr-2 text-stone-500" /> Pending Chores ({pendingApprovals.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {pendingApprovals.map((appr) => {
@@ -700,7 +707,7 @@ export default function ParentDashboard({
                     {pendingRedemptions.length > 0 && (
                       <div className="space-y-4">
                         <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          🎁 Pending Prize Deliveries ({pendingRedemptions.length})
+                          <FaGift className="inline-block mr-2 text-purple-500" /> Pending Prize Deliveries ({pendingRedemptions.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {pendingRedemptions.map((delivery) => {
@@ -760,7 +767,7 @@ export default function ParentDashboard({
                     {pendingGiftingRequests.length > 0 && (
                       <div className="space-y-4">
                         <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          💖 Pending Gifting Requests ({pendingGiftingRequests.length})
+                          <FaHeart className="inline-block mr-2 text-pink-500" /> Pending Gifting Requests ({pendingGiftingRequests.length})
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {pendingGiftingRequests.map((req) => {
@@ -772,7 +779,7 @@ export default function ParentDashboard({
                               >
                                 <div className="flex gap-4 items-start">
                                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
-                                    {req.type === 'charity' ? '🌍' : '🎁'}
+                                    {req.type === 'charity' ? <FaGlobe /> : <FaGift />}
                                   </div>
                                   <div>
                                     <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} requested:</span>
@@ -851,7 +858,7 @@ export default function ParentDashboard({
                     id="add-child-box"
                   >
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingChildId ? '✏️ Edit Child' : '👶 Register Family Child'}
+                      {editingChildId ? <span><FaPen className="inline-block mr-2"/> Edit Child</span> : <span><FaBaby className="inline-block mr-2"/> Register Family Child</span>}
                     </h3>
                     <form onSubmit={handleChildSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -950,7 +957,7 @@ export default function ParentDashboard({
                               </div>
                               {child.savings_unlocked && (
                                 <div className={`flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 whitespace-nowrap`}>
-                                  <span className="text-sm">🐷</span>
+                                  <span className="text-sm"><FaPiggyBank /></span>
                                   <span>{child.savings_pot || 0} Saved</span>
                                 </div>
                               )}
@@ -1103,7 +1110,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingTaskId ? '✏️ Edit Quest Blueprint' : '🧹 Create Quest Blueprint'}
+                      {editingTaskId ? <span><FaPen className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><FaBroom className="inline-block mr-2"/> Create Quest Blueprint</span>}
                     </h3>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1365,7 +1372,7 @@ export default function ParentDashboard({
                               }`}
                               id={`parent-complete-${task.id}`}
                             >
-                              ⚡ Complete
+                              <FaBolt className="inline-block mr-2 text-yellow-500" /> Complete
                             </button>
 
                             <div className="flex gap-2">
@@ -1443,7 +1450,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingRewardId ? '✏️ Edit Reward Token' : '🎁 Define Reward Token'}
+                      {editingRewardId ? <span><FaPen className="inline-block mr-2"/> Edit Reward Token</span> : <span><FaGift className="inline-block mr-2"/> Define Reward Token</span>}
                     </h3>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1478,11 +1485,11 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardIcon(e.target.value)}
                             className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="Gamepad2">🎮 Game Time</option>
-                            <option value="Pizza">🍕 Favorite Meal</option>
-                            <option value="Palette">🎨 Creative / Art</option>
-                            <option value="BookOpen">📖 Storybooks</option>
-                            <option value="Sparkles">✨ Special Trip</option>
+                            <option value="Gamepad2"><FaGamepad className="inline-block mr-2 text-blue-500" /> Game Time</option>
+                            <option value="Pizza"><FaPizzaSlice className="inline-block mr-2 text-orange-500" /> Favorite Meal</option>
+                            <option value="Palette"><FaPalette className="inline-block mr-2 text-purple-500" /> Creative / Art</option>
+                            <option value="BookOpen"><FaBookOpen className="inline-block mr-2 text-green-500" /> Storybooks</option>
+                            <option value="Sparkles"><FaWandMagicSparkles className="inline-block mr-2 text-pink-500" /> Special Trip</option>
                           </select>
                         </div>
                         <div className="md:col-span-2">
@@ -1492,10 +1499,10 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardLimit(e.target.value as any)}
                             className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="unlimited">♾️ Unlimited</option>
-                            <option value="daily">📅 1x Daily</option>
-                            <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
-                            <option value="one_time">🎯 One-Time (Disappears after use)</option>
+                            <option value="unlimited"><FaInfinity className="inline-block mr-2" /> Unlimited</option>
+                            <option value="daily"><FaCalendar className="inline-block mr-2" /> 1x Daily</option>
+                            <option value="twice_daily"><FaHandPeace className="inline-block mr-2 text-yellow-500" /> 2x Daily (Requires cooldown)</option>
+                            <option value="one_time"><FaBullseye className="inline-block mr-2 text-red-500" /> One-Time (Disappears after use)</option>
                           </select>
                         </div>
                       </div>
@@ -1562,7 +1569,7 @@ export default function ParentDashboard({
                         <div key={reward.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
                           <div className="flex justify-between items-start gap-2 sm:gap-4">
                             <div className="flex gap-2 sm:gap-3 items-center">
-                              <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}>🎁</span>
+                              <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
                               <div>
                                 <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
                                   {reward.title}
@@ -1672,7 +1679,7 @@ export default function ParentDashboard({
                         className={`border p-2 sm:p-3 rounded-xl flex justify-between items-center gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
                       >
                         <div className="flex gap-2 sm:gap-3 items-center">
-                          <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}>🎁</span>
+                          <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
                           <div>
                             <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
                               {reward.title}
@@ -1723,7 +1730,7 @@ export default function ParentDashboard({
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">
                   <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
-                    📜 Dispensation History Log
+                    <FaScroll className="inline-block mr-2 text-stone-500" /> Dispensation History Log
                   </h3>
                   <div className="space-y-3">
                     {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
