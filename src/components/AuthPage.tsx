@@ -325,7 +325,7 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
 
               <button
                 type="submit"
-                className="w-full gamepad-button py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
+                className="w-full btn-primary py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
                 id="real-login-submit"
               >
                 {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}

@@ -344,17 +344,17 @@ export default function ChildDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#040610]/95 flex flex-col items-center justify-center p-6 text-center"
+            className="fixed inset-0 z-50 bg-white/95 flex flex-col items-center justify-center p-6 text-center"
             id="evolution-cinematic"
           >
-            <div className="absolute inset-0 crt-overlay opacity-30 pointer-events-none" />
+            <div className="absolute inset-0  opacity-30 pointer-events-none" />
             
             <motion.div
               initial={{ scale: 0.8, rotate: -8 }}
               animate={{ scale: 1, rotate: 0 }}
               exit={{ scale: 0.8, rotate: 8 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative max-w-lg bg-[#0b0f2a] border-4 border-cyan-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(6,182,212,0.4)] space-y-6"
+              className="relative max-w-lg bg-white border-4 border-cyan-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(6,182,212,0.4)] space-y-6"
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
               
@@ -363,11 +363,11 @@ export default function ChildDashboard({
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
 
-              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent neon-glow-cyan">
+              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
                 {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
               </h2>
 
-              <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
                 {isHatching && hatchPhase !== 'reveal' ? (
                   <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
                 ) : (
@@ -478,7 +478,7 @@ export default function ChildDashboard({
                     initial={isHatching ? { scale: 0.3, opacity: 0, y: 30 } : { scale: 1, opacity: 1 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     transition={isHatching ? { type: 'spring', damping: 10, stiffness: 150, duration: 0.8 } : {}}
-                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-slate-950'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
+                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-white'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.image_url ? (
                       <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
@@ -513,7 +513,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); setEvolvingStage(null); setHatchPhase('idle'); }}
-                className={`w-full gamepad-button py-4 bg-gradient-to-r ${
+                className={`w-full btn-primary py-4 bg-gradient-to-r ${
                   isHatching && hatchPhase !== 'reveal'
                     ? 'from-amber-400 via-orange-500 to-pink-500 opacity-50 cursor-not-allowed'
                     : 'from-cyan-400 via-indigo-500 to-purple-600 cursor-pointer'
@@ -543,7 +543,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -593,7 +593,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); onSavingsUnlockSeen(activeChild.id); setShowReplayVideo(false); }}
-                className="w-full gamepad-button py-4 bg-amber-400 hover:bg-amber-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-primary w-full"
                 id="savings-unlock-dismiss-btn"
               >
                 GOT IT! 🎉
@@ -618,7 +618,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -668,7 +668,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); onFoodPotUnlockSeen(activeChild.id); setShowFoodReplayVideo(false); }}
-                className="w-full gamepad-button py-4 bg-orange-400 hover:bg-orange-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-primary w-full"
                 id="food-pot-unlock-dismiss-btn"
               >
                 GOT IT! 🎉
@@ -693,7 +693,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -743,7 +743,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); onGiftingUnlockSeen(activeChild.id); setShowGiftingReplayVideo(false); }}
-                className="w-full gamepad-button py-4 bg-rose-400 hover:bg-rose-300 border-2 border-stone-900 text-stone-950 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-danger w-full"
                 id="gifting-pot-unlock-dismiss-btn"
               >
                 GOT IT! 🎉
@@ -769,7 +769,7 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-rose-100 border border-rose-300 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="w-10 h-10 text-rose-600 animate-bounce" />
@@ -785,7 +785,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); setPenaltyMessage(null); }}
-                className="w-full gamepad-button py-3 bg-rose-500 hover:bg-rose-450 border-2 border-stone-900 text-white font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-primary py-3 bg-rose-500 hover:bg-rose-450 border-2 border-gray-200 text-white font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 id="pet-penalty-dismiss-btn"
               >
                 I Promise to Feed Them! 🥺
@@ -809,7 +809,7 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-stone-900 rounded-[2.5rem] p-8 shadow-[0_10px_0_0_rgba(28,25,23,1)] space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-orange-100 border border-orange-300 rounded-2xl flex items-center justify-center">
                 <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
@@ -837,7 +837,7 @@ export default function ChildDashboard({
                       setActiveChildTab('pots');
                     }
                   }}
-                  className="w-full gamepad-button py-3 bg-orange-400 hover:bg-orange-350 border-2 border-stone-900 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-[0_4px_0_0_#1c1917] hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                  className="w-full btn-primary py-3 bg-orange-400 hover:bg-orange-350 border-2 border-gray-200 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
                 >
                   {(activeChild?.pet_food || 0) > 0 ? "Feed Now! 🍖" : "Get Food! 🛒"}
                 </button>
@@ -1007,7 +1007,7 @@ export default function ChildDashboard({
                     {/* Holo Pedestal */}
                     <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
                       
-                      <div className="absolute inset-0 crt-overlay opacity-15 pointer-events-none" />
+                      <div className="absolute inset-0  opacity-15 pointer-events-none" />
                       <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${activeChildStage.color_theme}`} />
 
                       <div className="flex justify-between w-full items-start mt-1">
@@ -1103,7 +1103,7 @@ export default function ChildDashboard({
                               activeChild.pet_fed_today
                                 ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
                                 : (activeChild.pet_food || 0) > 0
-                                  ? 'bg-orange-500 border-2 border-stone-900 text-white shadow-[0_4px_0_0_#1c1917] hover:translate-y-0.5 hover:shadow-[0_2px_0_0_#1c1917] active:translate-y-1 active:shadow-none'
+                                  ? 'bg-orange-500 border-2 border-gray-200 text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_#1c1917] active:translate-y-1 active:shadow-none'
                                   : 'bg-stone-200 text-stone-400 border border-stone-300 cursor-not-allowed'
                             }`}
                           >
@@ -1387,7 +1387,7 @@ export default function ChildDashboard({
                                   key={task.id}
                                   className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-1.5 sm:gap-2 ${
                                     isApproved 
-                                      ? 'bg-slate-900/40 border-slate-950/50 opacity-45' 
+                                      ? 'bg-white/40 border-slate-950/50 opacity-45' 
                                       : isPending 
                                         ? 'bg-indigo-950/25 border-indigo-500/30' 
                                         : isOnCooldown
@@ -1414,7 +1414,7 @@ export default function ChildDashboard({
                                         </span>
                                       )}
                                     </div>
-                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide ${isApproved ? 'line-through text-slate-500' : styles.titleColor}`}>
+                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide ${isApproved ? 'line-through text-gray-9000' : styles.titleColor}`}>
                                       {task.title}
                                     </h4>
                                   </div>
@@ -1514,7 +1514,7 @@ export default function ChildDashboard({
                                   </div>
 
                                   <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
-                                    <span className={`text-[9px] sm:text-[10px] font-mono font-black hidden sm:inline-block ${isAffordable ? 'text-amber-700' : 'text-slate-500'}`}>
+                                    <span className={`text-[9px] sm:text-[10px] font-mono font-black hidden sm:inline-block ${isAffordable ? 'text-amber-700' : 'text-gray-9000'}`}>
                                       <GoldCoinIcon /> {rew.cost_points} GOLD
                                     </span>
 

@@ -128,7 +128,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               handleEnterClick('parent');
             }
           }}
-          className={`gamepad-button ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
+          className={`btn-primary ${styles.btnPrimary} py-2 px-5 rounded-xl text-xs uppercase font-display tracking-wide flex items-center gap-1.5`}
           id="landing-signin-btn"
         >
           Sign In
@@ -159,13 +159,13 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => handleEnterClick('parent')}
-                className={`flex-1 gamepad-button bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-sm border border-indigo-200 cursor-pointer text-sm uppercase font-display tracking-wide transition-all`}
+                className={`flex-1 btn-primary bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-sm border border-indigo-200 cursor-pointer text-sm uppercase font-display tracking-wide transition-all`}
               >
                 I'm a Grown-up
               </button>
               <button
                 onClick={() => handleEnterClick('child')}
-                className={`flex-1 gamepad-button ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-sm uppercase font-display tracking-wide`}
+                className={`flex-1 btn-primary ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-sm uppercase font-display tracking-wide`}
               >
                 I'm a Kid <ArrowRight className="w-4 h-4" />
               </button>
@@ -308,7 +308,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                     key={char.id}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center border transition-all cursor-pointer relative overflow-hidden ${
                       isSelected 
-                        ? 'bg-amber-100 border-2 border-stone-900 shadow-[0_3px_0_0_#1c1917]'
+                        ? 'bg-amber-100 border-2 border-gray-200 shadow-[0_3px_0_0_#1c1917]'
                         : 'bg-white border-2 border-[#E7E5E4] text-stone-700 hover:border-stone-300'
                     }`}
                   >
