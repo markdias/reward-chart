@@ -1852,7 +1852,7 @@ export default function ParentDashboard({
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
+                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] ${
                       'bg-gradient-to-r from-rose-500 to-red-500'
                     }`}
                   >

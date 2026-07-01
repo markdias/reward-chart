@@ -602,7 +602,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
                     </div>
                   </div>
@@ -677,7 +677,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-orange-500 fill-orange-500 ml-1" />
                     </div>
                   </div>
@@ -752,7 +752,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-95 transition-transform">
+                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-rose-500 fill-rose-500 ml-1" />
                     </div>
                   </div>
@@ -977,7 +977,7 @@ export default function ChildDashboard({
                             className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-amber-100 p-0.5 sm:p-1 border-2 border-amber-600 group-hover:border-white transition-all object-cover shadow-inner`}
                             referrerPolicy="no-referrer"
                           />
-                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-1 sm:-right-1 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-rose-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white shadow-sm`}>
+                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-1 sm:-right-1 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-rose-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white shadow-sm tabular-nums`}>
                             {child.level}
                           </span>
                         </div>
@@ -1043,7 +1043,7 @@ export default function ChildDashboard({
                             </div>
                             <div className="flex flex-col items-start">
                               <span className={`text-[8px] font-mono font-bold text-amber-700 uppercase tracking-wider`}>GOLD COINS</span>
-                              <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight leading-none`}>{activeChild.points}</span>
+                              <span className={`text-lg sm:text-xl font-mono font-black text-amber-600 tracking-tight leading-none tabular-nums`}>{activeChild.points}</span>
                             </div>
                           </div>
                         </div>
@@ -1078,7 +1078,7 @@ export default function ChildDashboard({
                           className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
                           {activeChildStage.image_url ? (
-                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
+                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float outline outline-1 -outline-offset-1 outline-black/10" />
                           ) : (
                             <span className="text-6xl sm:text-[9rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}
@@ -1090,7 +1090,7 @@ export default function ChildDashboard({
                       <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
                         <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
                           <span>GOLD BAR</span>
-                          <span className={`text-cyan-500 font-extrabold`}>LEVEL {activeChild.level}</span>
+                          <span className={`text-cyan-500 font-extrabold tabular-nums`}>LEVEL {activeChild.level}</span>
                         </div>
                         <div className={`w-full h-3 ${styles.cardBg} ${styles.borderStyle} rounded-full overflow-hidden mb-1 relative`}>
                           <motion.div 
@@ -1101,7 +1101,7 @@ export default function ChildDashboard({
                           />
                         </div>
                         <div className="flex justify-between items-center w-full px-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
+                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold tabular-nums`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
                         </div>
                       </div>
 
@@ -1128,7 +1128,7 @@ export default function ChildDashboard({
                           </button>
                           <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
                             <span>FOOD INVENTORY:</span>
-                            <span className="text-orange-600 font-extrabold">{activeChild.pet_food || 0} pieces</span>
+                            <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                           </div>
                           {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
                             <span className="text-[9px] text-red-500 font-bold text-center mt-1">
@@ -1159,7 +1159,7 @@ export default function ChildDashboard({
                           {/* Streak Widget */}
                           <button 
                             onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
                             <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
                             <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
@@ -1169,7 +1169,7 @@ export default function ChildDashboard({
                           {/* Weekly Widget */}
                           <button 
                             onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
                             <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
                               <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
@@ -1182,7 +1182,7 @@ export default function ChildDashboard({
                           {/* Monthly Widget */}
                           <button 
                             onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-95 transition-transform`}
+                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
                             <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
                               <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
@@ -1698,19 +1698,19 @@ export default function ChildDashboard({
                                       <button
                                         onClick={() => { setDepositAmount(Math.max(1, depositAmount - 1)); playSound.click(); }}
                                         disabled={depositAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
                                       </button>
                                 
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-250 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{depositAmount}</span>
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm tabular-nums">{depositAmount}</span>
                                       </div>
                                 
                                       <button
                                         onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 1)); playSound.click(); }}
                                         disabled={depositAmount >= activeChild.points}
-                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
                                       </button>
@@ -2006,17 +2006,17 @@ export default function ChildDashboard({
                                       <button
                                         onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
                                         disabled={charityAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
                                       </button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{charityAmount}</span>
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm tabular-nums">{charityAmount}</span>
                                       </div>
                                       <button
                                         onClick={() => { setCharityAmount(Math.min(((activeChild as any).gifting_pot || 0), charityAmount + 1)); playSound.click(); }}
                                         disabled={charityAmount >= ((activeChild as any).gifting_pot || 0)}
-                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
                                       </button>
@@ -2069,17 +2069,17 @@ export default function ChildDashboard({
                                       <button
                                         onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
                                         disabled={siblingAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
                                       </button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm">{siblingAmount}</span>
+                                        <span className="text-xl font-black font-mono text-amber-900 drop-shadow-sm tabular-nums">{siblingAmount}</span>
                                       </div>
                                       <button
                                         onClick={() => { setSiblingAmount(Math.min(((activeChild as any).gifting_pot || 0), siblingAmount + 1)); playSound.click(); }}
                                         disabled={siblingAmount >= ((activeChild as any).gifting_pot || 0)}
-                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 transition-all"
+                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
                                       </button>
