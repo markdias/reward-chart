@@ -385,7 +385,7 @@ export default function ParentDashboard({
     <div className={`min-h-screen bg-[#F5F2EA] text-stone-900 flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[260px] sm:h-[300px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none"></div>
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
 
       <header className={`relative z-40 px-4 sm:px-8 pt-safe-top pt-6 pb-6 flex items-center justify-between gap-2`}>
         <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
@@ -510,7 +510,7 @@ export default function ParentDashboard({
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 -mt-6 sm:-mt-12 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-6 sm:mt-10 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
         
         <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-6 space-y-6 self-start`}>
           <div className="space-y-1">

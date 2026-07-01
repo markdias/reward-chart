@@ -103,7 +103,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
     <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="landing-page-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
 
       {/* High-Tech Animated Background */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
@@ -140,7 +140,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 -mt-10 sm:-mt-20">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 mt-6 sm:mt-10">
         <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-xl shadow-orange-900/10 border border-white/50 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
           {/* Left Column: Marketing Info and CTA */}
           <div className="lg:col-span-6 flex flex-col space-y-8">

@@ -348,7 +348,7 @@ export default function ChildDashboard({
     <div className={`min-h-screen bg-[#F5F2EA] flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="child-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[260px] sm:h-[300px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
 
       {/* Immersive Starry Grid Backdrop */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
@@ -927,7 +927,7 @@ export default function ChildDashboard({
       </header>
 
       {/* Central HUD Viewport */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col relative z-20 overflow-y-auto -mt-6 sm:-mt-10 bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl shadow-orange-900/10 mb-24 lg:mb-8 border border-white/50" id="child-viewport">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col relative z-20 overflow-y-auto mt-6 sm:mt-10 bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl shadow-orange-900/10 mb-24 lg:mb-8 border border-white/50" id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
