@@ -1,9 +1,9 @@
 import { 
-  FaSparkles, FaComet, FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
+  FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
   FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
   FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
-  FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
+  FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket, FaPaw
 } from 'react-icons/fa6';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,9 +12,6 @@ import {
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert
 } from 'lucide-react';
-import { 
-  FaPaw, FaBullseye, FaGift, FaJar
-} from 'react-icons/fa6';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } from '../types';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
