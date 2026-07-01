@@ -86,7 +86,13 @@ export default function LockScreen({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 p-4 backdrop-blur-md" id="lock-screen-container">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 p-4 backdrop-blur-md"
+      id="lock-screen-container"
+    >
       
       {/* Background neon elements */}
       <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#1c1917_1.5px,transparent_1.5px)] [background-size:24px_24px] pointer-events-none" />
@@ -176,6 +182,6 @@ export default function LockScreen({
           </div>
         </form>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

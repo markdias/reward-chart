@@ -1672,7 +1672,7 @@ export default function App() {
 
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
-        {!hasCompletedOnboarding ? (
+        {(!hasCompletedOnboarding && !new URLSearchParams(window.location.search).has('share')) ? (
           <motion.div
             key="onboarding"
             initial={{ opacity: 0 }}
@@ -1710,6 +1710,11 @@ export default function App() {
               onBackToLanding={() => {
                 setHasCompletedOnboarding(false);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+                if (new URLSearchParams(window.location.search).has('share')) {
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  // Force a re-render to evaluate URL params correctly
+                  setShowLogin(false);
+                }
               }}
               theme={activeTheme}
             />
