@@ -9,6 +9,7 @@ import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
+import { LegalModal } from './components/LegalModal';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -1649,6 +1650,7 @@ export default function App() {
 
 
   return (
+    <>
     <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
       
       {/* Immersive Confetti Layer */}
@@ -1826,8 +1828,8 @@ export default function App() {
           />
         )}
       </AnimatePresence>
-
-
     </div>
+    <LegalModal />
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, C
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
+import pkg from '../../package.json';
 
 interface LandingPageProps {
   onEnterArcade: (role: 'parent' | 'child') => void;
@@ -395,10 +396,10 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-mono text-[10px]">
-          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY_LEDGER</a>
-          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS_OF_SERVICE</a>
+          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
+          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className="text-emerald-600 font-bold animate-pulse">● ENGINE_ONLINE_V2.0</span>
+          <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>
     </div>

@@ -4,7 +4,9 @@ import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
-import { hashPassword } from '../utils/security';
+import { hashPassword, evaluatePassword } from '../utils/security';
+import { PasswordInput } from './PasswordInput';
+import pkg from '../../package.json';
 
 interface AuthPageProps {
   onLoginReal: (email: string) => void;
@@ -132,6 +134,15 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
       setRealAuthError('Password must be at least 6 characters');
       playSound.pinError();
       return;
+    }
+
+    if (isSignUp) {
+      const { isValid } = evaluatePassword(password);
+      if (!isValid) {
+        setRealAuthError('Please ensure your password meets all requirements.');
+        playSound.pinError();
+        return;
+      }
     }
 
     if (!isSupabaseConfigured()) {
@@ -320,12 +331,10 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                 <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
                   Password
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                  onChange={setPassword}
+                  showPolicy={isSignUp}
                 />
               </div>
 
@@ -360,8 +369,8 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>LOCAL STORAGE</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>Local Offline Save</span>
+              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
+              <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
@@ -385,7 +394,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className="text-emerald-600 font-bold animate-pulse">● SYSTEM ONLINE</span>
+          <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>
     </div>

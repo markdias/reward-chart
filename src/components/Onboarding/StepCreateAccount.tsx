@@ -3,6 +3,8 @@ import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { Cloud, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { playSound } from '../../utils/sound';
 import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
+import { PasswordInput } from '../PasswordInput';
+import { evaluatePassword } from '../../utils/security';
 
 interface StepCreateAccountProps {
   theme: ThemeId;
@@ -38,6 +40,13 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      playSound.pinError();
+      return;
+    }
+
+    const { isValid } = evaluatePassword(password);
+    if (!isValid) {
+      setError('Please ensure your password meets all requirements.');
       playSound.pinError();
       return;
     }
@@ -131,14 +140,11 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
 
           <div>
             <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-              className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
+              onChange={setPassword}
+              showPolicy={true}
+              className={`${styles.inputBg}`}
             />
           </div>
 
