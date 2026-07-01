@@ -36,6 +36,20 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
         <div className="text-center space-y-2 shrink-0">
           <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Rewards</h2>
           <p className={`text-xs ${styles.textMuted}`}>Select some common rewards to add to your children's dashboard right away. You can add more later!</p>
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={() => {
+                if (selectedIds.length === PREMADE_REWARDS.length) {
+                  setSelectedIds([]);
+                } else {
+                  setSelectedIds(PREMADE_REWARDS.map(r => r.id as string));
+                }
+              }}
+              className={`text-xs font-bold transition-colors underline ${selectedIds.length === PREMADE_REWARDS.length ? 'text-stone-500 hover:text-stone-700' : 'text-amber-600 hover:text-amber-700'}`}
+            >
+              {selectedIds.length === PREMADE_REWARDS.length ? 'Deselect All' : 'Select All'}
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar min-h-[300px]">

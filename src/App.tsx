@@ -9,6 +9,7 @@ import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
+import { LegalModal } from './components/LegalModal';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -17,7 +18,7 @@ import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
-import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate } from './utils/date';
+import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -38,9 +39,9 @@ export default function App() {
     new URLSearchParams(window.location.search).has('share')
   );
   
-  // Profile state
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
+  const [postSignUpData, setPostSignUpData] = useState<{ email: string, parentName: string, familyName: string } | null>(null);
 
 
   // Core records lists
@@ -133,7 +134,7 @@ export default function App() {
 
   // Load records on start/auth change from localStorage or Supabase
   useEffect(() => {
-    if (!parentEmail) {
+    if (!parentEmail || !hasCompletedOnboarding) {
       return;
     }
 
@@ -192,7 +193,12 @@ export default function App() {
                 family_id: familyId,
                 family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
                 name: meta.name || localProfileObj.name || null,
-                share_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+                share_token: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+                savings_pot_unlock_level: 2,
+                food_pot_unlock_level: 4,
+                gifting_pot_unlock_level: 6,
+                points_to_level_up: 500,
+                level_up_gold_reward: 500
               };
               await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
               
@@ -414,7 +420,7 @@ export default function App() {
       // Local/demo mode - fetch from localStorage or defaults
       loadLocalStorageFallback(isDemo);
     }
-  }, [parentEmail]);
+  }, [parentEmail, hasCompletedOnboarding]);
 
 
   // Sync state helpers to update local storage
@@ -519,7 +525,12 @@ export default function App() {
       family_id: emailToUse,
       family_name: data.familyName,
       name: data.parentName,
-      share_token: null
+      share_token: null,
+      savings_pot_unlock_level: 2,
+      food_pot_unlock_level: 4,
+      gifting_pot_unlock_level: 6,
+      points_to_level_up: 500,
+      level_up_gold_reward: 500
     };
     localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(localProfile));
     setParentProfile(localProfile);
@@ -575,8 +586,8 @@ export default function App() {
       });
     });
 
-    localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
-    localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
+    localStorage.setItem(`RCH_CHILDREN_local_parent@rewardchart.app`, JSON.stringify(initialChildren));
+    localStorage.setItem(`RCH_TASKS_local_parent@rewardchart.app`, JSON.stringify(initialTasks));
     
     const initialRewards: Reward[] = [];
     data.selectedRewards.forEach((r, index) => {
@@ -601,7 +612,7 @@ export default function App() {
         });
       });
     });
-    localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+    localStorage.setItem(`RCH_REWARDS_local_parent@rewardchart.app`, JSON.stringify(initialRewards));
 
     // Update React state immediately so it's available without waiting for useEffect
     setChildren(initialChildren);
@@ -614,6 +625,23 @@ export default function App() {
     setParentEmail(emailToUse);
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
     setIsParentMode(true);
+    setPostSignUpData(null);
+  };
+
+  const handleSignUpReal = (email: string, name: string, familyName: string) => {
+    // Clear old state to prepare fresh real/blank dashboard loads
+    localStorage.removeItem('RCH_CHILDREN');
+    localStorage.removeItem('RCH_TASKS');
+    localStorage.removeItem('RCH_COMPLETIONS');
+    localStorage.removeItem('RCH_REWARDS');
+
+    setParentEmail(email);
+    localStorage.setItem('RCH_PARENT_EMAIL', email);
+    setPostSignUpData({ email, parentName: name, familyName });
+    
+    // Crucial: keep onboarding incomplete so they get the wizard
+    setHasCompletedOnboarding(false);
+    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
   };
 
   const handleLoginReal = (email: string) => {
@@ -1130,15 +1158,16 @@ export default function App() {
 
     // --- Limit Checks ---
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
     const childRedemptions = redemptions.filter(r => r.child_id === childId && r.reward_id === rewardId);
     
     if (reward.limit_type === 'daily') {
-      const todayRedemptions = childRedemptions.filter(r => r.redeemed_at.startsWith(todayStr));
+      const startOfDay = getStartOfDailyReset(now);
+      const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
       if (todayRedemptions.length >= 1) return; // Limit reached
     } 
     else if (reward.limit_type === 'twice_daily') {
-      const todayRedemptions = childRedemptions.filter(r => r.redeemed_at.startsWith(todayStr));
+      const startOfDay = getStartOfDailyReset(now);
+      const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
       if (todayRedemptions.length >= 2) return; // Limit reached
       
       // Wait at least 6 hours between redemptions
@@ -1621,6 +1650,7 @@ export default function App() {
 
 
   return (
+    <>
     <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
       
       {/* Immersive Confetti Layer */}
@@ -1643,6 +1673,13 @@ export default function App() {
                 setHasCompletedOnboarding(true);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
               }}
+              initialStep={postSignUpData ? 'children' : 'welcome'}
+              initialData={postSignUpData ? {
+                parentName: postSignUpData.parentName,
+                familyName: postSignUpData.familyName,
+                email: postSignUpData.email,
+              } : undefined}
+              skipAccountStep={!!postSignUpData}
             />
           </motion.div>
         ) : !parentEmail ? (
@@ -1655,6 +1692,7 @@ export default function App() {
           >
             <AuthPage 
               onLoginReal={handleLoginReal}
+              onSignUpReal={handleSignUpReal}
               onBackToLanding={() => {
                 setHasCompletedOnboarding(false);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
@@ -1790,8 +1828,8 @@ export default function App() {
           />
         )}
       </AnimatePresence>
-
-
     </div>
+    <LegalModal />
+    </>
   );
 }

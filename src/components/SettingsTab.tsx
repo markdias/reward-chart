@@ -5,7 +5,8 @@ import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
-import { hashPassword } from '../utils/security';
+import { hashPassword, evaluatePassword } from '../utils/security';
+import { PasswordInput } from './PasswordInput';
 
 interface SettingsTabProps {
   theme: ThemeId;
@@ -61,8 +62,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       text: 'text-stone-900',
       textMuted: 'text-stone-500',
       input: 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400',
-      primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold border-2 border-stone-900 shadow-[0_4px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
-      dangerBtn: 'bg-rose-500 hover:bg-rose-400 text-white font-extrabold border-2 border-stone-900 shadow-[0_4px_0_0_#1c1917] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
+      primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold border-2 border-gray-200 shadow-sm active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
+      dangerBtn: 'bg-rose-500 hover:bg-rose-400 text-white font-extrabold border-2 border-gray-200 shadow-sm active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
       dangerBtnOutline: 'border-2 border-rose-350 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-[0_3px_0_0_#f43f5e] active:translate-y-1 active:shadow-none',
     };
   };
@@ -127,6 +128,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       if (!parentProfile?.user_id || !supabase) {
         if (newPassword) {
           if (newPassword !== confirmPassword) throw new Error("New passwords do not match");
+          const { isValid } = evaluatePassword(newPassword);
+          if (!isValid) throw new Error("Please ensure your new password meets all requirements.");
           if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
           
           const emailKey = (parentProfile?.email || 'local_parent@rewardchart.app').trim().toLowerCase();
@@ -162,6 +165,9 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       if (currentPassword || newPassword || confirmPassword) {
         if (!currentPassword) throw new Error("Current password is required");
         if (newPassword !== confirmPassword) throw new Error("New passwords do not match");
+        
+        const { isValid } = evaluatePassword(newPassword);
+        if (!isValid) throw new Error("Please ensure your new password meets all requirements.");
         if (newPassword.length < 6) throw new Error("Password must be at least 6 characters");
         
         // Supabase reauthentication to verify current password before updating
@@ -351,21 +357,22 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </div>
           <div>
             <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>New Password</label>
-            <input 
-              type="password" 
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-            />
+            <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Leave blank to keep current"
+                showPolicy={newPassword.length > 0}
+                className={`bg-white border-stone-200 text-stone-900 placeholder:text-stone-400`}
+              />
           </div>
           <div>
             <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Confirm New Password</label>
-            <input 
-              type="password" 
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-amber-500 outline-none`} 
-            />
+            <PasswordInput
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Confirm new password"
+                className={`bg-white border-stone-200 text-stone-900 placeholder:text-stone-400`}
+              />
           </div>
         </div>
         

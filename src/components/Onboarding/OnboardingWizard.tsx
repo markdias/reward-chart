@@ -16,6 +16,9 @@ interface OnboardingWizardProps {
   theme: ThemeId;
   onComplete: (data: OnboardingData) => void;
   onLoginInstead: () => void;
+  initialStep?: WizardStep;
+  initialData?: Partial<OnboardingData>;
+  skipAccountStep?: boolean;
 }
 
 export interface OnboardingData {
@@ -30,9 +33,9 @@ export interface OnboardingData {
 
 type WizardStep = 'welcome' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'account';
 
-export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: OnboardingWizardProps) {
-  const [step, setStep] = useState<WizardStep>('welcome');
-  const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(null);
+export default function OnboardingWizard({ theme, onComplete, onLoginInstead, initialStep, initialData, skipAccountStep }: OnboardingWizardProps) {
+  const [step, setStep] = useState<WizardStep>(initialStep || 'welcome');
+  const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(initialStep === 'children' ? 'parent' : null);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     children: [],
     parentName: '',
@@ -40,6 +43,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
     selectedTasks: [],
     selectedRewards: [],
     skippedAccount: false,
+    ...initialData
   });
 
   const handleWelcomeComplete = (role: 'parent' | 'child') => {
@@ -49,7 +53,9 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
 
   const handleChildrenSetupComplete = (childrenData: Partial<Child>[]) => {
     setOnboardingData(prev => ({ ...prev, children: childrenData }));
-    if (startedBy === 'child') {
+    if (skipAccountStep) {
+      setStep('tasks');
+    } else if (startedBy === 'child') {
       setStep('handover');
     } else {
       setStep('parentDetails');
@@ -73,8 +79,16 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead }: 
 
   const handleRewardsSelectionComplete = (selectedRewardIds: string[]) => {
     const rewards = PREMADE_REWARDS.filter(r => selectedRewardIds.includes(r.id as string));
-    setOnboardingData(prev => ({ ...prev, selectedRewards: rewards as Reward[] }));
-    setStep('account');
+    const newOnboardingData = { ...onboardingData, selectedRewards: rewards as Reward[] };
+    setOnboardingData(newOnboardingData);
+    
+    if (skipAccountStep) {
+      // They already have an account, so just complete the wizard directly
+      const finalData = { ...newOnboardingData, skippedAccount: false };
+      onComplete(finalData);
+    } else {
+      setStep('account');
+    }
   };
 
   const handleAccountComplete = (skipped: boolean, email?: string) => {

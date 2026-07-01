@@ -4,15 +4,18 @@ import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
-import { hashPassword } from '../utils/security';
+import { hashPassword, evaluatePassword } from '../utils/security';
+import { PasswordInput } from './PasswordInput';
+import pkg from '../../package.json';
 
 interface AuthPageProps {
   onLoginReal: (email: string) => void;
+  onSignUpReal?: (email: string, name: string, familyName: string) => void;
   onBackToLanding: () => void;
   theme: ThemeId;
 }
 
-export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPageProps) {
+export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -27,15 +30,20 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
     if (!err) return 'Unknown connection or authentication error';
     if (typeof err === 'string') return err;
     
-    const parts: string[] = [];
+    const code = err.code || err.status || (err.error && err.error.code);
     const directMsg = err.message || err.error_description || err.error || (err.error && err.error.message);
+    
+    if (code === 'invalid_credentials' || (typeof directMsg === 'string' && directMsg.toLowerCase().includes('invalid login credentials'))) {
+      return "Incorrect email or password. Please try again or create a new account.";
+    }
+
+    const parts: string[] = [];
     if (directMsg && typeof directMsg === 'string') {
       parts.push(directMsg);
     } else if (directMsg && typeof directMsg === 'object') {
       parts.push(directMsg.message || JSON.stringify(directMsg));
     }
     
-    const code = err.code || err.status || (err.error && err.error.code);
     if (code) {
       parts.push(`(Code/Status: ${code})`);
     }
@@ -133,6 +141,15 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
       return;
     }
 
+    if (isSignUp) {
+      const { isValid } = evaluatePassword(password);
+      if (!isValid) {
+        setRealAuthError('Please ensure your password meets all requirements.');
+        playSound.pinError();
+        return;
+      }
+    }
+
     if (!isSupabaseConfigured()) {
       await handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
       return;
@@ -154,7 +171,7 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
           });
           if (error) {
             console.warn('Supabase signup error:', error);
-            setRealAuthError(`${getErrorMessage(error)}. If your server is having issues, you can register locally below instead!`);
+            setRealAuthError(getErrorMessage(error));
             playSound.pinError();
             return;
           }
@@ -167,7 +184,8 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
 
             if (!signInError && signInData?.session) {
               playSound.pinSuccess();
-              onLoginReal(email);
+              if (onSignUpReal) onSignUpReal(email, name, familyName);
+              else onLoginReal(email);
               return;
             }
 
@@ -183,14 +201,14 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
           });
           if (error) {
             console.warn('Supabase signin error:', error);
-            setRealAuthError(`${getErrorMessage(error)}. You can also log in locally below!`);
+            setRealAuthError(getErrorMessage(error));
             playSound.pinError();
             return;
           }
         }
       } catch (err: any) {
         console.warn('Exception during auth submission:', err);
-        setRealAuthError(`${getErrorMessage(err)}. Fall back to offline mode below if this persists.`);
+        setRealAuthError(getErrorMessage(err));
         playSound.pinError();
         return;
       }
@@ -201,7 +219,11 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
     }
     
     playSound.pinSuccess();
-    onLoginReal(email);
+    if (isSignUp && onSignUpReal) {
+      onSignUpReal(email, name, familyName);
+    } else {
+      onLoginReal(email);
+    }
   };
 
   const styles = THEME_PRESETS[theme];
@@ -314,18 +336,16 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
                 <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
                   Password
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                  onChange={setPassword}
+                  showPolicy={isSignUp}
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full gamepad-button py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
+                className="w-full btn-primary py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
                 id="real-login-submit"
               >
                 {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
@@ -354,8 +374,8 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>LOCAL STORAGE</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>Local Offline Save</span>
+              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
+              <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
@@ -379,7 +399,7 @@ export default function AuthPage({ onLoginReal, onBackToLanding, theme }: AuthPa
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
           <span className="text-slate-600">|</span>
-          <span className="text-emerald-600 font-bold animate-pulse">● SYSTEM ONLINE</span>
+          <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>
     </div>

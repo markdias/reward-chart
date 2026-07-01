@@ -95,10 +95,10 @@ export default function LockScreen({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-stone-900 bg-[#FCFBF9] shadow-[0_4px_0_0_#1c1917] relative"
+        className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-gray-200 bg-[#FCFBF9] shadow-sm relative"
         id="lock-panel"
       >
-        <div className="absolute inset-0 crt-overlay opacity-25 pointer-events-none" />
+        <div className="absolute inset-0  opacity-25 pointer-events-none" />
 
         {/* Vault Frame Header */}
         <div className="bg-stone-50 p-6 text-center border-b border-stone-200 relative">
@@ -110,7 +110,7 @@ export default function LockScreen({
             <ArrowLeft className="w-4 h-4 text-stone-700" />
           </button>
           
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border bg-amber-100 border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917]">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border bg-amber-100 border-gray-200 text-stone-900 shadow-[0_3px_0_0_#1c1917]">
             <Lock className="w-6 h-6 animate-pulse" />
           </div>
           <h2 className="text-xl font-black font-display tracking-wider uppercase text-stone-900">{title}</h2>
@@ -128,7 +128,7 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="ENTER PASSWORD"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border bg-white border-stone-900 text-stone-900 font-mono text-center text-sm tracking-wide shadow-[0_3px_0_0_#1c1917] focus:ring-2 focus:ring-amber-500 outline-none"
+              className="w-full px-4 py-3.5 pr-12 rounded-2xl border bg-white border-gray-200 text-stone-900 font-mono text-center text-sm tracking-wide shadow-[0_3px_0_0_#1c1917] focus:ring-2 focus:ring-amber-500 outline-none"
               autoFocus
             />
             <button
@@ -169,7 +169,7 @@ export default function LockScreen({
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading || !password}
-              className="flex-1 h-12 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer border bg-amber-400 border-stone-900 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
+              className="flex-1 h-12 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition-all flex items-center justify-center cursor-pointer border bg-amber-400 border-gray-200 text-stone-900 shadow-[0_3px_0_0_#1c1917] hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-0.5 active:shadow-[0_1px_0_0_#1c1917]"
             >
               {loading ? 'VERIFYING...' : 'DECRYPT'}
             </motion.button>

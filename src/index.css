@@ -1,163 +1,90 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Nunito", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Stunning Retro-Futuristic Game Arcade Grids & Glows */
 @layer utilities {
-  .neon-glow-purple {
-    text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.3);
+  /* Duolingo UI Styles */
+
+  .btn-primary {
+    @apply bg-green-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
+    box-shadow: 0 4px 0 0 #46A302;
   }
-  .neon-glow-pink {
-    text-shadow: 0 0 10px rgba(236, 72, 153, 0.6), 0 0 20px rgba(236, 72, 153, 0.3);
+  .btn-primary:active {
+    box-shadow: 0 0px 0 0 #46A302;
   }
-  .neon-glow-cyan {
-    text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.3);
+  .btn-primary:disabled {
+    @apply bg-gray-300 text-gray-500 opacity-100 cursor-not-allowed;
+    box-shadow: 0 4px 0 0 #D1D5DB;
   }
-  .neon-border-cyan {
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.35), inset 0 0 10px rgba(6, 182, 212, 0.1);
+  .btn-primary:disabled:active {
+    @apply translate-y-0;
+    box-shadow: 0 4px 0 0 #D1D5DB;
   }
-  .neon-border-purple {
-    box-shadow: 0 0 15px rgba(168, 85, 247, 0.35), inset 0 0 10px rgba(168, 85, 247, 0.1);
+
+  .btn-secondary {
+    @apply bg-white text-gray-500 border-2 border-gray-200 font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
+    box-shadow: 0 4px 0 0 #E5E7EB;
   }
-  .neon-border-pink {
-    box-shadow: 0 0 15px rgba(236, 72, 153, 0.35), inset 0 0 10px rgba(236, 72, 153, 0.1);
+  .btn-secondary:active {
+    box-shadow: 0 0px 0 0 #E5E7EB;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
+    box-shadow: 0 4px 0 0 #D12F2F;
+  }
+  .btn-danger:active {
+    box-shadow: 0 0px 0 0 #D12F2F;
+  }
+
+  .btn-blue {
+    @apply bg-blue-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
+    box-shadow: 0 4px 0 0 #1D4ED8;
+  }
+  .btn-blue:active {
+    box-shadow: 0 0px 0 0 #1D4ED8;
+  }
+
+  .btn-purple {
+    @apply bg-purple-500 text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center;
+    box-shadow: 0 4px 0 0 #7E22CE;
+  }
+  .btn-purple:active {
+    box-shadow: 0 0px 0 0 #7E22CE;
+  }
+
+  .duo-card {
+    @apply bg-white border-2 border-gray-200 rounded-3xl p-5;
+  }
+
+  .flame-active {
+    filter: drop-shadow(0 0 8px #f97316);
+    animation: bounce-soft 2s infinite ease-in-out;
+  }
+  
+  .animate-float {
+    animation: character-float 3s ease-in-out infinite;
   }
 }
 
-/* Custom interactive background animations */
-@keyframes grid-scroll {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(40px); }
-}
-
-.scrolling-grid {
-  background-size: 40px 40px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  animation: grid-scroll 2s linear infinite;
-}
-
-.scrolling-grid-cyan {
-  background-size: 30px 30px;
-  background-image: 
-    linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
-  animation: grid-scroll 4s linear infinite;
-}
-
-/* Dynamic CRT Scanline filter for authentic arcade machine look */
-.crt-overlay {
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 0, 0, 0.25) 50%
-  );
-  background-size: 100% 4px;
-  pointer-events: none;
-}
-
-/* Cybernetic holographic cards */
-.hologram-card {
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 10px 30px -10px rgba(0, 0, 0, 0.7),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.hologram-card:hover {
-  border-color: rgba(6, 182, 212, 0.4);
-  box-shadow: 
-    0 15px 40px -10px rgba(6, 182, 212, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.2);
-}
-
-/* Deep tactile game controller styling buttons */
-.gamepad-button {
-  box-shadow: 
-    0 6px 0px 0px rgba(0, 0, 0, 0.4),
-    0 12px 20px -5px rgba(0, 0, 0, 0.5);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.gamepad-button:active {
-  transform: translateY(4px);
-  box-shadow: 
-    0 2px 0px 0px rgba(0, 0, 0, 0.4),
-    0 6px 10px -3px rgba(0, 0, 0, 0.5);
-}
-
-/* Flame animation for daily streaks */
-@keyframes flame-pulse {
-  0%, 100% { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 8px #f97316); }
-  50% { transform: scale(1.15) rotate(2deg); filter: drop-shadow(0 0 18px #ef4444); }
-}
-
-.flame-active {
-  animation: flame-pulse 1.2s ease-in-out infinite;
-}
-
-/* Floating status orbs */
-@keyframes levitate {
+@keyframes bounce-soft {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-3px); }
 }
 
-.levitate-slow {
-  animation: levitate 4s ease-in-out infinite;
-}
-
-.levitate-fast {
-  animation: levitate 2.5s ease-in-out infinite;
-}
-
-/* Soft ambient background glow rings */
-.ambient-glow-cyan {
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0) 70%);
-}
-
-.ambient-glow-purple {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0) 70%);
-}
-
-.ambient-glow-pink {
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0) 70%);
-}
-
-/* Character image animations */
 @keyframes character-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
 
-@keyframes character-wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
-}
-
-@keyframes character-glow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2)); }
-  50% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)); }
-}
-
-.animate-float {
-  animation: character-float 3s ease-in-out infinite;
-}
-
-.animate-wiggle {
-  animation: character-wiggle 0.5s ease-in-out;
-}
-
-.animate-glow-pulse {
-  animation: character-glow 2s ease-in-out infinite;
+body {
+  background-color: #ffffff;
+  color: #374151; /* gray-700 */
 }
 
 /* iOS Safe Area Support */
@@ -167,4 +94,3 @@
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
-
