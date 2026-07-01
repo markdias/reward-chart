@@ -253,7 +253,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
     <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="auth-page-root">
       
       {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[350px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+      <div className="absolute top-0 left-0 right-0 h-[150px] sm:h-[160px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-[3rem] shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
 
       {/* High-Tech Animated Background */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
@@ -281,7 +281,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center relative z-20 -mt-10 sm:-mt-16" id="login-form-panel">
+      <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center relative z-20 mt-2 sm:mt-4" id="login-form-panel">
         
         <div className="space-y-4 sm:space-y-6">
           <motion.div
