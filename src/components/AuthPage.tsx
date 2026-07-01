@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 'lucide-react';
 import { playSound } from '../utils/sound';
@@ -25,6 +25,27 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
   const [isSignUp, setIsSignUp] = useState(hasShareToken);
   const [realAuthError, setRealAuthError] = useState('');
+  const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string } | null>(null);
+
+  useEffect(() => {
+    if (hasShareToken && isSupabaseConfigured()) {
+      const fetchInviter = async () => {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const shareToken = searchParams.get('share');
+          const { data } = await supabase
+            .from('parent_profiles')
+            .select('name, family_name')
+            .eq('share_token', shareToken)
+            .maybeSingle();
+          if (data) {
+            setInviterInfo({ name: data.name || 'A Parent', familyName: data.family_name || 'Their Family' });
+          }
+        }
+      };
+      fetchInviter();
+    }
+  }, [hasShareToken]);
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'Unknown connection or authentication error';
@@ -229,36 +250,38 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
   const styles = THEME_PRESETS[theme];
 
   return (
-    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-hidden transition-colors duration-300`} id="auth-page-root">
+    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="auth-page-root">
       
+      {/* Sweeping Curved Header Background */}
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+
       {/* High-Tech Animated Background */}
-      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      <div className="absolute top-10 left-10 w-96 h-96 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Retro Header Console */}
-      <header className={`w-full max-w-7xl mx-auto px-6 py-5 flex items-center justify-between border-b ${styles.divider} relative z-20`}>
+      <header className={`w-full max-w-7xl mx-auto px-6 pt-safe-top pt-6 pb-6 flex items-center justify-between border-none relative z-40`}>
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToLanding}
-            className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-[#78716C] hover:text-[#292524] transition-colors cursor-pointer"
+            className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-orange-100 hover:text-white transition-colors cursor-pointer bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-full"
           >
             ← Back to Home
           </button>
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-            <Gamepad2 className="w-6 h-6 text-white animate-pulse" />
+          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/20 hidden sm:flex">
+            <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
           </div>
           <div>
-            <span className={`text-2xl font-black font-display tracking-wider ${styles.titleGradient}`}>
+            <span className={`text-2xl font-black font-display tracking-wider text-white drop-shadow-sm`}>
               REWARD CHART
             </span>
-            <span className="block text-[9px] text-[#78716C] font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
+            <span className="block text-[9px] text-orange-100 font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
           </div>
         </div>
       </header>
 
       {/* Main Section */}
-      <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center relative z-20" id="login-form-panel">
+      <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center relative z-20 mt-6 sm:mt-10" id="login-form-panel">
         
         <div className="space-y-4 sm:space-y-6">
           <motion.div
@@ -268,17 +291,20 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
-                {isSignUp ? 'CREATE PARENT ACCOUNT' : 'SECURE PARENT LOGIN'}
+                {isSignUp ? (hasShareToken ? 'JOIN FAMILY' : 'CREATE PARENT ACCOUNT') : 'SECURE PARENT LOGIN'}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
-                Requires parent credentials to manage quests and rewards
+                {hasShareToken && isSignUp && inviterInfo 
+                  ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}`
+                  : 'Requires parent credentials to manage quests and rewards'
+                }
               </p>
             </div>
 
             <form onSubmit={handleRealAuthSubmit} className="space-y-3">
               {realAuthError && (
                 <div className="space-y-2">
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs flex items-center gap-2">
+                  <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{realAuthError}</span>
                   </div>
@@ -345,7 +371,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
               <button
                 type="submit"
-                className="w-full btn-primary py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest cursor-pointer mt-4 bg-stone-900 hover:bg-stone-800 text-white shadow-[0_3px_0_0_#1c1917]"
+                className="w-full btn-dark py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest mt-4"
                 id="real-login-submit"
               >
                 {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
@@ -370,7 +396,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+            <div className="p-2 rounded-xl bg-warning/15 text-dark">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -379,7 +405,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
             </div>
           </div>
           <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
-            <div className="p-2 rounded-xl bg-red-100 text-red-500">
+            <div className="p-2 rounded-xl bg-danger/10 text-danger">
               <Heart className="w-4 h-4" />
             </div>
             <div>

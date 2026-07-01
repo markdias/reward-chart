@@ -385,6 +385,11 @@ export default function App() {
             localStorage.setItem(keyGiftingRequests, JSON.stringify(dbGifting || []));
           }
 
+          // Clean up URL to remove token now that everything is loaded
+          if (new URLSearchParams(window.location.search).has('share')) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+
         } catch (err) {
           console.warn('Error loading Supabase data:', err);
           loadLocalStorageFallback(isDemo);
@@ -639,9 +644,18 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_EMAIL', email);
     setPostSignUpData({ email, parentName: name, familyName });
     
-    // Crucial: keep onboarding incomplete so they get the wizard
-    setHasCompletedOnboarding(false);
-    localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+    const isShared = new URLSearchParams(window.location.search).has('share');
+
+    if (isShared) {
+      // Joining existing family - skip wizard
+      setHasCompletedOnboarding(true);
+      localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+      setIsParentMode(true); // Drop them into parent view
+    } else {
+      // New family - run onboarding wizard
+      setHasCompletedOnboarding(false);
+      localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+    }
   };
 
   const handleLoginReal = (email: string) => {
@@ -1658,7 +1672,7 @@ export default function App() {
 
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
-        {!hasCompletedOnboarding ? (
+        {(!hasCompletedOnboarding && !new URLSearchParams(window.location.search).has('share')) ? (
           <motion.div
             key="onboarding"
             initial={{ opacity: 0 }}
@@ -1696,6 +1710,11 @@ export default function App() {
               onBackToLanding={() => {
                 setHasCompletedOnboarding(false);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
+                if (new URLSearchParams(window.location.search).has('share')) {
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  // Force a re-render to evaluate URL params correctly
+                  setShowLogin(false);
+                }
               }}
               theme={activeTheme}
             />

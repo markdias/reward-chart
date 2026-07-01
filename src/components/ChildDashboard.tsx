@@ -345,12 +345,15 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-hidden transition-colors duration-300`} id="child-root">
+    <div className={`min-h-screen bg-page flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="child-root">
       
+      {/* Sweeping Curved Header Background */}
+      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
+
       {/* Immersive Starry Grid Backdrop */}
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
-      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
@@ -800,7 +803,7 @@ export default function ChildDashboard({
 
               <button
                 onClick={() => { playSound.success(); setPenaltyMessage(null); }}
-                className="w-full btn-primary py-3 bg-rose-500 hover:bg-rose-450 border-2 border-gray-200 text-white font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                className="w-full btn-danger py-3 text-sm"
                 id="pet-penalty-dismiss-btn"
               >
                 I Promise to Feed Them! <FaFaceSadTear className="inline-block ml-2 text-yellow-500" />
@@ -852,7 +855,7 @@ export default function ChildDashboard({
                       setActiveChildTab('pots');
                     }
                   }}
-                  className="w-full btn-primary py-3 bg-orange-400 hover:bg-orange-350 border-2 border-gray-200 text-stone-900 font-black rounded-2xl uppercase tracking-widest text-sm shadow-sm hover:translate-y-1 hover:shadow-[0_0px_0_0_#1c1917] cursor-pointer transition-all"
+                  className="w-full btn-warning py-3 text-sm"
                 >
                   {(activeChild?.pet_food || 0) > 0 ? <span>Feed Now! <FaBone className="inline-block ml-2" /></span> : <span>Get Food! <FaCartShopping className="inline-block ml-2" /></span>}
                 </button>
@@ -875,31 +878,29 @@ export default function ChildDashboard({
       </AnimatePresence>
 
       {/* Top-tier Console Navigation Bar */}
-      <header className={`p-3 sm:p-5 border-b ${styles.divider} flex justify-between items-center ${styles.headerBg} relative z-30`}>
+      <header className={`px-4 sm:px-6 pt-safe-top pt-6 pb-6 flex justify-between items-center relative z-40 bg-transparent border-none`}>
         <div className="flex items-center gap-2 sm:gap-3">
           {selectedChildId ? (
             lockedChildId ? (
-              <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
-                <Lock className="w-4 h-4 text-white" />
+              <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-white shadow-lg shadow-orange-500/20 flex items-center justify-center text-sm sm:text-lg`}>
+                <Lock className="w-4 h-4 text-orange-500" />
               </div>
             ) : (
               <button
                 onClick={() => { playSound.click(); setSelectedChildId(null); }}
-                className={`p-2 rounded-lg sm:rounded-xl border transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold ${
-                  'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100 shadow-sm font-bold'
-                }`}
+                className={`p-2 rounded-xl sm:rounded-2xl transition-all cursor-pointer flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs font-mono font-bold bg-white text-orange-600 hover:bg-orange-50 shadow-lg shadow-orange-500/20 border-none`}
                 id="back-to-profiles-btn"
               >
-                <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
+                <ArrowLeft className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500`} /> <span className="hidden sm:inline">CHOOSE OPERATOR</span>
               </button>
             )
           ) : (
-            <div className={`h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm sm:text-lg shadow-md`}>
+            <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-white shadow-lg shadow-orange-500/20 flex items-center justify-center text-sm sm:text-lg`}>
               🎮
             </div>
           )}
-          <div className="flex flex-col">
-            <span className={`text-[12px] sm:text-sm font-black font-display tracking-widest uppercase ${styles.titleGradient}`}>
+          <div className="flex flex-col ml-1">
+            <span className={`text-[12px] sm:text-base font-black font-display tracking-widest uppercase text-amber-950 drop-shadow-sm`}>
               {activeChild ? `${activeChild.name}'S DASHBOARD` : 'KID CONTROL DECK'}
             </span>
           </div>
@@ -909,9 +910,7 @@ export default function ChildDashboard({
           {selectedChildId && !lockedChildId && onLockChild && (
             <button
               onClick={() => { playSound.success(); onLockChild(selectedChildId); }}
-              className={`hidden sm:flex items-center gap-1.5 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
-                'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 shadow-sm'
-              }`}
+              className={`hidden sm:flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all bg-white text-indigo-600 hover:bg-indigo-50 shadow-lg shadow-orange-500/20 border-none`}
               title="Lock device to this child's profile"
             >
               <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-500`} /> <span>LOCK DEVICE</span>
@@ -919,18 +918,16 @@ export default function ChildDashboard({
           )}
           <button
             onClick={() => { playSound.click(); onEnterParentMode(); }}
-            className={`flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all border ${
-              'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm font-bold'
-            }`}
+            className={`flex items-center gap-1 sm:gap-2 rounded-xl px-2.5 py-1.5 sm:px-4 sm:py-2.5 text-[9px] sm:text-xs font-bold font-mono cursor-pointer transition-all bg-white text-rose-600 hover:bg-rose-50 shadow-lg shadow-orange-500/20 border-none`}
             id="parent-gate-lock-btn"
           >
-            <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span className="text-rose-600">SWITCH TO PARENT</span>
+            <Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500`} /> <span>SWITCH TO PARENT</span>
           </button>
         </div>
       </header>
 
       {/* Central HUD Viewport */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col relative z-20 overflow-y-auto" id="child-viewport">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col relative z-20 overflow-y-auto mt-6 sm:mt-10 bg-white/90 backdrop-blur-md rounded-[2rem] shadow-xl shadow-orange-900/10 mb-24 lg:mb-8 border border-white/50" id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1071,19 +1068,19 @@ export default function ChildDashboard({
                       )}
 
                       {/* Giant Levitating Pedestal */}
-                      <div className="my-4 sm:my-8 relative flex items-center justify-center">
+                      <div className="my-6 sm:my-10 relative flex items-center justify-center">
                         {/* Interactive floating particles */}
-                        <div className="absolute h-28 w-28 sm:h-40 sm:w-40 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
+                        <div className="absolute h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
                         
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                           transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                          className={`h-20 w-20 sm:h-36 sm:w-36 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
                           {activeChildStage.image_url ? (
                             <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float" />
                           ) : (
-                            <span className="text-4xl sm:text-7xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
+                            <span className="text-6xl sm:text-[9rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}
                             </span>
                           )}
@@ -1117,8 +1114,8 @@ export default function ChildDashboard({
                               activeChild.pet_fed_today
                                 ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
                                 : (activeChild.pet_food || 0) > 0
-                                  ? 'bg-orange-500 border-2 border-gray-200 text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_#1c1917] active:translate-y-1 active:shadow-none'
-                                  : 'bg-stone-200 text-stone-400 border border-stone-300 cursor-not-allowed'
+                                  ? 'bg-warning border-2 border-neutral-border text-dark shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
+                                  : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
                             }`}
                           >
                             {isFeeding ? (
@@ -1400,7 +1397,7 @@ export default function ChildDashboard({
                               return (
                                 <div
                                   key={task.id}
-                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-1.5 sm:gap-2 ${
+                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 ${
                                     isApproved 
                                       ? 'bg-white/40 border-slate-950/50 opacity-45' 
                                       : isPending 
@@ -1410,58 +1407,59 @@ export default function ChildDashboard({
                                           : `${styles.cardBg} ${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg`
                                   }`}
                                 >
-                                  <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-1.5">
+                                  {/* Line 1: Tags */}
+                                  <div className="flex flex-wrap items-center gap-1.5 w-full">
+                                    <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
+                                      {task.category.toUpperCase()}
+                                    </span>
+                                    <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded`}>
+                                      {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
+                                    </span>
+                                    {isPending && (
+                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded animate-pulse`}>
+                                        PENDING
+                                      </span>
+                                    )}
+                                    {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
                                       <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
-                                        {task.category.toUpperCase()}
+                                        <GoldCoinIcon /> Completed {completedTodayCount}x
                                       </span>
-                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded`}>
-                                        {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
-                                      </span>
-                                      {isPending && (
-                                        <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded animate-pulse`}>
-                                          PENDING
-                                        </span>
-                                      )}
-                                      {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
-                                        <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
-                                          <GoldCoinIcon /> Completed {completedTodayCount}x
-                                        </span>
-                                      )}
-                                    </div>
-                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide ${isApproved ? 'line-through text-gray-9000' : styles.titleColor}`}>
-                                      {task.title}
-                                    </h4>
+                                    )}
                                   </div>
 
-                                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end md:self-center mt-1 md:mt-0">
-                                    <div className="flex gap-1.5 sm:gap-2">
+                                  {/* Line 2: Name + Coins + Button */}
+                                  <div className="flex items-center justify-between gap-2 w-full">
+                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide truncate ${isApproved ? 'line-through text-gray-9000' : styles.titleColor}`}>
+                                      {task.title}
+                                    </h4>
+
+                                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                       <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border text-yellow-700 bg-yellow-50 border-yellow-200`}>
                                         <Coins className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> +{task.points}
                                       </span>
-                                      </div>
 
-                                    {isApproved ? (
-                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
-                                        VERIFIED
-                                      </span>
-                                    ) : isPending ? (
-                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
-                                        AWAITING
-                                      </span>
-                                    ) : isOnCooldown ? (
-                                      <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
-                                        COOLDOWN ({cooldownTimeLeftStr})
-                                      </span>
-                                    ) : (
-                                      <button
-                                        onClick={() => handleTaskCheck(task.id)}
-                                        className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-stone-900 hover:bg-stone-800 shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]`}
-                                        id={`claim-task-${task.id}`}
-                                      >
-                                        COMPLETE!
-                                      </button>
-                                    )}
+                                      {isApproved ? (
+                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
+                                          VERIFIED
+                                        </span>
+                                      ) : isPending ? (
+                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
+                                          AWAITING
+                                        </span>
+                                      ) : isOnCooldown ? (
+                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
+                                          COOLDOWN ({cooldownTimeLeftStr})
+                                        </span>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleTaskCheck(task.id)}
+                                          className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-dark hover:bg-dark-hover shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]`}
+                                          id={`claim-task-${task.id}`}
+                                        >
+                                          COMPLETE!
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               );
@@ -1540,8 +1538,8 @@ export default function ChildDashboard({
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points, 'savings')}
                                           className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                             canDispense && (activeChild.savings_pot || 0) >= rew.cost_points
-                                              ? 'bg-emerald-400 hover:bg-emerald-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                              ? 'bg-primary hover:bg-primary-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
                                           }`}
                                           id={`claim-reward-savings-${rew.id}`}
                                         >
@@ -1553,8 +1551,8 @@ export default function ChildDashboard({
                                           onClick={() => handleClaimReward(rew.id, rew.cost_points)}
                                           className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
                                             canDispense
-                                              ? 'bg-amber-400 hover:bg-amber-300 border border-stone-950 text-stone-900 font-black shadow-[0_2px_0_0_#1c1917] sm:shadow-[0_3px_0_0_#1c1917]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-stone-300'
+                                              ? 'bg-warning hover:bg-warning-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
+                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
                                           }`}
                                           id={`claim-reward-${rew.id}`}
                                         >
@@ -2163,7 +2161,7 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-2 pb-safe">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-50 flex justify-around items-center px-4 py-3 pb-safe rounded-t-[2rem]">
             {[
               { id: 'companion', label: 'PET', icon: FaPaw },
               { id: 'tasks', label: 'QUESTS', icon: FaBullseye },
@@ -2176,14 +2174,15 @@ export default function ChildDashboard({
                 <button
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative p-3 rounded-xl transition-all flex flex-col items-center gap-1 w-full max-w-[80px] ${
+                  className={`relative p-3 rounded-2xl transition-all flex flex-col items-center justify-center duration-300 w-full max-w-[80px] ${
                     isSelected
-                      ? 'text-cyan-600 bg-cyan-50'
-                      : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
+                      ? 'text-white bg-cyan-400 shadow-md shadow-cyan-400/40 scale-110'
+                      : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
-                  {Icon && <Icon className="w-6 h-6" />}
-                  <span className={`text-[9px] font-bold font-mono tracking-widest uppercase ${isSelected ? 'text-cyan-600' : 'text-stone-500'}`}>
+                  {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                  {/* Optional label for mobile? The screenshot had labels removed. We'll keep them but hidden if not active or just smaller */}
+                  <span className={`text-[8px] font-bold font-mono tracking-widest uppercase mt-1 ${isSelected ? 'text-white' : 'text-slate-400'}`}>
                     {tab.label}
                   </span>
                 </button>
