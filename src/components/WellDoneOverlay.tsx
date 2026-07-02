@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from 'react';
-import { animate, stagger, spring } from 'animejs';
+import React from 'react';
 import Confetti from './Confetti';
 
 interface WellDoneOverlayProps {
@@ -7,140 +6,100 @@ interface WellDoneOverlayProps {
   taskName?: string | null;
 }
 
+// Vibrant per-letter colours
+const COLORS = ['#FF5757', '#FF9A3C', '#FFD166', '#06D6A0', '#4CC9F0', '#B5179E', '#FF5757', '#FF9A3C', '#FFD166'];
+
+const KEYFRAMES = `
+@keyframes wd-card-in {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-4deg); }
+  60%  { opacity: 1; transform: scale(1.06) rotate(1.5deg); }
+  80%  { transform: scale(0.97) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes wd-burst {
+  0%   { transform: scale(0);   opacity: 0; }
+  40%  { transform: scale(1.2); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes wd-letter {
+  0%   { opacity: 0; transform: translateY(56px) scale(0.4) rotate(var(--tilt)); }
+  55%  { opacity: 1; transform: translateY(-10px) scale(1.18) rotate(calc(var(--tilt) * -0.3)); }
+  75%  { transform: translateY(4px) scale(0.95) rotate(1deg); }
+  88%  { transform: translateY(-3px) scale(1.04) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+}
+@keyframes wd-badge {
+  0%   { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes wd-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+`;
+
 export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const lettersRef = useRef<HTMLDivElement>(null);
-  const badgeRef = useRef<HTMLDivElement>(null);
-  const burstRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!show || !overlayRef.current || !lettersRef.current) return;
-
-    const overlay = overlayRef.current;
-    const letterEls = Array.from(lettersRef.current.querySelectorAll<HTMLElement>('.wd-letter'));
-    const badge = badgeRef.current;
-    const burst = burstRef.current;
-
-    // Reset to invisible
-    overlay.style.opacity = '0';
-    letterEls.forEach(el => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(60px) scale(0.4) rotate(var(--tilt))';
-    });
-    if (badge) { badge.style.opacity = '0'; badge.style.transform = 'translateY(16px)'; }
-    if (burst) { burst.style.transform = 'scale(0)'; burst.style.opacity = '0'; }
-
-    // 1. Fade in overlay
-    animate(overlay, { opacity: [0, 1], duration: 180, easing: 'easeOutQuad' });
-
-    // 2. Burst background pulse
-    if (burst) {
-      animate(burst, {
-        scale: [0, 1.15, 1],
-        opacity: [0, 0.9, 0.7],
-        duration: 600,
-        easing: spring({ stiffness: 180, damping: 14 }),
-      });
-    }
-
-    // 3. Letters bounce in with stagger
-    animate(letterEls, {
-      opacity: [0, 1],
-      translateY: [60, 0],
-      scale: [0.4, 1.15, 1],
-      rotate: ['var(--tilt)', '4deg', '0deg'],
-      duration: 700,
-      delay: stagger(55, { start: 80 }),
-      easing: spring({ stiffness: 320, damping: 12 }),
-    });
-
-    // 4. Badge slides up
-    if (badge && taskName) {
-      animate(badge, {
-        opacity: [0, 1],
-        translateY: [16, 0],
-        duration: 420,
-        delay: 580,
-        easing: 'easeOutBack',
-      });
-    }
-  }, [show, taskName]);
-
   if (!show) return null;
 
   const word1 = 'WELL'.split('');
   const word2 = 'DONE!'.split('');
-  // Vibrant colour palette per letter
-  const colors = ['#FF5757', '#FF9A3C', '#FFD166', '#06D6A0', '#4CC9F0', '#B5179E', '#FF5757', '#FF9A3C', '#FFD166'];
+  const allLetters = [...word1, null, ...word2]; // null = spacer
 
   return (
     <>
+      {/* Inject keyframes once */}
+      <style>{KEYFRAMES}</style>
+
       <div
-        ref={overlayRef}
         className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none select-none"
-        style={{ opacity: 0 }}
+        style={{ animation: 'wd-overlay-in 0.18s ease-out forwards' }}
         aria-hidden
       >
-        {/* Soft radial burst behind card */}
+        {/* Radial burst */}
         <div
-          ref={burstRef}
           className="absolute rounded-full pointer-events-none"
           style={{
-            width: 560,
-            height: 560,
-            background: 'radial-gradient(circle at 50% 50%, rgba(253,224,71,0.55) 0%, rgba(244,114,182,0.35) 45%, transparent 72%)',
-            transform: 'scale(0)',
-            opacity: 0,
+            width: 600,
+            height: 600,
+            background: 'radial-gradient(circle, rgba(253,224,71,0.6) 0%, rgba(244,114,182,0.4) 45%, transparent 70%)',
+            animation: 'wd-burst 0.7s cubic-bezier(0.22,1,0.36,1) forwards',
           }}
         />
 
         {/* Card */}
         <div
-          className="relative flex flex-col items-center gap-4 px-12 py-10 rounded-[2.5rem] bg-white"
+          className="relative flex flex-col items-center gap-4 px-10 py-9 rounded-[2.5rem] bg-white"
           style={{
             border: '5px solid #FFD166',
-            boxShadow: '0 0 0 6px #FF9A3C33, 0 24px 80px rgba(0,0,0,0.22)',
+            boxShadow: '0 0 0 7px rgba(255,154,60,0.22), 0 28px 80px rgba(0,0,0,0.22)',
+            animation: 'wd-card-in 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards',
           }}
         >
-          {/* Letters */}
-          <div ref={lettersRef} className="flex items-end gap-0" style={{ lineHeight: 1 }}>
-            {word1.map((letter, i) => (
-              <div
-                key={`w1-${i}`}
-                className="wd-letter font-black"
-                style={{
-                  fontSize: 'clamp(3.5rem, 14vw, 7rem)',
-                  color: colors[i % colors.length],
-                  textShadow: `0 5px 0 ${colors[i % colors.length]}44`,
-                  fontFamily: 'var(--font-display, system-ui)',
-                  // @ts-ignore
-                  '--tilt': i % 2 === 0 ? '-14deg' : '14deg',
-                  letterSpacing: '-0.02em',
-                  opacity: 0,
-                }}
-              >
-                {letter}
-              </div>
-            ))}
+          {/* Letters row */}
+          <div className="flex items-end" style={{ lineHeight: 1 }}>
+            {allLetters.map((letter, i) => {
+              if (letter === null) return <div key="gap" style={{ width: '0.3em' }} />;
 
-            {/* Gap between WELL and DONE */}
-            <div style={{ width: '0.4em' }} />
+              // account for the null spacer when computing logical index
+              const colorIdx = i <= 3 ? i : i - 1;
+              const color = COLORS[colorIdx % COLORS.length];
+              const tilt = colorIdx % 2 === 0 ? '-15deg' : '15deg';
+              const delay = `${0.05 + colorIdx * 0.06}s`;
 
-            {word2.map((letter, i) => {
-              const gi = i + word1.length;
               return (
                 <div
-                  key={`w2-${i}`}
-                  className="wd-letter font-black"
+                  key={i}
+                  className="font-black"
                   style={{
-                    fontSize: 'clamp(3.5rem, 14vw, 7rem)',
-                    color: colors[gi % colors.length],
-                    textShadow: `0 5px 0 ${colors[gi % colors.length]}44`,
+                    fontSize: 'clamp(3.2rem, 13vw, 6.5rem)',
+                    color,
+                    textShadow: `0 5px 0 ${color}55`,
                     fontFamily: 'var(--font-display, system-ui)',
-                    // @ts-ignore
-                    '--tilt': gi % 2 === 0 ? '-14deg' : '14deg',
-                    letterSpacing: '-0.02em',
+                    letterSpacing: '-0.025em',
                     opacity: 0,
+                    // @ts-ignore custom property
+                    '--tilt': tilt,
+                    animation: `wd-letter 0.65s cubic-bezier(0.34,1.56,0.64,1) ${delay} forwards`,
                   }}
                 >
                   {letter}
@@ -152,15 +111,15 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
           {/* Task name badge */}
           {taskName && (
             <div
-              ref={badgeRef}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full"
               style={{
                 background: '#f0fdf4',
                 border: '2px solid #86efac',
                 opacity: 0,
+                animation: 'wd-badge 0.4s ease-out 0.65s forwards',
               }}
             >
-              <span style={{ fontSize: '1.1rem' }}>✅</span>
+              <span style={{ fontSize: '1rem' }}>✅</span>
               <span
                 className="font-bold text-sm truncate max-w-[260px]"
                 style={{ color: '#166534', fontFamily: 'var(--font-mono, monospace)' }}
