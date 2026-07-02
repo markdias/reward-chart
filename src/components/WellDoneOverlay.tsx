@@ -17,7 +17,7 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
     if (!show || !overlayRef.current || !lettersRef.current) return;
 
     const overlay = overlayRef.current;
-    const letterEls = lettersRef.current.querySelectorAll<HTMLElement>('.wd-letter');
+    const letterEls = Array.from(lettersRef.current.querySelectorAll<HTMLElement>('.wd-letter'));
     const badge = badgeRef.current;
     const burst = burstRef.current;
 
