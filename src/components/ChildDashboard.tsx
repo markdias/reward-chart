@@ -16,6 +16,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } 
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
+import WellDoneOverlay from './WellDoneOverlay';
 import { getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
 
 const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string }) => (
@@ -108,6 +109,10 @@ export default function ChildDashboard({
 
   const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
+
+  // Well Done celebration overlay
+  const [showWellDone, setShowWellDone] = useState(false);
+  const [wellDoneTaskName, setWellDoneTaskName] = useState<string | null>(null);
 
   // Savings Pot UI State
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -261,10 +266,13 @@ export default function ChildDashboard({
     setActiveChildTab('companion');
   };
 
-  const handleTaskCheck = (taskId: string) => {
+  const handleTaskCheck = (taskId: string, taskName?: string) => {
     if (!selectedChildId) return;
     playSound.success();
     onCompleteTask(taskId, selectedChildId);
+    setWellDoneTaskName(taskName || null);
+    setShowWellDone(true);
+    setTimeout(() => setShowWellDone(false), 2600);
   };
 
   const handleClaimReward = (rewardId: string, cost: number, paymentSource: 'main' | 'savings' = 'main') => {
@@ -354,6 +362,9 @@ export default function ChildDashboard({
       <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none`} />
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-12 left-1/4 w-[600px] h-[600px] bg-warning/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Well Done celebration overlay (anime.js powered) */}
+      <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
@@ -1452,7 +1463,7 @@ export default function ChildDashboard({
                                         </span>
                                       ) : (
                                         <button
-                                          onClick={() => handleTaskCheck(task.id)}
+                                          onClick={() => handleTaskCheck(task.id, task.title)}
                                           className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-dark hover:bg-dark-hover shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]`}
                                           id={`claim-task-${task.id}`}
                                         >
