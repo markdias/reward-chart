@@ -1529,78 +1529,84 @@ export default function ChildDashboard({
                                 return null;
                               }
 
-                              return (
-                                <div
-                                  key={rew.id}
-                                  className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 ${
-                                    isSavingFor
-                                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)]'
-                                      : `${styles.cardBg} ${canDispense ? `${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg` : 'opacity-60 border-slate-800/30'}`
-                                  }`}
-                                >
-                                  <div className="flex gap-2.5 sm:gap-3 items-center">
-                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-stone-150 border border-stone-200 flex items-center justify-center text-2xl sm:text-3xl shrink-0`}>
-                                      🎁
+                              const cardInner = (
+                                <>
+                                  <div className="flex gap-2.5 sm:gap-3 items-center min-w-0">
+                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${
+                                      canDispense
+                                        ? 'bg-warning/15 border border-warning/30'
+                                        : 'bg-stone-100 border border-stone-200'
+                                    }`}>
+                                      <Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${canDispense ? 'text-warning' : 'text-stone-400'}`} />
                                     </div>
-                                    <div>
-                                      <h4 className={`font-extrabold text-xs sm:text-sm ${styles.titleColor} font-display tracking-wide`}>{rew.title}</h4>
+                                    <div className="min-w-0">
+                                      <h4 className={`font-extrabold text-xs sm:text-sm ${styles.titleColor} font-display tracking-wide truncate`}>{rew.title}</h4>
                                       <p className={`text-[9px] sm:text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD</p>
                                     </div>
                                   </div>
 
                                   <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
-                                    <span className={`text-[9px] sm:text-[10px] font-mono font-black hidden sm:inline-block ${isAffordable ? 'text-amber-700' : 'text-gray-9000'}`}>
-                                      <GoldCoinIcon /> {rew.cost_points} GOLD
-                                    </span>
-
-                                    <div className="flex flex-col gap-1.5 items-end">
-                                      {isSavingFor ? (
-                                        <button
-                                          disabled={!canDispense || (activeChild.savings_pot || 0) < rew.cost_points}
-                                          onClick={() => handleClaimReward(rew.id, rew.cost_points, 'savings')}
-                                          className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
-                                            canDispense && (activeChild.savings_pot || 0) >= rew.cost_points
-                                              ? 'bg-primary hover:bg-primary-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
-                                          }`}
-                                          id={`claim-reward-savings-${rew.id}`}
-                                        >
-                                          {!availability.available ? availability.reason : hasPendingRequest ? 'PENDING' : 'BUY (SAVINGS)'}
-                                        </button>
+                                    {isSavingsUnlocked && (
+                                      isSavingFor ? (
+                                        <span className="text-[10px] sm:text-xs text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1 bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-300">
+                                          <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Saving
+                                        </span>
                                       ) : (
                                         <button
-                                          disabled={!canDispense}
-                                          onClick={() => handleClaimReward(rew.id, rew.cost_points)}
-                                          className={`font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all ${
-                                            canDispense
-                                              ? 'bg-warning hover:bg-warning-hover border border-dark text-dark font-black shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]'
-                                              : 'bg-stone-200 text-stone-400 cursor-not-allowed border border-neutral-border'
-                                          }`}
-                                          id={`claim-reward-${rew.id}`}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onSavingsGoal(activeChild.id, rew.id);
+                                            playSound.success();
+                                          }}
+                                          className="text-[8px] text-emerald-600 hover:bg-emerald-50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
                                         >
-                                          {!availability.available ? availability.reason : hasPendingRequest ? 'PENDING' : 'BUY'}
+                                          Set as Goal
                                         </button>
-                                      )}
-                                      
-                                      {isSavingsUnlocked && (
-                                        isSavingFor ? (
-                                          <span className="text-[10px] sm:text-xs text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1.5 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300 shadow-sm mt-1">
-                                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> SAVING FOR
-                                          </span>
-                                        ) : (
-                                          <button
-                                            onClick={() => {
-                                              onSavingsGoal(activeChild.id, rew.id);
-                                              playSound.success();
-                                            }}
-                                            className="text-[8px] text-emerald-600 hover:bg-emerald-50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
-                                          >
-                                            Set as Goal
-                                          </button>
-                                        )
-                                      )}
-                                    </div>
+                                      )
+                                    )}
+
+                                    {/* Status / cost badge */}
+                                    {hasPendingRequest ? (
+                                      <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase px-2.5 py-1.5 rounded-lg animate-pulse bg-stone-100 text-stone-600">
+                                        PENDING
+                                      </span>
+                                    ) : !availability.available ? (
+                                      <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase px-2.5 py-1.5 rounded-lg bg-stone-100 text-stone-400">
+                                        {availability.reason}
+                                      </span>
+                                    ) : (
+                                      <span className={`flex items-center gap-1 font-mono font-extrabold text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl border ${
+                                        isAffordable ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-stone-400 bg-stone-100 border-stone-200'
+                                      }`}>
+                                        <GoldCoinIcon /> {rew.cost_points}
+                                      </span>
+                                    )}
                                   </div>
+                                </>
+                              );
+
+                              return canDispense ? (
+                                <button
+                                  key={rew.id}
+                                  onClick={() => isSavingFor
+                                    ? handleClaimReward(rew.id, rew.cost_points, 'savings')
+                                    : handleClaimReward(rew.id, rew.cost_points)
+                                  }
+                                  id={`claim-reward-${rew.id}`}
+                                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 cursor-pointer active:scale-[0.98] active:brightness-95 ${
+                                    isSavingFor
+                                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-lg'
+                                      : `${styles.cardBg} ${styles.borderStyle} hover:border-warning/40 hover:shadow-lg`
+                                  }`}
+                                >
+                                  {cardInner}
+                                </button>
+                              ) : (
+                                <div
+                                  key={rew.id}
+                                  className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 opacity-60 ${styles.cardBg} border-slate-800/30`}
+                                >
+                                  {cardInner}
                                 </div>
                               );
                             })
