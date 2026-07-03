@@ -1519,7 +1519,7 @@ export default function ChildDashboard({
                                         <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
                                           COOLDOWN ({cooldownTimeLeftStr})
                                         </span>
-                                      )}
+                                      ) : null}
                                     </div>
                                   </div>
                                 </>
