@@ -222,7 +222,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                   <img 
                     src={activeChar.image} 
                     alt={activeChar.name} 
-                    className="w-full h-full object-contain p-2 animate-bounce-slow drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]" 
+                    className="w-full h-full object-contain p-2 animate-bounce-slow drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] outline outline-1 -outline-offset-1 outline-black/10" 
                   />
                 ) : (
                   <span className="text-6xl md:text-8xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] animate-bounce-slow">
@@ -299,7 +299,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 return (
                   <motion.button
                     whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => handleCharacterSelect(index)}
                     key={char.id}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center border transition-all cursor-pointer relative overflow-hidden ${
@@ -312,7 +312,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                       <img 
                         src={char.image} 
                         alt={char.name} 
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain p-1 outline outline-1 -outline-offset-1 outline-black/10"
                       />
                     ) : (
                       <span className="text-2xl sm:text-3xl">{char.emoji}</span>

@@ -52,7 +52,7 @@ export function LegalModal() {
               <h2 className="text-2xl font-black font-display text-stone-900 uppercase tracking-widest">
                 {modalType === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
               </h2>
-              <button onClick={close} className="p-2 hover:bg-stone-100 rounded-full transition-colors active:scale-95">
+              <button onClick={close} className="p-2 hover:bg-stone-100 rounded-full transition-colors active:scale-[0.96]">
                 <X className="w-6 h-6 text-stone-500" />
               </button>
             </div>

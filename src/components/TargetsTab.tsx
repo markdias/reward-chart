@@ -47,7 +47,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
       text: 'text-stone-900',
       textMuted: 'text-stone-500',
       input: 'bg-stone-50 border-stone-200 text-stone-900 placeholder-stone-400',
-      primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold border-2 border-gray-200 shadow-sm active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase',
+      primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-900 font-extrabold border-2 border-gray-200 shadow-sm active:translate-y-1 active:shadow-none transition-all uppercase',
     };
   };
 
