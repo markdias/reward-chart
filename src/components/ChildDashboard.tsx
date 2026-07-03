@@ -1426,7 +1426,7 @@ export default function ChildDashboard({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           key="child-tasks-tab"
-                          className="space-y-4"
+                          className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"
                           id="child-tasks-deck"
                         >
                           {tasks.filter(t => {
