@@ -1508,9 +1508,7 @@ export default function ChildDashboard({
                                       <CoinBadge points={task.points} prefix="+" shape="square" />
 
                                       {isApproved ? (
-                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700`}>
-                                          VERIFIED
-                                        </span>
+                                        <CoinBadge points={task.points} prefix="+" shape="square" />
                                       ) : isPending ? (
                                         <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
                                           AWAITING
