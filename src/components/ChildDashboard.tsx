@@ -34,24 +34,41 @@ const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string })
   </svg>
 );
 
-// Gold coin with the number printed inside — always a fixed circle, font shrinks for big numbers
-const CoinBadge = ({ points, prefix = '+', size = 'md' }: { points: number; prefix?: string; size?: 'sm' | 'md' }) => {
+// Gold coin with the number printed inside — fixed size, font shrinks for big numbers
+// shape='circle' → round (tasks), shape='square' → rounded-square (rewards, matches Gift icon)
+const CoinBadge = ({
+  points,
+  prefix = '+',
+  size = 'md',
+  shape = 'circle',
+}: {
+  points: number;
+  prefix?: string;
+  size?: 'sm' | 'md';
+  shape?: 'circle' | 'square';
+}) => {
   const label = `${prefix}${points}`;
   const len = label.length;
-  const mdFont  = len <= 2 ? '13px' : len === 3 ? '11px' : len === 4 ? '9px' : '8px';
-  const smFont  = len <= 2 ? '11px' : len === 3 ? '9px'  : '8px';
+  // Font shrinks to fit — circle stays rigid
+  const mdFont = len <= 2 ? '13px' : len === 3 ? '11px' : len === 4 ? '9px' : '8px';
+  const smFont = len <= 2 ? '11px' : len === 3 ? '9px' : '8px';
+  // Square matches the Gift icon container: h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl
+  const shapeClass = shape === 'square'
+    ? 'h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl'
+    : size === 'sm' ? 'w-7 h-7 rounded-full' : 'w-9 h-9 rounded-full';
+  const fontSize = shape === 'square'
+    ? (len <= 2 ? '15px' : len === 3 ? '12px' : len === 4 ? '10px' : '9px')
+    : (size === 'sm' ? smFont : mdFont);
   return (
     <div
-      className={`inline-flex items-center justify-center font-black shrink-0 rounded-full ${
-        size === 'sm' ? 'w-7 h-7' : 'w-9 h-9'
-      }`}
+      className={`inline-flex items-center justify-center font-black shrink-0 flex-col ${shapeClass}`}
       style={{
         background: 'linear-gradient(145deg, #FFE566 0%, #F59E0B 55%, #D97706 100%)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 0 #92400e',
         color: '#78350f',
         border: '1.5px solid #B45309',
         letterSpacing: '-0.03em',
-        fontSize: size === 'sm' ? smFont : mdFont,
+        fontSize,
         lineHeight: 1,
       }}
     >
@@ -1599,7 +1616,7 @@ export default function ChildDashboard({
                                         {availability.reason}
                                       </span>
                                     ) : (
-                                      <CoinBadge points={rew.cost_points} prefix="" size="sm" />
+                                      <CoinBadge points={rew.cost_points} prefix="" shape="square" />
                                     )}
                                   </div>
                                 </>
