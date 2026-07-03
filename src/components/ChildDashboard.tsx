@@ -34,8 +34,9 @@ const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string })
   </svg>
 );
 
-// Gold coin with the number printed inside — fixed size, font shrinks for big numbers
-// shape='circle' → round (tasks), shape='square' → rounded-square (rewards, matches Gift icon)
+// Gold coin badge
+// shape='circle' → solid gold circle with number inside (tasks)
+// shape='square' → amber icon box with coin outline + number (rewards, matches Gift icon style)
 const CoinBadge = ({
   points,
   prefix = '+',
@@ -49,26 +50,51 @@ const CoinBadge = ({
 }) => {
   const label = `${prefix}${points}`;
   const len = label.length;
-  // Font shrinks to fit — circle stays rigid
   const mdFont = len <= 2 ? '13px' : len === 3 ? '11px' : len === 4 ? '9px' : '8px';
   const smFont = len <= 2 ? '11px' : len === 3 ? '9px' : '8px';
-  // Square matches the Gift icon container: h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl
-  const shapeClass = shape === 'square'
-    ? 'h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl'
-    : size === 'sm' ? 'w-7 h-7 rounded-full' : 'w-9 h-9 rounded-full';
-  const fontSize = shape === 'square'
-    ? (len <= 2 ? '15px' : len === 3 ? '12px' : len === 4 ? '10px' : '9px')
-    : (size === 'sm' ? smFont : mdFont);
+
+  if (shape === 'square') {
+    // Coin outline icon + number — same container style as Gift icon
+    const svgFontSize = len <= 2 ? 11 : len === 3 ? 9 : 8;
+    return (
+      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 bg-warning/15 border border-warning/30">
+        <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-7 sm:h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Coin outer ring */}
+          <circle cx="12" cy="12" r="9.5" stroke="#D97706" strokeWidth="1.8" fill="#FEF3C7" />
+          {/* Inner ring detail */}
+          <circle cx="12" cy="12" r="7" stroke="#F59E0B" strokeWidth="0.8" strokeDasharray="2 1.5" fill="none" />
+          {/* Number in centre */}
+          <text
+            x="12"
+            y="12"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={svgFontSize}
+            fontWeight="900"
+            fontFamily="Nunito, sans-serif"
+            fill="#92400e"
+            letterSpacing="-0.5"
+          >
+            {label}
+          </text>
+        </svg>
+      </div>
+    );
+  }
+
+  // Circle variant — solid gold coin (tasks)
   return (
     <div
-      className={`inline-flex items-center justify-center font-black shrink-0 flex-col ${shapeClass}`}
+      className={`inline-flex items-center justify-center font-black shrink-0 rounded-full ${
+        size === 'sm' ? 'w-7 h-7' : 'w-9 h-9'
+      }`}
       style={{
         background: 'linear-gradient(145deg, #FFE566 0%, #F59E0B 55%, #D97706 100%)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 0 #92400e',
         color: '#78350f',
         border: '1.5px solid #B45309',
         letterSpacing: '-0.03em',
-        fontSize,
+        fontSize: size === 'sm' ? smFont : mdFont,
         lineHeight: 1,
       }}
     >
