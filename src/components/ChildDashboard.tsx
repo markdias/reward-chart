@@ -34,22 +34,25 @@ const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string })
   </svg>
 );
 
-// Gold coin with the number printed inside — like a classic arcade/mobile game coin
+// Gold coin with the number printed inside — always a fixed circle, font shrinks for big numbers
 const CoinBadge = ({ points, prefix = '+', size = 'md' }: { points: number; prefix?: string; size?: 'sm' | 'md' }) => {
   const label = `${prefix}${points}`;
-  // Wider pill for big numbers, circle for small ones
-  const isPill = label.length > 3;
+  const len = label.length;
+  const mdFont  = len <= 2 ? '13px' : len === 3 ? '11px' : len === 4 ? '9px' : '8px';
+  const smFont  = len <= 2 ? '11px' : len === 3 ? '9px'  : '8px';
   return (
     <div
-      className={`inline-flex items-center justify-center font-black shrink-0 ${
-        size === 'sm' ? 'text-[10px] min-w-[28px] h-[28px] rounded-full px-1.5' : 'text-xs min-w-[36px] h-[36px] rounded-full px-2'
-      } ${isPill ? 'rounded-full' : 'rounded-full'}`}
+      className={`inline-flex items-center justify-center font-black shrink-0 rounded-full ${
+        size === 'sm' ? 'w-7 h-7' : 'w-9 h-9'
+      }`}
       style={{
         background: 'linear-gradient(145deg, #FFE566 0%, #F59E0B 55%, #D97706 100%)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 0 #92400e',
         color: '#78350f',
         border: '1.5px solid #B45309',
-        letterSpacing: '-0.02em',
+        letterSpacing: '-0.03em',
+        fontSize: size === 'sm' ? smFont : mdFont,
+        lineHeight: 1,
       }}
     >
       {label}
