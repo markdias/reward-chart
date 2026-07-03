@@ -1520,8 +1520,8 @@ export default function ChildDashboard({
                                           COOLDOWN ({cooldownTimeLeftStr})
                                         </span>
                                       ) : (
-                                        <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-primary shadow-[0_3px_0_0_var(--color-primary-shadow)] shrink-0 pointer-events-none">
-                                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                        <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-warning shadow-[0_3px_0_0_var(--color-warning-shadow)] shrink-0 pointer-events-none">
+                                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-dark" />
                                         </div>
                                       )}
                                     </div>
