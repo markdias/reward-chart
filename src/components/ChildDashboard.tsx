@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } from '../types';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
@@ -33,6 +33,23 @@ const GoldCoinIcon = ({ className = "w-[1em] h-[1em]" }: { className?: string })
     </defs>
   </svg>
 );
+
+// Map task category → icon + colours (matching prize card icon box style)
+const CATEGORY_ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; iconColor: string; label: string }> = {
+  chores:   { Icon: Home,      bg: 'bg-orange-400/15 border-orange-400/30',   iconColor: 'text-orange-500',  label: 'Chores'    },
+  homework: { Icon: BookOpen,  bg: 'bg-blue-400/15 border-blue-400/30',       iconColor: 'text-blue-500',    label: 'Homework'  },
+  behavior: { Icon: Heart,     bg: 'bg-rose-400/15 border-rose-400/30',       iconColor: 'text-rose-500',    label: 'Behaviour' },
+  health:   { Icon: Dumbbell,  bg: 'bg-green-400/15 border-green-400/30',     iconColor: 'text-green-500',   label: 'Health'    },
+  creative: { Icon: Palette,   bg: 'bg-purple-400/15 border-purple-400/30',   iconColor: 'text-purple-500',  label: 'Creative'  },
+  other:    { Icon: Star,      bg: 'bg-stone-400/15 border-stone-400/30',     iconColor: 'text-stone-500',   label: 'Other'     },
+};
+
+const RECURRENCE_LABEL: Record<string, string> = {
+  daily:      'Daily',
+  weekly:     'Weekly',
+  one_time:   'One-off',
+  repeatable: 'Repeatable',
+};
 
 // Gold coin badge
 // shape='circle' → solid gold circle with number inside (tasks)
@@ -1476,49 +1493,41 @@ export default function ChildDashboard({
 
                               const isCompletable = !isApproved && !isPending && !isOnCooldown;
 
+                              const catMeta = CATEGORY_ICON_MAP[task.category] ?? CATEGORY_ICON_MAP.other;
+                              const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
+                              const subtitleParts = [catMeta.label, recLabel, ...(completedTodayCount > 0 ? [`Done ${completedTodayCount}×`] : [])];
+
                               const cardContent = (
                                 <>
-                                  {/* Line 1: Tags */}
-                                  <div className="flex flex-wrap items-center gap-1.5 w-full">
-                                    <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
-                                      {task.category.toUpperCase()}
-                                    </span>
-                                    <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded`}>
-                                      {task.recurrence === 'one_time' ? 'ONE-OFF' : task.recurrence.toUpperCase()}
-                                    </span>
-                                    {isPending && (
-                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-stone-700 bg-stone-100 border border-stone-200 px-2 py-0.5 rounded animate-pulse`}>
-                                        PENDING
-                                      </span>
-                                    )}
-                                    {task.recurrence === 'repeatable' && completedTodayCount > 0 && (
-                                      <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
-                                        <GoldCoinIcon /> Completed {completedTodayCount}x
-                                      </span>
-                                    )}
+                                  {/* Icon + title + subtitle */}
+                                  <div className="flex gap-2.5 sm:gap-3 items-center min-w-0">
+                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border ${catMeta.bg} ${
+                                      isApproved || isOnCooldown ? 'opacity-50' : ''
+                                    }`}>
+                                      <catMeta.Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${catMeta.iconColor}`} />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <h4 className={`font-extrabold text-xs sm:text-sm font-display tracking-wide truncate ${isApproved ? `line-through ${styles.textMuted}` : styles.titleColor}`}>
+                                        {task.title}
+                                      </h4>
+                                      <p className={`text-[9px] sm:text-[10px] font-mono uppercase mt-0.5 ${styles.textMuted}`}>
+                                        {subtitleParts.join(' · ')}
+                                      </p>
+                                    </div>
                                   </div>
 
-                                  {/* Line 2: Name + Coins + Button */}
-                                  <div className="flex items-center justify-between gap-2 w-full">
-                                    <h4 className={`font-black font-display text-sm sm:text-base tracking-wide truncate ${isApproved ? 'line-through text-gray-9000' : styles.titleColor}`}>
-                                      {task.title}
-                                    </h4>
-
-                                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                      <CoinBadge points={task.points} prefix="+" shape="square" />
-
-                                      {isApproved ? (
-                                        <CoinBadge points={task.points} prefix="+" shape="square" />
-                                      ) : isPending ? (
-                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-600`}>
-                                          AWAITING
-                                        </span>
-                                      ) : isOnCooldown ? (
-                                        <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
-                                          COOLDOWN ({cooldownTimeLeftStr})
-                                        </span>
-                                      ) : null}
-                                    </div>
+                                  {/* Right: coin + status */}
+                                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                    {isPending ? (
+                                      <span className="px-2.5 py-1.5 rounded-lg font-mono text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-500">
+                                        AWAITING
+                                      </span>
+                                    ) : isOnCooldown ? (
+                                      <span className="px-2.5 py-1.5 rounded-lg font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200">
+                                        {cooldownTimeLeftStr}
+                                      </span>
+                                    ) : null}
+                                    <CoinBadge points={task.points} prefix="+" shape="square" />
                                   </div>
                                 </>
                               );
@@ -1528,16 +1537,16 @@ export default function ChildDashboard({
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
-                                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 cursor-pointer active:scale-[0.98] active:brightness-95 ${styles.cardBg} ${styles.borderStyle} hover:border-primary/40 hover:shadow-lg`}
+                                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2 cursor-pointer active:scale-[0.98] active:brightness-95 ${styles.cardBg} ${styles.borderStyle} hover:border-warning/40 hover:shadow-lg`}
                                 >
                                   {cardContent}
                                 </button>
                               ) : (
                                 <div
                                   key={task.id}
-                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 ${
+                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex items-center justify-between gap-2 ${
                                     isApproved
-                                      ? 'bg-white/40 border-slate-950/50 opacity-45'
+                                      ? `${styles.cardBg} ${styles.borderStyle} opacity-50`
                                       : isPending
                                         ? 'bg-indigo-950/25 border-indigo-500/30'
                                         : 'bg-amber-950/20 border-amber-500/20 opacity-75'
