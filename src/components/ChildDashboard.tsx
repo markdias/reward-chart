@@ -1464,10 +1464,11 @@ export default function ChildDashboard({
                                       ) : (
                                         <button
                                           onClick={() => handleTaskCheck(task.id, task.title)}
-                                          className={`hover:scale-105 active:scale-95 text-white font-extrabold px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all font-mono bg-dark hover:bg-dark-hover shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)]`}
+                                          className={`hover:scale-110 active:scale-90 flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl cursor-pointer shadow-md transition-all bg-primary hover:bg-primary-hover shadow-[0_3px_0_0_var(--color-primary-shadow)] active:shadow-none active:translate-y-[3px]`}
                                           id={`claim-task-${task.id}`}
+                                          aria-label="Complete task"
                                         >
-                                          COMPLETE!
+                                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                         </button>
                                       )}
                                     </div>
