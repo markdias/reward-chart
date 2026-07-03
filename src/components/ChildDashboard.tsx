@@ -1405,19 +1405,10 @@ export default function ChildDashboard({
                                 }
                               }
 
-                              return (
-                                <div
-                                  key={task.id}
-                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 ${
-                                    isApproved 
-                                      ? 'bg-white/40 border-slate-950/50 opacity-45' 
-                                      : isPending 
-                                        ? 'bg-indigo-950/25 border-indigo-500/30' 
-                                        : isOnCooldown
-                                          ? 'bg-amber-950/20 border-amber-500/20 opacity-75'
-                                          : `${styles.cardBg} ${styles.borderStyle} hover:border-cyan-500/30 hover:shadow-lg`
-                                  }`}
-                                >
+                              const isCompletable = !isApproved && !isPending && !isOnCooldown;
+
+                              const cardContent = (
+                                <>
                                   {/* Line 1: Tags */}
                                   <div className="flex flex-wrap items-center gap-1.5 w-full">
                                     <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded`}>
@@ -1462,17 +1453,36 @@ export default function ChildDashboard({
                                           COOLDOWN ({cooldownTimeLeftStr})
                                         </span>
                                       ) : (
-                                        <button
-                                          onClick={() => handleTaskCheck(task.id, task.title)}
-                                          className={`hover:scale-110 active:scale-90 flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl cursor-pointer shadow-md transition-all bg-primary hover:bg-primary-hover shadow-[0_3px_0_0_var(--color-primary-shadow)] active:shadow-none active:translate-y-[3px]`}
-                                          id={`claim-task-${task.id}`}
-                                          aria-label="Complete task"
-                                        >
+                                        <div className="flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary shadow-[0_3px_0_0_var(--color-primary-shadow)] shrink-0 pointer-events-none">
                                           <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                                        </button>
+                                        </div>
                                       )}
                                     </div>
                                   </div>
+                                </>
+                              );
+
+                              return isCompletable ? (
+                                <button
+                                  key={task.id}
+                                  onClick={() => handleTaskCheck(task.id, task.title)}
+                                  id={`claim-task-${task.id}`}
+                                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 cursor-pointer active:scale-[0.98] active:brightness-95 ${styles.cardBg} ${styles.borderStyle} hover:border-primary/40 hover:shadow-lg`}
+                                >
+                                  {cardContent}
+                                </button>
+                              ) : (
+                                <div
+                                  key={task.id}
+                                  className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all flex flex-col gap-1.5 sm:gap-2 ${
+                                    isApproved
+                                      ? 'bg-white/40 border-slate-950/50 opacity-45'
+                                      : isPending
+                                        ? 'bg-indigo-950/25 border-indigo-500/30'
+                                        : 'bg-amber-950/20 border-amber-500/20 opacity-75'
+                                  }`}
+                                >
+                                  {cardContent}
                                 </div>
                               );
                             })
