@@ -32,6 +32,7 @@ interface ParentDashboardProps {
   redemptions: RewardRedemption[];
   onAddChild: (name: string, characterId: string, avatarUrl: string) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
+  onDeleteChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
   onAssignTask: (template: Task, childIds: string[]) => void;
@@ -71,6 +72,7 @@ export default function ParentDashboard({
   redemptions,
   onAddChild,
   onEditChild,
+  onDeleteChild,
   onUpdateChildStats,
   onAddTask,
   onAssignTask,
@@ -114,6 +116,7 @@ export default function ParentDashboard({
   
   // Custom Confirmation Modal State
   const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak'} | null>(null);
+  const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{childId: string, childName: string} | null>(null);
   
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -968,12 +971,23 @@ export default function ParentDashboard({
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => openEditChild(child)}
-                            className={`p-2 rounded-xl transition-all cursor-pointer border absolute top-4 right-4 bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          <div className="absolute top-4 right-4 flex gap-1.5">
+                            <button
+                              onClick={() => openEditChild(child)}
+                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            {onDeleteChild && (
+                              <button
+                                onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
+                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-rose-50 border-rose-200 text-rose-400 hover:bg-rose-100 hover:text-rose-600`}
+                                title="Delete child"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         <div className={`p-3 rounded-2xl border flex items-center justify-between bg-stone-50 border-stone-200`}>
@@ -1857,6 +1871,58 @@ export default function ParentDashboard({
                     }`}
                   >
                     RESET NOW
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Child Confirmation Modal */}
+        <AnimatePresence>
+          {deleteChildConfirmation && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200 shadow-rose-900/10"
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 rounded-full bg-rose-100 text-rose-600">
+                    <Trash2 className="w-8 h-8" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
+                  Delete {deleteChildConfirmation.childName}?
+                </h3>
+                <p className="text-center text-sm font-mono mb-2 text-stone-600">
+                  This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
+                </p>
+                <p className="text-center text-xs font-mono mb-6 text-rose-500 font-bold">
+                  ⚠️ This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { playSound.click(); setDeleteChildConfirmation(null); }}
+                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={() => {
+                      playSound.purchase();
+                      if (onDeleteChild) onDeleteChild(deleteChildConfirmation.childId);
+                      setDeleteChildConfirmation(null);
+                    }}
+                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] bg-gradient-to-r from-rose-500 to-red-600"
+                  >
+                    DELETE
                   </button>
                 </div>
               </motion.div>
