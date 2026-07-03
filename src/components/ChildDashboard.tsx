@@ -1519,10 +1519,6 @@ export default function ChildDashboard({
                                         <span className={`px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg sm:rounded-xl font-mono text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200`}>
                                           COOLDOWN ({cooldownTimeLeftStr})
                                         </span>
-                                      ) : (
-                                        <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-warning shadow-[0_3px_0_0_var(--color-warning-shadow)] shrink-0 pointer-events-none">
-                                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-dark" />
-                                        </div>
                                       )}
                                     </div>
                                   </div>
