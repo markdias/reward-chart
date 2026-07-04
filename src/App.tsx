@@ -28,6 +28,7 @@ import PotsShowcase from './components/PotsShowcase';
 import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
 import { IosTabBarShowcase } from './components/IosTabBarShowcase';
 import ChildCardShowcase from './components/ChildCardShowcase';
+import WellDoneShowcase from './components/WellDoneShowcase';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -62,6 +63,10 @@ export default function App() {
 
   if (new URLSearchParams(window.location.search).get('showcase') === 'child-card') {
     return <ChildCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'welldone') {
+    return <WellDoneShowcase />;
   }
 
   // Auth state
