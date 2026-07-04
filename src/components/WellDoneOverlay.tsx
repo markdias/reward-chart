@@ -75,13 +75,11 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
     fontWeight: 900,
     fontSize: 'clamp(5rem, 21vw, 10.5rem)',
     lineHeight: 0.92,
-    color: '#FFD700',
-    WebkitTextStroke: '4px #92400e',
+    color: '#FFFFFF',
+    WebkitTextStroke: '3px #EA580C',
     textShadow: [
-      '3px 3px 0 #b45309',
-      '6px 6px 0 #92400e',
-      '9px 9px 0 rgba(0,0,0,0.35)',
-      '0 0 60px rgba(255,215,0,0.5)',
+      '0px 6px 0 #C2410C',
+      '0px 12px 24px rgba(234,88,12,0.4)',
     ].join(', '),
     opacity: 0,
     animation: `${anim} 0.55s cubic-bezier(0.34,1.4,0.64,1) ${delay} forwards`,
@@ -96,7 +94,8 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
       <div
         className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at 50% 45%, #1e1060 0%, #0f0828 60%, #060412 100%)',
+          background: 'radial-gradient(circle at center, rgba(254,240,138,0.85) 0%, rgba(253,186,116,0.95) 100%)',
+          backdropFilter: 'blur(8px)',
           animation: 'wd-bg-in 0.22s ease-out forwards',
         }}
         aria-hidden
@@ -107,7 +106,7 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
           style={{
             width: '200vmax',
             height: '200vmax',
-            background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,215,0,0.055) 10deg, transparent 20deg, transparent 30deg, rgba(255,215,0,0.04) 40deg, transparent 50deg, transparent 60deg, rgba(255,215,0,0.055) 70deg, transparent 80deg, transparent 90deg, rgba(255,215,0,0.04) 100deg, transparent 110deg, transparent 120deg, rgba(255,215,0,0.055) 130deg, transparent 140deg, transparent 150deg, rgba(255,215,0,0.04) 160deg, transparent 170deg, transparent 180deg, rgba(255,215,0,0.055) 190deg, transparent 200deg, transparent 210deg, rgba(255,215,0,0.04) 220deg, transparent 230deg, transparent 240deg, rgba(255,215,0,0.055) 250deg, transparent 260deg, transparent 270deg, rgba(255,215,0,0.04) 280deg, transparent 290deg, transparent 300deg, rgba(255,215,0,0.055) 310deg, transparent 320deg, transparent 330deg, rgba(255,215,0,0.04) 340deg, transparent 350deg)',
+            background: 'conic-gradient(from 0deg, transparent 0deg, rgba(234,88,12,0.15) 10deg, transparent 20deg, transparent 30deg, rgba(234,88,12,0.1) 40deg, transparent 50deg, transparent 60deg, rgba(234,88,12,0.15) 70deg, transparent 80deg, transparent 90deg, rgba(234,88,12,0.1) 100deg, transparent 110deg, transparent 120deg, rgba(234,88,12,0.15) 130deg, transparent 140deg, transparent 150deg, rgba(234,88,12,0.1) 160deg, transparent 170deg, transparent 180deg, rgba(234,88,12,0.15) 190deg, transparent 200deg, transparent 210deg, rgba(234,88,12,0.1) 220deg, transparent 230deg, transparent 240deg, rgba(234,88,12,0.15) 250deg, transparent 260deg, transparent 270deg, rgba(234,88,12,0.1) 280deg, transparent 290deg, transparent 300deg, rgba(234,88,12,0.15) 310deg, transparent 320deg, transparent 330deg, rgba(234,88,12,0.1) 340deg, transparent 350deg)',
             animation: 'wd-rays 12s linear infinite',
           }}
         />
@@ -165,9 +164,9 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
                 gap: '0.5rem',
                 padding: '0.55rem 1.25rem',
                 borderRadius: '999px',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1.5px solid rgba(255,215,0,0.35)',
-                backdropFilter: 'blur(8px)',
+                background: 'white',
+                border: '2px solid #FDBA74',
+                boxShadow: '0 4px 12px rgba(234,88,12,0.15)',
                 opacity: 0,
                 animation: 'wd-badge 0.4s ease-out 0.6s forwards',
               }}
@@ -175,7 +174,7 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
               <span style={{ fontSize: '1rem' }}>✅</span>
               <span
                 style={{
-                  color: 'rgba(255,255,255,0.9)',
+                  color: '#9A3412',
                   fontFamily: '"Nunito", sans-serif',
                   fontWeight: 700,
                   fontSize: '0.85rem',
