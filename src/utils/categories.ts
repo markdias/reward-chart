@@ -1,4 +1,5 @@
 import { CheckCircle, BookOpen, Heart, Palette, Target, Smile } from 'lucide-react';
+import React from 'react';
 
 export const CATEGORY_ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; iconColor: string; label: string }> = {
   chores: { Icon: CheckCircle, bg: 'bg-indigo-100 border-indigo-200', iconColor: 'text-indigo-600', label: 'Chore' },

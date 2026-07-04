@@ -1,7 +1,9 @@
 import React from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { User, ArrowRight, ArrowLeft } from 'lucide-react';
 import { playSound } from '../../utils/sound';
+import { Button } from '../ui/Button';
 
 interface StepHandoverProps {
   theme: ThemeId;
@@ -38,19 +40,23 @@ export default function StepHandover({ theme, onNext, onBack }: StepHandoverProp
 
         <div className="flex gap-3 mt-4">
           {onBack && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onBack}
-              className="p-4 rounded-2xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
             >
               <ArrowLeft className="w-5 h-5" />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="info"
+            fullWidth
+            className="flex-1"
             onClick={handleNext}
-            className={`flex-1 btn-info py-4 rounded-2xl flex items-center justify-center gap-2 font-display uppercase tracking-wider text-base`}
+            rightIcon={<ArrowRight className="w-5 h-5" />}
           >
-            I'm the grown-up, let's go <ArrowRight className="w-5 h-5" />
-          </button>
+            I'm the grown-up, let's go
+          </Button>
         </div>
       </div>
     </div>

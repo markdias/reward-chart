@@ -1,10 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Nunito", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.75rem;
+  
+  --text-3xs: 0.5625rem;
+  --text-3xs--line-height: 0.75rem;
 
   /* Unified OKLCH Color Palette */
   --color-primary: oklch(65% 0.22 142);
@@ -38,82 +44,17 @@
 }
 
 @layer utilities {
-  /* Duolingo UI Styles */
-
-  .btn-primary {
-    @apply bg-primary hover:bg-primary-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-primary-shadow);
-  }
-  .btn-primary:active {
-    box-shadow: 0 0px 0 0 var(--color-primary-shadow);
-  }
-  .btn-primary:disabled {
-    @apply bg-gray-300 text-gray-500 opacity-100 cursor-not-allowed;
-    box-shadow: 0 4px 0 0 #D1D5DB;
-  }
-  .btn-primary:disabled:active {
-    @apply translate-y-0;
-    box-shadow: 0 4px 0 0 #D1D5DB;
-  }
-
-  .btn-secondary {
-    @apply bg-surface hover:bg-surface-alt text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-neutral-border);
-  }
-  .btn-secondary:active {
-    box-shadow: 0 0px 0 0 var(--color-neutral-border);
-  }
-
-  .btn-danger {
-    @apply bg-danger hover:bg-danger-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-danger-shadow);
-  }
-  .btn-danger:active {
-    box-shadow: 0 0px 0 0 var(--color-danger-shadow);
-  }
-
-  .btn-blue {
-    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-info-shadow);
-  }
-  .btn-blue:active {
-    box-shadow: 0 0px 0 0 var(--color-info-shadow);
-  }
-
-  .btn-info {
-    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-info-shadow);
-  }
-  .btn-info:active {
-    box-shadow: 0 0px 0 0 var(--color-info-shadow);
-  }
-
-  .btn-purple {
-    @apply bg-accent-purple hover:bg-accent-purple-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-accent-purple-shadow);
-  }
-  .btn-purple:active {
-    box-shadow: 0 0px 0 0 var(--color-accent-purple-shadow);
-  }
-
-  .btn-warning {
-    @apply bg-warning hover:bg-warning-hover text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-warning-shadow);
-  }
-  .btn-warning:active {
-    box-shadow: 0 0px 0 0 var(--color-warning-shadow);
-  }
-
-  .btn-dark {
-    @apply bg-dark hover:bg-dark-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-dark-shadow);
-  }
-  .btn-dark:active {
-    box-shadow: 0 0px 0 0 var(--color-dark-shadow);
-  }
 
   .duo-card {
     @apply bg-surface border-2 border-neutral-border rounded-3xl p-5;
+  }
+  
+  .card-panel {
+    @apply bg-white border border-gray-200 shadow-sm rounded-3xl p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border-2 border-gray-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 text-xs font-mono transition-all;
   }
 
   .flame-active {

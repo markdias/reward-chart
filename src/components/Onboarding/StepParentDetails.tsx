@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { UserCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { playSound } from '../../utils/sound';
+import { Button } from '../ui/Button';
 
 interface StepParentDetailsProps {
   theme: ThemeId;
@@ -61,21 +63,25 @@ export default function StepParentDetails({ theme, onNext, onBack, initialName =
 
           <div className="flex gap-3 pt-2">
             {onBack && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 type="button"
                 onClick={onBack}
-                className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
               >
                 <ArrowLeft className="w-5 h-5" />
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="primary"
+              fullWidth
+              className="flex-1"
               type="submit"
               disabled={!name.trim() || !familyName.trim()}
-              className={`flex-1 ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg disabled:opacity-50`}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Continue <ArrowRight className="w-4 h-4" />
-            </button>
+              Continue
+            </Button>
           </div>
         </form>
       </div>

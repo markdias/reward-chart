@@ -82,3 +82,19 @@ BEGIN
   DELETE FROM auth.users WHERE id = v_user_id;
 END;
 $$;
+
+-- 4. Add Gold Pot Maintenance Fields
+ALTER TABLE children
+ADD COLUMN IF NOT EXISTS gold_pot_maintenance_unlock_seen boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS gold_pot_broken boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS gold_pot_break_count_this_week integer DEFAULT 0,
+ADD COLUMN IF NOT EXISTS gold_pot_break_week text,
+ADD COLUMN IF NOT EXISTS gold_pot_last_check_date text,
+ADD COLUMN IF NOT EXISTS gold_pot_last_leak_date text,
+ADD COLUMN IF NOT EXISTS gold_pot_last_fix_date text,
+ADD COLUMN IF NOT EXISTS gold_pot_total_leaked integer DEFAULT 0,
+ADD COLUMN IF NOT EXISTS gold_pot_intro_seen boolean DEFAULT false;
+
+ALTER TABLE parent_profiles
+ADD COLUMN IF NOT EXISTS gold_pot_maintenance_unlock_level integer DEFAULT 8,
+ADD COLUMN IF NOT EXISTS gold_pot_maintenance_cost integer DEFAULT 2;

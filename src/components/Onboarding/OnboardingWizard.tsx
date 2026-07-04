@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 

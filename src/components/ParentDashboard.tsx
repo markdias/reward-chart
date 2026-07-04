@@ -6,11 +6,12 @@ import {
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
@@ -22,7 +23,9 @@ import { getSupabaseClient } from '../utils/supabase';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
-
+import { CoinBadge } from './CoinBadge';
+import { LinearProgressBar } from './ProgressBar';
+import { Button } from './ui/Button';
 
 interface ParentDashboardProps {
   children: Child[];
@@ -385,20 +388,22 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-page text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
-      
-      {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
+    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
+      {/* Ambient Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[40%] right-[-5%] w-80 h-80 bg-purple-400/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
       <header className="bg-white border-b border-gray-100 relative z-20 pt-[max(env(safe-area-inset-top),_1rem)]">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setActiveTab('settings')}
-              className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+              className="bg-gray-50"
             >
               <Settings className="w-5 h-5" />
-            </button>
+            </Button>
             <div className="flex flex-col">
               <h1 className="text-sm sm:text-lg font-black text-slate-900 leading-tight">
                 Parent Center
@@ -411,21 +416,23 @@ export default function ParentDashboard({
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <div className="relative">
-              <button
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={() => {
                   playSound.click();
                   setShowNotifications(!showNotifications);
                 }}
-                className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors relative"
                 id="notifications-bell-btn"
+                className="bg-gray-50 relative"
               >
                 <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                 {totalPending > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white z-10">
                     {totalPending}
                   </span>
                 )}
-              </button>
+              </Button>
 
               <AnimatePresence>
                 {showNotifications && (
@@ -437,7 +444,7 @@ export default function ParentDashboard({
                     id="notifications-box"
                   >
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                      <span className="font-bold text-xs font-mono tracking-wider text-gray-500 uppercase">INCOMING TELEMETRY</span>
+                      <Typography variant="label">INCOMING TELEMETRY</Typography>
                       <span className="text-[8px] text-emerald-500 font-mono">LIVE UPDATE</span>
                     </div>
                     <div className="max-h-60 overflow-y-auto space-y-2">
@@ -493,29 +500,33 @@ export default function ParentDashboard({
             </div>
 
             {onLogout && (
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   playSound.click();
                   onLogout();
                 }}
-                className="hidden sm:flex items-center gap-1 sm:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold border border-gray-200 transition-colors uppercase px-3 py-2 rounded-xl text-[10px] sm:text-xs"
+                className="hidden sm:flex"
                 id="global-logout-btn"
+                leftIcon={<LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               >
-                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>SIGN OUT</span>
-              </button>
+                SIGN OUT
+              </Button>
             )}
 
-            <button
+            <Button
+              variant="dark"
+              size="sm"
               onClick={() => {
                 playSound.click();
                 onExitParentMode();
               }}
-              className="flex items-center gap-1 sm:gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors uppercase px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[10px] sm:text-xs"
               id="exit-to-child-view-btn"
+              leftIcon={<Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             >
-              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">SWITCH TO KID VIEW</span>
-            </button>
+              <span className="hidden sm:inline">SWITCH TO KID VIEW</span>
+            </Button>
           </div>
         </div>
       </header>
@@ -564,7 +575,7 @@ export default function ParentDashboard({
           </nav>
         </aside>
 
-        <main className="lg:col-span-9 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-[600px]">
+        <main className="lg:col-span-9 card-panel min-h-[600px] z-10">
           
           <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
@@ -606,9 +617,9 @@ export default function ParentDashboard({
                       <h3 className="font-bold text-slate-900 text-sm">Sammy the Creator hasn't logged any activity today.</h3>
                       <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
                     </div>
-                    <button className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-colors shrink-0">
+                    <Button variant="primary" size="sm" className="shrink-0">
                       Send Nudge
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -639,8 +650,8 @@ export default function ParentDashboard({
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button onClick={() => handleReject(appr.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
-                              <button onClick={() => handleApprove(appr.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                              <Button variant="secondary" size="sm" onClick={() => handleReject(appr.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => handleApprove(appr.id)}>Approve</Button>
                             </div>
                           </div>
                         )
@@ -659,8 +670,8 @@ export default function ParentDashboard({
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button onClick={() => onRejectReward(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
-                              <button onClick={() => onDeliverReward(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                              <Button variant="secondary" size="sm" onClick={() => onRejectReward(req.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => onDeliverReward(req.id)}>Approve</Button>
                             </div>
                           </div>
                         )
@@ -678,13 +689,13 @@ export default function ParentDashboard({
                               </div>
                               <div>
                                 <p className="font-bold text-slate-900 text-sm">{child?.name} wants to give!</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{title} ({req.amount} pts)</p>
+                                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">{title} (<CoinBadge points={req.amount} size="sm" />)</p>
                                 <p className="text-[10px] text-gray-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <button onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
-                              <button onClick={() => onApproveGiftingRequest && onApproveGiftingRequest(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                              <Button variant="secondary" size="sm" onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => onApproveGiftingRequest && onApproveGiftingRequest(req.id)}>Approve</Button>
                             </div>
                           </div>
                         )
@@ -725,8 +736,8 @@ export default function ParentDashboard({
                             <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                         </div>
-                        <div className={`font-black text-xs sm:text-sm shrink-0 ${activity.type === 'task' ? 'text-emerald-500' : 'text-gray-400 line-through'}`}>
-                          {activity.type === 'task' ? '+' : '-'}{activity.points} pts
+                        <div className={`font-black text-xs sm:text-sm shrink-0 flex items-center justify-center`}>
+                          <CoinBadge points={activity.points} size="sm" disabled={activity.type !== 'task'} />
                         </div>
                       </div>
                     ))}
@@ -753,13 +764,14 @@ export default function ParentDashboard({
                     <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>CHILDREN REGISTER</h2>
                     <p className={`text-xs ${styles.textMuted}`}>Initialize new operators and monitor active companion level caps.</p>
                   </div>
-                  <button
+                  <Button
+                    variant="dark"
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
-                    className={`bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
                     id="add-child-btn-top"
+                    leftIcon={<UserPlus className="w-4 h-4" />}
                   >
-                    <UserPlus className="w-4 h-4" /> REGISTER NEW CHILD
-                  </button>
+                    REGISTER NEW CHILD
+                  </Button>
                 </div>
 
                 {showAddChild && (
@@ -818,14 +830,16 @@ export default function ParentDashboard({
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddChild(false);
                             setEditingChildId(null);
@@ -833,10 +847,9 @@ export default function ParentDashboard({
                             setNewChildChar('unicorn');
                             setNewChildAvatar('/avatars/boy_fox.png');
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
@@ -849,10 +862,8 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={child.id}
-                        className={`p-5 rounded-3xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col gap-4 relative overflow-hidden`}
+                        className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
                       >
-                        <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${stage.color_theme}`} />
-
                         <div className="flex gap-4 items-center pr-8">
                           <img
                             src={child.avatar_url}
@@ -863,9 +874,8 @@ export default function ParentDashboard({
                           <div className="flex-1 min-w-0">
                             <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
-                              <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <Coins className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                                <span>{child.points} Gold</span>
+                              <div className={`flex items-center gap-2 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
+                                <CoinBadge points={child.points} size="sm" />
                               </div>
                               {child.savings_unlocked && (
                                 <div className={`flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 whitespace-nowrap`}>
@@ -880,20 +890,23 @@ export default function ParentDashboard({
                             </div>
                           </div>
                           <div className="absolute top-4 right-4 flex gap-1.5">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => openEditChild(child)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                             >
                               <Edit2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                             {onDeleteChild && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-rose-50 border-rose-200 text-rose-400 hover:bg-rose-100 hover:text-rose-600`}
                                 title="Delete child"
+                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -975,12 +988,11 @@ export default function ParentDashboard({
                             <span className="uppercase">LEVEL {child.level} PROGRESS</span>
                             <span className={`font-extrabold ${styles.titleColor}`}>{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
                           </div>
-                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
-                            <div 
-                              className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
-                              style={{ width: `${Math.min(100, (((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
-                            />
-                          </div>
+                          <LinearProgressBar 
+                            progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                            heightClass="h-3"
+                            className="mt-2"
+                          />
                         </div>
                       </div>
                     );
@@ -1017,7 +1029,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingTaskId ? <span><FaPen className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><FaBroom className="inline-block mr-2"/> Create Quest Blueprint</span>}
+                      {editingTaskId ? <span><Edit2 className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><Sparkles className="inline-block mr-2"/> Create Quest Blueprint</span>}
                     </h3>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1074,14 +1086,16 @@ export default function ParentDashboard({
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddTask(false);
                             setEditingTaskId(null);
@@ -1089,10 +1103,9 @@ export default function ParentDashboard({
                             setTaskPoints(15);
                             setTaskCooldownMinutes(undefined);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
@@ -1126,19 +1139,23 @@ export default function ParentDashboard({
                   </div>
                   
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={handleImportDefaultTasks}
-                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
+                      leftIcon={<Plus className="w-3.5 h-3.5" />}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </button>
-                    <button
+                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                    </Button>
+                    <Button
+                      variant="dark"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-chore-btn-top"
+                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> CREATE <span className="hidden sm:inline">TEMPLATE</span>
-                    </button>
+                      CREATE <span className="hidden sm:inline">TEMPLATE</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -1169,9 +1186,7 @@ export default function ParentDashboard({
                             </div>
 
                             <div className="flex flex-col items-end gap-2 shrink-0">
-                              <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm sm:text-base">
-                                +{task.points}
-                              </span>
+                              <CoinBadge points={task.points} size="lg" />
                             </div>
                           </div>
 
@@ -1187,12 +1202,12 @@ export default function ParentDashboard({
                             </button>
 
                             <div className="flex gap-2">
-                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
                                 <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -1270,23 +1285,22 @@ export default function ParentDashboard({
                           </div>
 
                           <div className="flex flex-col items-end gap-2 shrink-0">
-                            <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm sm:text-base">
-                              +{task.points}
-                            </span>
+                              <CoinBadge points={task.points} size="lg" />
                           </div>
                         </div>
 
                         <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
-                          <button
+                          <Button
+                            variant="primary"
+                            size="sm"
                             onClick={() => {
                               playSound.success();
                               onParentCompleteTask(task.id, task.child_id);
                             }}
-                            className="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 px-3 py-1.5 rounded-lg transition-colors"
                             id={`parent-complete-${task.id}`}
                           >
                             Mark Complete
-                          </button>
+                          </Button>
 
                           <div className="flex gap-2">
                             <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
@@ -1336,7 +1350,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingRewardId ? <span><FaPen className="inline-block mr-2"/> Edit Reward Token</span> : <span><FaGift className="inline-block mr-2"/> Define Reward Token</span>}
+                      {editingRewardId ? <span><Edit2 className="inline-block mr-2"/> Edit Reward Token</span> : <span><Gift className="inline-block mr-2"/> Define Reward Token</span>}
                     </h3>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1371,11 +1385,11 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardIcon(e.target.value)}
                             className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="Gamepad2"><FaGamepad className="inline-block mr-2 text-blue-500" /> Game Time</option>
-                            <option value="Pizza"><FaPizzaSlice className="inline-block mr-2 text-orange-500" /> Favorite Meal</option>
-                            <option value="Palette"><FaPalette className="inline-block mr-2 text-purple-500" /> Creative / Art</option>
-                            <option value="BookOpen"><FaBookOpen className="inline-block mr-2 text-green-500" /> Storybooks</option>
-                            <option value="Sparkles"><FaWandMagicSparkles className="inline-block mr-2 text-pink-500" /> Special Trip</option>
+                            <option value="Gamepad2">🎮 Game Time</option>
+                            <option value="Pizza">🍕 Favorite Meal</option>
+                            <option value="Palette">🎨 Creative / Art</option>
+                            <option value="BookOpen">📖 Storybooks</option>
+                            <option value="Sparkles">✨ Special Trip</option>
                           </select>
                         </div>
                         <div className="md:col-span-2">
@@ -1385,33 +1399,34 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardLimit(e.target.value as any)}
                             className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="unlimited"><FaInfinity className="inline-block mr-2" /> Unlimited</option>
-                            <option value="daily"><FaCalendar className="inline-block mr-2" /> 1x Daily</option>
-                            <option value="twice_daily"><FaHandPeace className="inline-block mr-2 text-yellow-500" /> 2x Daily (Requires cooldown)</option>
-                            <option value="one_time"><FaBullseye className="inline-block mr-2 text-red-500" /> One-Time (Disappears after use)</option>
+                            <option value="unlimited">♾️ Unlimited</option>
+                            <option value="daily">📅 1x Daily</option>
+                            <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
+                            <option value="one_time">🎯 One-Time (Disappears after use)</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddReward(false);
                             setEditingRewardId(null);
                             setRewardTitle('');
                             setRewardCost(50);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
@@ -1445,19 +1460,23 @@ export default function ParentDashboard({
                   </div>
 
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={handleImportDefaultRewards}
-                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
+                      leftIcon={<Plus className="w-3.5 h-3.5" />}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </button>
-                    <button
+                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                    </Button>
+                    <Button
+                      variant="dark"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-reward-btn-top"
+                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> ADD <span className="hidden sm:inline">REWARD</span>
-                    </button>
+                      ADD <span className="hidden sm:inline">REWARD</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -1487,9 +1506,7 @@ export default function ParentDashboard({
                             </div>
 
                             <div className="flex flex-col items-end gap-2 shrink-0">
-                              <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex flex-col items-center justify-center font-black text-sm sm:text-base">
-                                -{reward.cost_points}
-                              </span>
+                              <CoinBadge points={reward.cost_points} size="lg" />
                             </div>
                           </div>
 
@@ -1505,12 +1522,12 @@ export default function ParentDashboard({
                             </button>
 
                             <div className="flex gap-2">
-                              <button onClick={() => openEditReward(reward)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
                                 <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -1604,12 +1621,12 @@ export default function ParentDashboard({
 
                         <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
                           <div className="flex gap-2">
-                            <button onClick={() => openEditReward(reward)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                            <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
                               <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1622,7 +1639,7 @@ export default function ParentDashboard({
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">
                   <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
-                    <FaScroll className="inline-block mr-2 text-stone-500" /> Dispensation History Log
+                    <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
                   </h3>
                   <div className="space-y-3">
                     {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
@@ -1645,15 +1662,17 @@ export default function ParentDashboard({
                                 </p>
                               </div>
                               {isOneTimeUsed && (
-                                <button
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => {
                                     playSound.success();
                                     onRestoreReward(reward.id);
                                   }}
-                                  className={`px-3 py-1.5 rounded text-[10px] font-mono font-bold uppercase border border-amber-500/50 text-amber-700 hover:bg-amber-50`}
+                                  className="border-amber-500/50 text-amber-700 hover:bg-amber-50"
                                 >
                                   RESTORE ONE-TIME
-                                </button>
+                                </Button>
                               )}
                             </div>
                           );
@@ -1732,27 +1751,25 @@ export default function ParentDashboard({
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => { playSound.click(); setResetConfirmation(null); }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${
-                      'bg-stone-100 hover:bg-stone-200 text-stone-700'
-                    }`}
+                    className="flex-1 bg-stone-100"
                   >
                     CANCEL
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={() => {
                       playSound.purchase();
                       if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] ${
-                      'bg-gradient-to-r from-rose-500 to-red-500'
-                    }`}
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-500"
                   >
                     RESET NOW
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1789,22 +1806,24 @@ export default function ParentDashboard({
                   ⚠️ This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => { playSound.click(); setDeleteChildConfirmation(null); }}
-                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors bg-stone-100 hover:bg-stone-200 text-stone-700"
+                    className="flex-1 bg-stone-100"
                   >
                     CANCEL
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={() => {
                       playSound.purchase();
                       if (onDeleteChild) onDeleteChild(deleteChildConfirmation.childId);
                       setDeleteChildConfirmation(null);
                     }}
-                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] bg-gradient-to-r from-rose-500 to-red-600"
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-600"
                   >
                     DELETE
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </motion.div>

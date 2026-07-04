@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Lock, ShieldAlert, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { playSound } from '../utils/sound';
 import { ThemeId } from '../utils/theme';
 import { getSupabaseClient } from '../utils/supabase';
 import { hashPassword } from '../utils/security';
+import { Button } from './ui/Button';
 
 interface LockScreenProps {
   parentEmail: string | null;
@@ -103,18 +105,20 @@ export default function LockScreen({
       >
         {/* Vault Frame Header */}
         <div className="bg-gray-50/50 p-6 text-center border-b border-gray-100 relative">
-          <button 
+          <Button 
+            variant="ghost"
+            size="icon"
             onClick={onClose} 
-            className="absolute top-4 left-4 p-2.5 rounded-xl transition-all cursor-pointer bg-white border border-gray-200 text-stone-600 hover:bg-gray-50 shadow-sm"
+            className="absolute top-4 left-4"
             id="lock-back-btn"
           >
             <ArrowLeft className="w-5 h-5" />
-          </button>
+          </Button>
           
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">
             <Lock className="w-6 h-6 text-amber-500" />
           </div>
-          <h2 className="text-xl font-bold font-display tracking-wide text-slate-900">{title}</h2>
+          <Typography variant="h2">{title}</Typography>
           <p className="font-mono text-[10px] tracking-widest mt-1.5 uppercase text-stone-500 font-bold">{subtitle}</p>
         </div>
 
@@ -156,22 +160,25 @@ export default function LockScreen({
 
           {/* Action Buttons */}
           <div className="flex gap-3 w-full max-w-sm">
-            <button
+            <Button
+              variant="secondary"
+              fullWidth
+              className="flex-1"
               type="button"
               onClick={onClose}
-              className="flex-1 py-3.5 rounded-xl border-2 border-stone-200 text-stone-500 font-bold uppercase tracking-wider text-xs hover:bg-stone-50 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="warning"
+              fullWidth
+              className="flex-1"
               type="submit"
-              disabled={loading || !password}
-              className={`flex-1 py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wider shadow-lg ${
-                loading || !password ? 'bg-orange-300 text-white cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white'
-              }`}
+              isLoading={loading}
+              disabled={!password}
             >
-              {loading ? 'Verifying...' : 'Unlock'}
-            </button>
+              Unlock
+            </Button>
           </div>
         </form>
       </motion.div>

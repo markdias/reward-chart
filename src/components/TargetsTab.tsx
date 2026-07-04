@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion } from 'framer-motion';
 import { Target, Save } from 'lucide-react';
 import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
+import { Button } from './ui/Button';
 
 interface TargetsTabProps {
   theme: ThemeId;
@@ -23,6 +25,8 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
   const [savingsPotUnlockLevel, setSavingsPotUnlockLevel] = useState(parentProfile?.savings_pot_unlock_level ?? 2);
   const [foodPotUnlockLevel, setFoodPotUnlockLevel] = useState(parentProfile?.food_pot_unlock_level ?? 4);
   const [giftingPotUnlockLevel, setGiftingPotUnlockLevel] = useState(parentProfile?.gifting_pot_unlock_level ?? 6);
+  const [goldPotMaintenanceUnlockLevel, setGoldPotMaintenanceUnlockLevel] = useState(parentProfile?.gold_pot_maintenance_unlock_level ?? 8);
+  const [goldPotMaintenanceCost, setGoldPotMaintenanceCost] = useState(parentProfile?.gold_pot_maintenance_cost ?? 2);
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -35,6 +39,8 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
       setSavingsPotUnlockLevel(parentProfile.savings_pot_unlock_level ?? 2);
       setFoodPotUnlockLevel(parentProfile.food_pot_unlock_level ?? 4);
       setGiftingPotUnlockLevel(parentProfile.gifting_pot_unlock_level ?? 6);
+      setGoldPotMaintenanceUnlockLevel(parentProfile.gold_pot_maintenance_unlock_level ?? 8);
+      setGoldPotMaintenanceCost(parentProfile.gold_pot_maintenance_cost ?? 2);
     }
   }, [parentProfile]);
   
@@ -77,6 +83,8 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
           savings_pot_unlock_level: savingsPotUnlockLevel,
           food_pot_unlock_level: foodPotUnlockLevel,
           gifting_pot_unlock_level: giftingPotUnlockLevel,
+          gold_pot_maintenance_unlock_level: goldPotMaintenanceUnlockLevel,
+          gold_pot_maintenance_cost: goldPotMaintenanceCost,
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -215,17 +223,38 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     className={`w-full px-4 py-2 rounded-xl border border-rose-200 text-stone-700 bg-rose-50 focus:ring-2 focus:ring-rose-500 outline-none`} 
                   />
                 </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-amber-600`}>Gold Maintenance Lvl</label>
+                  <input 
+                    type="number" 
+                    value={goldPotMaintenanceUnlockLevel}
+                    onChange={(e) => setGoldPotMaintenanceUnlockLevel(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-amber-200 text-stone-700 bg-amber-50 focus:ring-2 focus:ring-amber-500 outline-none`} 
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold font-mono mb-2 uppercase tracking-wider text-amber-600`}>Gold Maintenance Cost</label>
+                  <input 
+                    type="number" 
+                    value={goldPotMaintenanceCost}
+                    onChange={(e) => setGoldPotMaintenanceCost(Number(e.target.value))}
+                    className={`w-full px-4 py-2 rounded-xl border border-amber-200 text-stone-700 bg-amber-50 focus:ring-2 focus:ring-amber-500 outline-none`} 
+                  />
+                </div>
 
               </div>
             </div>
           </div>
-          <button 
+          <Button 
+            variant="warning"
+            fullWidth
             onClick={handleSave}
-            disabled={isSaving}
-            className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold font-mono text-sm shadow-lg ${c.primaryBtn} disabled:opacity-50 mt-6`}
+            isLoading={isSaving}
+            leftIcon={<Save className="w-4 h-4" />}
+            className="mt-6"
           >
-            <Save className="w-4 h-4" /> {isSaving ? 'SAVING...' : 'SAVE TARGETS'}
-          </button>
+            SAVE TARGETS
+          </Button>
           {msg && <p className={`text-sm font-bold mt-2 ${msg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{msg}</p>}
         </div>
       </motion.div>

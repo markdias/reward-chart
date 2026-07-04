@@ -10,6 +10,7 @@ import Confetti from './components/Confetti';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
+import ButtonShowcase from './components/ButtonShowcase';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -20,8 +21,18 @@ import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 
+import TypographyShowcase from './components/TypographyShowcase';
+
 export default function App() {
   const activeTheme = 'sunny_toybox';
+  
+  if (new URLSearchParams(window.location.search).get('showcase') === 'buttons') {
+    return <ButtonShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'typography') {
+    return <TypographyShowcase />;
+  }
 
   // Auth state
   const [parentEmail, setParentEmail] = useState<string | null>(
@@ -197,6 +208,8 @@ export default function App() {
                 savings_pot_unlock_level: 2,
                 food_pot_unlock_level: 4,
                 gifting_pot_unlock_level: 6,
+                gold_pot_maintenance_unlock_level: 8,
+                gold_pot_maintenance_cost: 2,
                 points_to_level_up: 500,
                 level_up_gold_reward: 500
               };
@@ -507,7 +520,16 @@ export default function App() {
           last_fed_date: updatedChild.last_fed_date,
           last_hunger_check_date: updatedChild.last_hunger_check_date,
           gifting_unlocked: updatedChild.gifting_unlocked,
-          gifting_unlock_seen: updatedChild.gifting_unlock_seen
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen,
+          gold_pot_maintenance_unlock_seen: updatedChild.gold_pot_maintenance_unlock_seen,
+          gold_pot_broken: updatedChild.gold_pot_broken,
+          gold_pot_break_count_this_week: updatedChild.gold_pot_break_count_this_week,
+          gold_pot_break_week: updatedChild.gold_pot_break_week,
+          gold_pot_last_check_date: updatedChild.gold_pot_last_check_date,
+          gold_pot_last_leak_date: updatedChild.gold_pot_last_leak_date,
+          gold_pot_last_fix_date: updatedChild.gold_pot_last_fix_date,
+          gold_pot_total_leaked: updatedChild.gold_pot_total_leaked,
+          gold_pot_intro_seen: updatedChild.gold_pot_intro_seen
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -539,6 +561,8 @@ export default function App() {
       savings_pot_unlock_level: 2,
       food_pot_unlock_level: 4,
       gifting_pot_unlock_level: 6,
+      gold_pot_maintenance_unlock_level: 8,
+      gold_pot_maintenance_cost: 2,
       points_to_level_up: 500,
       level_up_gold_reward: 500
     };
@@ -1317,6 +1341,21 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
+  const handleSellPetFood = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.pet_food || 0) < 1) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + 1,
+      pet_food: child.pet_food! - 1,
+      food_pot_weekly_contribution: Math.max(0, (child.food_pot_weekly_contribution || 0) - 1)
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
   const handleFoodPotUnlockSeen = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
@@ -1392,6 +1431,19 @@ export default function App() {
       savings_goal_name: null,
       savings_goal_amount: null,
       savings_goal_reward_id: null
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleAppIntroSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      gold_pot_intro_seen: true
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1666,6 +1718,19 @@ export default function App() {
     syncChildren(updatedChildren);
     updateChildInSupabase(targetChild);
   };
+  const handleGoldPotMaintenanceUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      gold_pot_maintenance_unlock_seen: true,
+      gold_pot_last_check_date: new Date().toISOString().split('T')[0]
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
 
 
   return (
@@ -1795,11 +1860,14 @@ export default function App() {
               onSavingsGoal={handleSavingsGoal}
               onClearSavingsGoal={handleClearSavingsGoal}
               onSavingsUnlockSeen={handleSavingsUnlockSeen}
+              onAppIntroSeen={handleAppIntroSeen}
               onBuyPetFood={handleBuyPetFood}
+              onSellPetFood={handleSellPetFood}
               onFoodPotUnlockSeen={handleFoodPotUnlockSeen}
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
+              onGoldPotMaintenanceUnlockSeen={handleGoldPotMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               lockedChildId={lockedChildId}
               onLockChild={(childId) => {

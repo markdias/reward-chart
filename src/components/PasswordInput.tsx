@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { evaluatePassword } from '../utils/security';
+import { Button } from './ui/Button';
 
 interface PasswordInputProps {
   value: string;
@@ -36,14 +38,16 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
           placeholder={placeholder}
           className={`w-full px-4 py-2.5 rounded-xl pr-10 ${className}`}
         />
-        <button
+        <Button
+          variant="none"
+          size="none"
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 cursor-pointer"
           tabIndex={-1}
         >
           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </button>
+        </Button>
       </div>
 
       {showPolicy && (

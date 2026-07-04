@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Coins, Target, Utensils } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils } from 'lucide-react';
+import { Button } from './ui/Button';
+import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
@@ -113,14 +116,16 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
             </div>
             <div>
-              <span className="text-lg sm:text-2xl font-black font-display tracking-wider text-slate-900 drop-shadow-sm">
+              <Typography variant="h2" as="span">
                 REWARD CHART
-              </span>
+              </Typography>
               <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
             </div>
           </div>
 
-          <button
+          <Button
+            variant="warning"
+            size="sm"
             onClick={() => {
               playSound.click();
               if (onSignIn) {
@@ -129,11 +134,10 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 handleEnterClick('parent');
               }
             }}
-            className="font-black font-mono py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg sm:rounded-xl text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
             id="landing-signin-btn"
           >
             Sign In
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -157,18 +161,23 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           <div className="w-full max-w-md pt-2 pb-4">
             <h3 className={`text-sm font-bold uppercase tracking-widest font-mono mb-3 ${styles.textMuted}`}>Who is starting the adventure today?</h3>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
                 onClick={() => handleEnterClick('parent')}
-                className={`flex-1 btn-primary bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-sm border border-indigo-200 cursor-pointer text-sm uppercase font-display tracking-wide transition-all`}
               >
                 I'm a Grown-up
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                className="flex-1"
+                rightIcon={<ArrowRight className="w-5 h-5" />}
                 onClick={() => handleEnterClick('child')}
-                className={`flex-1 btn-primary ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-sm uppercase font-display tracking-wide`}
               >
-                I'm a Kid <ArrowRight className="w-4 h-4" />
-              </button>
+                I'm a Kid
+              </Button>
             </div>
           </div>
 
@@ -262,9 +271,9 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-amber-500 animate-pulse flex items-center gap-1 justify-end">
-                      <Coins className="w-3 h-3" /> +50 Coins
-                    </span>
+                    <div className="flex items-center gap-1 justify-end animate-pulse">
+                      <CoinBadge points={50} size="sm" />
+                    </div>
                   </div>
                 </div>
                 
@@ -340,9 +349,9 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <PiggyBank className="w-4 h-4 text-amber-500" />
                 LEARN REAL MONEY SKILLS
               </div>
-              <h2 className="text-3xl md:text-5xl font-black font-display text-stone-900">
+              <Typography variant="h1" as="h2">
                 A Financial Journey for Kids
-              </h2>
+              </Typography>
               <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-2xl mx-auto">
                 Reward Chart isn't just about finishing tasks. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
               </p>
@@ -350,8 +359,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
             <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-5 border border-amber-200">
-                  <Coins className="w-6 h-6" />
+                <div className="mb-5">
+                  <CoinBadge iconOnly size="lg" />
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { PREMADE_REWARDS } from '../../data/premadeTemplates';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface StepRewardsSelectionProps {
   theme: ThemeId;
@@ -89,18 +91,22 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
         </div>
 
         <div className="flex gap-3 pt-4 shrink-0 border-t border-stone-200">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onBack}
-            className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
           >
             <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            fullWidth
+            className="flex-1"
             onClick={handleContinue}
-            className={`flex-1 ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg`}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            Continue <ArrowRight className="w-4 h-4" />
-          </button>
+            Continue
+          </Button>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 'lucide-react';
 import { playSound } from '../utils/sound';
@@ -6,6 +7,7 @@ import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
 import { hashPassword, evaluatePassword } from '../utils/security';
 import { PasswordInput } from './PasswordInput';
+import { Button } from './ui/Button';
 import pkg from '../../package.json';
 
 interface AuthPageProps {
@@ -259,19 +261,21 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onBackToLanding}
-              className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-gray-500 hover:text-slate-900 transition-colors cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full"
+              className="mr-2"
             >
               ← Back to Home
-            </button>
+            </Button>
             <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm hidden sm:flex">
               <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
             </div>
             <div>
-              <span className="text-lg sm:text-2xl font-black font-display tracking-wider text-slate-900 drop-shadow-sm">
+              <Typography variant="h2" as="span">
                 REWARD CHART
-              </span>
+              </Typography>
               <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
             </div>
           </div>
@@ -285,7 +289,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-5 sm:p-6 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-4"
+            className="card-panel space-y-4"
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
@@ -318,7 +322,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="parent@example.com"
-                  className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                  className={`input-field ${styles.inputBg}`}
                 />
               </div>
 
@@ -334,7 +338,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                       onChange={(e) => setName(e.target.value)}
                       placeholder="E.g. Mum, Dad, etc."
                       required
-                      className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                      className={`input-field ${styles.inputBg}`}
                     />
                   </div>
 
@@ -349,7 +353,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                         onChange={(e) => setFamilyName(e.target.value)}
                         placeholder="E.g. The Smiths"
                         required
-                        className={`w-full px-4 py-2.5 rounded-xl text-xs font-mono border ${styles.inputBg}`}
+                        className={`input-field ${styles.inputBg}`}
                       />
                     </div>
                   )}
@@ -367,26 +371,30 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                className="w-full btn-dark py-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest mt-4"
+                variant="dark"
+                fullWidth
+                className="mt-4"
                 id="real-login-submit"
               >
                 {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
-              </button>
+              </Button>
             </form>
 
             <div className="text-center pt-2">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
                 onClick={() => {
                   playSound.click();
                   setIsSignUp(!isSignUp);
                 }}
-                className="text-xs text-stone-600 hover:text-stone-950 font-bold font-medium font-mono"
                 id="toggle-sign-up"
               >
                 {isSignUp ? '← USE EXISTING ACCOUNT' : 'CREATE A NEW ACCOUNT'}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

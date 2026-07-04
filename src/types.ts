@@ -15,6 +15,8 @@ export interface ParentProfile {
   weekly_reward_points?: number;
   monthly_points_target?: number;
   monthly_reward_points?: number;
+  gold_pot_maintenance_unlock_level?: number;
+  gold_pot_maintenance_cost?: number;
 }
 
 export interface Child {
@@ -56,6 +58,15 @@ export interface Child {
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
   last_gifting_date?: string | null;
+  gold_pot_broken?: boolean;
+  gold_pot_break_count_this_week?: number;
+  gold_pot_break_week?: string;
+  gold_pot_last_leak_date?: string | null;
+  gold_pot_last_check_date?: string | null;
+  gold_pot_last_fix_date?: string | null;
+  gold_pot_total_leaked?: number;
+  gold_pot_intro_seen?: boolean;
+  gold_pot_maintenance_unlock_seen?: boolean;
   created_at: string;
 }
 

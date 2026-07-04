@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { Child } from '../../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface StepChildrenSetupProps {
   theme: ThemeId;
@@ -88,13 +90,14 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     </div>
                     <span className={`font-bold ${styles.textColor}`}>{child.name}</span>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     type="button"
                     onClick={() => handleEditChild(child)}
-                    className="p-2 rounded-lg text-stone-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
                   >
                     <Edit3 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -154,58 +157,68 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
 
             <div className="flex gap-2 pt-2">
               {children.length > 0 && (
-                <button
+                <Button
+                  variant="ghost"
                   type="button"
                   onClick={() => {
                     setIsAdding(false);
                     setEditingChildId(null);
                     setName('');
                   }}
-                  className="flex-1 py-2 rounded-xl text-xs font-bold text-stone-500 hover:bg-stone-100"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="dark"
                 type="submit"
-                className={`flex-[2] py-2 rounded-xl text-xs font-bold font-mono tracking-widest uppercase text-white bg-stone-900 hover:bg-stone-800`}
+                className="flex-[2]"
               >
                 {editingChildId ? 'Update Child' : 'Save Child'}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
           <div className="flex flex-col gap-3">
             {startedBy === 'child' ? (
-              <button
+              <Button
+                variant="outline"
+                fullWidth
                 onClick={() => setIsAdding(true)}
-                className="flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-dashed border-stone-300 text-stone-600 font-bold hover:bg-stone-50 transition-colors"
+                leftIcon={<UserPlus className="w-5 h-5 text-indigo-500" />}
               >
-                <UserPlus className="w-5 h-5 text-indigo-500" /> Add a sibling? Pass them the phone!
-              </button>
+                Add a sibling? Pass them the phone!
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="outline"
+                fullWidth
                 onClick={() => setIsAdding(true)}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-stone-300 text-stone-500 font-bold hover:bg-stone-50 transition-colors"
+                leftIcon={<UserPlus className="w-4 h-4" />}
               >
-                <UserPlus className="w-4 h-4" /> Add Another Child
-              </button>
+                Add Another Child
+              </Button>
             )}
             <div className="flex gap-3">
               {onBack && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={onBack}
-                  className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
                 >
                   <ArrowLeft className="w-5 h-5" />
-                </button>
+                </Button>
               )}
-              <button
+              <Button
+                variant="primary"
+                fullWidth
+                className="flex-1"
                 onClick={handleContinue}
-                className={`flex-1 ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg`}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                {startedBy === 'child' ? "I'm Done" : "Continue"} <ArrowRight className="w-4 h-4" />
-              </button>
+                {startedBy === 'child' ? "I'm Done" : "Continue"}
+              </Button>
             </div>
           </div>
         )}

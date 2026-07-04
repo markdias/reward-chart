@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward } from '../types';
 import { getLogicalDateString } from '../utils/date';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
+import { CircularProgressBar } from './ProgressBar';
+import { Button } from './ui/Button';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -109,36 +112,10 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {/* Daily Goal Card */}
       <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm flex items-center gap-5">
         {/* Circular Progress */}
-        <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-            {/* Background Circle */}
-            <path
-              className="text-gray-100"
-              strokeWidth="3"
-              stroke="currentColor"
-              fill="none"
-              d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-            {/* Progress Circle */}
-            <path
-              className="text-emerald-400"
-              strokeWidth="3"
-              strokeDasharray={`${progressPercent}, 100`}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="none"
-              d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[10px] font-bold text-gray-400">PTS</span>
-            <span className="text-sm font-black text-slate-800 leading-none">{pointsEarnedToday}</span>
-          </div>
-        </div>
+        <CircularProgressBar progress={progressPercent} className="w-16 h-16">
+          <span className="text-[10px] font-bold text-gray-400">PTS</span>
+          <span className="text-sm font-black text-slate-800 leading-none">{pointsEarnedToday}</span>
+        </CircularProgressBar>
         
         <div>
           <h2 className="text-lg font-black text-slate-900">Daily Goal</h2>
@@ -161,17 +138,15 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         {/* Category Filters */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
           {categories.map(cat => (
-            <button
+            <Button
               key={cat.id}
+              variant={activeCategory === cat.id ? 'dark' : 'outline'}
+              size="sm"
+              className="rounded-full"
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors border ${
-                activeCategory === cat.id
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-              }`}
             >
               {cat.label}
-            </button>
+            </Button>
           ))}
         </div>
 

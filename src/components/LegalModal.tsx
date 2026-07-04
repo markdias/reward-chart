@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { Button } from './ui/Button';
 import { playSound } from '../utils/sound';
 
 export function LegalModal() {
@@ -49,18 +51,18 @@ export function LegalModal() {
             className="bg-white rounded-[2rem] p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border-4 border-stone-200"
           >
             <div className="flex justify-between items-center mb-6 border-b-2 border-stone-100 pb-4">
-              <h2 className="text-2xl font-black font-display text-stone-900 uppercase tracking-widest">
+              <Typography variant="h2">
                 {modalType === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
-              </h2>
-              <button onClick={close} className="p-2 hover:bg-stone-100 rounded-full transition-colors active:scale-[0.96]">
+              </Typography>
+              <Button variant="ghost" size="icon" onClick={close}>
                 <X className="w-6 h-6 text-stone-500" />
-              </button>
+              </Button>
             </div>
             
             <div className="prose prose-sm md:prose-base prose-stone max-w-none text-stone-600 space-y-4">
               {modalType === 'privacy' ? (
                 <>
-                  <p className="text-xs font-mono font-bold tracking-widest text-stone-400">LAST UPDATED: JULY 2026</p>
+                  <Typography variant="label" as="p">LAST UPDATED: JULY 2026</Typography>
                   <p>Welcome to Reward Chart! We are committed to protecting your privacy and ensuring your family's data is secure.</p>
                   
                   <h3 className="font-bold text-stone-900 text-lg mt-6">1. Information We Collect</h3>
@@ -77,7 +79,7 @@ export function LegalModal() {
                 </>
               ) : (
                 <>
-                  <p className="text-xs font-mono font-bold tracking-widest text-stone-400">LAST UPDATED: JULY 2026</p>
+                  <Typography variant="label" as="p">LAST UPDATED: JULY 2026</Typography>
                   <p>Please read these Terms of Service completely before using Reward Chart.</p>
                   
                   <h3 className="font-bold text-stone-900 text-lg mt-6">1. Acceptance of Terms</h3>
@@ -96,9 +98,9 @@ export function LegalModal() {
             </div>
             
             <div className="mt-8 pt-6 border-t-2 border-stone-100 flex justify-end">
-              <button onClick={close} className="btn-primary py-3 px-8 rounded-xl font-bold font-mono uppercase tracking-widest text-sm shadow-md">
+              <Button variant="primary" size="lg" onClick={close}>
                 I UNDERSTAND
-              </button>
+              </Button>
             </div>
           </motion.div>
         </motion.div>
