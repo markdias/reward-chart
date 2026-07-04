@@ -20,6 +20,7 @@ import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
+import { revokeInvalidLevelBadges } from './utils/badgeService';
 
 import TypographyShowcase from './components/TypographyShowcase';
 import TaskCardShowcase from './components/TaskCardShowcase';
@@ -791,6 +792,7 @@ export default function App() {
       const childIds = children.map(c => c.id);
       if (childIds.length > 0) {
         await supabase.from('completions').delete().in('child_id', childIds);
+        await supabase.from('child_badges').delete().in('child_id', childIds);
       }
       await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
       await supabase.from('gifting_requests').delete().eq('family_id', familyId);
@@ -800,7 +802,22 @@ export default function App() {
         points: 0,
         level: 1,
         streak_days: 0,
-        monthly_points: 0
+        monthly_points: 0,
+        lifetime_points: 0,
+        pet_food: 0,
+        weekly_points: 0,
+        savings_pot: 0,
+        savings_unlocked: false,
+        savings_unlock_seen: false,
+        food_pot_unlocked: false,
+        food_pot_unlock_seen: false,
+        savings_goal_name: null,
+        savings_goal_amount: null,
+        savings_goal_reward_id: null,
+        pet_fed_today: false,
+        pet_unhappy: false,
+        last_fed_date: null,
+        last_saved_date: null
       }));
       syncChildren(updatedChildren);
       for (const child of updatedChildren) {
@@ -920,6 +937,12 @@ export default function App() {
       setTimeout(() => playSound.levelUp(), 300);
     }
 
+    // 1b. Level down check
+    while (newLevel > 1 && newLifetimePoints < ((newLevel - 1) * pointsToLevelUp)) {
+      newLevel--;
+      bonusesReceived = Math.max(0, bonusesReceived - 1);
+    }
+
     // 2. Weekly / Monthly Tracking (Explicit Reset Logging)
     const now = new Date();
 
@@ -1012,7 +1035,9 @@ export default function App() {
     if (updates.points !== undefined && updates.points > child.points) {
       const addedPoints = updates.points - child.points;
       targetChild = processLifetimePoints(targetChild, addedPoints);
-      // Let it update points through the pipeline, but we still apply the exact updates below
+      // Let it update points through the pipeline, but we must explicitly add the new points
+      // because processLifetimePoints only handles lifetime and bonuses.
+      targetChild.points += addedPoints;
       delete updates.points; 
     }
 
@@ -1246,6 +1271,53 @@ export default function App() {
     if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
       const { error } = await supabase.from('completions').insert(newCompletion);
       if (error) console.warn('Failed to sync completion to Supabase:', error.message);
+    }
+  };
+
+  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    // Let processLifetimePoints handle lifetime points and level recalculation.
+    // It will process the negative amount.
+    let targetChild = processLifetimePoints(child, -amount);
+    
+    // Explicitly subtract the actual points
+    targetChild.points = Math.max(0, child.points - amount);
+    
+    const levelDropped = (targetChild.level || 1) < (child.level || 1);
+
+    const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+    syncChildren(updatedChildren);
+
+    if (levelDropped) {
+      revokeInvalidLevelBadges(childId, targetChild.level || 1);
+    }
+
+    // Create a penalty completion
+    const newCompletion: TaskCompletion = {
+      id: `comp_penalty_${Date.now()}`,
+      task_id: 'penalty',
+      child_id: childId,
+      points_awarded: -amount,
+      status: 'approved',
+      completed_at: new Date().toISOString(),
+      notes: reason
+    };
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error: childError } = await supabase.from('children').update({
+        points: targetChild.points,
+        lifetime_points: targetChild.lifetime_points,
+        level: targetChild.level,
+        level_up_bonuses_received: targetChild.level_up_bonuses_received
+      }).eq('id', targetChild.id);
+      if (childError) console.warn('Failed to update child points for penalty in Supabase:', childError.message);
+
+      const { error: compError } = await supabase.from('completions').insert(newCompletion);
+      if (compError) console.warn('Failed to sync penalty completion to Supabase:', compError.message);
     }
   };
 
@@ -1865,6 +1937,7 @@ export default function App() {
               onAddChild={handleAddChild}
               onEditChild={handleEditChild}
               onUpdateChildStats={handleUpdateChildStats}
+              onDeductCoins={handleDeductCoins}
               onAddTask={handleAddTask}
               onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
@@ -1918,6 +1991,7 @@ export default function App() {
               onSavingsGoal={handleSavingsGoal}
               onClearSavingsGoal={handleClearSavingsGoal}
               onSavingsUnlockSeen={handleSavingsUnlockSeen}
+              onEditChild={handleEditChild}
               onAppIntroSeen={handleAppIntroSeen}
               onBuyPetFood={handleBuyPetFood}
               onSellPetFood={handleSellPetFood}

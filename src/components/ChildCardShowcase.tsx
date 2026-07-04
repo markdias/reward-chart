@@ -152,7 +152,7 @@ export default function ChildCardShowcase() {
                   <h3 className={`font-black text-2xl text-stone-900 font-display truncate leading-none mb-2`}>{child.name}</h3>
                   <div className="flex flex-wrap gap-2">
                     <div className="bg-amber-100 text-amber-800 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-inner">
-                      <CoinBadge points={child.points} size="sm" showLabel={false} />
+                      <CoinBadge points={child.points} size="sm" iconOnly={true} />
                       {child.points} Gold
                     </div>
                     {child.savings_unlocked && (
@@ -253,7 +253,7 @@ export default function ChildCardShowcase() {
                   <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-1 mb-1.5">Lvl {child.level}</div>
                   <div className="flex flex-wrap gap-2">
                     <div className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded-md text-xs font-bold border border-amber-100/50 flex items-center gap-1">
-                      <CoinBadge points={child.points} size="sm" showLabel={false} /> {child.points}
+                      <CoinBadge points={child.points} size="sm" iconOnly={true} /> {child.points}
                     </div>
                     {child.savings_unlocked && (
                       <div className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md text-xs font-bold border border-emerald-100/50 flex items-center gap-1">
@@ -330,7 +330,7 @@ export default function ChildCardShowcase() {
                 <div className="p-4 flex flex-col items-center justify-center">
                   <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Available Gold</span>
                   <div className="flex items-center gap-2">
-                    <CoinBadge points={child.points} size="sm" showLabel={false} />
+                    <CoinBadge points={child.points} size="sm" iconOnly={true} />
                     <span className="text-lg font-black text-amber-600">{child.points}</span>
                   </div>
                 </div>

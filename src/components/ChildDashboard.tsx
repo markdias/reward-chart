@@ -27,6 +27,7 @@ import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BadgesModal } from './BadgesModal';
+import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
 
 const RECURRENCE_LABEL: Record<string, string> = {
@@ -61,8 +62,9 @@ interface ChildDashboardProps {
   onGiftingUnlockSeen: (childId: string) => void;
   onGoldPotMaintenanceUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
+  onEditChild: (childId: string, updates: Partial<Child>) => void;
   lockedChildId?: string | null;
-  onLockChild?: (childId: string) => void;
+  onLockChild?: (childId: string | null) => void;
   theme: ThemeId;
 }
 
@@ -91,6 +93,7 @@ export default function ChildDashboard({
   onGiftingUnlockSeen,
   onGoldPotMaintenanceUnlockSeen,
   onUpdateChildStats,
+  onEditChild,
   lockedChildId,
   onLockChild,
   theme
@@ -1966,7 +1969,7 @@ export default function ChildDashboard({
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500" /></span>
+                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>

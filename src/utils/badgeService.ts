@@ -11,9 +11,39 @@ export const BADGE_CATEGORIES = {
   responsibility: 'Responsibility'
 };
 
+export async function revokeInvalidLevelBadges(childId: string, currentLevel: number) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  const badgesToRevoke = [];
+  if (currentLevel < 50) badgesToRevoke.push('legendary');
+  if (currentLevel < 30) badgesToRevoke.push('expert-status');
+  if (currentLevel < 20) badgesToRevoke.push('master-house');
+  if (currentLevel < 15) badgesToRevoke.push('seasoned-pro');
+  if (currentLevel < 10) badgesToRevoke.push('high-flyer');
+  if (currentLevel < 5) badgesToRevoke.push('on-the-move');
+  if (currentLevel < 3) badgesToRevoke.push('getting-hang');
+  if (currentLevel < 2) badgesToRevoke.push('rising-star');
+
+  if (badgesToRevoke.length > 0) {
+    const { error } = await supabase
+      .from('child_badges')
+      .delete()
+      .eq('child_id', childId)
+      .in('badge_id', badgesToRevoke);
+
+    if (error) {
+      console.error('Failed to revoke level badges', error);
+    }
+  }
+}
+
 export async function checkAndUnlockBadges(child: Child) {
   const supabase = getSupabaseClient();
   if (!supabase) return;
+
+  // Clean up any level badges that the child no longer qualifies for
+  await revokeInvalidLevelBadges(child.id, child.level || 1);
 
   // 1. Fetch all badges
   const { data: allBadges, error: badgesError } = await supabase

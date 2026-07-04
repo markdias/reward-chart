@@ -38,11 +38,12 @@ interface ParentDashboardProps {
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onDeleteChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
+  onDeductCoins?: (childId: string, amount: number, reason: string) => void;
   onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
   onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
-  onAddReward: (title: string, cost: number, icon: string, limitType: any) => void;
+  onAddReward: (title: string, cost: number, icon: string, limitType: any, isBadgeEligible?: boolean) => void;
   onAssignReward: (template: Reward, childIds: string[]) => void;
   onEditReward: (id: string, updates: Partial<Reward>) => void;
   onDeleteReward: (id: string) => void;
@@ -78,6 +79,7 @@ export default function ParentDashboard({
   onEditChild,
   onDeleteChild,
   onUpdateChildStats,
+  onDeductCoins,
   onAddTask,
   onAssignTask,
   onEditTask,
@@ -127,6 +129,11 @@ export default function ParentDashboard({
   // Custom Confirmation Modal State
   const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak'} | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{childId: string, childName: string} | null>(null);
+  
+  // Penalty Modal State
+  const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
+  const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
+  const [penaltyReason, setPenaltyReason] = useState<string>('');
   
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -891,6 +898,15 @@ export default function ParentDashboard({
                                 className={`flex-1 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
                               >
                                 <Settings className="w-4 h-4" /> Quick Adjustments
+                              </button>
+                            )}
+                            {onDeductCoins && (
+                              <button 
+                                onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }}
+                                className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center justify-center hover:bg-rose-100 transition-colors"
+                                title="Take Coins"
+                              >
+                                <MinusCircle className="w-4 h-4" />
                               </button>
                             )}
                             <button 
@@ -1687,10 +1703,107 @@ export default function ParentDashboard({
 
           </AnimatePresence>
         </main>
-        
-        {/* Reset Confirmation Modal */}
-        <AnimatePresence>
-          {resetConfirmation && (
+
+      <AnimatePresence>
+        {penaltyModalChildId && onDeductCoins && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative"
+            >
+              <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-50 shadow-sm">
+                <MinusCircle className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-2 font-display uppercase tracking-wide">
+                Take Coins
+              </h2>
+              <p className="text-center text-sm text-stone-500 mb-6">
+                Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      value={penaltyAmount}
+                      onChange={(e) => setPenaltyAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-black rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 text-lg"
+                    />
+                    <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
+                  <select
+                    value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
+                    onChange={(e) => {
+                      if (e.target.value === 'Custom') setPenaltyReason('');
+                      else setPenaltyReason(e.target.value);
+                    }}
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 mb-2"
+                  >
+                    <option value="" disabled>Select a reason...</option>
+                    <option value="Not listening">Not listening</option>
+                    <option value="Hitting">Hitting</option>
+                    <option value="Refusing chores">Refusing to do chores</option>
+                    <option value="Bad language">Bad language</option>
+                    <option value="Lying">Lying</option>
+                    <option value="Custom">Type my own...</option>
+                  </select>
+                  
+                  {(!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) || penaltyReason === '') && (
+                    <input
+                      type="text"
+                      placeholder="Type custom reason..."
+                      value={penaltyReason}
+                      onChange={(e) => setPenaltyReason(e.target.value)}
+                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { playSound.click(); setPenaltyModalChildId(null); setPenaltyReason(''); setPenaltyAmount(5); }} 
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="danger" 
+                  onClick={() => {
+                    playSound.click();
+                    onDeductCoins(penaltyModalChildId, penaltyAmount, penaltyReason || 'Penalty applied');
+                    setPenaltyModalChildId(null);
+                    setPenaltyReason('');
+                    setPenaltyAmount(5);
+                  }} 
+                  className="flex-1"
+                  disabled={!penaltyReason.trim() || penaltyAmount <= 0}
+                >
+                  Deduct Coins
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {resetConfirmation && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
