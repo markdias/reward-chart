@@ -17,6 +17,7 @@ export interface ParentProfile {
   monthly_reward_points?: number;
   gold_pot_maintenance_unlock_level?: number;
   gold_pot_maintenance_cost?: number;
+  dashboard_style?: string;
 }
 
 export interface Child {
@@ -42,6 +43,7 @@ export interface Child {
   monthly_reset_date?: string; // ISO date of next reset
   last_active_date?: string;
   savings_pot?: number;
+  last_saved_date?: string | null;
   savings_unlocked?: boolean;
   savings_unlock_seen?: boolean;
   savings_goal_name?: string | null;
@@ -67,6 +69,13 @@ export interface Child {
   gold_pot_total_leaked?: number;
   gold_pot_intro_seen?: boolean;
   gold_pot_maintenance_unlock_seen?: boolean;
+  pet_fed_total?: number;
+  pet_happy_streak?: number;
+  savings_deposits?: number;
+  savings_goals_met?: number;
+  gifts_made?: number;
+  gold_pot_fixes?: number;
+  gold_pot_unbroken_days?: number;
   created_at: string;
 }
 
@@ -106,6 +115,7 @@ export interface Reward {
   template_id?: string;
   icon_name: string;
   limit_type: 'unlimited' | 'daily' | 'twice_daily' | 'one_time';
+  is_badge_eligible?: boolean;
   created_at: string;
 }
 
@@ -116,7 +126,7 @@ export interface RewardRedemption {
   parent_id: string;
   redeemed_at: string;
   status: 'requested' | 'delivered' | 'rejected';
-  payment_source?: 'main' | 'savings';
+  payment_source?: 'main' | 'savings' | 'badge_freebie';
 }
 
 export interface GiftingRequest {
@@ -159,3 +169,21 @@ export interface CharacterPack {
   pack_name: string; // For categorizing thematic expansion packs (e.g., "Galaxy Pack", "Fantasy Pack")
   stages: CharacterEvolutionStage[];
 }
+
+export interface BadgeDef {
+  id: string;
+  name: string;
+  description: string;
+  icon_name: string;
+  category: string;
+  unlock_condition_hint: string;
+}
+
+export interface ChildBadge {
+  id: string;
+  child_id: string;
+  badge_id: string;
+  unlocked_at: string;
+  reward_claimed: boolean;
+}
+

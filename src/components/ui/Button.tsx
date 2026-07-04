@@ -105,6 +105,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const disabledClass = disabled || isLoading ? 'opacity-70 cursor-not-allowed pointer-events-none' : '';
 
     const combinedClasses = [
+      `btn-${variant}`,
       variantClasses,
       sizeClasses,
       widthClass,

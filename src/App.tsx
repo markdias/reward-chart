@@ -22,7 +22,10 @@ import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 
 import TypographyShowcase from './components/TypographyShowcase';
-
+import TaskCardShowcase from './components/TaskCardShowcase';
+import RewardCardShowcase from './components/RewardCardShowcase';
+import PotsShowcase from './components/PotsShowcase';
+import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
 export default function App() {
   const activeTheme = 'sunny_toybox';
   
@@ -34,7 +37,27 @@ export default function App() {
     return <TypographyShowcase />;
   }
 
+  if (new URLSearchParams(window.location.search).get('showcase') === 'tasks') {
+    return <TaskCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'rewards') {
+    return <RewardCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'pots') {
+    return <PotsShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'player-selection') {
+    return <PlayerSelectionShowcase />;
+  }
+
   // Auth state
+  const [globalTheme, setGlobalTheme] = useState<string>(
+    localStorage.getItem('RCH_GLOBAL_THEME') || 'modern'
+  );
+  
   const [parentEmail, setParentEmail] = useState<string | null>(
     localStorage.getItem('RCH_PARENT_EMAIL')
   );
@@ -51,6 +74,14 @@ export default function App() {
   );
   
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
+  
+  useEffect(() => {
+    if (parentProfile?.dashboard_style) {
+      setGlobalTheme(parentProfile.dashboard_style);
+      localStorage.setItem('RCH_GLOBAL_THEME', parentProfile.dashboard_style);
+    }
+  }, [parentProfile?.dashboard_style]);
+
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
   const [postSignUpData, setPostSignUpData] = useState<{ email: string, parentName: string, familyName: string } | null>(null);
 
@@ -529,7 +560,14 @@ export default function App() {
           gold_pot_last_leak_date: updatedChild.gold_pot_last_leak_date,
           gold_pot_last_fix_date: updatedChild.gold_pot_last_fix_date,
           gold_pot_total_leaked: updatedChild.gold_pot_total_leaked,
-          gold_pot_intro_seen: updatedChild.gold_pot_intro_seen
+          gold_pot_intro_seen: updatedChild.gold_pot_intro_seen,
+          last_saved_date: updatedChild.last_saved_date,
+          last_gifting_date: updatedChild.last_gifting_date,
+          savings_deposits: updatedChild.savings_deposits,
+          pet_fed_total: updatedChild.pet_fed_total,
+          gifts_made: updatedChild.gifts_made,
+          gold_pot_fixes: updatedChild.gold_pot_fixes,
+          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -1092,7 +1130,8 @@ export default function App() {
     title: string, 
     cost: number, 
     iconName: string,
-    limitType: any
+    limitType: any,
+    isBadgeEligible: boolean = false
   ) => {
     const newReward: Reward = {
       id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -1104,6 +1143,7 @@ export default function App() {
       is_template: true,
       icon_name: iconName,
       limit_type: limitType,
+      is_badge_eligible: isBadgeEligible,
       created_at: new Date().toISOString()
     };
     syncRewards([...rewards, newReward]);
@@ -1258,13 +1298,13 @@ export default function App() {
     const child = children.find(c => c.id === redemption.child_id);
 
     if (child) {
-      const cost = reward ? reward.cost_points : 0;
+      const cost = (reward && redemption.payment_source !== 'badge_freebie') ? reward.cost_points : 0;
       const isSavingsPurchase = redemption.payment_source === 'savings';
       const targetChild = {
         ...child,
         points: isSavingsPurchase ? child.points : Math.max(0, child.points - cost),
         savings_pot: isSavingsPurchase ? Math.max(0, (child.savings_pot || 0) - cost) : child.savings_pot,
-        pet_food: (child.pet_food || 0) + 1,
+        pet_food: (child.pet_food || 0) + (cost > 0 || redemption.payment_source === 'badge_freebie' ? 1 : 0),
       };
 
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
@@ -1334,7 +1374,8 @@ export default function App() {
       ...child,
       points: child.points - 1,
       pet_food: (child.pet_food || 0) + 1,
-      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1
+      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1,
+      last_fed_date: new Date().toISOString()
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1379,7 +1420,8 @@ export default function App() {
     const targetChild = {
       ...child,
       points: child.points - amount,
-      savings_pot: (child.savings_pot || 0) + amount
+      savings_pot: (child.savings_pot || 0) + amount,
+      last_saved_date: new Date().toISOString()
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1735,7 +1777,7 @@ export default function App() {
 
   return (
     <>
-    <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
+    <div className={`relative min-h-screen transition-all duration-300`} id="app-main" data-theme={globalTheme}>
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />

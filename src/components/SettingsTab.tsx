@@ -33,6 +33,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [dashboardStyle, setDashboardStyle] = useState('modern');
+
   React.useEffect(() => {
     if (parentProfile) {
       setName(parentProfile.name || '');
@@ -42,6 +44,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
       setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 500);
       setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
+      setDashboardStyle(parentProfile.dashboard_style || 'modern');
     }
   }, [parentProfile]);
   
@@ -96,7 +99,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           level_up_gold_reward: levelUpGoldReward,
           weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
-          monthly_reward_points: monthlyRewardPoints
+          monthly_reward_points: monthlyRewardPoints,
+          dashboard_style: dashboardStyle
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -315,6 +319,21 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none`} 
             />
           </div>
+
+          <div className="bg-white p-4 rounded-xl border border-stone-200">
+            <h4 className={`text-sm font-bold border-b pb-2 mb-4 border-stone-100 text-indigo-600`}>Appearance</h4>
+            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Child Dashboard Style</label>
+            <select
+              value={dashboardStyle}
+              onChange={(e) => setDashboardStyle(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border ${c.input} focus:ring-2 focus:ring-indigo-500 outline-none appearance-none bg-white font-semibold`}
+            >
+              <option value="modern">Modern (Default)</option>
+              <option value="playful_pop">Playful Pop</option>
+            </select>
+            <p className="text-[10px] mt-2 text-stone-500">Choose between the clean modern look or the bold & chunky "Playful Pop" aesthetic.</p>
+          </div>
+
           <Button 
             variant="warning"
             fullWidth

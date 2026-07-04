@@ -5,7 +5,7 @@ import {
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -107,6 +107,12 @@ export default function ParentDashboard({
   onUpdateParentProfile
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  
+  // Scroll to top when switching tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
@@ -144,6 +150,7 @@ export default function ParentDashboard({
   const [rewardChildIds, setRewardChildIds] = useState<string[]>([]);
   const [rewardIcon, setRewardIcon] = useState('Gamepad2');
   const [rewardLimit, setRewardLimit] = useState<'unlimited' | 'daily' | 'twice_daily' | 'one_time'>('unlimited');
+  const [rewardBadgeEligible, setRewardBadgeEligible] = useState(false);
 
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -345,10 +352,11 @@ export default function ParentDashboard({
         title: rewardTitle,
         cost_points: rewardCost,
         icon_name: rewardIcon,
-        limit_type: rewardLimit
+        limit_type: rewardLimit,
+        is_badge_eligible: rewardBadgeEligible
       });
     } else {
-      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit);
+      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit, rewardBadgeEligible);
     }
     setShowAddReward(false);
     setRewardSubTab('directory');
@@ -384,6 +392,7 @@ export default function ParentDashboard({
     setRewardChildIds([reward.child_id || 'directory']);
     setRewardIcon(reward.icon_name);
     setRewardLimit(reward.limit_type || 'unlimited');
+    setRewardBadgeEligible(reward.is_badge_eligible || false);
     setShowAddReward(true);
   };
 
@@ -440,7 +449,7 @@ export default function ParentDashboard({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border border-gray-100 shadow-xl overflow-hidden p-4 space-y-3 z-50 text-slate-900"
+                    className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border dashboard-card border-gray-100 shadow-xl overflow-hidden p-4 space-y-3 z-50 text-slate-900"
                     id="notifications-box"
                   >
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2">
@@ -641,7 +650,7 @@ export default function ParentDashboard({
                         const child = children.find(c => c.id === appr.child_id);
                         const task = tasks.find(t => t.id === appr.task_id);
                         return (
-                          <div key={appr.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={appr.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
                               <img src={child?.avatar_url || '/placeholder.png'} className="w-12 h-12 rounded-xl bg-gray-50" />
                               <div>
@@ -661,7 +670,7 @@ export default function ParentDashboard({
                         const child = children.find(c => c.id === req.child_id);
                         const reward = rewards.find(r => r.id === req.reward_id);
                         return (
-                          <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
                               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>
                               <div>
@@ -682,7 +691,7 @@ export default function ParentDashboard({
                         const typeIcon = req.type === 'charity' ? '🌍' : '💝';
                         const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
                         return (
-                          <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
                               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>
                                 {typeIcon}
@@ -726,7 +735,7 @@ export default function ParentDashboard({
                         date: new Date(r.redeemed_at),
                       }))
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10).map((activity, i) => (
-                      <div key={`${activity.id}-${i}`} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
+                      <div key={`${activity.id}-${i}`} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3 sm:gap-4">
                           <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-50 text-gray-500'}`}>
                             {activity.type === 'task' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : '🍦'}
@@ -793,7 +802,7 @@ export default function ParentDashboard({
                             value={newChildName}
                             onChange={(e) => setNewChildName(e.target.value)}
                             placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -802,7 +811,7 @@ export default function ParentDashboard({
                           <select
                             value={newChildChar}
                             onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             {CHARACTER_PACKS.map(char => (
                               <option key={char.id} value={char.id}>
@@ -855,14 +864,14 @@ export default function ParentDashboard({
                   </motion.div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {sortedChildren.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
                     return (
                       <div
                         key={child.id}
-                        className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
+                        className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
                       >
                         <div className="flex gap-4 items-center pr-8">
                           <img
@@ -1040,7 +1049,7 @@ export default function ParentDashboard({
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
                             placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1052,7 +1061,7 @@ export default function ParentDashboard({
                               min="0"
                               value={taskPoints}
                               onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             />
                           </div>
                         </div>
@@ -1062,7 +1071,7 @@ export default function ParentDashboard({
                           <select
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
@@ -1078,7 +1087,7 @@ export default function ParentDashboard({
                               min="1"
                               value={taskCooldownMinutes || ''}
                               onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                               required
                             />
                           </div>
@@ -1169,7 +1178,7 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
@@ -1242,7 +1251,7 @@ export default function ParentDashboard({
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border border-slate-700/50 object-cover" />
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border dashboard-card border-slate-700/50 object-cover" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1268,7 +1277,7 @@ export default function ParentDashboard({
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
-                      <div key={task.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
@@ -1361,7 +1370,7 @@ export default function ParentDashboard({
                             value={rewardTitle}
                             onChange={(e) => setRewardTitle(e.target.value)}
                             placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1371,7 +1380,7 @@ export default function ParentDashboard({
                             type="number"
                             value={rewardCost}
                             onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             min="10"
                             max="500"
                             required
@@ -1383,7 +1392,7 @@ export default function ParentDashboard({
                           <select
                             value={rewardIcon}
                             onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="Gamepad2">🎮 Game Time</option>
                             <option value="Pizza">🍕 Favorite Meal</option>
@@ -1397,13 +1406,25 @@ export default function ParentDashboard({
                           <select
                             value={rewardLimit}
                             onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="unlimited">♾️ Unlimited</option>
                             <option value="daily">📅 1x Daily</option>
                             <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
                             <option value="one_time">🎯 One-Time (Disappears after use)</option>
                           </select>
+                        </div>
+                        <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                          <input
+                            type="checkbox"
+                            id="rewardBadgeEligible"
+                            checked={rewardBadgeEligible}
+                            onChange={(e) => setRewardBadgeEligible(e.target.checked)}
+                            className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
+                          />
+                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-mono text-stone-600`}>
+                            Eligible as a free badge reward (Small Reward)
+                          </label>
                         </div>
                       </div>
 
@@ -1489,7 +1510,7 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
@@ -1589,7 +1610,7 @@ export default function ParentDashboard({
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
-                      <div key={reward.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">

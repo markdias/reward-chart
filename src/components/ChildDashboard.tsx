@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -25,6 +25,8 @@ import { getLogicalDateString, getCurrentWeekKey, getStartOfDailyReset } from '.
 import { CoinBadge } from './CoinBadge';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { BadgesModal } from './BadgesModal';
+import { checkAndUnlockBadges } from '../utils/badgeService';
 
 const RECURRENCE_LABEL: Record<string, string> = {
   daily:      'Daily',
@@ -41,7 +43,7 @@ interface ChildDashboardProps {
   rewards: Reward[];
   redemptions: RewardRedemption[];
   onCompleteTask: (taskId: string, childId: string) => void;
-  onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings') => void;
+  onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings' | 'badge_freebie') => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
@@ -93,6 +95,7 @@ export default function ChildDashboard({
   theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
+  const isPlayfulPop = parentProfile?.dashboard_style === 'playful_pop';
 
   // Helper to offset dates by 4 hours for a "4 AM daily reset"
   // This ensures tasks completed at 1 AM count towards the previous day
@@ -107,6 +110,7 @@ export default function ChildDashboard({
   }, [lockedChildId]);
 
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
+  const [expandedPot, setExpandedPot] = useState<'savings' | 'food' | 'gifting' | 'maintenance' | null>(null);
 
   // Scroll to top when switching tabs
   useEffect(() => {
@@ -139,6 +143,9 @@ export default function ChildDashboard({
   const [penaltyMessage, setPenaltyMessage] = useState<string | null>(null);
   const [goldPotPenaltyMessage, setGoldPotPenaltyMessage] = useState<string | null>(null);
   const [showFeedReminder, setShowFeedReminder] = useState(false);
+  const [showBadgesModal, setShowBadgesModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiMessage, setConfettiMessage] = useState('');
 
   // Gifting Pot UI State
   const [showGiftingReplayVideo, setShowGiftingReplayVideo] = useState(false);
@@ -183,6 +190,30 @@ export default function ChildDashboard({
   }, [evolvingStage, isHatching]);
 
   const activeChild = children.find(c => c.id === selectedChildId);
+
+  // Badge Evaluation Effect
+  useEffect(() => {
+    if (activeChild) {
+      checkAndUnlockBadges(activeChild).then(newUnlocks => {
+        if (newUnlocks && newUnlocks.length > 0) {
+          setShowConfetti(true);
+          setConfettiMessage(`You earned ${newUnlocks.length} new badge${newUnlocks.length > 1 ? 's' : ''}! Check your badges.`);
+          setTimeout(() => setShowConfetti(false), 5000);
+        }
+      }).catch(err => console.error("Error evaluating badges", err));
+    }
+  }, [
+    activeChild?.id, 
+    activeChild?.points, 
+    activeChild?.level, 
+    activeChild?.streak_days, 
+    activeChild?.pet_fed_total, 
+    activeChild?.savings_deposits, 
+    activeChild?.gifts_made, 
+    activeChild?.gold_pot_fixes, 
+    activeChild?.gold_pot_unbroken_days,
+    completions.length
+  ]);
 
   // Reset video play state when popup is closed
   useEffect(() => {
@@ -316,6 +347,35 @@ export default function ChildDashboard({
   const isSavingsUnlocked = activeChild ? (activeChild.savings_unlocked || activeChild.level >= (parentProfile?.savings_pot_unlock_level ?? 2)) : false;
   const isFoodPotUnlocked = activeChild ? (activeChild.food_pot_unlocked || activeChild.level >= (parentProfile?.food_pot_unlock_level ?? 4)) : false;
   const isGiftingUnlocked = activeChild ? (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6)) : false;
+
+  const potReminders: string[] = [];
+  const now = new Date();
+  if (activeChild) {
+    if (isSavingsUnlocked) {
+      const lastSaved = activeChild.last_saved_date ? new Date(activeChild.last_saved_date) : null;
+      const daysSinceSaved = lastSaved ? Math.floor((now.getTime() - lastSaved.getTime()) / (1000 * 3600 * 24)) : Infinity;
+      const savedToday = activeChild.last_saved_date?.startsWith(now.toISOString().split('T')[0]);
+      if (daysSinceSaved >= 7 && !savedToday) {
+        potReminders.push("Savings Pot: Time to deposit some coins!");
+      }
+    }
+    if (isFoodPotUnlocked) {
+      const lastFed = activeChild.last_fed_date ? new Date(activeChild.last_fed_date) : null;
+      const daysSinceFed = lastFed ? Math.floor((now.getTime() - lastFed.getTime()) / (1000 * 3600 * 24)) : Infinity;
+      if (daysSinceFed >= 3 && !activeChild.pet_fed_today) {
+        potReminders.push("Food Pot: Your pet might be hungry!");
+      }
+    }
+    if (isGiftingUnlocked) {
+      const lastGifted = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
+      const daysSinceGifted = lastGifted ? Math.floor((now.getTime() - lastGifted.getTime()) / (1000 * 3600 * 24)) : Infinity;
+      const giftedToday = activeChild.last_gifting_date?.startsWith(now.toISOString().split('T')[0]);
+      if (daysSinceGifted >= 14 && !giftedToday) {
+        potReminders.push("Gifting Pot: Consider gifting some coins!");
+      }
+    }
+  }
+
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
@@ -331,7 +391,7 @@ export default function ChildDashboard({
   const handleSelectChild = (id: string) => {
     playSound.purchase();
     setSelectedChildId(id);
-    setActiveChildTab('companion');
+    setActiveChildTab('home');
   };
 
   const handleTaskCheck = (taskId: string, taskName?: string) => {
@@ -420,8 +480,33 @@ export default function ChildDashboard({
     return { available: true };
   };
 
+  // Claim Free Reward from Badge
+  const handleClaimFreeReward = async (badgeId: string, rewardId: string) => {
+    if (!activeChild) return;
+    
+    // 1. Trigger the reward claim (freebie)
+    onClaimReward(rewardId, activeChild.id, 'badge_freebie');
+    
+    // 2. Update the child_badges table to mark as claimed
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await supabase
+        .from('child_badges')
+        .update({ reward_claimed: true })
+        .eq('child_id', activeChild.id)
+        .eq('badge_id', badgeId);
+      if (error) {
+        console.error('Error updating badge claimed state:', error);
+      }
+    }
+    
+    setShowConfetti(true);
+    setConfettiMessage('Free Prize Claimed! Enjoy!');
+    setTimeout(() => setShowConfetti(false), 5000);
+  };
+
   return (
-    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[80px] sm:pt-[90px]' : ''}`} id="child-root">
+    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+104px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+114px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
       
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
@@ -438,8 +523,8 @@ export default function ChildDashboard({
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
-              <h1 className="text-xl sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
+            <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
+              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
                 {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
               </h1>
               
@@ -1232,60 +1317,135 @@ export default function ChildDashboard({
               id="profile-picker"
             >
               <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${styles.tagCategory} text-xs font-bold font-mono uppercase tracking-widest`}>
-                  <Zap className="w-3.5 h-3.5 animate-pulse" /> INSERT PLAYER CHIP
-                  </div>
-                  <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight ${styles.titleColor}`}>
-                    Select your player coin
-                  </h1>
-                  <p className={`text-xs sm:text-sm ${styles.textMuted} max-w-md mx-auto leading-relaxed`}>
-                    Choose your family operator to access your quest diary, feed energy cells, and claim your physical prizes!
-                  </p>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
+                  <Plane className="w-3.5 h-3.5" /> BOARDING NOW
                 </div>
+                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-slate-800`}>
+                  Grab your ticket!
+                </h1>
+                <p className={`text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed`}>
+                  Select your boarding pass to start your adventure and claim your rewards!
+                </p>
+              </div>
 
-                <div className="flex flex-wrap justify-center gap-4 sm:gap-8 max-w-4xl mx-auto pt-4" id="kids-deck">
-                  {children.map((child) => {
-                    const stage = getCharacterStage(child.character_id, child.level);
-                    return (
-                      <motion.div
-                        whileHover={{ scale: 1.05, y: -4 }}
-                        whileTap={{ scale: 0.98 }}
-                        key={child.id}
-                        onClick={() => {
-                          handleSelectChild(child.id);
-                        }}
-                        className={`w-40 sm:w-52 md:w-64 shrink-0 cursor-pointer overflow-hidden aspect-square rounded-full border-4 sm:border-8 border-yellow-200 bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 p-2 flex flex-col items-center justify-center gap-1 sm:gap-2 text-center transition-all shadow-[0_6px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] sm:shadow-[0_8px_0_0_#b45309,0_15px_20px_rgba(0,0,0,0.2)] relative group hover:shadow-[0_0_30px_rgba(251,191,36,0.8)]`}
-                      >
-                        {/* Inner ring for coin effect */}
-                        <div className="absolute inset-2 sm:inset-3 rounded-full border border-yellow-200/60 pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                        {/* Interactive Kid Avatar frame */}
-                        <div className="relative mt-2 z-10">
-                          <img
-                            src={child.avatar_url}
-                            alt={child.name}
-                            className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-amber-100 p-0.5 sm:p-1 border-2 border-amber-600 group-hover:border-white transition-all object-cover shadow-inner`}
-                            referrerPolicy="no-referrer"
-                          />
-                          <span className={`absolute -bottom-1 -right-1 sm:-bottom-1 sm:-right-1 h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-rose-500 font-mono flex items-center justify-center text-[10px] sm:text-xs font-extrabold border-2 border-white text-white shadow-sm tabular-nums`}>
-                            {child.level}
-                          </span>
-                        </div>
-
-                        <div className="space-y-0.5 z-10 mt-1">
-                          <h3 className={`font-black font-display text-sm sm:text-xl text-amber-950 tracking-wide drop-shadow-sm`}>
-                            {child.name}
-                          </h3>
-                          <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] text-amber-900 font-mono font-bold bg-amber-200/50 px-1.5 py-0.5 rounded-full border border-amber-500/30 shadow-inner">
-                            <Flame className="w-3 h-3 text-rose-600 animate-pulse" />
-                            <span>{child.streak_days} <span className="hidden sm:inline">DAYS</span><span className="sm:hidden">D</span></span>
+              <div className="flex flex-col gap-6 max-w-4xl mx-auto pt-4 px-4 w-full text-left" id="kids-deck">
+                {children.map((child) => {
+                  const stage = getCharacterStage(child.character_id, child.level);
+                  return (
+                    <motion.div
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      key={child.id}
+                      onClick={() => {
+                        handleSelectChild(child.id);
+                      }}
+                      className="w-full cursor-pointer group flex shadow-lg hover:shadow-xl transition-shadow rounded-2xl overflow-hidden relative"
+                    >
+                      {/* Main Pass Body */}
+                      <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
+                        {/* Header */}
+                        <div className="h-8 sm:h-10 bg-[#0033A0] flex items-center justify-between px-3 sm:px-6 border-b border-[#002277]">
+                          <div className="flex items-center gap-2 text-white font-bold tracking-widest text-xs uppercase">
+                            <Plane className="w-4 h-4" /> <span>Reward Airways</span>
+                          </div>
+                          <div className="text-blue-200 font-mono text-[10px] tracking-widest uppercase">
+                            First Class
                           </div>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
+                        
+                        <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+                          
+                          <div className="flex items-center gap-2 sm:gap-6">
+                            <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
+                              <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
+                            </div>
+                            
+                            <div className="flex flex-col">
+                              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Name of Passenger</span>
+                              <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none mb-2 sm:mb-4">
+                                {child.name}
+                              </h3>
+                              
+                              <div className="flex gap-2 sm:gap-10">
+                              <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Flight</span>
+                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Gate</span>
+                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Seat</span>
+                                <span className="font-mono font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
+                          <div className="w-16 sm:w-32 h-8 sm:h-16 flex justify-between items-end opacity-60">
+                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
+                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
+                            <div className="w-1.5 sm:w-3 h-full bg-slate-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
+                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
+                            <div className="w-1 sm:w-1.5 h-full bg-slate-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
+                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
+                          </div>
+                          <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-slate-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
+                        </div>
+                        
+                      </div>
+                    </div>
+                    
+                    {/* Divider with Notches */}
+                    <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
+                      {/* Top Notch */}
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
+                      
+                      {/* Perforation Line */}
+                      <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
+                      
+                      {/* Bottom Notch */}
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
+                    </div>
+                    
+                    {/* Tear-off Stub */}
+                    <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
+                        <div className="h-10 bg-[#0033A0] w-full border-b border-[#002277]" />
+                        <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
+                          
+                          <Plane className="absolute -right-8 -bottom-8 w-24 h-24 sm:w-32 sm:h-32 text-slate-200 opacity-40 -rotate-45 pointer-events-none z-0" />
+
+                          <div className="w-full text-center mb-2 sm:mb-4 relative z-10">
+                            <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
+                            <span className="font-mono font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
+                          </div>
+
+                          <div className="w-full flex justify-between relative z-10">
+                            <div className="flex flex-col text-center w-1/2">
+                              <span className="text-[9px] text-slate-500 font-bold uppercase">Zone</span>
+                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">1</span>
+                            </div>
+                            <div className="flex flex-col text-center w-1/2">
+                              <span className="text-[9px] text-slate-500 font-bold uppercase">Class</span>
+                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">F</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                    </motion.div>
+                  );
+                })}
+              </div>
 
 
 
@@ -1603,6 +1763,8 @@ export default function ChildDashboard({
                           redemptions={redemptions}
                           rewards={rewards}
                           handleTaskCheck={handleTaskCheck}
+                          potReminders={potReminders}
+                          onOpenBadges={() => setShowBadgesModal(true)}
                         />
                       ) : activeChildTab === 'tasks' ? (
                         <motion.div
@@ -1619,7 +1781,7 @@ export default function ChildDashboard({
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" id="child-tasks-deck">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-tasks-deck">
                           {tasks.filter(t => {
                             if (t.child_id !== activeChild.id) return false;
                             if (t.recurrence === 'one_time') {
@@ -1690,56 +1852,62 @@ export default function ChildDashboard({
 
                               const cardContent = (
                                 <>
-                                  {/* Icon + title + subtitle */}
-                                  <div className="flex gap-2.5 sm:gap-3 items-center min-w-0">
-                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center shrink-0 border border-gray-200 bg-gray-100`}>
-                                      <catMeta.Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${isApproved ? 'text-gray-400' : 'text-slate-700'}`} />
-                                    </div>
-                                    <div className="min-w-0 flex flex-col justify-center">
-                                      <span className={`text-[9px] font-bold uppercase tracking-widest ${isApproved ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        {subtitleParts.join(' · ')}
-                                      </span>
-                                      <h4 className={`font-bold text-sm sm:text-base truncate ${isApproved ? 'line-through text-gray-400' : 'text-slate-900'}`}>
-                                        {task.title}
-                                      </h4>
+                                  <div className="absolute top-3 right-3">
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-gray-200 text-gray-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
+                                      <catMeta.Icon className="w-4 h-4" />
                                     </div>
                                   </div>
-
-                                  {/* Right: coin + status */}
-                                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                                    {isPending ? (
-                                      <span className="px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase animate-pulse bg-stone-100 text-stone-500">
-                                        AWAITING
-                                      </span>
-                                    ) : isOnCooldown ? (
-                                      <span className="px-2.5 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase bg-amber-100 text-amber-700 border border-amber-200">
-                                        {cooldownTimeLeftStr}
-                                      </span>
-                                    ) : null}
-                                    <CoinBadge points={task.points} size="md" disabled={isApproved} />
+                                  <div className={`mt-2 ${isCompletable ? 'group-hover:scale-110 transition-transform' : 'opacity-50'}`}>
+                                    <CoinBadge points={task.points} disabled={isApproved} />
+                                  </div>
+                                  <div className="w-full">
+                                    <h4 className={`font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                      {task.title}
+                                    </h4>
+                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                      {isApproved ? (
+                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full">
+                                          <FaCircleCheck className="w-3 h-3" /> DONE
+                                        </div>
+                                      ) : isPending ? (
+                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full">
+                                          AWAITING
+                                        </div>
+                                      ) : isOnCooldown ? (
+                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-amber-200">
+                                          {cooldownTimeLeftStr}
+                                        </div>
+                                      ) : (
+                                        <div className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full group-hover:bg-amber-100 group-hover:text-amber-600 transition-colors">
+                                          {recLabel}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </>
                               );
+
+                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
 
                               return isCompletable ? (
                                 <button
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
-                                  className={`w-full text-left p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer active:scale-[0.98] bg-white border-gray-200 hover:border-orange-400 shadow-sm`}
+                                  className={`${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] task-card`}
                                 >
                                   {cardContent}
                                 </button>
                               ) : (
                                 <div
                                   key={task.id}
-                                  className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                                  className={`${baseCardClasses} ${
                                     isApproved
-                                      ? `bg-gray-50 border-gray-100 opacity-75`
+                                      ? `bg-gray-50 border-gray-100`
                                       : isPending
                                         ? 'bg-indigo-50 border-indigo-100'
                                         : 'bg-amber-50 border-amber-100 opacity-75'
-                                  }`}
+                                  } task-card`}
                                 >
                                   {cardContent}
                                 </div>
@@ -1765,9 +1933,9 @@ export default function ChildDashboard({
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" id="child-rewards-deck">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                            <div className={`col-span-2 p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-2`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500" /></span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
@@ -1785,54 +1953,64 @@ export default function ChildDashboard({
                                 return null;
                               }
 
-                              const cardInner = (
-                                <>
-                                  <div className="flex gap-2.5 sm:gap-3 items-center min-w-0">
-                                    <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${
-                                      canDispense
-                                        ? 'bg-warning/15 border border-warning/30'
-                                        : 'bg-stone-100 border border-stone-200'
-                                    }`}>
-                                      <Gift className={`w-5 h-5 sm:w-6 sm:h-6 ${canDispense ? 'text-warning' : 'text-stone-400'}`} />
+                              let statusBadge = null;
+                              if (hasPendingRequest) {
+                                statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Pending</span>;
+                              } else if (!availability.available && !isSavingFor) {
+                                statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
+                              } else if (isSavingsUnlocked) {
+                                if (isSavingFor) {
+                                  statusBadge = (
+                                    <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+                                      <CheckCircle className="w-3 h-3" /> Saving
                                     </div>
-                                    <div className="min-w-0">
-                                      <h4 className={`font-extrabold text-xs sm:text-sm ${styles.titleColor} font-display tracking-wide truncate`}>{rew.title}</h4>
-                                      <p className={`text-[9px] sm:text-[10px] font-mono ${styles.textMuted} uppercase mt-0.5`}>COST: {rew.cost_points} GOLD</p>
+                                  );
+                                } else {
+                                  statusBadge = (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSavingsGoal(activeChild.id, rew.id);
+                                        playSound.success();
+                                      }}
+                                      className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
+                                    >
+                                      Set Goal
+                                    </button>
+                                  );
+                                }
+                              }
+
+                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
+                              
+                              let wrapperClasses = "";
+                              let iconBg = "";
+                              if (isSavingFor) {
+                                wrapperClasses = `${baseCardClasses} bg-emerald-50 border-emerald-300 shadow-[0_4px_20px_rgba(52,211,153,0.2)] hover:shadow-[0_8px_25px_rgba(52,211,153,0.3)] group cursor-pointer reward-card-saving`;
+                                iconBg = "bg-emerald-100 text-emerald-600";
+                              } else if (canDispense) {
+                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] reward-card`;
+                                iconBg = "bg-orange-100 text-orange-500";
+                              } else {
+                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 opacity-60 grayscale-[0.3] reward-card-disabled`;
+                                iconBg = "bg-stone-100 text-stone-400";
+                              }
+
+                              const cardContent = (
+                                <>
+                                  <div className="absolute top-3 right-3">
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${iconBg}`}>
+                                      <Gift className="w-4 h-4" />
                                     </div>
                                   </div>
-
-                                  <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
-                                    {isSavingsUnlocked && (
-                                      isSavingFor ? (
-                                        <span className="text-[10px] sm:text-xs text-emerald-700 font-black uppercase tracking-wider flex items-center gap-1 bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-300">
-                                          <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Saving
-                                        </span>
-                                      ) : (
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onSavingsGoal(activeChild.id, rew.id);
-                                            playSound.success();
-                                          }}
-                                          className="text-[8px] text-emerald-600 hover:bg-emerald-50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
-                                        >
-                                          Set as Goal
-                                        </button>
-                                      )
-                                    )}
-
-                                    {/* Status / cost badge */}
-                                    {hasPendingRequest ? (
-                                      <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase px-2.5 py-1.5 rounded-lg animate-pulse bg-stone-100 text-stone-600">
-                                        PENDING
-                                      </span>
-                                    ) : !availability.available ? (
-                                      <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase px-2.5 py-1.5 rounded-lg bg-stone-100 text-stone-400">
-                                        {availability.reason}
-                                      </span>
-                                    ) : (
-                                      <CoinBadge points={rew.cost_points} size="md" />
-                                    )}
+                                  <div className={`mt-2 ${canDispense ? 'group-hover:scale-110 transition-transform' : ''}`}>
+                                    <CoinBadge points={rew.cost_points} />
+                                  </div>
+                                  <div className="w-full">
+                                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight">{rew.title}</h4>
+                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                      {statusBadge}
+                                    </div>
                                   </div>
                                 </>
                               );
@@ -1845,20 +2023,13 @@ export default function ChildDashboard({
                                     : handleClaimReward(rew.id, rew.cost_points)
                                   }
                                   id={`claim-reward-${rew.id}`}
-                                  className={`w-full text-left p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 cursor-pointer active:scale-[0.98] active:brightness-95 ${
-                                    isSavingFor
-                                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-lg'
-                                      : 'bg-white border-gray-200 hover:border-emerald-400 shadow-sm hover:shadow-md'
-                                  }`}
+                                  className={wrapperClasses}
                                 >
-                                  {cardInner}
+                                  {cardContent}
                                 </button>
                               ) : (
-                                <div
-                                  key={rew.id}
-                                  className={`p-2.5 sm:p-3 rounded-xl border transition-all flex items-center justify-between gap-1.5 sm:gap-2 opacity-60 ${styles.cardBg} border-slate-800/30`}
-                                >
-                                  {cardInner}
+                                <div key={rew.id} className={wrapperClasses}>
+                                  {cardContent}
                                 </div>
                               );
                             })
@@ -1873,75 +2044,98 @@ export default function ChildDashboard({
                           key="child-pots-tab"
                           className="space-y-4"
                         >
-                          <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left">
+                          <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
                             <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">POTS</h2>
                             <p className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</p>
                           </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
                           {/* === MAIN GOLD POT SECTION === */}
-                          <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${activeChild.gold_pot_broken ? 'bg-red-50 border-red-200' : 'bg-gradient-to-br from-amber-50 to-yellow-50'} border-2 relative overflow-hidden shadow-sm`}>
-                            {/* Header */}
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="flex items-center gap-2">
-                                <div className={`h-9 w-9 rounded-xl ${activeChild.gold_pot_broken ? 'bg-red-100 border-red-200' : 'bg-gradient-to-br from-yellow-100 to-amber-100 border-amber-200'} border flex items-center justify-center`}>
-                                  {activeChild.gold_pot_broken ? (
-                                    <FaTriangleExclamation className="w-5 h-5 text-red-600" />
-                                  ) : (
-                                    <FaCoins className="w-5 h-5 text-amber-600" />
-                                  )}
-                                </div>
-                                <div>
-                                  <span className={`text-[8px] font-mono tracking-widest uppercase ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-600'} font-extrabold`}>MAIN POCKET</span>
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <h4 className={`font-black text-sm ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-amber-900'} leading-none`}>Gold Pot</h4>
-                                    <button 
-                                      onClick={() => setShowAppIntroVideo(true)}
-                                      className={`text-[9px] ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'} px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer`}
-                                    >
-                                      <Play className={`w-2.5 h-2.5 ${activeChild.gold_pot_broken ? 'fill-red-700' : 'fill-amber-700'}`} /> How It Works
-                                    </button>
-                                  </div>
-                                </div>
+                          <div 
+                            onClick={() => setExpandedPot(expandedPot === 'gold' ? null : 'gold')}
+                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                          >
+                            <div className="flex justify-between items-start mb-4">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
                               </div>
-                              <div className="flex items-center justify-center mr-1">
-                                <CoinBadge points={activeChild.points || 0} size="md" />
+                              <CoinBadge points={activeChild.points || 0} size="sm" />
+                            </div>
+                            <div>
+                              <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
+                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Gold Pot</h3>
+                              <div className="flex gap-2 mt-3 flex-wrap">
+                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
+                                  className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+                                >
+                                  <Play className="w-3 h-3" fill="currentColor" /> Video
+                                </button>
                               </div>
                             </div>
+                            
+                            <AnimatePresence>
+                              {expandedPot === 'gold' && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                                    This is your main pocket where all the gold coins you earn are kept. You can use these coins to buy rewards, save them in your Savings Pot, or spend them on your pets!
+                                  </p>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
 
                           {/* === SAVINGS POT SECTION === */}
 
                           {/* Savings Pot Unlocked Card */}
                           {isSavingsUnlocked && activeChild.savings_unlock_seen && (
-                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
-                        
-                              {/* Header */}
-                              <div className="flex items-center justify-between mb-3 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 flex items-center justify-center">
-                                    <PiggyBank className="w-5 h-5 text-emerald-600" />
-                                  </div>
-                                  <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>SAVINGS POT</span>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Savings</h4>
-                                      <button 
-                                        onClick={() => setShowReplayVideo(true)}
-                                        className="text-[9px] bg-emerald-105 text-emerald-700 hover:bg-emerald-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-                                      >
-                                        <Play className="w-2.5 h-2.5 fill-emerald-700" /> Play Video
-                                      </button>
-                                    </div>
-                                  </div>
+                            <div 
+                              onClick={() => setExpandedPot(expandedPot === 'savings' ? null : 'savings')}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-slate-200 hover:border-emerald-300 hover:shadow-lg'}`}
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                                  <PiggyBank className="w-6 h-6" />
                                 </div>
-                                <div className="flex items-center justify-center mr-1">
-                                  <CoinBadge points={activeChild.savings_pot || 0} size="md" />
+                                <CoinBadge points={activeChild.savings_pot || 0} size="sm" />
+                              </div>
+                              <div>
+                                <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
+                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Savings</h3>
+                                <div className="flex gap-2 mt-3 flex-wrap">
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
+                                    className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-200 transition-colors"
+                                  >
+                                    <Play className="w-3 h-3" fill="currentColor" /> Video
+                                  </button>
                                 </div>
                               </div>
-                        
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
-                              </p>
+
+                              <AnimatePresence>
+                                {expandedPot === 'savings' && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
+                                      Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
+                                    </p>
 
                               {activeChild.savings_goal_name && (
                                 <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
@@ -1971,26 +2165,23 @@ export default function ChildDashboard({
                                 </div>
                               )}
 
-                              {/* Action Buttons */}
-                              <div className="flex gap-2 relative">
-                                <Button
-                                  variant="warning"
-                                  className="flex-1"
-                                  onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
-                                  disabled={activeChild.points <= 0}
-                                  leftIcon={<FaCoins className="w-4 h-4" />}
-                                >
-                                  Deposit
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  className="flex-1"
-                                  onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
-                                  disabled={(activeChild.savings_pot || 0) <= 0}
-                                >
-                                  Withdraw All
-                                </Button>
-                              </div>
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 relative mt-auto">
+                                      <button
+                                        onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
+                                        disabled={activeChild.points <= 0}
+                                        className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2.5 rounded-xl font-bold text-xs border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <FaCoins /> Deposit
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
+                                        disabled={(activeChild.savings_pot || 0) <= 0}
+                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Withdraw All
+                                      </button>
+                                    </div>
 
                               {/* Deposit Modal */}
                               <AnimatePresence>
@@ -2023,10 +2214,10 @@ export default function ChildDashboard({
                                         <Plus className="w-4 h-4" />
                                       </button>
                                     </div>
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="primary"
-                                        className="flex-1"
+                                        className="w-full"
                                         onClick={() => {
                                           if (depositAmount > 0 && depositAmount <= activeChild.points) {
                                             onSavingsDeposit(activeChild.id, depositAmount);
@@ -2040,6 +2231,7 @@ export default function ChildDashboard({
                                       </Button>
                                       <Button
                                         variant="ghost"
+                                        className="w-full"
                                         onClick={() => { setShowDepositModal(false); playSound.click(); }}
                                       >
                                         Cancel
@@ -2059,10 +2251,10 @@ export default function ChildDashboard({
                                     className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2 relative z-20"
                                   >
                                     <p className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</p>
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="danger"
-                                        className="flex-1"
+                                        className="w-full"
                                         onClick={() => {
                                           onSavingsWithdraw(activeChild.id);
                                           setShowWithdrawConfirm(false);
@@ -2073,6 +2265,7 @@ export default function ChildDashboard({
                                       </Button>
                                       <Button
                                         variant="ghost"
+                                        className="w-full"
                                         onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}
                                       >
                                         Cancel
@@ -2081,12 +2274,15 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
                           {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
-                            <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
+                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaPiggyBank className="inline-block mr-2 text-pink-400" /> Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</Typography>
@@ -2109,32 +2305,44 @@ export default function ChildDashboard({
 
                           {/* Food Pot Unlocked Card */}
                           {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
-                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
-                        
-                              {/* Header */}
-                              <div className="flex items-center justify-between mb-3 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 border border-orange-200 flex items-center justify-center">
-                                    <Utensils className="w-5 h-5 text-orange-600" />
-                                  </div>
-                                  <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>FOOD POT</span>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Food Pot</h4>
-                                      <button 
-                                        onClick={() => setShowFoodReplayVideo(true)}
-                                        className="text-[9px] bg-orange-105 text-orange-700 hover:bg-orange-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-                                      >
-                                        <Play className="w-2.5 h-2.5 fill-orange-700" /> Play Video
-                                      </button>
-                                    </div>
-                                  </div>
+                            <div 
+                              onClick={() => setExpandedPot(expandedPot === 'food' ? null : 'food')}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-slate-200 hover:border-orange-300 hover:shadow-lg'}`}
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                                  <Utensils className="w-6 h-6" />
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl">
                                   <FaBone className="w-4 h-4 text-orange-500" />
                                   <Typography variant="number">{activeChild.pet_food || 0}</Typography>
                                 </div>
                               </div>
+                              <div>
+                                <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
+                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Food</h3>
+                                <div className="flex gap-2 mt-3 flex-wrap">
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
+                                    className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-orange-200 transition-colors"
+                                  >
+                                    <Play className="w-3 h-3" fill="currentColor" /> Video
+                                  </button>
+                                </div>
+                              </div>
+
+                              <AnimatePresence>
+                                {expandedPot === 'food' && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
 
                               {/* Weekly Contribution Progress */}
                               <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200">
@@ -2163,34 +2371,33 @@ export default function ChildDashboard({
                                 Add gold coins to your Food Pot to fund your pet's food. Once in the pot, use them to buy food pieces!
                               </p>
 
-                              {/* Action Buttons */}
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="warning"
-                                  className="flex-1"
-                                  onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
-                                  disabled={(activeChild.points || 0) < 1}
-                                  leftIcon={<FaBone className="w-4 h-4" />}
-                                >
-                                  Buy Food (1g)
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  className="flex-1"
-                                  onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
-                                  disabled={(activeChild.pet_food || 0) < 1}
-                                  leftIcon={<FaBone className="w-4 h-4" />}
-                                >
-                                  Sell Food (+1g)
-                                </Button>
-                              </div>
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 mt-auto relative">
+                                      <button
+                                        onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
+                                        disabled={(activeChild.points || 0) < 1}
+                                        className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2.5 rounded-xl font-bold text-xs border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <FaBone /> Buy (1g)
+                                      </button>
+                                      <button
+                                        onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
+                                        disabled={(activeChild.pet_food || 0) < 1}
+                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        Sell (+1g)
+                                      </button>
+                                    </div>
 
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )}
 
                           {/* Food Pot Locked Preview */}
                           {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
-                            <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
+                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaBowlFood className="inline-block mr-2 text-orange-400" /> Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</Typography>
@@ -2215,28 +2422,40 @@ export default function ChildDashboard({
 
                           {/* Gifting Pot Unlocked Card */}
                           {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
-                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} relative overflow-hidden shadow-lg`}>
-                        
-                              {/* Header */}
-                              <div className="flex items-center justify-between mb-3 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 border border-rose-200 flex items-center justify-center">
-                                    <Gift className="w-5 h-5 text-rose-600" />
-                                  </div>
-                                  <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>GIFTING POT</span>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <h4 className={`font-black text-sm ${styles.titleColor} leading-none`}>Gifting Pot</h4>
-                                      <button 
-                                        onClick={() => setShowGiftingReplayVideo(true)}
-                                        className="text-[9px] bg-rose-100 text-rose-700 hover:bg-rose-200 px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-                                      >
-                                        <Play className="w-2.5 h-2.5 fill-rose-700" /> Play Video
-                                      </button>
-                                    </div>
-                                  </div>
+                            <div 
+                              onClick={() => setExpandedPot(expandedPot === 'gifting' ? null : 'gifting')}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-slate-200 hover:border-purple-300 hover:shadow-lg'}`}
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+                                  <Gift className="w-6 h-6" />
                                 </div>
                               </div>
+                              <div>
+                                <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
+                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Gifting</h3>
+                                <div className="flex gap-2 mt-3 flex-wrap">
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
+                                    className="flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-rose-200 transition-colors"
+                                  >
+                                    <Play className="w-3 h-3" fill="currentColor" /> Video
+                                  </button>
+                                </div>
+                              </div>
+
+                              <AnimatePresence>
+                                {expandedPot === 'gifting' && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
 
                               <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                                 Donate to charity or gift to a sibling directly from your Main Gold Pot. It feels good to give!
@@ -2259,27 +2478,23 @@ export default function ChildDashboard({
                                 return null;
                               })()}
 
-                              {/* Action Buttons */}
-                              <div className="flex flex-wrap gap-2">
-                                <Button
-                                  variant="primary"
-                                  className="flex-1"
-                                  onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
-                                  disabled={activeChild.points <= 0}
-                                  leftIcon={<FaGlobe className="w-4 h-4" />}
-                                >
-                                  Donate
-                                </Button>
-                                <Button
-                                  variant="primary"
-                                  className="flex-1"
-                                  onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
-                                  disabled={activeChild.points <= 0 || children.length <= 1}
-                                  leftIcon={<FaGift className="w-4 h-4" />}
-                                >
-                                  Gift Sibling
-                                </Button>
-                              </div>
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col gap-2 mt-auto relative">
+                                      <button
+                                        onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
+                                        disabled={activeChild.points <= 0}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-2.5 rounded-xl font-bold text-xs border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <FaGlobe /> Charity
+                                      </button>
+                                      <button
+                                        onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
+                                        disabled={activeChild.points <= 0 || children.length <= 1}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-pink-50 text-pink-700 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-100 transition-colors border border-pink-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <FaGift /> Sibling
+                                      </button>
+                                    </div>
 
                               {/* Charity Modal */}
                               <AnimatePresence>
@@ -2319,10 +2534,10 @@ export default function ChildDashboard({
                                         <Plus className="w-4 h-4" />
                                       </button>
                                     </div>
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="primary"
-                                        className="flex-1"
+                                        className="w-full"
                                         onClick={() => {
                                           if (charityAmount > 0 && charityAmount <= (activeChild.points || 0) && selectedCharityId) {
                                             onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
@@ -2336,6 +2551,7 @@ export default function ChildDashboard({
                                       </Button>
                                       <Button
                                         variant="ghost"
+                                        className="w-full"
                                         onClick={() => { setShowCharityModal(false); playSound.click(); }}
                                       >
                                         Cancel
@@ -2383,10 +2599,10 @@ export default function ChildDashboard({
                                         <Plus className="w-4 h-4" />
                                       </button>
                                     </div>
-                                    <div className="flex gap-2 mt-2">
+                                    <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="primary"
-                                        className="flex-1"
+                                        className="w-full"
                                         onClick={() => {
                                           if (siblingAmount > 0 && siblingAmount <= (activeChild.points || 0) && selectedSiblingId) {
                                             onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
@@ -2400,6 +2616,7 @@ export default function ChildDashboard({
                                       </Button>
                                       <Button
                                         variant="ghost"
+                                        className="w-full"
                                         onClick={() => { setShowSiblingModal(false); playSound.click(); }}
                                       >
                                         Cancel
@@ -2408,12 +2625,15 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )}
 
                           {/* Gifting Pot Locked Preview */}
                           {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
-                            <div className={`p-4 rounded-2xl sm:rounded-3xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center text-center gap-2 opacity-70`}>
+                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
@@ -2436,53 +2656,62 @@ export default function ChildDashboard({
 
                           {/* === GOLD POT MAINTENANCE SECTION === */}
                           {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
-                            <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl ${activeChild.gold_pot_broken ? 'bg-red-50 border-red-200' : styles.cardBg} ${styles.borderStyle} border-2 relative overflow-hidden shadow-sm mt-4`}>
-                              {/* Header */}
-                              <div className="flex items-center justify-between mb-3 mt-1">
-                                <div className="flex items-center gap-2">
-                                  <div className={`h-9 w-9 rounded-xl ${activeChild.gold_pot_broken ? 'bg-red-100 border-red-200' : 'bg-gradient-to-br from-yellow-100 to-amber-100 border-amber-200'} border flex items-center justify-center`}>
-                                    <FaWrench className={`w-5 h-5 ${activeChild.gold_pot_broken ? 'text-red-600' : 'text-amber-600'}`} />
-                                  </div>
-                                  <div>
-                                    <span className={`text-[8px] font-mono tracking-widest uppercase ${activeChild.gold_pot_broken ? 'text-red-500' : styles.textMuted} font-extrabold`}>GOLD POT</span>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <h4 className={`font-black text-sm ${activeChild.gold_pot_broken ? 'text-red-900' : styles.titleColor} leading-none`}>Maintenance</h4>
-                                      <button 
-                                        onClick={() => setShowGoldPotMaintenanceVideo(true)}
-                                        className={`text-[9px] ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'} px-2 py-0.5 rounded-full font-bold transition-colors flex items-center gap-1 uppercase tracking-wider cursor-pointer`}
-                                      >
-                                        <Play className={`w-2.5 h-2.5 ${activeChild.gold_pot_broken ? 'fill-red-700' : 'fill-amber-700'}`} /> Play Video
-                                      </button>
-                                    </div>
-                                  </div>
+                            <div 
+                              onClick={() => setExpandedPot(expandedPot === 'maintenance' ? null : 'maintenance')}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                  <FaWrench className="w-6 h-6" />
+                                </div>
+                                <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${activeChild.gold_pot_broken ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                                  {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
                                 </div>
                               </div>
-                              
-                              <p className={`text-[10px] ${activeChild.gold_pot_broken ? 'text-red-800' : styles.textMuted} mb-3 leading-relaxed`}>
-                                Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
-                              </p>
+                              <div>
+                                <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
+                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Maintenance</h3>
+                                <div className="flex gap-2 mt-3 flex-wrap">
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
+                                  </button>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
+                                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+                                  >
+                                    <Play className="w-3 h-3" fill="currentColor" /> Video
+                                  </button>
+                                </div>
+                              </div>
 
-                              {/* Status Info */}
-                              <div className={`grid grid-cols-3 gap-2 bg-white/60 rounded-lg p-2 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200' : 'border-stone-200'}`}>
-                                <div className="text-center">
-                                  <div className={`text-[8px] font-bold ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-500'} uppercase tracking-wider`}>Status</div>
-                                  <div className={`text-xs font-black ${activeChild.gold_pot_broken ? 'text-red-600' : 'text-emerald-600'}`}>
-                                    {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
-                                  </div>
-                                </div>
-                                <div className="text-center border-l border-stone-200/60">
-                                  <div className={`text-[8px] font-bold ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-500'} uppercase tracking-wider`}>Last Fixed</div>
-                                  <div className={`text-xs font-medium ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
-                                    {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
-                                  </div>
-                                </div>
-                                <div className="text-center border-l border-stone-200/60">
-                                  <div className={`text-[8px] font-bold ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-500'} uppercase tracking-wider`}>Total Leaked</div>
-                                  <div className={`text-xs font-medium ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
-                                    {activeChild.gold_pot_total_leaked || 0} Coins
-                                  </div>
-                                </div>
-                              </div>
+                              <AnimatePresence>
+                                {expandedPot === 'maintenance' && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="mt-4 pt-4 border-t-2 border-slate-100">
+                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-slate-500'}`}>
+                                        Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
+                                      </p>
+
+                                      {/* Status Info */}
+                                      <div className={`grid grid-cols-2 gap-2 bg-slate-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
+                                        <div className="text-center">
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                            {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
+                                          </div>
+                                        </div>
+                                        <div className="text-center border-l border-slate-200">
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                            {activeChild.gold_pot_total_leaked || 0} Coins
+                                          </div>
+                                        </div>
+                                      </div>
 
                               {activeChild.gold_pot_broken && (
                                 <>
@@ -2512,9 +2741,14 @@ export default function ChildDashboard({
                                   </Button>
                                 </>
                               )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )}
 
+                        </div>
                         </motion.div>
                       ) : null}
                     </AnimatePresence>
@@ -2561,6 +2795,19 @@ export default function ChildDashboard({
             })}
           </div>
         )}
+
+      {/* Badges Modal */}
+      <AnimatePresence>
+        {showBadgesModal && activeChild && (
+          <BadgesModal
+            child={activeChild}
+            rewards={rewards}
+            onClose={() => setShowBadgesModal(false)}
+            onClaimFreeReward={handleClaimFreeReward}
+          />
+        )}
+      </AnimatePresence>
+
       </div>
     );
 }
