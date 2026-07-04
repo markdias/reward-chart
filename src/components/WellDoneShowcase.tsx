@@ -1,257 +1,207 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { CheckCircle2, Star, Sparkles, Medal, Zap, Trophy, Check } from 'lucide-react';
 import Confetti from './Confetti';
 
-// --- DATA ---
-const BACKGROUNDS = [
-  { id: 'sunny', name: 'Sunny Amber', style: { background: 'radial-gradient(circle at center, rgba(254,240,138,0.95) 0%, rgba(253,186,116,1) 100%)' } },
-  { id: 'space', name: 'Dark Space', style: { background: 'radial-gradient(ellipse at 50% 45%, #1e1060 0%, #0f0828 60%, #060412 100%)' } },
-  { id: 'vibrant', name: 'Vibrant Party', style: { background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' } },
-  { id: 'minimal', name: 'Soft Emerald', style: { background: '#ecfdf5' } },
-];
+const KEYFRAMES = `
+@keyframes kid-bounce {
+  0% { opacity: 0; transform: scale(0.5) translateY(40px) rotate(-10deg); }
+  60% { opacity: 1; transform: scale(1.1) translateY(-15px) rotate(5deg); }
+  80% { transform: scale(0.95) translateY(5px) rotate(-2deg); }
+  100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+}
+@keyframes kid-float {
+  0%, 100% { transform: translateY(0px) rotate(-3deg); }
+  50% { transform: translateY(-15px) rotate(4deg); }
+}
+`;
 
-const ICONS = [
-  { id: 'trophy_badge', name: 'Trophy Badge' },
-  { id: 'medal', name: 'Gold Medal' },
-  { id: 'star', name: 'Giant Star' },
-  { id: 'emoji', name: 'Classic Emoji 🏆' },
-];
-
-const TYPOGRAPHY = [
-  { id: 'bubbly', name: 'Bubbly Outline (White/Orange)' },
-  { id: 'gold', name: 'Gold 3D (Classic)' },
-  { id: 'flat', name: 'Modern Flat' },
-  { id: 'neon', name: 'Neon Glow' },
-];
-
-const TASK_BADGES = [
-  { id: 'green_tick', name: 'Green Tick (Original)' },
-  { id: 'check_circle', name: 'Minimal Check' },
-  { id: 'sparkle', name: 'Playful Sparkles' },
-  { id: 'solid_pill', name: 'Solid Orange Pill' },
-  { id: 'zap', name: 'Zap Energy' },
+const THEMES = [
+  {
+    id: 'rainbow',
+    name: 'Rainbow Magic 🦄',
+    desc: 'Soft pastels and magical unicorns',
+    bg: 'radial-gradient(circle at 50% 50%, #fdf4ff 0%, #fbcfe8 40%, #e0e7ff 100%)',
+    icon: '🦄',
+    title: 'MAGICAL!',
+    titleColor: '#d946ef', // fuchsia
+    titleStroke: '4px #ffffff',
+    titleShadow: '0 8px 0 #a21caf',
+    badgeBg: 'bg-white',
+    badgeBorder: 'border-[5px] border-fuchsia-300',
+    badgeRadius: 'rounded-full',
+    badgeTextColor: 'text-fuchsia-600',
+    badgeIcon: '✨',
+  },
+  {
+    id: 'dino',
+    name: 'Dino Safari 🦖',
+    desc: 'Jungle greens and roaring dinos',
+    bg: 'radial-gradient(circle at 50% 50%, #dcfce7 0%, #bbf7d0 50%, #86efac 100%)',
+    icon: '🦖',
+    title: 'ROAR-SOME!',
+    titleColor: '#f97316', // orange
+    titleStroke: '4px #ffffff',
+    titleShadow: '0 8px 0 #c2410c',
+    badgeBg: 'bg-orange-50',
+    badgeBorder: 'border-[5px] border-orange-400',
+    badgeRadius: 'rounded-3xl', // slightly blocky
+    badgeTextColor: 'text-orange-800',
+    badgeIcon: '🐾',
+  },
+  {
+    id: 'space',
+    name: 'Space Explorer 🚀',
+    desc: 'Cosmic colors and rockets',
+    bg: 'radial-gradient(circle at 50% 50%, #2e1065 0%, #172554 60%, #020617 100%)',
+    icon: '🚀',
+    title: 'STELLAR!',
+    titleColor: '#22d3ee', // cyan
+    titleStroke: '3px #ffffff',
+    titleShadow: '0 0 20px #22d3ee, 0 8px 0 #0891b2',
+    badgeBg: 'bg-[#0f172a]',
+    badgeBorder: 'border-[3px] border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]',
+    badgeRadius: 'rounded-full',
+    badgeTextColor: 'text-cyan-300',
+    badgeIcon: '⭐',
+  },
+  {
+    id: 'party',
+    name: 'Candy Party 🍭',
+    desc: 'Bright stripes and celebrations',
+    bg: 'repeating-linear-gradient(45deg, #fef08a 0px, #fef08a 40px, #fecdd3 40px, #fecdd3 80px)',
+    icon: '🎉',
+    title: 'YAYYY!',
+    titleColor: '#ffffff',
+    titleStroke: '4px #e11d48', // rose
+    titleShadow: '0 8px 0 #be123c',
+    badgeBg: 'bg-white',
+    badgeBorder: 'border-[5px] border-rose-400',
+    badgeRadius: 'rounded-2xl',
+    badgeTextColor: 'text-rose-600',
+    badgeIcon: '🎈',
+  },
 ];
 
 export default function WellDoneShowcase() {
-  const [bg, setBg] = useState(BACKGROUNDS[0]);
-  const [icon, setIcon] = useState(ICONS[0]);
-  const [typo, setTypo] = useState(TYPOGRAPHY[0]);
-  const [badge, setBadge] = useState(TASK_BADGES[1]); // Default to Check Circle instead of Green Tick
+  const [activeTheme, setActiveTheme] = useState(THEMES[0]);
   const [showConfetti, setShowConfetti] = useState(false);
-
   const taskName = "Cleaned my room";
 
-  const renderIcon = () => {
-    switch (icon.id) {
-      case 'trophy_badge':
-        return (
-          <div className="rounded-full bg-amber-50 border-[6px] border-amber-200 flex items-center justify-center shadow-xl shadow-amber-500/20 w-32 h-32 mx-auto">
-            <Trophy className="w-16 h-16 text-amber-500" fill="currentColor" />
-          </div>
-        );
-      case 'medal':
-        return (
-          <div className="rounded-full bg-rose-50 border-[6px] border-rose-200 flex items-center justify-center shadow-xl shadow-rose-500/20 w-32 h-32 mx-auto">
-            <Medal className="w-16 h-16 text-rose-500" fill="currentColor" />
-          </div>
-        );
-      case 'star':
-        return (
-          <div className="rounded-full bg-yellow-300 border-[6px] border-yellow-400 flex items-center justify-center shadow-xl shadow-yellow-500/30 w-32 h-32 mx-auto">
-            <Star className="w-20 h-20 text-white" fill="currentColor" />
-          </div>
-        );
-      case 'emoji':
-        return (
-          <div className="text-[6rem] leading-none filter drop-shadow-[0_8px_20px_rgba(255,215,0,0.6)]">
-            🏆
-          </div>
-        );
-      default:
-        return null;
-    }
+  const triggerAnimation = (theme: any) => {
+    setActiveTheme(theme);
+    setShowConfetti(false);
+    setTimeout(() => setShowConfetti(true), 50);
   };
-
-  const renderTypography = () => {
-    let styleObj: React.CSSProperties = {
-      display: 'block',
-      fontFamily: '"Nunito", sans-serif',
-      fontWeight: 900,
-      fontSize: '4rem',
-      lineHeight: 0.95,
-      letterSpacing: '-0.02em',
-    };
-
-    switch (typo.id) {
-      case 'bubbly':
-        styleObj = {
-          ...styleObj,
-          color: '#FFFFFF',
-          WebkitTextStroke: '2px #EA580C',
-          textShadow: '0px 4px 0 #C2410C, 0px 8px 16px rgba(234,88,12,0.4)',
-        };
-        break;
-      case 'gold':
-        styleObj = {
-          ...styleObj,
-          color: '#FFD700',
-          WebkitTextStroke: '2px #92400e',
-          textShadow: '3px 3px 0 #b45309, 6px 6px 0 #92400e, 0 0 30px rgba(255,215,0,0.5)',
-        };
-        break;
-      case 'flat':
-        styleObj = {
-          ...styleObj,
-          color: bg.id === 'minimal' ? '#065F46' : '#FFFFFF',
-          textShadow: 'none',
-          WebkitTextStroke: '0px',
-        };
-        break;
-      case 'neon':
-        styleObj = {
-          ...styleObj,
-          color: '#FFFFFF',
-          textShadow: '0 0 10px #FFF, 0 0 20px #FFF, 0 0 40px #f0abfc, 0 0 80px #c026d3',
-          WebkitTextStroke: '0px',
-        };
-        break;
-    }
-
-    return (
-      <div className="mt-4">
-        <span style={styleObj}>WELL</span>
-        <span style={styleObj}>DONE!</span>
-      </div>
-    );
-  };
-
-  const renderTaskBadge = () => {
-    switch (badge.id) {
-      case 'green_tick':
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-            <span className="text-base">✅</span>
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
-          </div>
-        );
-      case 'check_circle':
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
-          </div>
-        );
-      case 'sparkle':
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
-          </div>
-        );
-      case 'solid_pill':
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 border border-orange-300 shadow-lg">
-            <Check className="w-5 h-5 text-white stroke-[3]" />
-            <span className="text-white font-bold font-sans text-sm tracking-wide">{taskName}</span>
-          </div>
-        );
-      case 'zap':
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-            <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const renderSection = (title: string, options: any[], current: any, setter: any) => (
-    <div className="mb-8">
-      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">{title}</h3>
-      <div className="flex flex-wrap gap-3">
-        {options.map(opt => (
-          <button
-            key={opt.id}
-            onClick={() => setter(opt)}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-              current.id === opt.id
-                ? 'bg-indigo-500 text-white shadow-md'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-            }`}
-          >
-            {opt.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+      <style>{KEYFRAMES}</style>
       
       {/* Configuration Panel */}
-      <div className="w-full md:w-1/2 lg:w-2/5 p-8 border-r border-slate-200 bg-white overflow-y-auto max-h-screen">
+      <div className="w-full md:w-2/5 p-8 border-r border-slate-200 bg-white overflow-y-auto max-h-screen">
         <Typography variant="h2" className="mb-2 text-slate-800">
-          Overlay Builder
+          Kid-Friendly Themes
         </Typography>
-        <p className="text-slate-500 mb-8">Mix and match styles to build the perfect "Well Done" screen.</p>
+        <p className="text-slate-500 mb-8 text-sm">
+          Select a cohesive theme designed specifically to appeal to children.
+        </p>
         
-        {renderSection('Background Style', BACKGROUNDS, bg, setBg)}
-        {renderSection('Main Icon', ICONS, icon, setIcon)}
-        {renderSection('Typography', TYPOGRAPHY, typo, setTypo)}
-        {renderSection('Task Badge', TASK_BADGES, badge, setBadge)}
+        <div className="flex flex-col gap-4">
+          {THEMES.map(theme => (
+            <button
+              key={theme.id}
+              onClick={() => triggerAnimation(theme)}
+              className={`p-5 rounded-2xl text-left transition-all border-4 flex flex-col gap-1 ${
+                activeTheme.id === theme.id
+                  ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                  : 'border-transparent bg-slate-100 hover:bg-slate-200'
+              }`}
+            >
+              <span className="font-black text-lg text-slate-800">{theme.name}</span>
+              <span className="text-slate-500 text-sm font-medium">{theme.desc}</span>
+            </button>
+          ))}
+        </div>
 
         <div className="mt-12 pt-8 border-t border-slate-200">
           <button 
-            onClick={() => {
-              setShowConfetti(false);
-              setTimeout(() => setShowConfetti(true), 50);
-            }}
-            className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform active:scale-95"
+            onClick={() => triggerAnimation(activeTheme)}
+            className="w-full py-4 bg-slate-800 text-white font-black uppercase tracking-wider rounded-2xl shadow-lg hover:scale-[1.02] transition-transform active:scale-95"
           >
-            Test Animation (Confetti)
+            Replay Animation
           </button>
         </div>
       </div>
 
       {/* Preview Panel */}
-      <div className="w-full md:w-1/2 lg:w-3/5 p-8 bg-slate-100 flex items-center justify-center relative overflow-hidden">
+      <div className="w-full md:w-3/5 p-8 bg-slate-100 flex items-center justify-center relative overflow-hidden">
         
-        {/* Full Screen Overlay Preview */}
+        {/* Full Screen Overlay Preview container */}
         <div 
-          className="relative w-full max-w-[400px] h-[750px] rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col items-center justify-center border-[8px] border-white transition-all duration-500"
-          style={bg.style}
+          className="relative w-full max-w-[420px] h-[800px] rounded-[3rem] overflow-hidden shadow-2xl flex flex-col items-center justify-center border-[12px] border-white transition-all duration-700"
+          style={{ background: activeTheme.bg }}
         >
-          {/* Optional Sunburst for Space/Sunny */}
-          {(bg.id === 'sunny' || bg.id === 'space') && (
-            <div
-              className="absolute inset-0 opacity-40 pointer-events-none"
-              style={{
-                background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.15) 10deg, transparent 20deg, transparent 30deg, rgba(255,255,255,0.1) 40deg, transparent 50deg, transparent 60deg, rgba(255,255,255,0.15) 70deg, transparent 80deg, transparent 90deg, rgba(255,255,255,0.1) 100deg, transparent 110deg, transparent 120deg, rgba(255,255,255,0.15) 130deg, transparent 140deg, transparent 150deg, rgba(255,255,255,0.1) 160deg, transparent 170deg, transparent 180deg, rgba(255,255,255,0.15) 190deg, transparent 200deg, transparent 210deg, rgba(255,255,255,0.1) 220deg, transparent 230deg, transparent 240deg, rgba(255,255,255,0.15) 250deg, transparent 260deg, transparent 270deg, rgba(255,255,255,0.1) 280deg, transparent 290deg, transparent 300deg, rgba(255,255,255,0.15) 310deg, transparent 320deg, transparent 330deg, rgba(255,255,255,0.1) 340deg, transparent 350deg)',
-              }}
-            />
+          {/* Subtle star overlay for space */}
+          {activeTheme.id === 'space' && (
+             <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           )}
 
-          <div className="relative flex flex-col items-center gap-4 text-center z-10 w-full px-6">
-            {renderIcon()}
-            {renderTypography()}
-            <div className="mt-6 w-full flex justify-center">
-              {renderTaskBadge()}
+          <div className="relative flex flex-col items-center gap-6 text-center z-10 w-full px-6">
+            
+            {/* Massive Playful Icon */}
+            <div 
+              key={`icon-${activeTheme.id}-${showConfetti}`}
+              className="text-[8rem] leading-none filter drop-shadow-2xl"
+              style={{ animation: 'kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards, kid-float 3s ease-in-out infinite 0.8s' }}
+            >
+              {activeTheme.icon}
             </div>
+            
+            {/* Bouncy Title */}
+            <div 
+              key={`title-${activeTheme.id}-${showConfetti}`}
+              className="flex flex-col items-center mt-2"
+              style={{ animation: 'kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.15s forwards', opacity: 0 }}
+            >
+              {activeTheme.title.split(' ').map((word, i) => (
+                <span
+                  key={i}
+                  style={{
+                    display: 'block',
+                    fontFamily: '"Nunito", sans-serif',
+                    fontWeight: 900,
+                    fontSize: '4.5rem',
+                    lineHeight: 0.9,
+                    letterSpacing: '-0.03em',
+                    color: activeTheme.titleColor,
+                    WebkitTextStroke: activeTheme.titleStroke,
+                    textShadow: activeTheme.titleShadow,
+                    transform: i % 2 !== 0 ? 'rotate(-2deg)' : 'rotate(2deg)',
+                  }}
+                >
+                  {word}
+                </span>
+              ))}
+            </div>
+
+            {/* Task Badge */}
+            <div 
+              key={`badge-${activeTheme.id}-${showConfetti}`}
+              className={`mt-8 flex items-center gap-3 px-6 py-3 ${activeTheme.badgeRadius} ${activeTheme.badgeBg} ${activeTheme.badgeBorder} shadow-xl`}
+              style={{ animation: 'kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s forwards', opacity: 0 }}
+            >
+              <span className="text-xl">{activeTheme.badgeIcon}</span>
+              <span className={`font-black font-sans text-base tracking-wide ${activeTheme.badgeTextColor}`}>
+                {taskName}
+              </span>
+            </div>
+
           </div>
           
           <Confetti active={showConfetti} />
         </div>
         
-        {/* Helper Label */}
-        <div className="absolute top-8 right-8 text-slate-400 font-bold tracking-widest uppercase text-sm">
-          Live Preview Mode
-        </div>
       </div>
-
     </div>
   );
 }
