@@ -26,6 +26,7 @@ import TaskCardShowcase from './components/TaskCardShowcase';
 import RewardCardShowcase from './components/RewardCardShowcase';
 import PotsShowcase from './components/PotsShowcase';
 import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
+import { IosTabBarShowcase } from './components/IosTabBarShowcase';
 export default function App() {
   const activeTheme = 'sunny_toybox';
   
@@ -51,6 +52,10 @@ export default function App() {
 
   if (new URLSearchParams(window.location.search).get('showcase') === 'player-selection') {
     return <PlayerSelectionShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'ios-tab-bar') {
+    return <IosTabBarShowcase />;
   }
 
   // Auth state

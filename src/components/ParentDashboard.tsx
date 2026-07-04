@@ -152,7 +152,12 @@ export default function ParentDashboard({
   const [rewardLimit, setRewardLimit] = useState<'unlimited' | 'daily' | 'twice_daily' | 'one_time'>('unlimited');
   const [rewardBadgeEligible, setRewardBadgeEligible] = useState(false);
 
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [nudgedChildIds, setNudgedChildIds] = useState<string[]>([]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const childrenToNudge = children.filter(c => {
+    const activeToday = c.last_active_date ? c.last_active_date.split('T')[0] === todayStr : false;
+    return !activeToday;
+  });
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
   const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
@@ -404,143 +409,60 @@ export default function ParentDashboard({
 
       <header className="bg-white border-b border-gray-100 relative z-20 pt-[max(env(safe-area-inset-top),_1rem)]">
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
               onClick={() => setActiveTab('settings')}
-              className="bg-gray-50"
+              className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
             >
-              <Settings className="w-5 h-5" />
-            </Button>
-            <div className="flex flex-col">
-              <h1 className="text-sm sm:text-lg font-black text-slate-900 leading-tight">
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+            <div className="flex flex-col justify-center">
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 leading-none tracking-tight font-display">
                 Parent Center
               </h1>
-              <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium">
-                {parentEmail}
-              </p>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-slate-500 font-semibold mt-1.5">
+                {parentProfile?.name && <span>{parentProfile.name}</span>}
+                {parentProfile?.name && parentProfile?.family_name && <span className="opacity-50">•</span>}
+                {parentProfile?.family_name && <span>{parentProfile.family_name}</span>}
+                {(parentProfile?.name || parentProfile?.family_name) && <span className="opacity-50">•</span>}
+                <span className="truncate">{parentEmail}</span>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
+            <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    playSound.click();
+                    onLogout();
+                  }}
+                  className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
+                  id="global-logout-btn"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  <span className="hidden sm:inline">SIGN OUT</span>
+                </button>
+              )}
+              <button
                 onClick={() => {
                   playSound.click();
-                  setShowNotifications(!showNotifications);
+                  onExitParentMode();
                 }}
-                id="notifications-bell-btn"
-                className="bg-gray-50 relative"
+                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                id="exit-to-child-view-btn"
+                title="Switch to Kid View"
               >
-                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                {totalPending > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white z-10">
-                    {totalPending}
-                  </span>
-                )}
-              </Button>
-
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border dashboard-card border-gray-100 shadow-xl overflow-hidden p-4 space-y-3 z-50 text-slate-900"
-                    id="notifications-box"
-                  >
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                      <Typography variant="label">INCOMING TELEMETRY</Typography>
-                      <span className="text-[8px] text-emerald-500 font-mono">LIVE UPDATE</span>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {totalPending === 0 ? (
-                        <p className="text-xs text-gray-400 py-4 text-center">No pending approvals. Channels clear!</p>
-                      ) : (
-                        <>
-                          {pendingApprovals.map(appr => {
-                            const child = children.find(c => c.id === appr.child_id);
-                            const task = tasks.find(t => t.id === appr.task_id);
-                            return (
-                              <div key={appr.id} className="p-2.5 bg-gray-50 rounded-xl text-xs flex gap-2 border border-gray-100">
-                                <span className="text-lg"><FaBullhorn className="text-blue-500" /></span>
-                                <div>
-                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
-                                  <p className="text-gray-500 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {pendingRedemptions.map(req => {
-                            const child = children.find(c => c.id === req.child_id);
-                            return (
-                              <div key={req.id} className="p-2.5 bg-rose-50 rounded-xl text-xs flex gap-2 border border-rose-100">
-                                <span className="text-lg"><FaGift className="text-rose-500" /></span>
-                                <div>
-                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
-                                  <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {pendingGiftingRequests.map(req => {
-                            const child = children.find(c => c.id === req.child_id);
-                            const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
-                            const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
-                            return (
-                              <div key={req.id} className="p-2.5 bg-blue-50 rounded-xl text-xs flex gap-2 border border-blue-100">
-                                <span className="text-lg">{typeIcon}</span>
-                                <div>
-                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
-                                  <p className="text-blue-600 font-semibold text-[11px] mt-0.5">{title}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             </div>
-
-            {onLogout && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  playSound.click();
-                  onLogout();
-                }}
-                className="hidden sm:flex"
-                id="global-logout-btn"
-                leftIcon={<LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-              >
-                SIGN OUT
-              </Button>
-            )}
-
-            <Button
-              variant="dark"
-              size="sm"
-              onClick={() => {
-                playSound.click();
-                onExitParentMode();
-              }}
-              id="exit-to-child-view-btn"
-              leftIcon={<Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            >
-              <span className="hidden sm:inline">SWITCH TO KID VIEW</span>
-            </Button>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-6 sm:mt-10 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-2 sm:mt-4 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
         
         <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
@@ -616,21 +538,46 @@ export default function ParentDashboard({
               >
                 
                 {/* Smart Reminders */}
-                <div className="space-y-3">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-500" />
-                    Smart Reminders
-                  </h2>
-                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm">Sammy the Creator hasn't logged any activity today.</h3>
-                      <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
+                {childrenToNudge.length > 0 && (
+                  <div className="space-y-3">
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-indigo-500" />
+                      Smart Reminders
+                    </h2>
+                    <div className="space-y-3">
+                      {childrenToNudge.map(child => {
+                        const isNudged = child.has_pending_nudge || nudgedChildIds.includes(child.id);
+                        return (
+                          <div key={child.id} className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex items-center gap-3">
+                              <img src={child.avatar_url || '/placeholder.png'} alt={child.name} className="w-10 h-10 rounded-full" />
+                              <div>
+                                <h3 className="font-bold text-slate-900 text-sm">{child.name} hasn't logged any activity today.</h3>
+                                <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
+                              </div>
+                            </div>
+                            <Button 
+                              variant={isNudged ? "secondary" : "primary"} 
+                              size="sm" 
+                              className="shrink-0"
+                              disabled={isNudged}
+                              onClick={() => {
+                                setNudgedChildIds(prev => [...prev, child.id]);
+                                playSound.success();
+                                onEditChild(child.id, { 
+                                  has_pending_nudge: true, 
+                                  last_nudge_time: new Date().toISOString() 
+                                });
+                              }}
+                            >
+                              {isNudged ? 'Nudged!' : 'Send Nudge'}
+                            </Button>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <Button variant="primary" size="sm" className="shrink-0">
-                      Send Nudge
-                    </Button>
                   </div>
-                </div>
+                )}
 
                 {/* Needs Approval */}
                 <div className="space-y-3">
@@ -768,18 +715,14 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="children-view"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>CHILDREN REGISTER</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Initialize new operators and monitor active companion level caps.</p>
-                  </div>
+                <div className="flex justify-end items-center">
                   <Button
                     variant="dark"
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
                     id="add-child-btn-top"
                     leftIcon={<UserPlus className="w-4 h-4" />}
                   >
-                    REGISTER NEW CHILD
+                    ADD CHILD
                   </Button>
                 </div>
 
@@ -1124,26 +1067,26 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR TASKS */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0">
+                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
                     <button
                       onClick={() => setTaskSubTab('directory')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'directory'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
+                      BLUEPRINTS
                     </button>
                     <button
                       onClick={() => setTaskSubTab('active')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'active'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
+                      ASSIGNED
                     </button>
                   </div>
                   
@@ -1272,7 +1215,6 @@ export default function ParentDashboard({
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
                 <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE QUESTS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
@@ -1457,26 +1399,26 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR REWARDS */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0">
+                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
                     <button
                       onClick={() => setRewardSubTab('directory')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'directory'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
+                      BLUEPRINTS
                     </button>
                     <button
                       onClick={() => setRewardSubTab('active')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'active'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
+                      ASSIGNED
                     </button>
                   </div>
 
@@ -1605,7 +1547,6 @@ export default function ParentDashboard({
                 {/* ACTIVE REWARDS */}
                 {rewardSubTab === 'active' && (
                 <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE REWARDS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
@@ -1852,12 +1793,13 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex justify-around items-end px-2 py-2 pb-safe">
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
           {[
             { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
             { id: 'children', label: 'Children', icon: Users },
             { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-            { id: 'rewards', label: 'Rewards', icon: Trophy }
+            { id: 'rewards', label: 'Rewards', icon: Trophy },
+            { id: 'targets', label: 'Targets', icon: Target }
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -1865,28 +1807,20 @@ export default function ParentDashboard({
               <button
                 key={tab.id}
                 onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2 ${
-                  isSelected ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
+                className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-all duration-300 rounded-[1.25rem] ${
+                  isSelected ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={isSelected ? 2.5 : 2} />
-                <span className="text-[10px] sm:text-xs font-semibold">{tab.label}</span>
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />
+                <span className={`text-[9px] font-bold tracking-tight`}>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="absolute top-1 right-2 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10">
                     {tab.badge}
                   </span>
                 )}
               </button>
             );
           })}
-          
-          <button
-            onClick={() => { playSound.click(); onExitParentMode(); }}
-            className="relative flex-1 flex flex-col items-center justify-center gap-1 py-2 text-gray-400 hover:text-gray-600"
-          >
-            <Users className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
-            <span className="text-[10px] sm:text-xs font-semibold">Switch</span>
-          </button>
         </div>
       </div>
     </div>

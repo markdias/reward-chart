@@ -12,6 +12,7 @@ export interface ParentProfile {
   food_pot_unlock_level?: number;
   gifting_pot_unlock_level?: number;
   weekly_points_target?: number;
+  daily_points_target?: number;
   weekly_reward_points?: number;
   monthly_points_target?: number;
   monthly_reward_points?: number;
@@ -57,6 +58,8 @@ export interface Child {
   pet_unhappy?: boolean;
   last_fed_date?: string | null;
   last_hunger_check_date?: string | null;
+  has_pending_nudge?: boolean;
+  last_nudge_time?: string | null;
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
   last_gifting_date?: string | null;

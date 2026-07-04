@@ -506,7 +506,7 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+104px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+114px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
+    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+64px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+72px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
       
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
@@ -527,24 +527,51 @@ export default function ChildDashboard({
               <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
                 {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
               </h1>
-              
-              <div className="flex items-center justify-center bg-gradient-to-r from-amber-50 to-yellow-50/30 border border-amber-100/60 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl shadow-sm w-fit">
-                <CoinBadge points={activeChild?.points || 0} size="sm" />
+              <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+                <CoinBadge points={activeChild?.points || 0} />
+                <button 
+                  onClick={() => { playSound.click(); onEnterParentMode(); }}
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                  title="Parent Dashboard"
+                >
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
               </div>
             </div>
           </div>
-          
-          {/* Parent Lock Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => { playSound.click(); onEnterParentMode(); }}
-            title="Parent Dashboard"
-          >
-            <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
-          </Button>
         </header>
       )}
+
+      {/* Nudge Banner */}
+      <AnimatePresence>
+        {activeChild?.has_pending_nudge && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, y: -10 }}
+            className="mx-2 sm:mx-8 mt-2 sm:mt-4 p-4 rounded-3xl bg-indigo-50 border-[3px] border-indigo-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 z-30 relative"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm sm:text-base">You have a message!</h3>
+                <p className="text-xs sm:text-sm text-slate-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                playSound.click();
+                onEditChild(activeChild.id, { has_pending_nudge: false });
+              }}
+              className="px-6 py-3 rounded-full bg-indigo-500 text-white font-bold text-xs sm:text-sm tracking-widest uppercase hover:bg-indigo-600 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-indigo-500/20 whitespace-nowrap w-full sm:w-auto"
+            >
+              I'm on it!
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Well Done celebration overlay (anime.js powered) */}
       <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} />
@@ -1328,7 +1355,7 @@ export default function ChildDashboard({
                 </p>
               </div>
 
-              <div className="flex flex-col gap-6 max-w-4xl mx-auto pt-4 px-4 w-full text-left" id="kids-deck">
+              <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
                 {children.map((child) => {
                   const stage = getCharacterStage(child.character_id, child.level);
                   return (
@@ -1360,13 +1387,15 @@ export default function ChildDashboard({
                               <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
                             </div>
                             
-                            <div className="flex flex-col">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Name of Passenger</span>
-                              <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none mb-2 sm:mb-4">
-                                {child.name}
-                              </h3>
+                            <div className="flex flex-col justify-center py-1 sm:py-2">
+                              <div>
+                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
+                                <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
+                                  {child.name}
+                                </h3>
+                              </div>
                               
-                              <div className="flex gap-2 sm:gap-10">
+                              <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
                               <div className="flex flex-col">
                                 <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Flight</span>
                                 <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
@@ -2766,13 +2795,13 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2 py-3 pb-safe">
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
             {[
-              { id: 'home', label: 'HOME', icon: Home },
-              { id: 'tasks', label: 'TASKS', icon: CheckCircle },
-              { id: 'rewards', label: 'PRIZES', icon: Gift },
-              { id: 'companion', label: 'PET', icon: FaCat },
-              { id: 'pots', label: 'POTS', icon: FaJar }
+              { id: 'home', label: 'Home', icon: Home },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle },
+              { id: 'rewards', label: 'Prizes', icon: Gift },
+              { id: 'companion', label: 'Pet', icon: FaCat },
+              { id: 'pots', label: 'Pots', icon: FaJar }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeChildTab === tab.id;
@@ -2780,14 +2809,12 @@ export default function ChildDashboard({
                 <button
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative p-2 transition-all flex flex-col items-center justify-center duration-300 w-full max-w-[70px] ${
-                    isSelected
-                      ? 'text-slate-900 scale-110'
-                      : 'text-slate-400 hover:text-slate-600'
+                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-all duration-300 rounded-[1.25rem] ${
+                    isSelected ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {Icon && <Icon className="w-6 h-6 sm:w-7 sm:h-7 mb-1" />}
-                  <span className={`text-[9px] font-bold tracking-wide ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {Icon && <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
+                  <span className={`text-[9px] font-bold tracking-tight`}>
                     {tab.label}
                   </span>
                 </button>

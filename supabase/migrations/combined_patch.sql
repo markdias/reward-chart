@@ -2,6 +2,7 @@
 
 -- 1. Add configurable levels to parent_profiles
 ALTER TABLE parent_profiles 
+ADD COLUMN IF NOT EXISTS daily_points_target integer DEFAULT 50,
 ADD COLUMN IF NOT EXISTS savings_pot_unlock_level integer DEFAULT 1,
 ADD COLUMN IF NOT EXISTS savings_pot_unlock_xp integer DEFAULT 50,
 ADD COLUMN IF NOT EXISTS food_pot_unlock_level integer DEFAULT 2,
@@ -13,6 +14,8 @@ ADD COLUMN IF NOT EXISTS maintenance_pot_unlock_xp integer DEFAULT 50;
 
 -- 2. Add pots fields to children
 ALTER TABLE children 
+ADD COLUMN IF NOT EXISTS has_pending_nudge BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS last_nudge_time TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS savings_pot integer DEFAULT 0,
 ADD COLUMN IF NOT EXISTS last_saved_date text,
 ADD COLUMN IF NOT EXISTS savings_unlocked boolean DEFAULT false,
