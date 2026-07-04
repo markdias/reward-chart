@@ -1,68 +1,71 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { CheckCircle2, Star, Sparkles, Medal, Zap, Heart, Trophy, Check } from 'lucide-react';
+import { CheckCircle2, Star, Sparkles, Medal, Zap, Trophy, Check } from 'lucide-react';
 import Confetti from './Confetti';
 
+// --- DATA ---
+const BACKGROUNDS = [
+  { id: 'sunny', name: 'Sunny Amber', style: { background: 'radial-gradient(circle at center, rgba(254,240,138,0.95) 0%, rgba(253,186,116,1) 100%)' } },
+  { id: 'space', name: 'Dark Space', style: { background: 'radial-gradient(ellipse at 50% 45%, #1e1060 0%, #0f0828 60%, #060412 100%)' } },
+  { id: 'vibrant', name: 'Vibrant Party', style: { background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' } },
+  { id: 'minimal', name: 'Soft Emerald', style: { background: '#ecfdf5' } },
+];
+
+const ICONS = [
+  { id: 'trophy_badge', name: 'Trophy Badge' },
+  { id: 'medal', name: 'Gold Medal' },
+  { id: 'star', name: 'Giant Star' },
+  { id: 'emoji', name: 'Classic Emoji 🏆' },
+];
+
+const TYPOGRAPHY = [
+  { id: 'bubbly', name: 'Bubbly Outline (White/Orange)' },
+  { id: 'gold', name: 'Gold 3D (Classic)' },
+  { id: 'flat', name: 'Modern Flat' },
+  { id: 'neon', name: 'Neon Glow' },
+];
+
+const TASK_BADGES = [
+  { id: 'green_tick', name: 'Green Tick (Original)' },
+  { id: 'check_circle', name: 'Minimal Check' },
+  { id: 'sparkle', name: 'Playful Sparkles' },
+  { id: 'solid_pill', name: 'Solid Orange Pill' },
+  { id: 'zap', name: 'Zap Energy' },
+];
+
 export default function WellDoneShowcase() {
-  const [selectedVariant, setSelectedVariant] = useState(1);
+  const [bg, setBg] = useState(BACKGROUNDS[0]);
+  const [icon, setIcon] = useState(ICONS[0]);
+  const [typo, setTypo] = useState(TYPOGRAPHY[0]);
+  const [badge, setBadge] = useState(TASK_BADGES[1]); // Default to Check Circle instead of Green Tick
+  const [showConfetti, setShowConfetti] = useState(false);
+
   const taskName = "Cleaned my room";
 
-  const renderBadgeVariant = (variant: number) => {
-    switch (variant) {
-      case 1: // Current with green tick (baseline)
+  const renderIcon = () => {
+    switch (icon.id) {
+      case 'trophy_badge':
         return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(234,88,12,0.15)] relative">
-            <span className="text-base">✅</span>
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
+          <div className="rounded-full bg-amber-50 border-[6px] border-amber-200 flex items-center justify-center shadow-xl shadow-amber-500/20 w-32 h-32 mx-auto">
+            <Trophy className="w-16 h-16 text-amber-500" fill="currentColor" />
           </div>
         );
-      case 2: // Minimal CheckCircle
+      case 'medal':
         return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(234,88,12,0.15)] relative">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
+          <div className="rounded-full bg-rose-50 border-[6px] border-rose-200 flex items-center justify-center shadow-xl shadow-rose-500/20 w-32 h-32 mx-auto">
+            <Medal className="w-16 h-16 text-rose-500" fill="currentColor" />
           </div>
         );
-      case 3: // Playful Sparkles
+      case 'star':
         return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(234,88,12,0.15)] relative">
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
+          <div className="rounded-full bg-yellow-300 border-[6px] border-yellow-400 flex items-center justify-center shadow-xl shadow-yellow-500/30 w-32 h-32 mx-auto">
+            <Star className="w-20 h-20 text-white" fill="currentColor" />
           </div>
         );
-      case 4: // Solid Orange Pill with White Text
+      case 'emoji':
         return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 border border-orange-300 shadow-lg relative">
-            <Check className="w-5 h-5 text-white stroke-[3]" />
-            <span className="text-white font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
-          </div>
-        );
-      case 5: // Zap / Energy
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(234,88,12,0.15)] relative">
-            <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
-            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
-          </div>
-        );
-      case 6: // Floating Star Tag (No border)
-        return (
-          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white shadow-xl relative">
-            <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center">
-              <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-            </div>
-            <span className="text-slate-800 font-bold font-sans text-sm tracking-wide">
-              {taskName}
-            </span>
+          <div className="text-[6rem] leading-none filter drop-shadow-[0_8px_20px_rgba(255,215,0,0.6)]">
+            🏆
           </div>
         );
       default:
@@ -70,102 +73,185 @@ export default function WellDoneShowcase() {
     }
   };
 
+  const renderTypography = () => {
+    let styleObj: React.CSSProperties = {
+      display: 'block',
+      fontFamily: '"Nunito", sans-serif',
+      fontWeight: 900,
+      fontSize: '4rem',
+      lineHeight: 0.95,
+      letterSpacing: '-0.02em',
+    };
+
+    switch (typo.id) {
+      case 'bubbly':
+        styleObj = {
+          ...styleObj,
+          color: '#FFFFFF',
+          WebkitTextStroke: '2px #EA580C',
+          textShadow: '0px 4px 0 #C2410C, 0px 8px 16px rgba(234,88,12,0.4)',
+        };
+        break;
+      case 'gold':
+        styleObj = {
+          ...styleObj,
+          color: '#FFD700',
+          WebkitTextStroke: '2px #92400e',
+          textShadow: '3px 3px 0 #b45309, 6px 6px 0 #92400e, 0 0 30px rgba(255,215,0,0.5)',
+        };
+        break;
+      case 'flat':
+        styleObj = {
+          ...styleObj,
+          color: bg.id === 'minimal' ? '#065F46' : '#FFFFFF',
+          textShadow: 'none',
+          WebkitTextStroke: '0px',
+        };
+        break;
+      case 'neon':
+        styleObj = {
+          ...styleObj,
+          color: '#FFFFFF',
+          textShadow: '0 0 10px #FFF, 0 0 20px #FFF, 0 0 40px #f0abfc, 0 0 80px #c026d3',
+          WebkitTextStroke: '0px',
+        };
+        break;
+    }
+
+    return (
+      <div className="mt-4">
+        <span style={styleObj}>WELL</span>
+        <span style={styleObj}>DONE!</span>
+      </div>
+    );
+  };
+
+  const renderTaskBadge = () => {
+    switch (badge.id) {
+      case 'green_tick':
+        return (
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+            <span className="text-base">✅</span>
+            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
+          </div>
+        );
+      case 'check_circle':
+        return (
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
+          </div>
+        );
+      case 'sparkle':
+        return (
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
+          </div>
+        );
+      case 'solid_pill':
+        return (
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 border border-orange-300 shadow-lg">
+            <Check className="w-5 h-5 text-white stroke-[3]" />
+            <span className="text-white font-bold font-sans text-sm tracking-wide">{taskName}</span>
+          </div>
+        );
+      case 'zap':
+        return (
+          <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border-2 border-orange-300 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+            <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />
+            <span className="text-orange-800 font-bold font-sans text-sm tracking-wide">{taskName}</span>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderSection = (title: string, options: any[], current: any, setter: any) => (
+    <div className="mb-8">
+      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">{title}</h3>
+      <div className="flex flex-wrap gap-3">
+        {options.map(opt => (
+          <button
+            key={opt.id}
+            onClick={() => setter(opt)}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              current.id === opt.id
+                ? 'bg-indigo-500 text-white shadow-md'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+            }`}
+          >
+            {opt.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-100 p-8 flex flex-col font-sans">
-      <div className="max-w-4xl mx-auto w-full">
-        <header className="mb-12 text-center">
-          <Typography variant="h1" as="h1" className="mb-4 text-slate-800">
-            Well Done Task Badge Iterations
-          </Typography>
-          <p className="text-slate-500 mb-8">Click an option below to preview it in the overlay.</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[1, 2, 3, 4, 5, 6].map((num) => (
-              <button
-                key={num}
-                onClick={() => setSelectedVariant(num)}
-                className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                  selectedVariant === num
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                Option {num}
-              </button>
-            ))}
-          </div>
-        </header>
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+      
+      {/* Configuration Panel */}
+      <div className="w-full md:w-1/2 lg:w-2/5 p-8 border-r border-slate-200 bg-white overflow-y-auto max-h-screen">
+        <Typography variant="h2" className="mb-2 text-slate-800">
+          Overlay Builder
+        </Typography>
+        <p className="text-slate-500 mb-8">Mix and match styles to build the perfect "Well Done" screen.</p>
+        
+        {renderSection('Background Style', BACKGROUNDS, bg, setBg)}
+        {renderSection('Main Icon', ICONS, icon, setIcon)}
+        {renderSection('Typography', TYPOGRAPHY, typo, setTypo)}
+        {renderSection('Task Badge', TASK_BADGES, badge, setBadge)}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[1, 2, 3, 4, 5, 6].map((variant) => (
+        <div className="mt-12 pt-8 border-t border-slate-200">
+          <button 
+            onClick={() => {
+              setShowConfetti(false);
+              setTimeout(() => setShowConfetti(true), 50);
+            }}
+            className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/30 hover:scale-[1.02] transition-transform active:scale-95"
+          >
+            Test Animation (Confetti)
+          </button>
+        </div>
+      </div>
+
+      {/* Preview Panel */}
+      <div className="w-full md:w-1/2 lg:w-3/5 p-8 bg-slate-100 flex items-center justify-center relative overflow-hidden">
+        
+        {/* Full Screen Overlay Preview */}
+        <div 
+          className="relative w-full max-w-[400px] h-[750px] rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col items-center justify-center border-[8px] border-white transition-all duration-500"
+          style={bg.style}
+        >
+          {/* Optional Sunburst for Space/Sunny */}
+          {(bg.id === 'sunny' || bg.id === 'space') && (
             <div
-              key={variant}
-              onClick={() => setSelectedVariant(variant)}
-              className={`p-8 rounded-3xl cursor-pointer transition-all border-2 flex items-center justify-center min-h-[160px] ${
-                selectedVariant === variant
-                  ? 'border-orange-500 bg-orange-50/50 shadow-md'
-                  : 'border-transparent bg-white hover:border-slate-200'
-              }`}
-            >
-              <div className="transform scale-125">
-                {renderBadgeVariant(variant)}
-              </div>
+              className="absolute inset-0 opacity-40 pointer-events-none"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.15) 10deg, transparent 20deg, transparent 30deg, rgba(255,255,255,0.1) 40deg, transparent 50deg, transparent 60deg, rgba(255,255,255,0.15) 70deg, transparent 80deg, transparent 90deg, rgba(255,255,255,0.1) 100deg, transparent 110deg, transparent 120deg, rgba(255,255,255,0.15) 130deg, transparent 140deg, transparent 150deg, rgba(255,255,255,0.1) 160deg, transparent 170deg, transparent 180deg, rgba(255,255,255,0.15) 190deg, transparent 200deg, transparent 210deg, rgba(255,255,255,0.1) 220deg, transparent 230deg, transparent 240deg, rgba(255,255,255,0.15) 250deg, transparent 260deg, transparent 270deg, rgba(255,255,255,0.1) 280deg, transparent 290deg, transparent 300deg, rgba(255,255,255,0.15) 310deg, transparent 320deg, transparent 330deg, rgba(255,255,255,0.1) 340deg, transparent 350deg)',
+              }}
+            />
+          )}
+
+          <div className="relative flex flex-col items-center gap-4 text-center z-10 w-full px-6">
+            {renderIcon()}
+            {renderTypography()}
+            <div className="mt-6 w-full flex justify-center">
+              {renderTaskBadge()}
             </div>
-          ))}
+          </div>
+          
+          <Confetti active={showConfetti} />
+        </div>
+        
+        {/* Helper Label */}
+        <div className="absolute top-8 right-8 text-slate-400 font-bold tracking-widest uppercase text-sm">
+          Live Preview Mode
         </div>
       </div>
 
-      {/* Mini Overlay Preview */}
-      <div 
-        className="fixed bottom-8 right-8 w-80 h-[28rem] rounded-3xl overflow-hidden shadow-2xl z-50 flex flex-col items-center justify-center border-4 border-white"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(254,240,138,0.95) 0%, rgba(253,186,116,1) 100%)',
-        }}
-      >
-        <div className="relative flex flex-col items-center gap-3 text-center z-10 scale-75 origin-center">
-          <div
-            className="rounded-full bg-amber-50 border-[6px] border-amber-200 flex items-center justify-center shadow-xl shadow-amber-500/20"
-            style={{ width: '8rem', height: '8rem' }}
-          >
-            <Trophy className="w-1/2 h-1/2 text-amber-500" fill="currentColor" />
-          </div>
-
-          <span
-            style={{
-              fontFamily: '"Nunito", sans-serif',
-              fontWeight: 900,
-              fontSize: '4rem',
-              lineHeight: 0.92,
-              color: '#FFFFFF',
-              WebkitTextStroke: '2px #EA580C',
-              textShadow: '0px 4px 0 #C2410C, 0px 8px 16px rgba(234,88,12,0.4)',
-              letterSpacing: '-0.02em',
-              display: 'block',
-              marginTop: '1rem',
-            }}
-          >
-            WELL
-          </span>
-          <span
-            style={{
-              fontFamily: '"Nunito", sans-serif',
-              fontWeight: 900,
-              fontSize: '4rem',
-              lineHeight: 0.92,
-              color: '#FFFFFF',
-              WebkitTextStroke: '2px #EA580C',
-              textShadow: '0px 4px 0 #C2410C, 0px 8px 16px rgba(234,88,12,0.4)',
-              letterSpacing: '-0.02em',
-              display: 'block',
-            }}
-          >
-            DONE!
-          </span>
-
-          <div className="mt-4">
-            {renderBadgeVariant(selectedVariant)}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
