@@ -90,37 +90,32 @@ export default function LockScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
       id="lock-screen-container"
     >
-      
-      {/* Background neon elements */}
-      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(var(--color-dark)_1.5px,transparent_1.5px)] [background-size:24px_24px] pointer-events-none" />
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md overflow-hidden rounded-3xl border-2 border-neutral-border bg-surface-alt shadow-sm relative"
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl relative"
         id="lock-panel"
       >
-        <div className="absolute inset-0  opacity-25 pointer-events-none" />
-
         {/* Vault Frame Header */}
-        <div className="bg-surface p-6 text-center border-b border-neutral-border relative">
+        <div className="bg-gray-50/50 p-6 text-center border-b border-gray-100 relative">
           <button 
             onClick={onClose} 
-            className="absolute top-4 left-4 p-2 rounded-xl border transition-all cursor-pointer bg-surface border-neutral-border text-dark hover:bg-surface-alt shadow-sm"
+            className="absolute top-4 left-4 p-2.5 rounded-xl transition-all cursor-pointer bg-white border border-gray-200 text-stone-600 hover:bg-gray-50 shadow-sm"
             id="lock-back-btn"
           >
-            <ArrowLeft className="w-4 h-4 text-dark" />
+            <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border bg-warning/15 border-neutral-border text-dark shadow-[0_3px_0_0_var(--color-dark-shadow)]">
-            <Lock className="w-6 h-6 animate-pulse" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">
+            <Lock className="w-6 h-6 text-amber-500" />
           </div>
-          <h2 className="text-xl font-black font-display tracking-wider uppercase text-dark">{title}</h2>
-          <p className="font-mono text-[9px] tracking-widest mt-1 uppercase text-stone-500 font-bold">{subtitle}</p>
+          <h2 className="text-xl font-bold font-display tracking-wide text-slate-900">{title}</h2>
+          <p className="font-mono text-[10px] tracking-widest mt-1.5 uppercase text-stone-500 font-bold">{subtitle}</p>
         </div>
 
         {/* Password Entry Form */}
@@ -133,8 +128,8 @@ export default function LockScreen({
                 setPassword(e.target.value);
                 if (error) setError(false);
               }}
-              placeholder="ENTER PASSWORD"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border bg-surface border-neutral-border text-dark font-mono text-center text-sm tracking-wide shadow-[0_3px_0_0_var(--color-dark-shadow)] focus:ring-2 focus:ring-warning outline-none"
+              placeholder="Enter Password"
+              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-gray-200 bg-gray-50 text-slate-900 font-mono text-center text-sm shadow-sm focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:text-stone-400"
               autoFocus
             />
             <button
@@ -143,9 +138,9 @@ export default function LockScreen({
                 playSound.click();
                 setShowPassword(!showPassword);
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-dark p-1 cursor-pointer"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 cursor-pointer transition-colors"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
 
@@ -153,32 +148,30 @@ export default function LockScreen({
             <motion.p 
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-danger font-mono font-bold text-xs mb-6 flex items-center gap-1.5 uppercase tracking-wide bg-danger/10 px-3 py-1.5 rounded-lg border border-danger/30"
+              className="text-red-600 font-mono font-bold text-[10px] mb-6 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-red-50 px-3 py-2 rounded-xl border border-red-100 w-full max-w-sm"
             >
-              <ShieldAlert className="w-4 h-4 animate-bounce" /> PASSWORD DECRYPTION FAILURE
+              <ShieldAlert className="w-4 h-4" /> Incorrect Password
             </motion.p>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4 w-full max-w-sm">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+          <div className="flex gap-3 w-full max-w-sm">
+            <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-12 btn-secondary text-danger hover:bg-danger/10 border-neutral-border"
+              className="flex-1 py-3.5 rounded-xl border-2 border-stone-200 text-stone-500 font-bold uppercase tracking-wider text-xs hover:bg-stone-50 transition-colors"
             >
-              ABORT
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              Cancel
+            </button>
+            <button
               type="submit"
               disabled={loading || !password}
-              className="flex-1 h-12 btn-warning"
+              className={`flex-1 py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wider shadow-lg ${
+                loading || !password ? 'bg-orange-300 text-white cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white'
+              }`}
             >
-              {loading ? 'VERIFYING...' : 'DECRYPT'}
-            </motion.button>
+              {loading ? 'Verifying...' : 'Unlock'}
+            </button>
           </div>
         </form>
       </motion.div>

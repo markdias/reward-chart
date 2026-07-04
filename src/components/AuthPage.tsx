@@ -250,32 +250,30 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
   const styles = THEME_PRESETS[theme];
 
   return (
-    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="auth-page-root">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="auth-page-root">
       
-      {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
-
-      {/* High-Tech Animated Background */}
-      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Retro Header Console */}
-      <header className={`w-full max-w-7xl mx-auto px-6 pt-safe-top pt-6 pb-6 flex items-center justify-between border-none relative z-40`}>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBackToLanding}
-            className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-orange-100 hover:text-white transition-colors cursor-pointer bg-black/10 hover:bg-black/20 px-3 py-1.5 rounded-full"
-          >
-            ← Back to Home
-          </button>
-          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/20 hidden sm:flex">
-            <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
-          </div>
-          <div>
-            <span className={`text-2xl font-black font-display tracking-wider text-white drop-shadow-sm`}>
-              REWARD CHART
-            </span>
-            <span className="block text-[9px] text-orange-100 font-mono tracking-widest font-extrabold">MAKE CHORES FUN</span>
+      {/* Clean White Header */}
+      <header 
+        className="w-full bg-white border-b border-gray-100 relative z-40"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBackToLanding}
+              className="mr-2 flex items-center gap-1 text-xs font-mono font-bold text-gray-500 hover:text-slate-900 transition-colors cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full"
+            >
+              ← Back to Home
+            </button>
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm hidden sm:flex">
+              <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
+            </div>
+            <div>
+              <span className="text-lg sm:text-2xl font-black font-display tracking-wider text-slate-900 drop-shadow-sm">
+                REWARD CHART
+              </span>
+              <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
+            </div>
           </div>
         </div>
       </header>
@@ -287,7 +285,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 sm:p-6 rounded-3xl ${styles.cardBg} space-y-4`}
+            className="p-5 sm:p-6 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-4"
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
@@ -395,7 +393,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
-          <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+          <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-xl bg-warning/15 text-dark">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -404,7 +402,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
-          <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+          <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-xl bg-danger/10 text-danger">
               <Heart className="w-4 h-4" />
             </div>

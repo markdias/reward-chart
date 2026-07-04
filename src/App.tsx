@@ -200,7 +200,12 @@ export default function App() {
                 points_to_level_up: 500,
                 level_up_gold_reward: 500
               };
-              await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
+              const { error: profileError } = await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
+              
+              if (profileError) {
+                console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
+                return; // Abort further inserts if profile fails
+              }
               
               // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
               if (!shareToken) {

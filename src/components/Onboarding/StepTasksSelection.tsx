@@ -30,8 +30,8 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
   };
 
   return (
-    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-6 flex flex-col justify-center h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-4 shadow-xl flex flex-col h-[85vh] overflow-hidden relative z-10`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col h-[100dvh]`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl space-y-6 flex flex-col h-full max-h-[85vh] relative z-10`}>
         <div className="text-center space-y-2 shrink-0">
           <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Tasks</h2>
           <p className={`text-xs ${styles.textMuted}`}>Select some common tasks to add to your children's dashboard right away. You can add more later!</p>

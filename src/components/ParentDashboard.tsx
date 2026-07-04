@@ -390,145 +390,146 @@ export default function ParentDashboard({
       {/* Sweeping Curved Header Background */}
       <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
 
-      <header className={`relative z-40 px-4 sm:px-8 pt-safe-top pt-6 pb-6 flex items-center justify-between gap-2`}>
-        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-          <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-white shadow-lg shadow-orange-500/20 flex items-center justify-center text-xl shrink-0`}>
-            <Settings className={`w-5 h-5 sm:w-6 sm:h-6 text-orange-500 animate-spin-slow`} />
+      <header className="bg-white border-b border-gray-100 relative z-20 pt-[max(env(safe-area-inset-top),_1rem)]">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col">
+              <h1 className="text-sm sm:text-lg font-black text-slate-900 leading-tight">
+                Parent Center
+              </h1>
+              <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium">
+                {parentEmail}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className={`text-lg sm:text-2xl font-black font-display tracking-wide text-amber-950 drop-shadow-sm truncate`}>
-              Parent Mission Control
-            </h1>
-            <p className={`hidden sm:block text-[10px] text-amber-900 font-bold font-mono tracking-widest uppercase truncate`}>{parentEmail}</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <div className="relative">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="relative">
+              <button
+                onClick={() => {
+                  playSound.click();
+                  setShowNotifications(!showNotifications);
+                }}
+                className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors relative"
+                id="notifications-bell-btn"
+              >
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                {totalPending > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white">
+                    {totalPending}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-white border border-gray-100 shadow-xl overflow-hidden p-4 space-y-3 z-50 text-slate-900"
+                    id="notifications-box"
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                      <span className="font-bold text-xs font-mono tracking-wider text-gray-500 uppercase">INCOMING TELEMETRY</span>
+                      <span className="text-[8px] text-emerald-500 font-mono">LIVE UPDATE</span>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {totalPending === 0 ? (
+                        <p className="text-xs text-gray-400 py-4 text-center">No pending approvals. Channels clear!</p>
+                      ) : (
+                        <>
+                          {pendingApprovals.map(appr => {
+                            const child = children.find(c => c.id === appr.child_id);
+                            const task = tasks.find(t => t.id === appr.task_id);
+                            return (
+                              <div key={appr.id} className="p-2.5 bg-gray-50 rounded-xl text-xs flex gap-2 border border-gray-100">
+                                <span className="text-lg"><FaBullhorn className="text-blue-500" /></span>
+                                <div>
+                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
+                                  <p className="text-gray-500 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {pendingRedemptions.map(req => {
+                            const child = children.find(c => c.id === req.child_id);
+                            return (
+                              <div key={req.id} className="p-2.5 bg-rose-50 rounded-xl text-xs flex gap-2 border border-rose-100">
+                                <span className="text-lg"><FaGift className="text-rose-500" /></span>
+                                <div>
+                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
+                                  <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {pendingGiftingRequests.map(req => {
+                            const child = children.find(c => c.id === req.child_id);
+                            const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
+                            const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
+                            return (
+                              <div key={req.id} className="p-2.5 bg-blue-50 rounded-xl text-xs flex gap-2 border border-blue-100">
+                                <span className="text-lg">{typeIcon}</span>
+                                <div>
+                                  <p className="text-slate-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
+                                  <p className="text-blue-600 font-semibold text-[11px] mt-0.5">{title}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {onLogout && (
+              <button
+                onClick={() => {
+                  playSound.click();
+                  onLogout();
+                }}
+                className="hidden sm:flex items-center gap-1 sm:gap-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold border border-gray-200 transition-colors uppercase px-3 py-2 rounded-xl text-[10px] sm:text-xs"
+                id="global-logout-btn"
+              >
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>SIGN OUT</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 playSound.click();
-                setShowNotifications(!showNotifications);
+                onExitParentMode();
               }}
-              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-surface border-2 border-neutral-border text-dark hover:bg-surface-alt transition-all cursor-pointer relative shadow-[0_3px_0_0_var(--color-neutral-border)] active:translate-y-[2px] active:shadow-none"
-              id="notifications-bell-btn"
+              className="flex items-center gap-1 sm:gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors uppercase px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-[10px] sm:text-xs"
+              id="exit-to-child-view-btn"
             >
-              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
-              {totalPending > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
-                  {totalPending}
-                </span>
-              )}
+              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">SWITCH TO KID VIEW</span>
             </button>
-
-            <AnimatePresence>
-              {showNotifications && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-surface border-3 border-neutral-border shadow-[0_6px_0_0_var(--color-neutral-border)] overflow-hidden p-4 space-y-3 z-50 text-dark"
-                  id="notifications-box"
-                >
-                  <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-                    <span className="font-bold text-xs font-mono tracking-wider text-amber-600 uppercase">INCOMING TELEMETRY</span>
-                    <span className="text-[8px] text-stone-500 font-mono">LIVE UPDATE</span>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-2">
-                    {totalPending === 0 ? (
-                      <p className="text-xs text-stone-500 py-4 text-center">No pending approvals. Channels clear!</p>
-                    ) : (
-                      <>
-                        {pendingApprovals.map(appr => {
-                          const child = children.find(c => c.id === appr.child_id);
-                          const task = tasks.find(t => t.id === appr.task_id);
-                          return (
-                            <div key={appr.id} className="p-2.5 bg-page rounded-xl text-xs flex gap-2 border border-neutral-border text-dark">
-                              <span className="text-lg"><FaBullhorn /></span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
-                                <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {pendingRedemptions.map(req => {
-                          const child = children.find(c => c.id === req.child_id);
-                          return (
-                            <div key={req.id} className="p-2.5 bg-danger/10 rounded-xl text-xs flex gap-2 border border-danger/30 text-dark">
-                              <span className="text-lg"><FaGift /></span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
-                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {pendingGiftingRequests.map(req => {
-                          const child = children.find(c => c.id === req.child_id);
-                          const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
-                          const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
-                          return (
-                            <div key={req.id} className="p-2.5 bg-info/10 rounded-xl text-xs flex gap-2 border border-info/30 text-dark">
-                              <span className="text-lg">{typeIcon}</span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
-                                <p className="text-blue-600 font-semibold text-[11px] mt-0.5">{title}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
-
-          {onLogout && (
-            <button
-              onClick={() => {
-                playSound.click();
-                onLogout();
-              }}
-              className="flex items-center gap-1 sm:gap-2 bg-surface hover:bg-surface-alt text-dark font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
-              id="global-logout-btn"
-            >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600" />
-              <span>SIGN OUT</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              playSound.click();
-              onExitParentMode();
-            }}
-            className="flex items-center gap-1 sm:gap-2 bg-danger hover:bg-danger-hover text-white font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
-            id="exit-to-child-view-btn"
-          >
-            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>SWITCH TO KID VIEW</span>
-          </button>
         </div>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-6 sm:mt-10 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
         
-        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-6 space-y-6 self-start`}>
-          <div className="space-y-1">
-            <span className={`text-[10px] font-bold font-mono text-amber-700 uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
-            <p className={`text-xs text-stone-500`}>Configure chore metrics and levels.</p>
-          </div>
-
+        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
-              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
+              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending },
               { id: 'children', label: 'CHILDREN', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUESTS', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'PRIZES', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'TARGETS & POTS', icon: Target },
-
               { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -539,21 +540,21 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
                     isSelected 
-                      ? 'bg-rose-400 text-white shadow-md shadow-rose-400/30 scale-[1.02]'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:scale-[1.01]'
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-slate-900 hover:scale-[1.01]'
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-slate-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className={`${isSelected ? 'bg-white text-rose-500' : tab.badgeColor + ' text-white'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
+                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
                       {tab.badge}
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${isSelected ? 'text-rose-100' : 'text-slate-400'} font-bold`}>
+                    <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-400' : 'text-gray-400'} font-bold`}>
                       ({tab.count})
                     </span>
                   )}
@@ -561,46 +562,24 @@ export default function ParentDashboard({
               );
             })}
           </nav>
-
-          <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col gap-2`}>
-            <h4 className={`text-xs font-bold font-display ${styles.textColor} flex items-center gap-1.5`}>
-              <Sparkles className="w-4 h-4 text-amber-400" /> EVOLUTION ENGINE ACTIVE
-            </h4>
-            <p className={`text-[11px] ${styles.textMuted} leading-relaxed font-sans`}>
-              Child points automatically scale companions through 3 stages. Stage 1 is an egg pod, Stage 2 is adolescent form, and Stage 3 unlocks high-flying heroism (150+ pts)!
-            </p>
-          </div>
         </aside>
 
         <main className="lg:col-span-9 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-[600px]">
           
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8">
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Activity className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-pulse" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
-              </div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{approvedCompletionsCount}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">COMPLETED</span>
             </div>
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">{children.length === 1 ? 'CHILD' : 'CHILDREN'}</span></span>
-              </div>
+            
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{children.length}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">ACTIVE</span>
             </div>
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
-                <ShieldAlert className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-bounce-slow" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
-                <span className={`text-xs sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
-              </div>
+            
+            <div className="bg-rose-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-rose-500 leading-none mb-1 sm:mb-2">{totalPending}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-rose-500 uppercase">PENDING</span>
             </div>
           </div>
 
@@ -612,222 +591,151 @@ export default function ParentDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 key="approvals-tab"
-                className="space-y-6"
+                className="space-y-6 sm:space-y-8"
                 id="approvals-view"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>INBOX & APPROVALS</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Authorize finished duties and deliver claimed prizes.</p>
+                
+                {/* Smart Reminders */}
+                <div className="space-y-3">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-500" />
+                    Smart Reminders
+                  </h2>
+                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">Sammy the Creator hasn't logged any activity today.</h3>
+                      <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
+                    </div>
+                    <button className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-colors shrink-0">
+                      Send Nudge
+                    </button>
                   </div>
-                  <span className={`px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold font-mono`}>
-                    {totalPending} STANDBY
-                  </span>
                 </div>
 
-
-
-                {totalPending === 0 ? (
-                  <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
-                    <span className="text-5xl inline-block animate-bounce-slow"><FaRocket className="text-purple-500" /></span>
-                    <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
-                    <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
-                      Whenever kids finish tasks or claim prizes, they will cascade here for parent authorisation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {pendingApprovals.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaBroom className="inline-block mr-2 text-stone-500" /> Pending Chores ({pendingApprovals.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingApprovals.map((appr) => {
-                            const child = children.find(c => c.id === appr.child_id);
-                            const task = tasks.find(t => t.id === appr.task_id);
-                            const character = CHARACTER_PACKS.find(cp => cp.id === child?.character_id);
-                            return (
-                              <div
-                                key={appr.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <img
-                                    src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
-                                    alt="Child avatar"
-                                    className={`w-14 h-14 rounded-2xl p-1 border bg-stone-100 border-stone-200`}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  <div>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name}</span>
-                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase`}>
-                                        {character?.name.split(' ')[0]}
-                                      </span>
-                                    </div>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {task?.title || 'Unknown Task'}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      COMPLETED AT: {new Date(appr.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className="flex gap-3">
-                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                                      {task?.points || 0} Gold
-                                    </div>
-                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <TrendingUp className="w-3.5 h-3.5 text-cyan-500" />
-                                      {task?.points ?? 0} Gold
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleReject(appr.id)}
-                                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200`}
-                                    >
-                                      <X className="w-4 h-4" /> REJECT
-                                    </button>
-                                    <button
-                                      onClick={() => handleApprove(appr.id)}
-                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                    >
-                                      <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
-                                    </button>
-                                  </div>
-                                </div>
+                {/* Needs Approval */}
+                <div className="space-y-3">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    Needs Approval
+                  </h2>
+                  
+                  {totalPending === 0 ? (
+                    <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+                      <div className="text-4xl mb-3 text-amber-400">✨</div>
+                      <h3 className="font-black text-slate-900 text-sm mb-1">All Caught Up!</h3>
+                      <p className="text-gray-400 text-xs">No pending tasks to approve.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingApprovals.map((appr) => {
+                        const child = children.find(c => c.id === appr.child_id);
+                        const task = tasks.find(t => t.id === appr.task_id);
+                        return (
+                          <div key={appr.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <img src={child?.avatar_url || '/placeholder.png'} className="w-12 h-12 rounded-xl bg-gray-50" />
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} finished {task?.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
                               </div>
-                            );
-                          })}
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => handleReject(appr.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
+                              <button onClick={() => handleApprove(appr.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      
+                      {pendingRedemptions.map((req) => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const reward = rewards.find(r => r.id === req.reward_id);
+                        return (
+                          <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} claimed {reward?.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{new Date(req.redeemed_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => onRejectReward(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
+                              <button onClick={() => onDeliverReward(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                            </div>
+                          </div>
+                        )
+                      })}
+
+                      {pendingGiftingRequests.map((req) => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const typeIcon = req.type === 'charity' ? '🌍' : '💝';
+                        const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
+                        return (
+                          <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>
+                                {typeIcon}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} wants to give!</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{title} ({req.amount} pts)</p>
+                                <p className="text-[10px] text-gray-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50">Deny</button>
+                              <button onClick={() => onApproveGiftingRequest && onApproveGiftingRequest(req.id)} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800">Approve</button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Activity */}
+                <div className="space-y-3">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    Recent Activity
+                  </h2>
+                  <div className="space-y-2">
+                    {[
+                      ...completions.filter(c => c.status === 'approved').map(c => ({
+                        id: c.id,
+                        type: 'task',
+                        title: tasks.find(t => t.id === c.task_id)?.title || 'Unknown Task',
+                        points: tasks.find(t => t.id === c.task_id)?.points || 0,
+                        date: new Date(c.completed_at),
+                      })),
+                      ...redemptions.filter(r => r.status === 'delivered').map(r => ({
+                        id: r.id,
+                        type: 'reward',
+                        title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
+                        points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
+                        date: new Date(r.redeemed_at),
+                      }))
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10).map((activity, i) => (
+                      <div key={`${activity.id}-${i}`} className="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-50 text-gray-500'}`}>
+                            {activity.type === 'task' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : '🍦'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 text-xs sm:text-sm">{activity.title}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
+                        </div>
+                        <div className={`font-black text-xs sm:text-sm shrink-0 ${activity.type === 'task' ? 'text-emerald-500' : 'text-gray-400 line-through'}`}>
+                          {activity.type === 'task' ? '+' : '-'}{activity.points} pts
                         </div>
                       </div>
-                    )}
-              
-                    {pendingRedemptions.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaGift className="inline-block mr-2 text-purple-500" /> Pending Prize Deliveries ({pendingRedemptions.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingRedemptions.map((delivery) => {
-                            const child = children.find(c => c.id === delivery.child_id);
-                            const reward = rewards.find(r => r.id === delivery.reward_id);
-                            return (
-                              <div
-                                key={delivery.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
-                                    🎁
-                                  </div>
-                                  <div>
-                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} claimed:</span>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {reward?.title || 'Unknown Reward'}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      CLAIMED AT: {new Date(delivery.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs text-rose-700`}>-{reward?.cost_points || 0} Gold</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        playSound.success();
-                                        onDeliverReward(delivery.id);
-                                      }}
-                                      className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                                    >
-                                      APPROVE
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        playSound.click();
-                                        onRejectReward(delivery.id);
-                                      }}
-                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
-                                    >
-                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {pendingGiftingRequests.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaHeart className="inline-block mr-2 text-pink-500" /> Pending Gifting Requests ({pendingGiftingRequests.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingGiftingRequests.map((req) => {
-                            const child = children.find(c => c.id === req.child_id);
-                            return (
-                              <div
-                                key={req.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
-                                    {req.type === 'charity' ? <FaGlobe /> : <FaGift />}
-                                  </div>
-                                  <div>
-                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} requested:</span>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {req.type === 'charity' ? `Donate to Charity (${(req as any).charity_name})` : `Gift to Sibling (${children.find(c => c.id === req.sibling_id)?.name})`}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      REQUESTED AT: {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs text-rose-700`}>{req.amount} Gold Coins</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        playSound.success();
-                                        onApproveGiftingRequest(req.id);
-                                      }}
-                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                    >
-                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        playSound.click();
-                                        onRejectGiftingRequest(req.id);
-                                      }}
-                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
-                                    >
-                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                    ))}
+                    {[...completions.filter(c => c.status === 'approved'), ...redemptions.filter(r => r.status === 'delivered')].length === 0 && (
+                      <div className="text-center p-8 text-gray-400 text-xs">No recent activity yet.</div>
                     )}
                   </div>
-                )}
+                </div>
+
               </motion.div>
             )}
 
@@ -1244,52 +1152,47 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-2 sm:gap-4">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
-                                  {task.category.toUpperCase()}
-                                </span>
-                                <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
-                                  <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                                </div>
+                        <div key={task.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                                <FaStar />
                               </div>
-                              <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
-                              <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                                Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
-                              </p>
+                              <div>
+                                <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                  <span className="mx-2">•</span>
+                                  Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
-                              <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
-                                +{task.points} GOLD
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm sm:text-base">
+                                +{task.points}
                               </span>
+                            </div>
+                          </div>
 
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
-                                }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              >
-                                ASSIGN
+                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                              }}
+                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                            >
+                              Assign to Child
+                            </button>
+
+                            <div className="flex gap-2">
+                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                                <Edit2 className="w-4 h-4" />
                               </button>
-
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => openEditTask(task)}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => { playSound.click(); onDeleteTask(task.id); }}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
+                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
 
@@ -1299,9 +1202,9 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
+                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-gray-100"
                               >
-                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                <p className="text-[10px] font-mono font-bold text-gray-500 uppercase">
                                   Select children to assign this quest:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1350,60 +1253,48 @@ export default function ParentDashboard({
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
-                      <div
-                        key={task.id}
-                        className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
-                      >
-                        <div className="flex justify-between items-start gap-2 sm:gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                              <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
-                                {task.category.toUpperCase()}
-                              </span>
-                              <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
-                                <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                              </div>
+                      <div key={task.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                              <FaStar />
                             </div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
-                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                              Child assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
-                            </p>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Assigned: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                                <span className="mx-2">•</span>
+                                Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
-                            <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
-                              +{task.points} GOLD
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm sm:text-base">
+                              +{task.points}
                             </span>
+                          </div>
+                        </div>
 
-                            <button
-                              onClick={() => {
-                                playSound.success();
-                                onParentCompleteTask(task.id, task.child_id);
-                              }}
-                              className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              id={`parent-complete-${task.id}`}
-                            >
-                              COMPLETE
+                        <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                          <button
+                            onClick={() => {
+                              playSound.success();
+                              onParentCompleteTask(task.id, task.child_id);
+                            }}
+                            className="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700 px-3 py-1.5 rounded-lg transition-colors"
+                            id={`parent-complete-${task.id}`}
+                          >
+                            Mark Complete
+                          </button>
+
+                          <div className="flex gap-2">
+                            <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Edit2 className="w-4 h-4" />
                             </button>
-
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => openEditTask(task)}
-                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                              >
-                                <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  onDeleteTask(task.id);
-                                }}
-                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                id={`delete-task-${task.id}`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              </button>
-                            </div>
+                            <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1579,51 +1470,47 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-2 sm:gap-4">
-                            <div className="flex gap-2 sm:gap-3 items-center">
-                              <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
+                        <div key={reward.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                                <FaGift />
+                              </div>
                               <div>
-                                <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
-                                  {reward.title}
-                                </h3>
-                                <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                                  Assigned: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
-                                  <span className="mx-1 sm:mx-2">•</span>
-                                  Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                                <h3 className="font-bold text-slate-900 text-sm">{reward.title}</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                  <span className="mx-2">•</span>
+                                  Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1.5 sm:gap-3">
-                              <span className={`font-mono font-black text-xs sm:text-sm text-amber-600 hidden sm:inline-block`}>
-                                {reward.cost_points} GOLD
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <span className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border-[2px] sm:border-[3px] border-orange-300 bg-orange-50 text-orange-500 flex flex-col items-center justify-center font-black text-sm sm:text-base">
+                                -{reward.cost_points}
                               </span>
+                            </div>
+                          </div>
 
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
-                                }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              >
-                                ASSIGN
+                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
+                              }}
+                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                            >
+                              Assign to Child
+                            </button>
+
+                            <div className="flex gap-2">
+                              <button onClick={() => openEditReward(reward)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                                <Edit2 className="w-4 h-4" />
                               </button>
-
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => openEditReward(reward)}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
+                              <button onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
 
@@ -1633,9 +1520,9 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
                               >
-                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                <p className={`text-[10px] font-bold text-gray-500 uppercase`}>
                                   Select children to assign this reward:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1652,13 +1539,13 @@ export default function ParentDashboard({
                                             : [...currentAssignedIds, child.id];
                                           onAssignReward(reward, newAssignedIds);
                                         }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-dark border-neutral-border text-white shadow-[0_2px_0_0_var(--color-dark-shadow)]')
-                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                            ? ('bg-slate-900 border-slate-900 text-white')
+                                            : ('bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border border-slate-700/50 object-cover" />
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full object-cover" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1685,49 +1572,43 @@ export default function ParentDashboard({
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
-                      <div
-                        key={reward.id}
-                        className={`border p-2 sm:p-3 rounded-xl flex justify-between items-center gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
-                      >
-                        <div className="flex gap-2 sm:gap-3 items-center">
-                          <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
-                          <div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
-                              {reward.title}
-                              {!reward.is_available && reward.limit_type === 'one_time' && (
-                                <span className="ml-1 sm:ml-2 text-[8px] sm:text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase align-middle">
-                                  CLAIMED
-                                </span>
-                              )}
-                            </h3>
-                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                              Available for: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
-                              <span className="mx-1 sm:mx-2">•</span>
-                              Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
-                            </p>
+                      <div key={reward.id} className="bg-white border border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                              <FaGift />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-sm">
+                                {reward.title}
+                                {!reward.is_available && reward.limit_type === 'one_time' && (
+                                  <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
+                                    CLAIMED
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Available for: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                                <span className="mx-2">•</span>
+                                Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className="w-12 h-12 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
+                              {reward.cost_points}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-1.5 sm:gap-3">
-                          <span className={`font-mono font-black text-xs sm:text-sm text-amber-600`}>
-                            {reward.cost_points} GOLD
-                          </span>
+                        <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditReward(reward)}
-                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                            >
-                              <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <button onClick={() => openEditReward(reward)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Edit2 className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => {
-                                playSound.click();
-                                onDeleteReward(reward.id);
-                              }}
-                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                              id={`delete-reward-${reward.id}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <button onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -1931,14 +1812,12 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-50 flex justify-around items-center px-4 py-3 pb-safe rounded-t-[2rem]">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex justify-around items-end px-2 py-2 pb-safe">
           {[
-            { id: 'approvals', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
-            { id: 'children', icon: Users },
-            { id: 'tasks', icon: CheckSquare },
-            { id: 'rewards', icon: Trophy },
-            { id: 'compliance', icon: ShieldCheck },
-            { id: 'settings', icon: Settings }
+            { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
+            { id: 'children', label: 'Children', icon: Users },
+            { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+            { id: 'rewards', label: 'Rewards', icon: Trophy }
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -1946,21 +1825,28 @@ export default function ParentDashboard({
               <button
                 key={tab.id}
                 onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                className={`relative p-3 rounded-2xl transition-all flex flex-col items-center justify-center duration-300 ${
-                  isSelected
-                    ? 'text-white bg-rose-400 shadow-md shadow-rose-400/40 scale-110'
-                    : 'text-slate-400 hover:text-slate-600'
+                className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2 ${
+                  isSelected ? 'text-slate-900' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 <Icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={isSelected ? 2.5 : 2} />
-                {tab.badge !== undefined && tab.badge > 0 && !isSelected && (
-                  <span className={`absolute top-0 right-0 ${tab.badgeColor} text-white text-[8px] font-mono px-1.5 py-0.5 rounded-full font-bold shadow-sm`}>
+                <span className="text-[10px] sm:text-xs font-semibold">{tab.label}</span>
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="absolute top-1 right-2 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
                     {tab.badge}
                   </span>
                 )}
               </button>
             );
           })}
+          
+          <button
+            onClick={() => { playSound.click(); onExitParentMode(); }}
+            className="relative flex-1 flex flex-col items-center justify-center gap-1 py-2 text-gray-400 hover:text-gray-600"
+          >
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
+            <span className="text-[10px] sm:text-xs font-semibold">Switch</span>
+          </button>
         </div>
       </div>
     </div>

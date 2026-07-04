@@ -112,6 +112,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
           <StepChildrenSetup
             theme={theme}
             onNext={handleChildrenSetupComplete}
+            onBack={() => setStep('welcome')}
             initialChildren={onboardingData.children}
             startedBy={startedBy}
           />
@@ -121,6 +122,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
           <StepHandover 
             theme={theme}
             onNext={handleHandoverComplete}
+            onBack={() => setStep('children')}
           />
         );
       case 'parentDetails':
@@ -128,6 +130,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
           <StepParentDetails
             theme={theme}
             onNext={handleParentDetailsComplete}
+            onBack={() => startedBy === 'child' ? setStep('handover') : setStep('children')}
             initialName={onboardingData.parentName}
             initialFamilyName={onboardingData.familyName}
           />
@@ -174,7 +177,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
-        className="w-full h-full min-h-screen"
+        className="w-full h-full min-h-screen bg-white text-slate-900"
       >
         {renderStep()}
       </motion.div>

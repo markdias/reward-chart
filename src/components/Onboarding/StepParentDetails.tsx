@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
-import { UserCircle, ArrowRight } from 'lucide-react';
+import { UserCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { playSound } from '../../utils/sound';
 
 interface StepParentDetailsProps {
@@ -8,9 +8,10 @@ interface StepParentDetailsProps {
   onNext: (name: string, familyName: string) => void;
   initialName?: string;
   initialFamilyName?: string;
+  onBack?: () => void;
 }
 
-export default function StepParentDetails({ theme, onNext, initialName = '', initialFamilyName = '' }: StepParentDetailsProps) {
+export default function StepParentDetails({ theme, onNext, onBack, initialName = '', initialFamilyName = '' }: StepParentDetailsProps) {
   const styles = THEME_PRESETS[theme];
   const [name, setName] = useState(initialName);
   const [familyName, setFamilyName] = useState(initialFamilyName);
@@ -23,8 +24,8 @@ export default function StepParentDetails({ theme, onNext, initialName = '', ini
   };
 
   return (
-    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-6 shadow-xl relative z-10`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto shadow-sm">
             <UserCircle className="w-8 h-8 text-amber-500" />
@@ -58,13 +59,24 @@ export default function StepParentDetails({ theme, onNext, initialName = '', ini
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={!name.trim() || !familyName.trim()}
-            className={`w-full ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg mt-4 disabled:opacity-50`}
-          >
-            CONTINUE <ArrowRight className="w-5 h-5" />
-          </button>
+          <div className="flex gap-3 pt-2">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={!name.trim() || !familyName.trim()}
+              className={`flex-1 ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg disabled:opacity-50`}
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </form>
       </div>
     </div>
