@@ -1,5 +1,6 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
+import { Trophy } from 'lucide-react';
 import Confetti from './Confetti';
 
 interface WellDoneOverlayProps {
@@ -137,15 +138,15 @@ export default function WellDoneOverlay({ show, taskName }: WellDoneOverlayProps
 
           {/* Trophy bounces in first */}
           <div
+            className="rounded-full bg-amber-50 border-[4px] sm:border-[6px] border-amber-200 flex items-center justify-center shadow-xl shadow-amber-500/20"
             style={{
-              fontSize: 'clamp(3.5rem, 12vw, 6rem)',
-              lineHeight: 1,
+              width: 'clamp(6rem, 24vw, 11rem)',
+              height: 'clamp(6rem, 24vw, 11rem)',
               opacity: 0,
-              filter: 'drop-shadow(0 8px 20px rgba(255,215,0,0.6))',
               animation: 'wd-star 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.05s forwards',
             }}
           >
-            🏆
+            <Trophy className="w-1/2 h-1/2 text-amber-500" fill="currentColor" />
           </div>
 
           {/* WELL */}
