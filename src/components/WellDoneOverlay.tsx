@@ -1,4 +1,5 @@
 import React from 'react';
+import { Typography } from './ui/Typography';
 import Confetti from './Confetti';
 
 interface WellDoneOverlayProps {

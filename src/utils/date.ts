@@ -41,3 +41,9 @@ export const getStartOfDailyReset = (d = new Date()): number => {
   return result.getTime();
 };
 
+
+export const getLogicalDateString = (date: Date | string) => {
+  const d = new Date(date);
+  d.setHours(d.getHours() - 4);
+  return d.toDateString();
+};

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Typography } from './ui/Typography';
 
 interface ConfettiProps {
   active: boolean;

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { Cloud, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { playSound } from '../../utils/sound';
 import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
 import { PasswordInput } from '../PasswordInput';
 import { evaluatePassword } from '../../utils/security';
+import { Button } from '../ui/Button';
 
 interface StepCreateAccountProps {
   theme: ThemeId;
@@ -106,8 +108,8 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
   };
 
   return (
-    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-10 flex flex-col justify-center h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-6 shadow-xl relative z-10`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto shadow-sm">
             <Cloud className="w-8 h-8 text-cyan-500" />
@@ -148,32 +150,38 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className={`w-full ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg mt-2`}
+            variant="primary"
+            fullWidth
+            isLoading={isSubmitting}
+            className="mt-2"
           >
-            {isSubmitting ? 'CREATING...' : 'CREATE ACCOUNT'}
-          </button>
+            CREATE ACCOUNT
+          </Button>
         </form>
 
         <div className="flex flex-col items-center gap-3 pt-4 border-t border-stone-200">
           <p className="text-[10px] text-stone-500">Already have an account? <button onClick={onLoginInstead} className="font-bold underline">Sign in instead</button></p>
           <div className="flex w-full gap-3 mt-2">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={onBack}
-              className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
             >
               <ArrowLeft className="w-5 h-5" />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              className="flex-1"
               type="button"
               onClick={handleSkip}
-              className={`flex-1 bg-white border-2 border-stone-200 text-stone-600 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 tracking-wide hover:bg-stone-50`}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Skip for now <ArrowRight className="w-4 h-4" />
-            </button>
+              Skip for now
+            </Button>
           </div>
         </div>
       </div>

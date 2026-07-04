@@ -5,12 +5,13 @@ import {
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText
 } from 'lucide-react';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
@@ -22,7 +23,9 @@ import { getSupabaseClient } from '../utils/supabase';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
-
+import { CoinBadge } from './CoinBadge';
+import { LinearProgressBar } from './ProgressBar';
+import { Button } from './ui/Button';
 
 interface ParentDashboardProps {
   children: Child[];
@@ -104,6 +107,12 @@ export default function ParentDashboard({
   onUpdateParentProfile
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  
+  // Scroll to top when switching tabs
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
@@ -141,8 +150,14 @@ export default function ParentDashboard({
   const [rewardChildIds, setRewardChildIds] = useState<string[]>([]);
   const [rewardIcon, setRewardIcon] = useState('Gamepad2');
   const [rewardLimit, setRewardLimit] = useState<'unlimited' | 'daily' | 'twice_daily' | 'one_time'>('unlimited');
+  const [rewardBadgeEligible, setRewardBadgeEligible] = useState(false);
 
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [nudgedChildIds, setNudgedChildIds] = useState<string[]>([]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const childrenToNudge = children.filter(c => {
+    const activeToday = c.last_active_date ? c.last_active_date.split('T')[0] === todayStr : false;
+    return !activeToday;
+  });
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
   const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
@@ -342,10 +357,11 @@ export default function ParentDashboard({
         title: rewardTitle,
         cost_points: rewardCost,
         icon_name: rewardIcon,
-        limit_type: rewardLimit
+        limit_type: rewardLimit,
+        is_badge_eligible: rewardBadgeEligible
       });
     } else {
-      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit);
+      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit, rewardBadgeEligible);
     }
     setShowAddReward(false);
     setRewardSubTab('directory');
@@ -381,154 +397,81 @@ export default function ParentDashboard({
     setRewardChildIds([reward.child_id || 'directory']);
     setRewardIcon(reward.icon_name);
     setRewardLimit(reward.limit_type || 'unlimited');
+    setRewardBadgeEligible(reward.is_badge_eligible || false);
     setShowAddReward(true);
   };
 
   return (
-    <div className={`min-h-screen bg-page text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
-      
-      {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-warning to-warning-shadow rounded-b-2xl shadow-sm z-0 pointer-events-none"></div>
+    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
+      {/* Ambient Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[40%] right-[-5%] w-80 h-80 bg-purple-400/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
-      <header className={`relative z-40 px-4 sm:px-8 pt-safe-top pt-6 pb-6 flex items-center justify-between gap-2`}>
-        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-          <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-white shadow-lg shadow-orange-500/20 flex items-center justify-center text-xl shrink-0`}>
-            <Settings className={`w-5 h-5 sm:w-6 sm:h-6 text-orange-500 animate-spin-slow`} />
-          </div>
-          <div className="min-w-0">
-            <h1 className={`text-lg sm:text-2xl font-black font-display tracking-wide text-amber-950 drop-shadow-sm truncate`}>
-              Parent Mission Control
-            </h1>
-            <p className={`hidden sm:block text-[10px] text-amber-900 font-bold font-mono tracking-widest uppercase truncate`}>{parentEmail}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <div className="relative">
+      <header className="bg-white border-b border-gray-100 relative z-20 pt-[max(env(safe-area-inset-top),_1rem)]">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
-              onClick={() => {
-                playSound.click();
-                setShowNotifications(!showNotifications);
-              }}
-              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-surface border-2 border-neutral-border text-dark hover:bg-surface-alt transition-all cursor-pointer relative shadow-[0_3px_0_0_var(--color-neutral-border)] active:translate-y-[2px] active:shadow-none"
-              id="notifications-bell-btn"
+              onClick={() => setActiveTab('settings')}
+              className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
             >
-              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-500" />
-              {totalPending > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-rose-500 text-[9px] sm:text-[10px] font-mono font-bold text-white ring-2 ring-white animate-bounce">
-                  {totalPending}
-                </span>
-              )}
+              <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
+            <div className="flex flex-col justify-center">
+              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 leading-none tracking-tight font-display">
+                Parent Center
+              </h1>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-slate-500 font-semibold mt-1.5">
+                {parentProfile?.name && <span>{parentProfile.name}</span>}
+                {parentProfile?.name && parentProfile?.family_name && <span className="opacity-50">•</span>}
+                {parentProfile?.family_name && <span>{parentProfile.family_name}</span>}
+                {(parentProfile?.name || parentProfile?.family_name) && <span className="opacity-50">•</span>}
+                <span className="truncate">{parentEmail}</span>
+              </div>
+            </div>
+          </div>
 
-            <AnimatePresence>
-              {showNotifications && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-3 w-[calc(100vw-2rem)] sm:w-80 rounded-3xl bg-surface border-3 border-neutral-border shadow-[0_6px_0_0_var(--color-neutral-border)] overflow-hidden p-4 space-y-3 z-50 text-dark"
-                  id="notifications-box"
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    playSound.click();
+                    onLogout();
+                  }}
+                  className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
+                  id="global-logout-btn"
+                  title="Sign Out"
                 >
-                  <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-                    <span className="font-bold text-xs font-mono tracking-wider text-amber-600 uppercase">INCOMING TELEMETRY</span>
-                    <span className="text-[8px] text-stone-500 font-mono">LIVE UPDATE</span>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-2">
-                    {totalPending === 0 ? (
-                      <p className="text-xs text-stone-500 py-4 text-center">No pending approvals. Channels clear!</p>
-                    ) : (
-                      <>
-                        {pendingApprovals.map(appr => {
-                          const child = children.find(c => c.id === appr.child_id);
-                          const task = tasks.find(t => t.id === appr.task_id);
-                          return (
-                            <div key={appr.id} className="p-2.5 bg-page rounded-xl text-xs flex gap-2 border border-neutral-border text-dark">
-                              <span className="text-lg"><FaBullhorn /></span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} finished a chore!</p>
-                                <p className="text-amber-600 font-semibold text-[11px] mt-0.5">{task?.title || 'Unknown Chores'}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {pendingRedemptions.map(req => {
-                          const child = children.find(c => c.id === req.child_id);
-                          return (
-                            <div key={req.id} className="p-2.5 bg-danger/10 rounded-xl text-xs flex gap-2 border border-danger/30 text-dark">
-                              <span className="text-lg"><FaGift /></span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} wants a reward!</p>
-                                <p className="text-rose-600 font-semibold text-[11px] mt-0.5">{rewards.find(r => r.id === req.reward_id)?.title || 'Unknown Reward'}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {pendingGiftingRequests.map(req => {
-                          const child = children.find(c => c.id === req.child_id);
-                          const typeIcon = req.type === 'charity' ? <FaGlobe className="inline-block text-blue-500" /> : <FaHeart className="inline-block text-pink-500" />;
-                          const title = req.type === 'charity' ? `Charity: ${req.charity_name}` : `Gift to: ${children.find(c => c.id === req.sibling_id)?.name}`;
-                          return (
-                            <div key={req.id} className="p-2.5 bg-info/10 rounded-xl text-xs flex gap-2 border border-info/30 text-dark">
-                              <span className="text-lg">{typeIcon}</span>
-                              <div>
-                                <p className="text-stone-800 font-bold">{child?.name || 'Child'} sent a gift!</p>
-                                <p className="text-blue-600 font-semibold text-[11px] mt-0.5">{title}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
-                </motion.div>
+                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  <span className="hidden sm:inline">SIGN OUT</span>
+                </button>
               )}
-            </AnimatePresence>
+              <button
+                onClick={() => {
+                  playSound.click();
+                  onExitParentMode();
+                }}
+                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                id="exit-to-child-view-btn"
+                title="Switch to Kid View"
+              >
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
           </div>
-
-          {onLogout && (
-            <button
-              onClick={() => {
-                playSound.click();
-                onLogout();
-              }}
-              className="flex items-center gap-1 sm:gap-2 bg-surface hover:bg-surface-alt text-dark font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
-              id="global-logout-btn"
-            >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600" />
-              <span>SIGN OUT</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              playSound.click();
-              onExitParentMode();
-            }}
-            className="flex items-center gap-1 sm:gap-2 bg-danger hover:bg-danger-hover text-white font-extrabold border-2 border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none active:scale-95 transition-all uppercase px-2.5 py-1.5 sm:px-4.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-mono"
-            id="exit-to-child-view-btn"
-          >
-            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>SWITCH TO KID VIEW</span>
-          </button>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-6 sm:mt-10 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-2 sm:mt-4 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
         
-        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-6 space-y-6 self-start`}>
-          <div className="space-y-1">
-            <span className={`text-[10px] font-bold font-mono text-amber-700 uppercase tracking-widest`}>ARCADE UTILITY RAILS</span>
-            <p className={`text-xs text-stone-500`}>Configure chore metrics and levels.</p>
-          </div>
-
+        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
-              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
+              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending },
               { id: 'children', label: 'CHILDREN', icon: Users, count: children.length },
               { id: 'tasks', label: 'QUESTS', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'PRIZES', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'TARGETS & POTS', icon: Target },
-
               { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -539,21 +482,21 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
                     isSelected 
-                      ? 'bg-rose-400 text-white shadow-md shadow-rose-400/30 scale-[1.02]'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 hover:scale-[1.01]'
+                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-slate-900 hover:scale-[1.01]'
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-slate-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className={`${isSelected ? 'bg-white text-rose-500' : tab.badgeColor + ' text-white'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
+                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
                       {tab.badge}
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${isSelected ? 'text-rose-100' : 'text-slate-400'} font-bold`}>
+                    <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-400' : 'text-gray-400'} font-bold`}>
                       ({tab.count})
                     </span>
                   )}
@@ -561,46 +504,24 @@ export default function ParentDashboard({
               );
             })}
           </nav>
-
-          <div className={`p-4 rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col gap-2`}>
-            <h4 className={`text-xs font-bold font-display ${styles.textColor} flex items-center gap-1.5`}>
-              <Sparkles className="w-4 h-4 text-amber-400" /> EVOLUTION ENGINE ACTIVE
-            </h4>
-            <p className={`text-[11px] ${styles.textMuted} leading-relaxed font-sans`}>
-              Child points automatically scale companions through 3 stages. Stage 1 is an egg pod, Stage 2 is adolescent form, and Stage 3 unlocks high-flying heroism (150+ pts)!
-            </p>
-          </div>
         </aside>
 
-        <main className="lg:col-span-9 bg-white rounded-[2rem] shadow-xl shadow-orange-900/5 p-4 sm:p-6 lg:p-8 overflow-y-auto min-h-[600px]">
+        <main className="lg:col-span-9 card-panel min-h-[600px] z-10">
           
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-8">
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Activity className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-pulse" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>COMPLETED</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{approvedCompletionsCount} <span className="hidden sm:inline">QUESTS</span></span>
-              </div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{approvedCompletionsCount}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">COMPLETED</span>
             </div>
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-200`}>
-                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate`}>ACTIVE</span>
-                <span className={`text-xs sm:text-xl font-black ${styles.titleColor} font-mono`}>{children.length} <span className="hidden sm:inline">{children.length === 1 ? 'CHILD' : 'CHILDREN'}</span></span>
-              </div>
+            
+            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{children.length}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">ACTIVE</span>
             </div>
-            <div className={`p-1.5 sm:p-4 rounded-lg sm:rounded-2xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col sm:flex-row items-center gap-1 sm:gap-4 text-center sm:text-left`}>
-              <div className={`p-1 sm:p-3 rounded-md sm:rounded-xl bg-rose-50 text-rose-700 border border-rose-200`}>
-                <ShieldAlert className="w-3.5 h-3.5 sm:w-5 sm:h-5 animate-bounce-slow" />
-              </div>
-              <div className="w-full">
-                <span className={`block text-[6px] sm:text-[8px] font-mono ${styles.textMuted} uppercase font-extrabold truncate text-rose-500`}>PENDING</span>
-                <span className={`text-xs sm:text-xl font-black text-rose-600 font-mono`}>{totalPending} <span className="hidden sm:inline">TASKS</span></span>
-              </div>
+            
+            <div className="bg-rose-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-rose-500 leading-none mb-1 sm:mb-2">{totalPending}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-rose-500 uppercase">PENDING</span>
             </div>
           </div>
 
@@ -612,222 +533,176 @@ export default function ParentDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 key="approvals-tab"
-                className="space-y-6"
+                className="space-y-6 sm:space-y-8"
                 id="approvals-view"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>INBOX & APPROVALS</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Authorize finished duties and deliver claimed prizes.</p>
-                  </div>
-                  <span className={`px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold font-mono`}>
-                    {totalPending} STANDBY
-                  </span>
-                </div>
-
-
-
-                {totalPending === 0 ? (
-                  <div className={`p-12 text-center rounded-3xl ${styles.cardBg} border ${styles.borderStyle} space-y-4`}>
-                    <span className="text-5xl inline-block animate-bounce-slow"><FaRocket className="text-purple-500" /></span>
-                    <h3 className={`text-lg font-black ${styles.titleColor} uppercase tracking-wide font-display`}>ALL CHANNELS CLEAR</h3>
-                    <p className={`text-xs ${styles.textMuted} max-w-sm mx-auto leading-relaxed`}>
-                      Whenever kids finish tasks or claim prizes, they will cascade here for parent authorisation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {pendingApprovals.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaBroom className="inline-block mr-2 text-stone-500" /> Pending Chores ({pendingApprovals.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingApprovals.map((appr) => {
-                            const child = children.find(c => c.id === appr.child_id);
-                            const task = tasks.find(t => t.id === appr.task_id);
-                            const character = CHARACTER_PACKS.find(cp => cp.id === child?.character_id);
-                            return (
-                              <div
-                                key={appr.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <img
-                                    src={child?.avatar_url || 'https://api.dicebear.com/7.x/adventurer/svg'}
-                                    alt="Child avatar"
-                                    className={`w-14 h-14 rounded-2xl p-1 border bg-stone-100 border-stone-200`}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  <div>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name}</span>
-                                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase`}>
-                                        {character?.name.split(' ')[0]}
-                                      </span>
-                                    </div>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {task?.title || 'Unknown Task'}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      COMPLETED AT: {new Date(appr.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className="flex gap-3">
-                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <Coins className="w-3.5 h-3.5 text-yellow-500" />
-                                      {task?.points || 0} Gold
-                                    </div>
-                                    <div className={`flex items-center gap-1.5 text-xs font-mono font-bold ${styles.textColor}`}>
-                                      <TrendingUp className="w-3.5 h-3.5 text-cyan-500" />
-                                      {task?.points ?? 0} Gold
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleReject(appr.id)}
-                                      className={`px-3 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1 border bg-stone-50 border-stone-200 text-stone-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200`}
-                                    >
-                                      <X className="w-4 h-4" /> REJECT
-                                    </button>
-                                    <button
-                                      onClick={() => handleApprove(appr.id)}
-                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                    >
-                                      <Check className="w-4 h-4 stroke-[3px]" /> AUTHORIZE
-                                    </button>
-                                  </div>
-                                </div>
+                
+                {/* Smart Reminders */}
+                {childrenToNudge.length > 0 && (
+                  <div className="space-y-3">
+                    <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-indigo-500" />
+                      Smart Reminders
+                    </h2>
+                    <div className="space-y-3">
+                      {childrenToNudge.map(child => {
+                        const isNudged = child.has_pending_nudge || nudgedChildIds.includes(child.id);
+                        return (
+                          <div key={child.id} className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="flex items-center gap-3">
+                              <img src={child.avatar_url || '/placeholder.png'} alt={child.name} className="w-10 h-10 rounded-full" />
+                              <div>
+                                <h3 className="font-bold text-slate-900 text-sm">{child.name} hasn't logged any activity today.</h3>
+                                <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-              
-                    {pendingRedemptions.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaGift className="inline-block mr-2 text-purple-500" /> Pending Prize Deliveries ({pendingRedemptions.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingRedemptions.map((delivery) => {
-                            const child = children.find(c => c.id === delivery.child_id);
-                            const reward = rewards.find(r => r.id === delivery.reward_id);
-                            return (
-                              <div
-                                key={delivery.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
-                                    🎁
-                                  </div>
-                                  <div>
-                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} claimed:</span>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {reward?.title || 'Unknown Reward'}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      CLAIMED AT: {new Date(delivery.redeemed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs text-rose-700`}>-{reward?.cost_points || 0} Gold</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        playSound.success();
-                                        onDeliverReward(delivery.id);
-                                      }}
-                                      className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                                    >
-                                      APPROVE
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        playSound.click();
-                                        onRejectReward(delivery.id);
-                                      }}
-                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
-                                    >
-                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {pendingGiftingRequests.length > 0 && (
-                      <div className="space-y-4">
-                        <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase border-b border-stone-200 pb-2`}>
-                          <FaHeart className="inline-block mr-2 text-pink-500" /> Pending Gifting Requests ({pendingGiftingRequests.length})
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {pendingGiftingRequests.map((req) => {
-                            const child = children.find(c => c.id === req.child_id);
-                            return (
-                              <div
-                                key={req.id}
-                                className={`p-5 rounded-3xl border flex flex-col justify-between gap-4 ${styles.cardBg} ${styles.borderStyle}`}
-                              >
-                                <div className="flex gap-4 items-start">
-                                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border bg-stone-100 border-stone-200`}>
-                                    {req.type === 'charity' ? <FaGlobe /> : <FaGift />}
-                                  </div>
-                                  <div>
-                                    <span className={`font-extrabold text-sm ${styles.textColor}`}>{child?.name} requested:</span>
-                                    <h3 className={`font-extrabold ${styles.titleColor} text-base mt-1.5`}>
-                                      {req.type === 'charity' ? `Donate to Charity (${(req as any).charity_name})` : `Gift to Sibling (${children.find(c => c.id === req.sibling_id)?.name})`}
-                                    </h3>
-                                    <p className={`text-[10px] font-mono ${styles.textMuted} mt-0.5`}>
-                                      REQUESTED AT: {new Date(req.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className={`flex items-center justify-between border-t border-stone-150 pt-4 mt-2`}>
-                                  <div className={`flex items-center gap-1.5 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-xl`}>
-                                    <span className={`font-mono font-black text-xs text-rose-700`}>{req.amount} Gold Coins</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        playSound.success();
-                                        onApproveGiftingRequest(req.id);
-                                      }}
-                                      className={`px-4 py-2 bg-primary hover:bg-primary-hover border border-neutral-border text-dark shadow-[0_2.5px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0.5px_0_0_var(--color-dark-shadow)] rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1 shadow-md`}
-                                    >
-                                      <Check className="w-4 h-4 stroke-[3px]" /> APPROVE
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        playSound.click();
-                                        onRejectGiftingRequest(req.id);
-                                      }}
-                                      className={`px-4 py-2 bg-stone-50 border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-rose-600 rounded-xl text-xs font-mono font-black cursor-pointer transition-all flex items-center gap-1`}
-                                    >
-                                      <X className="w-4 h-4 stroke-[3px]" /> DENY
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                            </div>
+                            <Button 
+                              variant={isNudged ? "secondary" : "primary"} 
+                              size="sm" 
+                              className="shrink-0"
+                              disabled={isNudged}
+                              onClick={() => {
+                                setNudgedChildIds(prev => [...prev, child.id]);
+                                playSound.success();
+                                onEditChild(child.id, { 
+                                  has_pending_nudge: true, 
+                                  last_nudge_time: new Date().toISOString() 
+                                });
+                              }}
+                            >
+                              {isNudged ? 'Nudged!' : 'Send Nudge'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
+
+                {/* Needs Approval */}
+                <div className="space-y-3">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    Needs Approval
+                  </h2>
+                  
+                  {totalPending === 0 ? (
+                    <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+                      <div className="text-4xl mb-3 text-amber-400">✨</div>
+                      <h3 className="font-black text-slate-900 text-sm mb-1">All Caught Up!</h3>
+                      <p className="text-gray-400 text-xs">No pending tasks to approve.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingApprovals.map((appr) => {
+                        const child = children.find(c => c.id === appr.child_id);
+                        const task = tasks.find(t => t.id === appr.task_id);
+                        return (
+                          <div key={appr.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <img src={child?.avatar_url || '/placeholder.png'} className="w-12 h-12 rounded-xl bg-gray-50" />
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} finished {task?.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="secondary" size="sm" onClick={() => handleReject(appr.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => handleApprove(appr.id)}>Approve</Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      
+                      {pendingRedemptions.map((req) => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const reward = rewards.find(r => r.id === req.reward_id);
+                        return (
+                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} claimed {reward?.title}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{new Date(req.redeemed_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="secondary" size="sm" onClick={() => onRejectReward(req.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => onDeliverReward(req.id)}>Approve</Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+
+                      {pendingGiftingRequests.map((req) => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const typeIcon = req.type === 'charity' ? '🌍' : '💝';
+                        const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
+                        return (
+                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                            <div className="flex gap-4">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>
+                                {typeIcon}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm">{child?.name} wants to give!</p>
+                                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">{title} (<CoinBadge points={req.amount} size="sm" />)</p>
+                                <p className="text-[10px] text-gray-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="secondary" size="sm" onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)}>Deny</Button>
+                              <Button variant="primary" size="sm" onClick={() => onApproveGiftingRequest && onApproveGiftingRequest(req.id)}>Approve</Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Activity */}
+                <div className="space-y-3">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                    Recent Activity
+                  </h2>
+                  <div className="space-y-2">
+                    {[
+                      ...completions.filter(c => c.status === 'approved').map(c => ({
+                        id: c.id,
+                        type: 'task',
+                        title: tasks.find(t => t.id === c.task_id)?.title || 'Unknown Task',
+                        points: tasks.find(t => t.id === c.task_id)?.points || 0,
+                        date: new Date(c.completed_at),
+                      })),
+                      ...redemptions.filter(r => r.status === 'delivered').map(r => ({
+                        id: r.id,
+                        type: 'reward',
+                        title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
+                        points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
+                        date: new Date(r.redeemed_at),
+                      }))
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10).map((activity, i) => (
+                      <div key={`${activity.id}-${i}`} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-50 text-gray-500'}`}>
+                            {activity.type === 'task' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : '🍦'}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 text-xs sm:text-sm">{activity.title}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
+                        </div>
+                        <div className={`font-black text-xs sm:text-sm shrink-0 flex items-center justify-center`}>
+                          <CoinBadge points={activity.points} size="sm" disabled={activity.type !== 'task'} />
+                        </div>
+                      </div>
+                    ))}
+                    {[...completions.filter(c => c.status === 'approved'), ...redemptions.filter(r => r.status === 'delivered')].length === 0 && (
+                      <div className="text-center p-8 text-gray-400 text-xs">No recent activity yet.</div>
+                    )}
+                  </div>
+                </div>
+
               </motion.div>
             )}
 
@@ -840,18 +715,15 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="children-view"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className={`text-2xl font-black font-display ${styles.titleColor}`}>CHILDREN REGISTER</h2>
-                    <p className={`text-xs ${styles.textMuted}`}>Initialize new operators and monitor active companion level caps.</p>
-                  </div>
-                  <button
+                <div className="flex justify-end items-center">
+                  <Button
+                    variant="dark"
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
-                    className={`bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2.5 px-4 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all font-mono`}
                     id="add-child-btn-top"
+                    leftIcon={<UserPlus className="w-4 h-4" />}
                   >
-                    <UserPlus className="w-4 h-4" /> REGISTER NEW CHILD
-                  </button>
+                    ADD CHILD
+                  </Button>
                 </div>
 
                 {showAddChild && (
@@ -873,7 +745,7 @@ export default function ParentDashboard({
                             value={newChildName}
                             onChange={(e) => setNewChildName(e.target.value)}
                             placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -882,7 +754,7 @@ export default function ParentDashboard({
                           <select
                             value={newChildChar}
                             onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             {CHARACTER_PACKS.map(char => (
                               <option key={char.id} value={char.id}>
@@ -910,14 +782,16 @@ export default function ParentDashboard({
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase tracking-wider`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddChild(false);
                             setEditingChildId(null);
@@ -925,26 +799,23 @@ export default function ParentDashboard({
                             setNewChildChar('unicorn');
                             setNewChildAvatar('/avatars/boy_fox.png');
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {sortedChildren.map((child) => {
                     const stage = getCharacterStage(child.character_id, child.level);
                     const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
                     return (
                       <div
                         key={child.id}
-                        className={`p-5 rounded-3xl ${styles.cardBg} border ${styles.borderStyle} flex flex-col gap-4 relative overflow-hidden`}
+                        className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
                       >
-                        <div className={`absolute top-0 inset-x-0 h-2 bg-gradient-to-r ${stage.color_theme}`} />
-
                         <div className="flex gap-4 items-center pr-8">
                           <img
                             src={child.avatar_url}
@@ -955,9 +826,8 @@ export default function ParentDashboard({
                           <div className="flex-1 min-w-0">
                             <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
-                              <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <Coins className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                                <span>{child.points} Gold</span>
+                              <div className={`flex items-center gap-2 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
+                                <CoinBadge points={child.points} size="sm" />
                               </div>
                               {child.savings_unlocked && (
                                 <div className={`flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 whitespace-nowrap`}>
@@ -972,20 +842,23 @@ export default function ParentDashboard({
                             </div>
                           </div>
                           <div className="absolute top-4 right-4 flex gap-1.5">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => openEditChild(child)}
-                              className={`p-2 rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
                             >
                               <Edit2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                             {onDeleteChild && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                                className={`p-2 rounded-xl transition-all cursor-pointer border bg-rose-50 border-rose-200 text-rose-400 hover:bg-rose-100 hover:text-rose-600`}
                                 title="Delete child"
+                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -1067,12 +940,11 @@ export default function ParentDashboard({
                             <span className="uppercase">LEVEL {child.level} PROGRESS</span>
                             <span className={`font-extrabold ${styles.titleColor}`}>{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
                           </div>
-                          <div className={`w-full h-3 rounded-full overflow-hidden p-0.5 border bg-stone-100 border-stone-200 mt-2`}>
-                            <div 
-                              className={`h-full rounded-full bg-gradient-to-r ${stage.color_theme}`}
-                              style={{ width: `${Math.min(100, (((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100)}%` }}
-                            />
-                          </div>
+                          <LinearProgressBar 
+                            progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                            heightClass="h-3"
+                            className="mt-2"
+                          />
                         </div>
                       </div>
                     );
@@ -1109,7 +981,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingTaskId ? <span><FaPen className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><FaBroom className="inline-block mr-2"/> Create Quest Blueprint</span>}
+                      {editingTaskId ? <span><Edit2 className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><Sparkles className="inline-block mr-2"/> Create Quest Blueprint</span>}
                     </h3>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1120,7 +992,7 @@ export default function ParentDashboard({
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
                             placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1132,7 +1004,7 @@ export default function ParentDashboard({
                               min="0"
                               value={taskPoints}
                               onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             />
                           </div>
                         </div>
@@ -1142,7 +1014,7 @@ export default function ParentDashboard({
                           <select
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
@@ -1158,7 +1030,7 @@ export default function ParentDashboard({
                               min="1"
                               value={taskCooldownMinutes || ''}
                               onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                               required
                             />
                           </div>
@@ -1166,14 +1038,16 @@ export default function ParentDashboard({
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddTask(false);
                             setEditingTaskId(null);
@@ -1181,10 +1055,9 @@ export default function ParentDashboard({
                             setTaskPoints(15);
                             setTaskCooldownMinutes(undefined);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
@@ -1194,43 +1067,47 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR TASKS */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0">
+                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
                     <button
                       onClick={() => setTaskSubTab('directory')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'directory'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
+                      BLUEPRINTS
                     </button>
                     <button
                       onClick={() => setTaskSubTab('active')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'active'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
+                      ASSIGNED
                     </button>
                   </div>
                   
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={handleImportDefaultTasks}
-                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
+                      leftIcon={<Plus className="w-3.5 h-3.5" />}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </button>
-                    <button
+                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                    </Button>
+                    <Button
+                      variant="dark"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-chore-btn-top"
+                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> CREATE <span className="hidden sm:inline">TEMPLATE</span>
-                    </button>
+                      CREATE <span className="hidden sm:inline">TEMPLATE</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -1244,52 +1121,45 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-2 sm:gap-4">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
-                                  {task.category.toUpperCase()}
-                                </span>
-                                <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
-                                  <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                                </div>
+                        <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                                <FaStar />
                               </div>
-                              <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
-                              <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                                Assigned to: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
-                              </p>
+                              <div>
+                                <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                  <span className="mx-2">•</span>
+                                  Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
-                              <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
-                                +{task.points} GOLD
-                              </span>
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <CoinBadge points={task.points} size="lg" />
+                            </div>
+                          </div>
 
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
-                                }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              >
-                                ASSIGN
-                              </button>
+                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                              }}
+                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                            >
+                              Assign to Child
+                            </button>
 
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => openEditTask(task)}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => { playSound.click(); onDeleteTask(task.id); }}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
 
@@ -1299,9 +1169,9 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
+                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-gray-100"
                               >
-                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                <p className="text-[10px] font-mono font-bold text-gray-500 uppercase">
                                   Select children to assign this quest:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1324,7 +1194,7 @@ export default function ParentDashboard({
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border border-slate-700/50 object-cover" />
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border dashboard-card border-slate-700/50 object-cover" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1345,65 +1215,51 @@ export default function ParentDashboard({
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
                 <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE QUESTS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
-                      <div
-                        key={task.id}
-                        className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
-                      >
-                        <div className="flex justify-between items-start gap-2 sm:gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                              <span className={`text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200`}>
-                                {task.category.toUpperCase()}
-                              </span>
-                              <div className={`flex gap-2 sm:gap-3 text-xs sm:text-sm font-mono font-bold ${styles.textColor}`}>
-                                <span className="flex items-center gap-1"><Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" /> {task.points}</span>
-                              </div>
+                      <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                              <FaStar />
                             </div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base mt-1 sm:mt-2 font-display`}>{task.title}</h3>
-                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                              Child assigned: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
-                            </p>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Assigned: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                                <span className="mx-2">•</span>
+                                Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                              </p>
+                            </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-1.5 sm:gap-3 shrink-0">
-                            <span className={`font-mono font-black text-xs sm:text-sm text-emerald-700 hidden sm:inline-block`}>
-                              +{task.points} GOLD
-                            </span>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                              <CoinBadge points={task.points} size="lg" />
+                          </div>
+                        </div>
 
-                            <button
-                              onClick={() => {
-                                playSound.success();
-                                onParentCompleteTask(task.id, task.child_id);
-                              }}
-                              className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              id={`parent-complete-${task.id}`}
-                            >
-                              COMPLETE
+                        <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              playSound.success();
+                              onParentCompleteTask(task.id, task.child_id);
+                            }}
+                            id={`parent-complete-${task.id}`}
+                          >
+                            Mark Complete
+                          </Button>
+
+                          <div className="flex gap-2">
+                            <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Edit2 className="w-4 h-4" />
                             </button>
-
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => openEditTask(task)}
-                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                              >
-                                <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  onDeleteTask(task.id);
-                                }}
-                                className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                id={`delete-task-${task.id}`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              </button>
-                            </div>
+                            <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1445,7 +1301,7 @@ export default function ParentDashboard({
                   >
 
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
-                      {editingRewardId ? <span><FaPen className="inline-block mr-2"/> Edit Reward Token</span> : <span><FaGift className="inline-block mr-2"/> Define Reward Token</span>}
+                      {editingRewardId ? <span><Edit2 className="inline-block mr-2"/> Edit Reward Token</span> : <span><Gift className="inline-block mr-2"/> Define Reward Token</span>}
                     </h3>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1456,7 +1312,7 @@ export default function ParentDashboard({
                             value={rewardTitle}
                             onChange={(e) => setRewardTitle(e.target.value)}
                             placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             required
                           />
                         </div>
@@ -1466,7 +1322,7 @@ export default function ParentDashboard({
                             type="number"
                             value={rewardCost}
                             onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                             min="10"
                             max="500"
                             required
@@ -1478,13 +1334,13 @@ export default function ParentDashboard({
                           <select
                             value={rewardIcon}
                             onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="Gamepad2"><FaGamepad className="inline-block mr-2 text-blue-500" /> Game Time</option>
-                            <option value="Pizza"><FaPizzaSlice className="inline-block mr-2 text-orange-500" /> Favorite Meal</option>
-                            <option value="Palette"><FaPalette className="inline-block mr-2 text-purple-500" /> Creative / Art</option>
-                            <option value="BookOpen"><FaBookOpen className="inline-block mr-2 text-green-500" /> Storybooks</option>
-                            <option value="Sparkles"><FaWandMagicSparkles className="inline-block mr-2 text-pink-500" /> Special Trip</option>
+                            <option value="Gamepad2">🎮 Game Time</option>
+                            <option value="Pizza">🍕 Favorite Meal</option>
+                            <option value="Palette">🎨 Creative / Art</option>
+                            <option value="BookOpen">📖 Storybooks</option>
+                            <option value="Sparkles">✨ Special Trip</option>
                           </select>
                         </div>
                         <div className="md:col-span-2">
@@ -1492,35 +1348,48 @@ export default function ParentDashboard({
                           <select
                             value={rewardLimit}
                             onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
                           >
-                            <option value="unlimited"><FaInfinity className="inline-block mr-2" /> Unlimited</option>
-                            <option value="daily"><FaCalendar className="inline-block mr-2" /> 1x Daily</option>
-                            <option value="twice_daily"><FaHandPeace className="inline-block mr-2 text-yellow-500" /> 2x Daily (Requires cooldown)</option>
-                            <option value="one_time"><FaBullseye className="inline-block mr-2 text-red-500" /> One-Time (Disappears after use)</option>
+                            <option value="unlimited">♾️ Unlimited</option>
+                            <option value="daily">📅 1x Daily</option>
+                            <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
+                            <option value="one_time">🎯 One-Time (Disappears after use)</option>
                           </select>
+                        </div>
+                        <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                          <input
+                            type="checkbox"
+                            id="rewardBadgeEligible"
+                            checked={rewardBadgeEligible}
+                            onChange={(e) => setRewardBadgeEligible(e.target.checked)}
+                            className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
+                          />
+                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-mono text-stone-600`}>
+                            Eligible as a free badge reward (Small Reward)
+                          </label>
                         </div>
                       </div>
 
                       <div className="flex gap-2">
-                        <button
+                        <Button
                           type="submit"
-                          className={`flex-1 bg-warning hover:bg-warning-hover border border-neutral-border shadow-[0_3px_0_0_var(--color-dark-shadow)] text-dark py-2.5 rounded-xl text-xs font-black cursor-pointer font-mono uppercase`}
+                          variant="warning"
+                          className="flex-1"
                         >
                           {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => {
                             setShowAddReward(false);
                             setEditingRewardId(null);
                             setRewardTitle('');
                             setRewardCost(50);
                           }}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-mono border bg-white border-stone-200 text-stone-500 hover:bg-stone-50`}
                         >
                           CANCEL
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </motion.div>
@@ -1530,43 +1399,47 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR REWARDS */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex gap-2 overflow-x-auto pb-1 xl:pb-0">
+                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
                     <button
                       onClick={() => setRewardSubTab('directory')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'directory'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      BLUEPRINTS <span className="hidden sm:inline">(DIRECTORY)</span>
+                      BLUEPRINTS
                     </button>
                     <button
                       onClick={() => setRewardSubTab('active')}
-                      className={`shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold font-mono transition-all ${
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'active'
-                          ? ('bg-stone-900 text-white')
-                          : ('bg-stone-100 text-stone-500 hover:text-stone-900')
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
                       }`}
                     >
-                      ASSIGNED <span className="hidden sm:inline">(ACTIVE)</span>
+                      ASSIGNED
                     </button>
                   </div>
 
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={handleImportDefaultRewards}
-                      className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold font-mono transition-colors border border-stone-300 text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 sm:gap-2`}
+                      leftIcon={<Plus className="w-3.5 h-3.5" />}
                     >
-                      <Plus className="w-3.5 h-3.5" /> IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </button>
-                    <button
+                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                    </Button>
+                    <Button
+                      variant="dark"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
                       onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      className={`flex-1 sm:flex-none justify-center bg-dark hover:bg-dark-hover text-white shadow-[0_3px_0_0_var(--color-dark-shadow)] font-bold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-[10px] sm:text-xs flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all font-mono`}
                       id="add-reward-btn-top"
+                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> ADD <span className="hidden sm:inline">REWARD</span>
-                    </button>
+                      ADD <span className="hidden sm:inline">REWARD</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -1579,51 +1452,45 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className={`border p-2 sm:p-3 rounded-xl flex flex-col gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}>
-                          <div className="flex justify-between items-start gap-2 sm:gap-4">
-                            <div className="flex gap-2 sm:gap-3 items-center">
-                              <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
+                        <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-4 items-center">
+                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                                <FaGift />
+                              </div>
                               <div>
-                                <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
-                                  {reward.title}
-                                </h3>
-                                <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                                  Assigned: <strong className={`font-bold text-amber-700`}>{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</strong>
-                                  <span className="mx-1 sm:mx-2">•</span>
-                                  Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
+                                <h3 className="font-bold text-slate-900 text-sm">{reward.title}</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                  <span className="mx-2">•</span>
+                                  Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                 </p>
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-end gap-1.5 sm:gap-3">
-                              <span className={`font-mono font-black text-xs sm:text-sm text-amber-600 hidden sm:inline-block`}>
-                                {reward.cost_points} GOLD
-                              </span>
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <CoinBadge points={reward.cost_points} size="lg" />
+                            </div>
+                          </div>
 
-                              <button
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
-                                }}
-                                className="font-black font-mono py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-warning hover:bg-warning-hover border border-dark text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)] sm:shadow-[0_3px_0_0_var(--color-dark-shadow)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_var(--color-dark-shadow)] active:translate-y-1"
-                              >
-                                ASSIGN
-                              </button>
+                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                            <button
+                              onClick={() => {
+                                playSound.click();
+                                setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
+                              }}
+                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                            >
+                              Assign to Child
+                            </button>
 
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => openEditReward(reward)}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                                <button
-                                  onClick={() => { playSound.click(); onDeleteReward(reward.id); }}
-                                  className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </button>
-                              </div>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
 
@@ -1633,9 +1500,9 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-200`}
+                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
                               >
-                                <p className={`text-[10px] font-mono font-bold ${styles.textMuted} uppercase`}>
+                                <p className={`text-[10px] font-bold text-gray-500 uppercase`}>
                                   Select children to assign this reward:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1652,13 +1519,13 @@ export default function ParentDashboard({
                                             : [...currentAssignedIds, child.id];
                                           onAssignReward(reward, newAssignedIds);
                                         }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-dark border-neutral-border text-white shadow-[0_2px_0_0_var(--color-dark-shadow)]')
-                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
+                                            ? ('bg-slate-900 border-slate-900 text-white')
+                                            : ('bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border border-slate-700/50 object-cover" />
+                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full object-cover" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1680,55 +1547,48 @@ export default function ParentDashboard({
                 {/* ACTIVE REWARDS */}
                 {rewardSubTab === 'active' && (
                 <div className="mt-4">
-                  <h3 className={`text-xl font-black font-display ${styles.titleColor} mb-4`}>ACTIVE REWARDS (ASSIGNED)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
-                      <div
-                        key={reward.id}
-                        className={`border p-2 sm:p-3 rounded-xl flex justify-between items-center gap-1.5 sm:gap-2 ${styles.cardBg} ${styles.borderStyle}`}
-                      >
-                        <div className="flex gap-2 sm:gap-3 items-center">
-                          <span className={`text-xl sm:text-2xl bg-stone-100 border border-stone-200 p-1.5 sm:p-2 rounded-xl`}><FaGift /></span>
-                          <div>
-                            <h3 className={`font-extrabold ${styles.titleColor} text-sm sm:text-base font-display`}>
-                              {reward.title}
-                              {!reward.is_available && reward.limit_type === 'one_time' && (
-                                <span className="ml-1 sm:ml-2 text-[8px] sm:text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 font-bold uppercase align-middle">
-                                  CLAIMED
-                                </span>
-                              )}
-                            </h3>
-                            <p className={`text-[10px] sm:text-xs ${styles.textMuted} mt-0.5 sm:mt-1`}>
-                              Available for: <strong className={`font-bold text-amber-700`}>{assignedName || 'None'}</strong>
-                              <span className="mx-1 sm:mx-2">•</span>
-                              Limit: <strong className="font-bold uppercase text-[8px] sm:text-[9px]">{(reward.limit_type || 'unlimited').replace('_', ' ')}</strong>
-                            </p>
+                      <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                              <FaGift />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-sm">
+                                {reward.title}
+                                {!reward.is_available && reward.limit_type === 'one_time' && (
+                                  <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
+                                    CLAIMED
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Available for: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                                <span className="mx-2">•</span>
+                                Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className="w-12 h-12 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
+                              {reward.cost_points}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-1.5 sm:gap-3">
-                          <span className={`font-mono font-black text-xs sm:text-sm text-amber-600`}>
-                            {reward.cost_points} GOLD
-                          </span>
+                        <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditReward(reward)}
-                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-900`}
-                            >
-                              <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                playSound.click();
-                                onDeleteReward(reward.id);
-                              }}
-                              className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all cursor-pointer border bg-stone-50 border-stone-200 text-stone-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200`}
-                              id={`delete-reward-${reward.id}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            </button>
+                            <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1741,7 +1601,7 @@ export default function ParentDashboard({
                 {/* History Log */}
                 <div className="pt-8 border-t border-slate-800">
                   <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
-                    <FaScroll className="inline-block mr-2 text-stone-500" /> Dispensation History Log
+                    <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
                   </h3>
                   <div className="space-y-3">
                     {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
@@ -1764,15 +1624,17 @@ export default function ParentDashboard({
                                 </p>
                               </div>
                               {isOneTimeUsed && (
-                                <button
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => {
                                     playSound.success();
                                     onRestoreReward(reward.id);
                                   }}
-                                  className={`px-3 py-1.5 rounded text-[10px] font-mono font-bold uppercase border border-amber-500/50 text-amber-700 hover:bg-amber-50`}
+                                  className="border-amber-500/50 text-amber-700 hover:bg-amber-50"
                                 >
                                   RESTORE ONE-TIME
-                                </button>
+                                </Button>
                               )}
                             </div>
                           );
@@ -1851,27 +1713,25 @@ export default function ParentDashboard({
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => { playSound.click(); setResetConfirmation(null); }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors ${
-                      'bg-stone-100 hover:bg-stone-200 text-stone-700'
-                    }`}
+                    className="flex-1 bg-stone-100"
                   >
                     CANCEL
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={() => {
                       playSound.purchase();
                       if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] ${
-                      'bg-gradient-to-r from-rose-500 to-red-500'
-                    }`}
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-500"
                   >
                     RESET NOW
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1908,22 +1768,24 @@ export default function ParentDashboard({
                   ⚠️ This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => { playSound.click(); setDeleteChildConfirmation(null); }}
-                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm transition-colors bg-stone-100 hover:bg-stone-200 text-stone-700"
+                    className="flex-1 bg-stone-100"
                   >
                     CANCEL
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
                     onClick={() => {
                       playSound.purchase();
                       if (onDeleteChild) onDeleteChild(deleteChildConfirmation.childId);
                       setDeleteChildConfirmation(null);
                     }}
-                    className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-sm text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.96] bg-gradient-to-r from-rose-500 to-red-600"
+                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-600"
                   >
                     DELETE
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1931,14 +1793,13 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-50 flex justify-around items-center px-4 py-3 pb-safe rounded-t-[2rem]">
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
           {[
-            { id: 'approvals', icon: CheckSquare, badge: totalPending, badgeColor: 'bg-rose-500' },
-            { id: 'children', icon: Users },
-            { id: 'tasks', icon: CheckSquare },
-            { id: 'rewards', icon: Trophy },
-            { id: 'compliance', icon: ShieldCheck },
-            { id: 'settings', icon: Settings }
+            { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
+            { id: 'children', label: 'Children', icon: Users },
+            { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+            { id: 'rewards', label: 'Rewards', icon: Trophy },
+            { id: 'targets', label: 'Targets', icon: Target }
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -1946,15 +1807,14 @@ export default function ParentDashboard({
               <button
                 key={tab.id}
                 onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                className={`relative p-3 rounded-2xl transition-all flex flex-col items-center justify-center duration-300 ${
-                  isSelected
-                    ? 'text-white bg-rose-400 shadow-md shadow-rose-400/40 scale-110'
-                    : 'text-slate-400 hover:text-slate-600'
+                className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-all duration-300 rounded-[1.25rem] ${
+                  isSelected ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={isSelected ? 2.5 : 2} />
-                {tab.badge !== undefined && tab.badge > 0 && !isSelected && (
-                  <span className={`absolute top-0 right-0 ${tab.badgeColor} text-white text-[8px] font-mono px-1.5 py-0.5 rounded-full font-bold shadow-sm`}>
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />
+                <span className={`text-[9px] font-bold tracking-tight`}>{tab.label}</span>
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10">
                     {tab.badge}
                   </span>
                 )}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { Typography } from '../ui/Typography';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { PREMADE_REWARDS } from '../../data/premadeTemplates';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { Button } from '../ui/Button';
 
 interface StepRewardsSelectionProps {
   theme: ThemeId;
@@ -31,8 +33,8 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
   };
 
   return (
-    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 py-6 flex flex-col justify-center h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl ${styles.cardBg} space-y-4 shadow-xl flex flex-col h-[85vh] overflow-hidden relative z-10`}>
+    <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col h-[100dvh]`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl space-y-4 flex flex-col h-[85vh] overflow-hidden relative z-10`}>
         <div className="text-center space-y-2 shrink-0">
           <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Rewards</h2>
           <p className={`text-xs ${styles.textMuted}`}>Select some common rewards to add to your children's dashboard right away. You can add more later!</p>
@@ -89,18 +91,22 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
         </div>
 
         <div className="flex gap-3 pt-4 shrink-0 border-t border-stone-200">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onBack}
-            className="p-3.5 rounded-xl border-2 border-stone-200 text-stone-500 hover:bg-stone-50"
           >
             <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            fullWidth
+            className="flex-1"
             onClick={handleContinue}
-            className={`flex-1 ${styles.btnPrimary} py-3.5 rounded-xl flex items-center justify-center gap-2 font-display uppercase tracking-wide shadow-lg`}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            Continue <ArrowRight className="w-4 h-4" />
-          </button>
+            Continue
+          </Button>
         </div>
       </div>
     </div>
