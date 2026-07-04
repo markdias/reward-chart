@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CheckCircle2, Star, Sparkles, Medal, Rocket, Wand2, PartyPopper, PawPrint } from 'lucide-react';
 import { Typography } from './ui/Typography';
 import Confetti from './Confetti';
 
@@ -18,10 +19,10 @@ const KEYFRAMES = `
 const THEMES = [
   {
     id: 'rainbow',
-    name: 'Rainbow Magic 🦄',
-    desc: 'Soft pastels and magical unicorns',
+    name: 'Rainbow Magic',
+    desc: 'Soft pastels and magic wands',
     bg: 'radial-gradient(circle at 50% 50%, #fdf4ff 0%, #fbcfe8 40%, #e0e7ff 100%)',
-    icon: '🦄',
+    icon: <Wand2 className="w-32 h-32 text-fuchsia-500" strokeWidth={2.5} />,
     title: 'MAGICAL!',
     titleColor: '#d946ef', // fuchsia
     titleStroke: '4px #ffffff',
@@ -30,14 +31,14 @@ const THEMES = [
     badgeBorder: 'border-[5px] border-fuchsia-300',
     badgeRadius: 'rounded-full',
     badgeTextColor: 'text-fuchsia-600',
-    badgeIcon: '✨',
+    badgeIcon: <Sparkles className="w-5 h-5 text-fuchsia-400" />,
   },
   {
-    id: 'dino',
-    name: 'Dino Safari 🦖',
-    desc: 'Jungle greens and roaring dinos',
+    id: 'safari',
+    name: 'Wild Safari',
+    desc: 'Jungle greens and paw prints',
     bg: 'radial-gradient(circle at 50% 50%, #dcfce7 0%, #bbf7d0 50%, #86efac 100%)',
-    icon: '🦖',
+    icon: <PawPrint className="w-32 h-32 text-orange-500" strokeWidth={2.5} />,
     title: 'ROAR-SOME!',
     titleColor: '#f97316', // orange
     titleStroke: '4px #ffffff',
@@ -46,14 +47,14 @@ const THEMES = [
     badgeBorder: 'border-[5px] border-orange-400',
     badgeRadius: 'rounded-3xl', // slightly blocky
     badgeTextColor: 'text-orange-800',
-    badgeIcon: '🐾',
+    badgeIcon: <CheckCircle2 className="w-5 h-5 text-orange-500" />,
   },
   {
     id: 'space',
-    name: 'Space Explorer 🚀',
+    name: 'Space Explorer',
     desc: 'Cosmic colors and rockets',
     bg: 'radial-gradient(circle at 50% 50%, #2e1065 0%, #172554 60%, #020617 100%)',
-    icon: '🚀',
+    icon: <Rocket className="w-32 h-32 text-cyan-400" strokeWidth={2.5} />,
     title: 'STELLAR!',
     titleColor: '#22d3ee', // cyan
     titleStroke: '3px #ffffff',
@@ -62,14 +63,14 @@ const THEMES = [
     badgeBorder: 'border-[3px] border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]',
     badgeRadius: 'rounded-full',
     badgeTextColor: 'text-cyan-300',
-    badgeIcon: '⭐',
+    badgeIcon: <Star className="w-5 h-5 text-cyan-400 fill-cyan-400" />,
   },
   {
     id: 'party',
-    name: 'Candy Party 🍭',
+    name: 'Party Time',
     desc: 'Bright stripes and celebrations',
     bg: 'repeating-linear-gradient(45deg, #fef08a 0px, #fef08a 40px, #fecdd3 40px, #fecdd3 80px)',
-    icon: '🎉',
+    icon: <PartyPopper className="w-32 h-32 text-rose-500" strokeWidth={2.5} />,
     title: 'YAYYY!',
     titleColor: '#ffffff',
     titleStroke: '4px #e11d48', // rose
@@ -78,7 +79,7 @@ const THEMES = [
     badgeBorder: 'border-[5px] border-rose-400',
     badgeRadius: 'rounded-2xl',
     badgeTextColor: 'text-rose-600',
-    badgeIcon: '🎈',
+    badgeIcon: <Medal className="w-5 h-5 text-rose-500" />,
   },
 ];
 
@@ -151,7 +152,7 @@ export default function WellDoneShowcase() {
             {/* Massive Playful Icon */}
             <div 
               key={`icon-${activeTheme.id}-${showConfetti}`}
-              className="text-[8rem] leading-none filter drop-shadow-2xl"
+              className="flex justify-center items-center filter drop-shadow-2xl"
               style={{ animation: 'kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards, kid-float 3s ease-in-out infinite 0.8s' }}
             >
               {activeTheme.icon}
@@ -190,7 +191,9 @@ export default function WellDoneShowcase() {
               className={`mt-8 flex items-center gap-3 px-6 py-3 ${activeTheme.badgeRadius} ${activeTheme.badgeBg} ${activeTheme.badgeBorder} shadow-xl`}
               style={{ animation: 'kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s forwards', opacity: 0 }}
             >
-              <span className="text-xl">{activeTheme.badgeIcon}</span>
+              <div className="flex-shrink-0 flex items-center justify-center">
+                {activeTheme.badgeIcon}
+              </div>
               <span className={`font-black font-sans text-base tracking-wide ${activeTheme.badgeTextColor}`}>
                 {taskName}
               </span>
