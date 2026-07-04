@@ -575,7 +575,7 @@ export default function ChildDashboard({
       </AnimatePresence>
 
       {/* Well Done celebration overlay (anime.js powered) */}
-      <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} />
+      <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} companionId={activeChild?.character_id} />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
