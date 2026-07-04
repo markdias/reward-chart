@@ -1819,8 +1819,8 @@ export default function ChildDashboard({
                             }
                             return true;
                           }).length === 0 ? (
-                            <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500" /></span>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-3`}>
+                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
                               <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
