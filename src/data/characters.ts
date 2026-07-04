@@ -2,25 +2,18 @@ import { CharacterPack, CharacterEvolutionStage } from '../types';
 import { CHARACTER_SVG_FALLBACKS } from './characterSvgs';
 
 export const PRECANNED_AVATARS = [
-  // Boy-themed new avatars
-  '/avatars/boy_fox.png',
-  '/avatars/boy_puppy.png',
-  '/avatars/boy_kitten.png',
-  '/avatars/boy_bunny.png',
-  '/avatars/boy_bear.png',
-  '/avatars/boy_owl.png',
-  // Girl-themed new avatars
-  '/avatars/girl_fox.png',
-  '/avatars/girl_puppy.png',
-  '/avatars/girl_kitten.png',
-  '/avatars/girl_bunny.png',
-  '/avatars/girl_bear.png',
-  '/avatars/girl_owl.png',
-  // Boy items
-  '/avatars/boy_car.png',
-  '/avatars/boy_rocket.png',
-  '/avatars/boy_dino.png',
-  '/avatars/boy_gamepad.png'
+  'Cat',
+  'Dog',
+  'Rabbit',
+  'Bird',
+  'Rocket',
+  'Star',
+  'Crown',
+  'Car',
+  'Gamepad2',
+  'Smile',
+  'Heart',
+  'Zap'
 ];
 
 export const CHARACTER_PACKS: CharacterPack[] = [

@@ -5,6 +5,7 @@ import { Child } from '../../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { ChildAvatar } from '../ChildAvatar';
 
 interface StepChildrenSetupProps {
   theme: ThemeId;
@@ -83,7 +84,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden p-1 border shrink-0">
                       {child.avatar_url ? (
-                        <img src={child.avatar_url} alt={child.name} className="w-full h-full object-contain" />
+                        <ChildAvatar iconName={child.avatar_url} className="w-full h-full" />
                       ) : (
                         <User className="w-5 h-5 text-stone-400" />
                       )}
@@ -147,9 +148,9 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     key={url}
                     type="button"
                     onClick={() => setSelectedAvatar(url)}
-                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${selectedAvatar === url ? 'border-amber-500 bg-amber-50' : 'border-transparent hover:border-slate-500/50'}`}
+                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
                   >
-                    <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
+                    <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                   </button>
                 ))}
               </div>

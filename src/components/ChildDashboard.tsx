@@ -23,6 +23,7 @@ import { playSound } from '../utils/sound';
 import WellDoneOverlay from './WellDoneOverlay';
 import { getLogicalDateString, getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
 import { CoinBadge } from './CoinBadge';
+import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BadgesModal } from './BadgesModal';
@@ -1384,7 +1385,7 @@ export default function ChildDashboard({
                           
                           <div className="flex items-center gap-2 sm:gap-6">
                             <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
-                              <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
+                              <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
                             </div>
                             
                             <div className="flex flex-col justify-center py-1 sm:py-2">

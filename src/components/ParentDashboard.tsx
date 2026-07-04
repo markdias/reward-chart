@@ -24,6 +24,7 @@ import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
 import { CoinBadge } from './CoinBadge';
+import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 
@@ -132,7 +133,7 @@ export default function ParentDashboard({
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
-  const [newChildAvatar, setNewChildAvatar] = useState('/avatars/boy_fox.png');
+  const [newChildAvatar, setNewChildAvatar] = useState('Rocket');
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -322,7 +323,7 @@ export default function ParentDashboard({
     setNewChildName('');
     setEditingChildId(null);
     setNewChildChar('unicorn');
-    setNewChildAvatar('/avatars/boy_fox.png');
+    setNewChildAvatar('Rocket');
     setShowAddChild(false);
   };
 
@@ -375,7 +376,7 @@ export default function ParentDashboard({
     setEditingChildId(child.id);
     setNewChildName(child.name);
     setNewChildChar(child.character_id);
-    setNewChildAvatar(child.avatar_url || '/avatars/boy_fox.png');
+    setNewChildAvatar(child.avatar_url || 'Rocket');
     setShowAddChild(true);
   };
 
@@ -550,7 +551,7 @@ export default function ParentDashboard({
                         return (
                           <div key={child.id} className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="flex items-center gap-3">
-                              <img src={child.avatar_url || '/placeholder.png'} alt={child.name} className="w-10 h-10 rounded-full" />
+                              <ChildAvatar iconName={child.avatar_url} className="w-10 h-10" />
                               <div>
                                 <h3 className="font-bold text-slate-900 text-sm">{child.name} hasn't logged any activity today.</h3>
                                 <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
@@ -599,7 +600,7 @@ export default function ParentDashboard({
                         return (
                           <div key={appr.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
-                              <img src={child?.avatar_url || '/placeholder.png'} className="w-12 h-12 rounded-xl bg-gray-50" />
+                              <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-12 h-12 !rounded-xl bg-gray-50" />
                               <div>
                                 <p className="font-bold text-slate-900 text-sm">{child?.name} finished {task?.title}</p>
                                 <p className="text-xs text-gray-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
@@ -773,9 +774,9 @@ export default function ParentDashboard({
                               key={url}
                               type="button"
                               onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${newChildAvatar === url ? ('border-amber-500 bg-amber-50') : 'border-transparent hover:border-slate-500/50'}`}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
                             >
-                              <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
+                              <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                             </button>
                           ))}
                         </div>
@@ -797,7 +798,7 @@ export default function ParentDashboard({
                             setEditingChildId(null);
                             setNewChildName('');
                             setNewChildChar('unicorn');
-                            setNewChildAvatar('/avatars/boy_fox.png');
+                            setNewChildAvatar('Rocket');
                           }}
                         >
                           CANCEL
@@ -814,137 +815,140 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={child.id}
-                        className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
+                        className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6"
                       >
-                        <div className="flex gap-4 items-center pr-8">
-                          <img
-                            src={child.avatar_url}
-                            alt="Child avatar"
-                            className={`w-16 h-16 rounded-2xl p-1 border object-cover shrink-0 bg-stone-100 border-stone-200`}
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h3 className={`font-extrabold text-lg ${styles.titleColor} font-display truncate`}>{child.name}</h3>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 mt-1">
-                              <div className={`flex items-center gap-2 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <CoinBadge points={child.points} size="sm" />
-                              </div>
-                              {child.savings_unlocked && (
-                                <div className={`flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 whitespace-nowrap`}>
-                                  <span className="text-sm"><FaPiggyBank /></span>
-                                  <span>{child.savings_pot || 0} Saved</span>
-                                </div>
-                              )}
-                              <div className={`flex items-center gap-1 text-xs font-mono font-bold ${styles.textColor} whitespace-nowrap`}>
-                                <TrendingUp className="w-3.5 h-3.5 text-cyan-500 shrink-0" />
-                                <span>Lvl {child.level || 1} <span className="text-[10px] ml-1 opacity-70">({(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)}/{parentProfile?.points_to_level_up ?? 500} Gold)</span></span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="absolute top-4 right-4 flex gap-1.5">
+                        {onDeleteChild && (
+                          <div className="absolute top-4 right-4 z-20">
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
+                              title="Delete child"
+                              className="text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-full h-8 w-8 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                        
+                        <div className="relative">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="relative">
+                              <ChildAvatar 
+                                iconName={child.avatar_url} 
+                                className="w-20 h-20 !rounded-[1.25rem] bg-stone-50 relative z-10" 
+                              />
+                            </div>
+                            
+                            <div className="flex items-start gap-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex flex-col items-center">
+                                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] border-amber-300 bg-amber-50 text-amber-600 flex items-center justify-center font-black text-lg sm:text-xl shadow-sm">
+                                     {child.points}
+                                  </div>
+                                  <span className="text-[10px] font-bold text-stone-400 mt-1.5 uppercase tracking-widest">Gold</span>
+                                </div>
+                                {child.savings_unlocked && (
+                                   <div className="flex flex-col items-center">
+                                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] border-emerald-300 bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-lg sm:text-xl shadow-sm">
+                                         {child.savings_pot}
+                                      </div>
+                                      <span className="text-[10px] font-bold text-stone-400 mt-1.5 uppercase tracking-widest">Saved</span>
+                                   </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h3 className="font-black text-2xl text-stone-900 font-display leading-tight">{child.name}</h3>
+                          </div>
+
+                          <div className="mt-5 p-3 rounded-2xl bg-stone-50/50 border border-stone-100 flex items-center gap-3">
+                             {stage.image_url ? (
+                                <img src={stage.image_url} alt={stage.name} className="w-10 h-10 drop-shadow-sm" />
+                             ) : (
+                                <span className="text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">{stage.emoji}</span>
+                             )}
+                             <div className="flex-1">
+                               <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-0.5">Companion</p>
+                               <p className="text-sm font-bold text-stone-700 leading-none">{pack?.name.split(' the ')[0] || 'Unknown'} <span className="opacity-50 font-normal">Stage {stage.stage_number}</span></p>
+                             </div>
+                          </div>
+                          
+                          <div className="mt-5">
+                            <div className="flex justify-between items-center mb-2 px-1 font-mono">
+                              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider whitespace-nowrap">Level {child.level}</span>
+                              <span className="text-xs font-extrabold text-stone-900 whitespace-nowrap">{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
+                            </div>
+                            <LinearProgressBar progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100} heightClass="h-4" />
+                          </div>
+                          
+                          <div className="mt-4 flex gap-2">
+                            {onUpdateChildStats && (
+                              <button 
+                                onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
+                                className={`flex-1 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
+                              >
+                                <Settings className="w-4 h-4" /> Quick Adjustments
+                              </button>
+                            )}
+                            <button 
                               onClick={() => openEditChild(child)}
+                              className="px-4 py-2.5 rounded-xl bg-stone-100/50 border border-stone-200/50 text-stone-500 text-xs font-bold flex items-center justify-center hover:bg-stone-100 hover:text-stone-700 transition-colors"
                             >
                               <Edit2 className="w-4 h-4" />
-                            </Button>
-                            {onDeleteChild && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                                title="Delete child"
-                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className={`p-3 rounded-2xl border flex items-center justify-between bg-stone-50 border-stone-200`}>
-                          <div>
-                            <p className={`text-[8px] ${styles.textMuted} font-mono font-bold uppercase tracking-wider`}>Species Pack</p>
-                            <p className={`text-xs font-extrabold ${styles.textColor} mt-0.5`}>{pack?.name.split(' the ')[0] || 'Unknown'}</p>
-                            <p className={`text-[10px] font-mono text-amber-700 mt-0.5`}>Stage {stage.stage_number}: {stage.name}</p>
-                          </div>
-                          {stage.image_url ? (
-                            <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-cover rounded-lg" />
-                          ) : (
-                            <span className="text-4xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{stage.emoji}</span>
-                          )}
-                        </div>
-
-                        {onUpdateChildStats && (
-                          <div className={`mt-2 rounded-2xl border overflow-hidden transition-all bg-stone-50 border-stone-200`}>
-                            <button
-                              onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
-                              className={`w-full p-3 flex items-center justify-between text-left cursor-pointer hover:bg-stone-100 transition-colors `}
-                            >
-                              <h4 className={`text-xs font-bold font-display ${styles.titleColor}`}>Quick Adjustments</h4>
-                              <ChevronDown className={`w-4 h-4 ${styles.textMuted} transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
                             </button>
+                          </div>
+
+                          {onUpdateChildStats && (
                             <AnimatePresence>
                               {expandedAdjustments[child.id] && (
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="border-t border-stone-200 bg-stone-100"
+                                  className="mt-4 overflow-hidden"
                                 >
-                                  <div className="p-3 space-y-3 border-t border-stone-200">
+                                  <div className="p-3 bg-stone-50 rounded-2xl border border-stone-100 space-y-3">
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono ${styles.textColor}`}>Gold:</span>
+                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Gold</span>
                                       <div className="flex gap-1">
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono ${styles.textColor}`}>Lifetime Gold:</span>
+                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Lifetime Gold</span>
                                       <div className="flex gap-1.5 justify-end">
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
                                     <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono ${styles.textColor}`}>Level:</span>
+                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Level</span>
                                       <div className="flex gap-1">
                                         <button onClick={() => { 
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
-                                        }} className={`p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-1.5 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
+                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
-
                                   </div>
                                 </motion.div>
                               )}
                             </AnimatePresence>
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                            <span className="uppercase">LEVEL {child.level} PROGRESS</span>
-                            <span className={`font-extrabold ${styles.titleColor}`}>{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
-                          </div>
-                          <LinearProgressBar 
-                            progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                            heightClass="h-3"
-                            className="mt-2"
-                          />
+                          )}
                         </div>
                       </div>
                     );
@@ -1194,7 +1198,7 @@ export default function ParentDashboard({
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full bg-white border dashboard-card border-slate-700/50 object-cover" />
+                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-slate-700/50" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1525,7 +1529,7 @@ export default function ParentDashboard({
                                             : ('bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100')
                                         }`}
                                       >
-                                        <img src={child.avatar_url} alt={child.name} className="w-5 h-5 rounded-full object-cover" />
+                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>

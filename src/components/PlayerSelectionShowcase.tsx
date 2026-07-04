@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Plane, Crown, Ticket, Sparkles, QrCode } from 'lucide-react';
 import { Typography } from './ui/Typography';
 import { INITIAL_CHILDREN } from '../data/mockData';
+import { ChildAvatar } from './ChildAvatar';
 
 export default function PlayerSelectionShowcase() {
   const [selectedVariation, setSelectedVariation] = useState<number>(1);
@@ -77,7 +78,7 @@ function IterationOne({ children }: { children: any[] }) {
               
               <div className="flex items-center gap-6">
                 <div className="w-24 h-24 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
-                  <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
+                  <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
                 </div>
                 
                 <div className="flex flex-col">
@@ -194,7 +195,7 @@ function IterationTwo({ children }: { children: any[] }) {
               
               <div className="flex items-center gap-6">
                 <div className="w-24 h-24 rounded-lg bg-slate-800 border-2 border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.3)] overflow-hidden">
-                  <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover grayscale-[30%] contrast-125" />
+                  <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none grayscale-[30%] contrast-125" />
                 </div>
                 
                 <div className="flex flex-col">
@@ -302,7 +303,7 @@ function IterationThree({ children }: { children: any[] }) {
                 
                 <div className="flex items-center gap-6 z-10">
                   <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-md overflow-hidden relative">
-                    <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
+                    <ChildAvatar iconName={child.avatar_url} className="w-full h-full" />
                   </div>
                   
                   <div className="flex flex-col">
