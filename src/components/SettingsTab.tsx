@@ -344,6 +344,20 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               fullWidth
               onClick={async () => {
                 playSound.click();
+                // iOS requires the Web App to be added to the Home Screen (PWA) to support Push Notifications
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+                
+                if (isIOS && !isStandalone) {
+                  alert("To enable Push Notifications on your iPhone/iPad, you must first add this app to your Home Screen.\n\nTap the Share button (square with an up arrow) at the bottom of Safari, scroll down, and select 'Add to Home Screen'. Then open the app from your home screen and try again!");
+                  return;
+                }
+
+                if (OneSignal.Notifications && OneSignal.Notifications.permission === true) {
+                  alert("Push Notifications are already enabled for this device!");
+                  return;
+                }
+
                 try {
                   await OneSignal.Slidedown.promptPush({ force: true });
                   console.log("Push prompt shown");
@@ -354,7 +368,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               }}
               leftIcon={<Bell className="w-4 h-4" />}
             >
-              ENABLE PUSH NOTIFICATIONS
+              {OneSignal.Notifications?.permission ? "NOTIFICATIONS ENABLED" : "ENABLE PUSH NOTIFICATIONS"}
             </Button>
             <p className="text-[10px] mt-2 text-stone-500">Receive alerts when a child completes a task or claims a reward. Note: iOS users must add the app to their Home Screen first.</p>
           </div>
