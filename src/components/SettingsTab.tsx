@@ -344,7 +344,6 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               fullWidth
               onClick={async () => {
                 playSound.click();
-                
                 // iOS requires the Web App to be added to the Home Screen (PWA) to support Push Notifications
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
