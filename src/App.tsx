@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import OneSignal from 'react-onesignal';
 import { App as CapacitorApp } from '@capacitor/app';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
@@ -98,6 +99,28 @@ export default function App() {
       localStorage.setItem('RCH_GLOBAL_THEME', parentProfile.dashboard_style);
     }
   }, [parentProfile?.dashboard_style]);
+
+  useEffect(() => {
+    // Initialize OneSignal
+    if (import.meta.env.VITE_ONESIGNAL_APP_ID) {
+      OneSignal.init({
+        appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+        allowLocalhostAsSecureOrigin: true
+      }).then(() => {
+        if (parentProfile?.user_id) {
+          OneSignal.login(parentProfile.user_id);
+        }
+      }).catch(err => console.error("OneSignal init error:", err));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (parentProfile?.user_id) {
+      OneSignal.login(parentProfile.user_id).catch(console.error);
+    } else if (!parentProfile?.user_id) {
+      OneSignal.logout().catch(console.error);
+    }
+  }, [parentProfile?.user_id]);
 
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
   const [postSignUpData, setPostSignUpData] = useState<{ email: string, parentName: string, familyName: string } | null>(null);
