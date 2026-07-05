@@ -5,6 +5,7 @@ import { Child } from '../../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { ChildAvatar } from '../ChildAvatar';
 
 interface StepChildrenSetupProps {
   theme: ThemeId;
@@ -19,12 +20,14 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
   const [children, setChildren] = useState<Partial<Child>[]>(initialChildren);
   const [isAdding, setIsAdding] = useState(initialChildren.length === 0);
   const [name, setName] = useState('');
+  const [age, setAge] = useState<number | ''>('');
   const [selectedCharId, setSelectedCharId] = useState(CHARACTER_PACKS[0].id);
   const [selectedAvatar, setSelectedAvatar] = useState(PRECANNED_AVATARS[0]);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
 
   const handleEditChild = (child: Partial<Child>) => {
     setName(child.name || '');
+    setAge(child.age || '');
     setSelectedCharId(child.character_id || CHARACTER_PACKS[0].id);
     setSelectedAvatar(child.avatar_url || PRECANNED_AVATARS[0]);
     setEditingChildId(child.id || null);
@@ -38,7 +41,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
     if (editingChildId) {
       setChildren(prev => prev.map(child => 
         child.id === editingChildId 
-          ? { ...child, name: name.trim(), character_id: selectedCharId, avatar_url: selectedAvatar }
+          ? { ...child, name: name.trim(), age: typeof age === 'number' ? age : undefined, character_id: selectedCharId, avatar_url: selectedAvatar }
           : child
       ));
     } else {
@@ -47,6 +50,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
         {
           id: `temp_${Date.now()}`,
           name: name.trim(),
+          age: typeof age === 'number' ? age : undefined,
           character_id: selectedCharId,
           avatar_url: selectedAvatar,
         }
@@ -54,6 +58,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
     }
 
     setName('');
+    setAge('');
     setSelectedCharId(CHARACTER_PACKS[0].id);
     setSelectedAvatar(PRECANNED_AVATARS[0]);
     setEditingChildId(null);
@@ -83,12 +88,15 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden p-1 border shrink-0">
                       {child.avatar_url ? (
-                        <img src={child.avatar_url} alt={child.name} className="w-full h-full object-contain" />
+                        <ChildAvatar iconName={child.avatar_url} className="w-full h-full" />
                       ) : (
                         <User className="w-5 h-5 text-stone-400" />
                       )}
                     </div>
-                    <span className={`font-bold ${styles.textColor}`}>{child.name}</span>
+                    <div className="flex flex-col">
+                      <span className={`font-bold ${styles.textColor}`}>{child.name}</span>
+                      {child.age && <span className={`text-[10px] ${styles.textMuted}`}>Age {child.age}</span>}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
@@ -106,16 +114,30 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
 
         {isAdding ? (
           <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-4`}>
-            <div>
-              <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Child's First Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g. Leo"
-                className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
-                required
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Child's First Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Leo"
+                  className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
+                  required
+                />
+              </div>
+              <div className="col-span-1">
+                <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Age</label>
+                <input
+                  type="number"
+                  value={age}
+                  onChange={e => setAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                  placeholder="e.g. 7"
+                  min={1}
+                  max={18}
+                  className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
+                />
+              </div>
             </div>
             
             <div>
@@ -147,9 +169,9 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     key={url}
                     type="button"
                     onClick={() => setSelectedAvatar(url)}
-                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer ${selectedAvatar === url ? 'border-amber-500 bg-amber-50' : 'border-transparent hover:border-slate-500/50'}`}
+                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
                   >
-                    <img src={url} alt="Avatar option" className="w-full aspect-square rounded-lg object-cover" />
+                    <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                   </button>
                 ))}
               </div>
@@ -164,6 +186,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     setIsAdding(false);
                     setEditingChildId(null);
                     setName('');
+                    setAge('');
                   }}
                   className="flex-1"
                 >

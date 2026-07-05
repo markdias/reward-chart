@@ -28,7 +28,7 @@ export const PREMADE_REWARDS: Omit<Reward, 'created_at' | 'parent_id'>[] = [
   { id: 'template-22', title: '1 hour gaming time', cost_points: 100, icon_name: 'Gamepad2', is_available: true, limit_type: 'daily', child_id: 'directory', is_template: true },
   { id: 'template-23', title: 'Choose a sweet treat', cost_points: 30, icon_name: 'Candy', is_available: true, limit_type: 'daily', child_id: 'directory', is_template: true },
   { id: 'template-24', title: 'Stay up 30 mins past bedtime', cost_points: 150, icon_name: 'Moon', is_available: true, limit_type: 'one_time', child_id: 'directory', is_template: true },
-  { id: 'template-25', title: 'Choose the film for movie night', cost_points: 80, icon_name: 'Film', is_available: true, limit_type: 'one_time', child_id: 'directory', is_template: true },
+  { id: 'template-25', title: 'Choose the film for film night', cost_points: 80, icon_name: 'Film', is_available: true, limit_type: 'one_time', child_id: 'directory', is_template: true },
   { id: 'template-26', title: 'Have a friend over to play', cost_points: 200, icon_name: 'Users', is_available: true, limit_type: 'one_time', child_id: 'directory', is_template: true },
   { id: 'template-27', title: 'Pick the dinner for tonight', cost_points: 100, icon_name: 'Pizza', is_available: true, limit_type: 'one_time', child_id: 'directory', is_template: true },
   { id: 'template-28', title: 'A trip to the park', cost_points: 50, icon_name: 'TreePine', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true },

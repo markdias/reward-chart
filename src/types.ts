@@ -25,6 +25,7 @@ export interface Child {
   id: string;
   parent_id: string;
   name: string;
+  age?: number;
   avatar_url: string;
   character_id: string; // Selected character template ID (e.g. 'unicorn', 'robot')
   points: number;
@@ -94,6 +95,7 @@ export interface Task {
   is_template?: boolean;
   template_id?: string;
   is_active: boolean;
+  age_range?: '3-5' | '6-8' | '9-12' | 'all';
   created_at: string;
 }
 
@@ -119,6 +121,7 @@ export interface Reward {
   icon_name: string;
   limit_type: 'unlimited' | 'daily' | 'twice_daily' | 'one_time';
   is_badge_eligible?: boolean;
+  age_range?: '3-5' | '6-8' | '9-12' | 'all';
   created_at: string;
 }
 

@@ -23,9 +23,11 @@ import { playSound } from '../utils/sound';
 import WellDoneOverlay from './WellDoneOverlay';
 import { getLogicalDateString, getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
 import { CoinBadge } from './CoinBadge';
+import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BadgesModal } from './BadgesModal';
+import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
 
 const RECURRENCE_LABEL: Record<string, string> = {
@@ -60,8 +62,9 @@ interface ChildDashboardProps {
   onGiftingUnlockSeen: (childId: string) => void;
   onGoldPotMaintenanceUnlockSeen: (childId: string) => void;
   onUpdateChildStats: (childId: string, updates: Partial<Child>) => void;
+  onEditChild: (childId: string, updates: Partial<Child>) => void;
   lockedChildId?: string | null;
-  onLockChild?: (childId: string) => void;
+  onLockChild?: (childId: string | null) => void;
   theme: ThemeId;
 }
 
@@ -90,6 +93,7 @@ export default function ChildDashboard({
   onGiftingUnlockSeen,
   onGoldPotMaintenanceUnlockSeen,
   onUpdateChildStats,
+  onEditChild,
   lockedChildId,
   onLockChild,
   theme
@@ -526,6 +530,7 @@ export default function ChildDashboard({
             <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
               <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
                 {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
+                {activeChild?.age && <span className="text-sm sm:text-xl text-slate-500 font-normal">({activeChild.age})</span>}
               </h1>
               <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
                 <CoinBadge points={activeChild?.points || 0} />
@@ -574,7 +579,7 @@ export default function ChildDashboard({
       </AnimatePresence>
 
       {/* Well Done celebration overlay (anime.js powered) */}
-      <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} />
+      <WellDoneOverlay show={showWellDone} taskName={wellDoneTaskName} companionId={activeChild?.character_id} />
 
       {/* Evolution Pop-up Milestone Cinematic Overlay */}
       <AnimatePresence>
@@ -1384,7 +1389,7 @@ export default function ChildDashboard({
                           
                           <div className="flex items-center gap-2 sm:gap-6">
                             <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
-                              <img src={child.avatar_url} alt={child.name} className="w-full h-full object-cover" />
+                              <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
                             </div>
                             
                             <div className="flex flex-col justify-center py-1 sm:py-2">
@@ -1392,6 +1397,7 @@ export default function ChildDashboard({
                                 <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
                                 <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
                                   {child.name}
+                                  {child.age && <span className="text-sm sm:text-xl text-slate-500 font-normal ml-2">({child.age})</span>}
                                 </h3>
                               </div>
                               
@@ -1794,6 +1800,7 @@ export default function ChildDashboard({
                           handleTaskCheck={handleTaskCheck}
                           potReminders={potReminders}
                           onOpenBadges={() => setShowBadgesModal(true)}
+                          parentProfile={parentProfile}
                         />
                       ) : activeChildTab === 'tasks' ? (
                         <motion.div
@@ -1818,8 +1825,8 @@ export default function ChildDashboard({
                             }
                             return true;
                           }).length === 0 ? (
-                            <div className={`p-10 text-center ${styles.cardBg} ${styles.borderStyle} rounded-3xl space-y-3`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500" /></span>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-3`}>
+                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
                               <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
@@ -1965,7 +1972,7 @@ export default function ChildDashboard({
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500" /></span>
+                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
                             </div>
@@ -2795,7 +2802,7 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/60 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
             {[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle },

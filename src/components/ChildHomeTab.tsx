@@ -1,13 +1,13 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'framer-motion';
-import { Child, Task, TaskCompletion, RewardRedemption, Reward } from '../types';
+import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString } from '../utils/date';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle } from 'lucide-react';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -18,6 +18,7 @@ interface ChildHomeTabProps {
   handleTaskCheck: (taskId: string, title: string) => void;
   potReminders?: string[];
   onOpenBadges: () => void;
+  parentProfile?: ParentProfile | null;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -28,10 +29,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   rewards,
   handleTaskCheck,
   potReminders = [],
-  onOpenBadges
+  onOpenBadges,
+  parentProfile
 }) => {
-  // Daily Goal Logic (Assume 50 points daily goal)
-  const DAILY_GOAL = 50;
+  // Daily Goal Logic
+  const DAILY_GOAL = parentProfile?.daily_points_target ?? 50;
   
   // Calculate points earned today
   const todayLogicalDate = getLogicalDateString(new Date());
@@ -42,26 +44,40 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   );
 
   const pointsEarnedToday = todayCompletions.reduce((acc, c) => {
-    const task = tasks.find(t => t.id === c.task_id);
-    return acc + (task?.points || 0);
+    // Only count positive points towards the daily goal
+    return acc + (c.points_awarded > 0 ? c.points_awarded : 0);
   }, 0);
 
   const pointsRemaining = Math.max(0, DAILY_GOAL - pointsEarnedToday);
   const progressPercent = Math.min(100, (pointsEarnedToday / DAILY_GOAL) * 100);
 
-  // Filter Tasks to only show COMPLETED tasks for today
-  const filteredTasks = tasks.filter(t => {
-    if (t.child_id !== activeChild.id) return false;
-    
-    // Only show tasks that are completed today
-    const isDoneToday = completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved' && getLogicalDateString(c.completed_at) === todayLogicalDate);
-    
-    return isDoneToday;
-  });
-
-  // Recent Activity logic: only show today's prizes (redemptions)
+  // Combine Recent Activity
   const recentActivities: any[] = [];
 
+  // 1. Add Completions (Positive and Negative)
+  todayCompletions.forEach(c => {
+    if (c.points_awarded < 0) {
+      recentActivities.push({
+        id: `comp-${c.id}`,
+        title: c.notes || 'Penalty',
+        points: c.points_awarded, // already negative
+        date: new Date(c.completed_at),
+        type: 'penalty'
+      });
+    } else {
+      const task = tasks.find(t => t.id === c.task_id);
+      recentActivities.push({
+        id: `comp-${c.id}`,
+        title: task?.title || 'Unknown Task',
+        points: c.points_awarded,
+        date: new Date(c.completed_at),
+        type: 'earn',
+        category: task?.category || 'other'
+      });
+    }
+  });
+
+  // 2. Add Redemptions
   const recentRedemptions = redemptions.filter(r => 
     r.child_id === activeChild.id && 
     getLogicalDateString(r.redeemed_at) === todayLogicalDate
@@ -72,16 +88,15 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       recentActivities.push({
         id: `red-${r.id}`,
         title: reward.title,
-        points: -reward.cost_points,
+        points: -reward.cost_points, // Make it negative for UI
         date: new Date(r.redeemed_at),
         type: 'spend'
       });
     }
   });
 
-  // Sort descending by date, take top 5
+  // Sort descending by date
   recentActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
-  const topActivities = recentActivities.slice(0, 5);
 
   return (
     <motion.div
@@ -146,42 +161,58 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </div>
       )}
 
-      {/* Completed Tasks Section */}
-      <div className="space-y-4">
-        <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left">
-          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">COMPLETED TASKS</h2>
-          <p className="text-[10px] sm:text-xs font-mono text-stone-500">Great job finishing these tasks today!</p>
+      {/* Combined Activity Section */}
+      <div className="space-y-4 pt-2">
+        <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left dashboard-card transition-all">
+          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">TODAY'S ACTIVITY</h2>
+          <p className="text-[10px] sm:text-xs font-mono text-stone-500">Everything you earned, claimed, or lost today.</p>
         </div>
-
-        {/* Task Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredTasks.length === 0 ? (
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+          {recentActivities.length === 0 ? (
             <div className="col-span-full p-8 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-3xl">
-              No tasks completed today.
+              No activity today.
             </div>
           ) : (
-            filteredTasks.map(task => {
-              const comp = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === todayLogicalDate);
-              const isDone = comp && comp.status === 'approved';
-              const catMeta = CATEGORY_ICON_MAP[task.category] || CATEGORY_ICON_MAP.other;
+            recentActivities.map((act) => {
+              let bgClass = "bg-stone-50 border-stone-100";
+              let iconBgClass = "bg-stone-200/50 text-stone-400";
+              let textClass = "text-stone-400";
+              let iconContent: React.ReactNode = <Sparkles className="w-6 h-6" />;
+
+              if (act.type === 'earn') {
+                const catMeta = CATEGORY_ICON_MAP[act.category as any] || CATEGORY_ICON_MAP.other;
+                iconContent = <catMeta.Icon className="w-6 h-6" />;
+                bgClass = `${catMeta.bg} bg-opacity-50`;
+                iconBgClass = `bg-white/60 ${catMeta.iconColor}`;
+                textClass = catMeta.iconColor;
+              } else if (act.type === 'spend') {
+                bgClass = "bg-purple-50/50 border-purple-100";
+                iconBgClass = "bg-purple-100 text-purple-400";
+                textClass = "text-purple-600";
+                iconContent = <Trophy className="w-6 h-6" />;
+              } else if (act.type === 'penalty') {
+                bgClass = "bg-rose-50/50 border-rose-100";
+                iconBgClass = "bg-rose-100 text-rose-400";
+                textClass = "text-rose-600";
+                iconContent = <AlertTriangle className="w-6 h-6" />;
+              }
 
               return (
-                <div
-                  key={task.id}
-                  className={`relative p-4 rounded-[1.5rem] border-2 shadow-sm flex flex-col items-center text-center gap-3 bg-stone-50 border-stone-100 opacity-75`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-stone-200/50 text-stone-400`}>
-                    <catMeta.Icon className="w-6 h-6" />
+                <div key={act.id} className={`relative p-4 rounded-[1.5rem] border-2 shadow-sm flex flex-col items-center text-center gap-3 opacity-90 transition-all dashboard-card hover:-translate-y-1 ${bgClass}`}>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconBgClass}`}>
+                    {iconContent}
                   </div>
                   <div className="flex flex-col gap-1 w-full">
-                    <h3 className="font-bold text-sm sm:text-base leading-tight text-stone-400 line-through">
-                      {task.title}
+                    <h3 className={`font-bold text-sm sm:text-base leading-tight ${act.type === 'earn' ? 'line-through opacity-70' : ''} ${textClass}`}>
+                      {act.title}
                     </h3>
+                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">
+                      {act.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
                   <div className="mt-auto pt-2 w-full flex justify-center">
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 bg-stone-100 text-stone-400 border-stone-200`}>
-                      <span className="font-black text-sm">{task.points}</span>
-                    </div>
+                    <CoinBadge points={act.points} />
                   </div>
                 </div>
               );
@@ -189,36 +220,6 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           )}
         </div>
       </div>
-
-      {/* Recent Activity */}
-      {topActivities.length > 0 && (
-        <div className="space-y-4 pt-4">
-          <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left">
-            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">TODAY'S PRIZES</h2>
-            <p className="text-[10px] sm:text-xs font-mono text-stone-500">Prizes you have claimed today!</p>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            {topActivities.map((act) => (
-              <div key={act.id} className="relative p-4 rounded-[1.5rem] border-2 shadow-sm flex flex-col items-center text-center gap-3 bg-stone-50 border-stone-100 opacity-75">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-stone-200/50 text-stone-400">
-                  <span className="text-2xl opacity-50">{act.type === 'earn' ? '✨' : '🛍️'}</span>
-                </div>
-                <div className="flex flex-col gap-1 w-full">
-                  <h3 className="font-bold text-sm sm:text-base leading-tight text-stone-400">
-                    {act.title}
-                  </h3>
-                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">
-                    {act.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <div className="mt-auto pt-2 w-full flex justify-center">
-                  <CoinBadge points={act.points} disabled={true} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
     </motion.div>
   );

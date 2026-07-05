@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Coin, Medal, ArrowLeft, Lock, Gift } from 'lucide-react';
+import { X, Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Coins, Medal, ArrowLeft, Lock, Gift } from 'lucide-react';
 import { Child, Reward } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -40,7 +40,9 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
     fetchBadges();
   }, [child.id]);
 
-  const eligibleRewards = rewards.filter(r => r.is_badge_eligible && (r.child_id === child.id || r.child_id === 'directory') && r.is_available);
+  const eligibleRewards = rewards
+    .filter(r => r.is_badge_eligible && (r.child_id === child.id || r.child_id === 'directory') && r.is_available)
+    .filter((r, index, self) => index === self.findIndex((t) => t.title.trim().toLowerCase() === r.title.trim().toLowerCase()));
 
   const renderBadgeDetail = () => {
     if (!selectedBadge) return null;
