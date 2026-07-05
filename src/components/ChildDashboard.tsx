@@ -530,6 +530,7 @@ export default function ChildDashboard({
             <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
               <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
                 {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
+                {activeChild?.age && <span className="text-sm sm:text-xl text-slate-500 font-normal">({activeChild.age})</span>}
               </h1>
               <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
                 <CoinBadge points={activeChild?.points || 0} />
@@ -1396,6 +1397,7 @@ export default function ChildDashboard({
                                 <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
                                 <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
                                   {child.name}
+                                  {child.age && <span className="text-sm sm:text-xl text-slate-500 font-normal ml-2">({child.age})</span>}
                                 </h3>
                               </div>
                               
@@ -1798,6 +1800,7 @@ export default function ChildDashboard({
                           handleTaskCheck={handleTaskCheck}
                           potReminders={potReminders}
                           onOpenBadges={() => setShowBadgesModal(true)}
+                          parentProfile={parentProfile}
                         />
                       ) : activeChildTab === 'tasks' ? (
                         <motion.div
@@ -2799,7 +2802,7 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/60 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
             {[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle },

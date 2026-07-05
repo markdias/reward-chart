@@ -17,6 +17,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest }
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
+import { EXTENDED_TASKS, EXTENDED_REWARDS } from '../data/extendedTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -34,7 +35,7 @@ interface ParentDashboardProps {
   completions: TaskCompletion[];
   rewards: Reward[];
   redemptions: RewardRedemption[];
-  onAddChild: (name: string, characterId: string, avatarUrl: string) => void;
+  onAddChild: (name: string, characterId: string, avatarUrl: string, age?: number) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onDeleteChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
@@ -139,6 +140,7 @@ export default function ParentDashboard({
   const [showAddChild, setShowAddChild] = useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState('');
+  const [newChildAge, setNewChildAge] = useState<number | ''>('');
   const [newChildChar, setNewChildChar] = useState('unicorn');
   const [newChildAvatar, setNewChildAvatar] = useState('Rocket');
 
@@ -159,6 +161,20 @@ export default function ParentDashboard({
   const [rewardIcon, setRewardIcon] = useState('Gamepad2');
   const [rewardLimit, setRewardLimit] = useState<'unlimited' | 'daily' | 'twice_daily' | 'one_time'>('unlimited');
   const [rewardBadgeEligible, setRewardBadgeEligible] = useState(false);
+
+  // Generate Ideas Modal State
+  const [showGenerateTasksModal, setShowGenerateTasksModal] = useState(false);
+  const [showGenerateRewardsModal, setShowGenerateRewardsModal] = useState(false);
+  const [generateAgeRange, setGenerateAgeRange] = useState<'all' | '3-5' | '6-8' | '9-12'>('all');
+  const [generateCount, setGenerateCount] = useState<number>(5);
+  const [editingPreviewId, setEditingPreviewId] = useState<string | null>(null);
+  const [previewEditTitle, setPreviewEditTitle] = useState('');
+  const [previewEditPoints, setPreviewEditPoints] = useState(0);
+  
+  const [generatedTasksToPreview, setGeneratedTasksToPreview] = useState<any[] | null>(null);
+  const [selectedTaskIdsForImport, setSelectedTaskIdsForImport] = useState<string[]>([]);
+  const [generatedRewardsToPreview, setGeneratedRewardsToPreview] = useState<any[] | null>(null);
+  const [selectedRewardIdsForImport, setSelectedRewardIdsForImport] = useState<string[]>([]);
 
   const [nudgedChildIds, setNudgedChildIds] = useState<string[]>([]);
   const todayStr = new Date().toISOString().split('T')[0];
@@ -198,6 +214,148 @@ export default function ParentDashboard({
   };
 
 
+  const isTitleSimilar = (title1: string, title2: string) => {
+    const t1 = title1.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+    const t2 = title2.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+    if (t1 === t2) return true;
+    
+    // Check substring for longer titles
+    if ((t1.includes(t2) && t2.length > 8) || (t2.includes(t1) && t1.length > 8)) return true;
+    
+    const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'with', 'do', 'make', 'your', 'my', 'some', 'any', 'get', 'put', 'help']);
+    const words1 = t1.split(' ').filter(w => w.length > 2 && !stopWords.has(w));
+    const words2 = t2.split(' ').filter(w => w.length > 2 && !stopWords.has(w));
+    
+    if (words1.length === 0 || words2.length === 0) return false;
+
+    const matchCount = words1.filter(w => words2.includes(w)).length;
+    if (matchCount === 0) return false;
+    
+    const minLen = Math.min(words1.length, words2.length);
+    if (minLen === 1 && matchCount === 1) return true; 
+    
+    if (minLen > 1 && matchCount / minLen > 0.5) return true;
+    
+    return false;
+  };
+
+  const getRecommendedAgeRange = () => {
+    const ages = children.map(c => c.age).filter((a): a is number => typeof a === 'number');
+    if (ages.length === 0) return 'all';
+    const avg = ages.reduce((sum, a) => sum + a, 0) / ages.length;
+    if (avg <= 5) return '3-5';
+    if (avg <= 8) return '6-8';
+    if (avg <= 12) return '9-12';
+    return 'all';
+  };
+
+  const handleGenerateTasks = () => {
+    let pool = EXTENDED_TASKS;
+    if (generateAgeRange !== 'all') {
+      pool = pool.filter(t => t.age_range === generateAgeRange || t.age_range === 'all');
+    }
+    
+    const available = pool.filter(template => {
+      return !tasks.some(existing => isTitleSimilar(template.title, existing.title));
+    });
+
+    if (available.length === 0) {
+      alert(`No more fresh quests available for this age range!`);
+      setShowGenerateTasksModal(false);
+      return;
+    }
+
+    // Shuffle and pick `generateCount`
+    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    const picked = shuffled.slice(0, generateCount);
+
+    const tasksToPreview = picked.map(t => ({ 
+      ...t, 
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile?.family_id || ''
+    }));
+    
+    setGeneratedTasksToPreview(tasksToPreview);
+    setSelectedTaskIdsForImport(tasksToPreview.map(t => t.id));
+  };
+
+  const handleImportGeneratedTasks = async () => {
+    if (!parentProfile?.family_id || !generatedTasksToPreview) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const tasksToInsert = generatedTasksToPreview.filter(t => selectedTaskIdsForImport.includes(t.id));
+    if (tasksToInsert.length === 0) {
+        setGeneratedTasksToPreview(null);
+        setShowGenerateTasksModal(false);
+        return;
+    }
+
+    const { error } = await supabase.from('tasks').insert(tasksToInsert);
+    if (error) {
+      console.error('Supabase tasks insert error:', error);
+      alert(`Error generating tasks: ${error.message}`);
+    } else {
+      playSound.success();
+      setGeneratedTasksToPreview(null);
+      setShowGenerateTasksModal(false);
+    }
+  };
+
+  const handleGenerateRewards = () => {
+    let pool = EXTENDED_REWARDS;
+    if (generateAgeRange !== 'all') {
+      pool = pool.filter(r => r.age_range === generateAgeRange || r.age_range === 'all');
+    }
+    
+    const available = pool.filter(template => {
+      return !rewards.some(existing => isTitleSimilar(template.title, existing.title));
+    });
+
+    if (available.length === 0) {
+      alert(`No more fresh prizes available for this age range!`);
+      setShowGenerateRewardsModal(false);
+      return;
+    }
+
+    // Shuffle and pick `generateCount`
+    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    const picked = shuffled.slice(0, generateCount);
+
+    const rewardsToPreview = picked.map(r => ({ 
+      ...r, 
+      id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      created_at: new Date().toISOString(),
+      parent_id: parentProfile?.family_id || ''
+    }));
+    
+    setGeneratedRewardsToPreview(rewardsToPreview);
+    setSelectedRewardIdsForImport(rewardsToPreview.map(r => r.id));
+  };
+
+  const handleImportGeneratedRewards = async () => {
+    if (!parentProfile?.family_id || !generatedRewardsToPreview) return;
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    const rewardsToInsert = generatedRewardsToPreview.filter(r => selectedRewardIdsForImport.includes(r.id));
+    if (rewardsToInsert.length === 0) {
+        setGeneratedRewardsToPreview(null);
+        setShowGenerateRewardsModal(false);
+        return;
+    }
+
+    const { error } = await supabase.from('rewards').insert(rewardsToInsert);
+    if (error) {
+      console.error('Supabase rewards insert error:', error);
+      alert(`Error generating prizes: ${error.message}`);
+    } else {
+      playSound.success();
+      setGeneratedRewardsToPreview(null);
+      setShowGenerateRewardsModal(false);
+    }
+  };
 
   const handleImportDefaultTasks = async () => {
     if (!parentProfile?.family_id) return;
@@ -321,13 +479,15 @@ export default function ParentDashboard({
   const handleChildSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChildName) return;
-    playSound.success();
+    playSound.click();
     if (editingChildId) {
-      onEditChild(editingChildId, { name: newChildName, character_id: newChildChar, avatar_url: newChildAvatar });
+      onEditChild(editingChildId, { name: newChildName, age: typeof newChildAge === 'number' ? newChildAge : undefined, character_id: newChildChar, avatar_url: newChildAvatar });
     } else {
-      onAddChild(newChildName, newChildChar, newChildAvatar);
+      onAddChild(newChildName, newChildChar, newChildAvatar, typeof newChildAge === 'number' ? newChildAge : undefined);
     }
     setNewChildName('');
+    setNewChildAge('');
+    setNewChildChar('unicorn');
     setEditingChildId(null);
     setNewChildChar('unicorn');
     setNewChildAvatar('Rocket');
@@ -382,6 +542,7 @@ export default function ParentDashboard({
   const openEditChild = (child: Child) => {
     setEditingChildId(child.id);
     setNewChildName(child.name);
+    setNewChildAge(child.age || '');
     setNewChildChar(child.character_id);
     setNewChildAvatar(child.avatar_url || 'Rocket');
     setShowAddChild(true);
@@ -410,13 +571,18 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative overflow-x-hidden`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative`} id="parent-dashboard-root">
       {/* Ambient Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      <div className="absolute top-[40%] right-[-5%] w-80 h-80 bg-purple-400/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px]"></div>
+        <div className="absolute top-[40%] right-[-5%] w-80 h-80 bg-purple-400/10 rounded-full blur-[100px]"></div>
+      </div>
 
-      <header className="bg-white border-b border-gray-100 relative z-20 pt-[max(env(safe-area-inset-top),_1rem)]">
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+      <header 
+        className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 pb-2 sm:pb-3"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
+      >
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3">
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setActiveTab('settings')}
@@ -758,6 +924,18 @@ export default function ParentDashboard({
                           />
                         </div>
                         <div>
+                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
+                          <input
+                            type="number"
+                            value={newChildAge}
+                            onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                            placeholder="Age"
+                            min={1}
+                            max={18}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
                           <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
                           <select
                             value={newChildChar}
@@ -804,6 +982,7 @@ export default function ParentDashboard({
                             setShowAddChild(false);
                             setEditingChildId(null);
                             setNewChildName('');
+                            setNewChildAge('');
                             setNewChildChar('unicorn');
                             setNewChildAvatar('Rocket');
                           }}
@@ -868,7 +1047,9 @@ export default function ParentDashboard({
                           </div>
 
                           <div>
-                            <h3 className="font-black text-2xl text-stone-900 font-display leading-tight">{child.name}</h3>
+                            <h3 className="font-black text-2xl text-stone-900 font-display leading-tight">
+                              {child.name} {child.age ? <span className="text-lg text-stone-500 font-normal ml-2">({child.age})</span> : ''}
+                            </h3>
                           </div>
 
                           <div className="mt-5 p-3 rounded-2xl bg-stone-50/50 border border-stone-100 flex items-center gap-3">
@@ -1111,6 +1292,18 @@ export default function ParentDashboard({
                   </div>
                   
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                      onClick={() => { 
+                        playSound.click(); 
+                        setGenerateAgeRange(getRecommendedAgeRange());
+                        setShowGenerateTasksModal(true); 
+                      }}
+                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                    >
+                      GENERATE <span className="hidden sm:inline">IDEAS</span>
+                    </Button>
                     <Button
                       variant="outline"
                       className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
@@ -1443,6 +1636,18 @@ export default function ParentDashboard({
                   </div>
 
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                      onClick={() => { 
+                        playSound.click(); 
+                        setGenerateAgeRange(getRecommendedAgeRange());
+                        setShowGenerateRewardsModal(true); 
+                      }}
+                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                    >
+                      GENERATE <span className="hidden sm:inline">IDEAS</span>
+                    </Button>
                     <Button
                       variant="outline"
                       className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
@@ -1910,7 +2115,7 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/60 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
           {[
             { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
             { id: 'children', label: 'Children', icon: Users },
@@ -1940,6 +2145,310 @@ export default function ParentDashboard({
           })}
         </div>
       </div>
+      {/* Generate Quests Modal */}
+      <AnimatePresence>
+        {showGenerateTasksModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGenerateTasksModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-4">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <h2 className="text-xl font-black text-slate-900 mb-2">
+                  {generatedTasksToPreview ? "Select Quests to Keep" : "Generate Quests"}
+                </h2>
+                
+                {!generatedTasksToPreview ? (
+                  <>
+                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</p>
+                    
+                    <div className="space-y-4 mb-8">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <select
+                          value={generateAgeRange}
+                          onChange={(e) => setGenerateAgeRange(e.target.value as any)}
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="all">All Ages</option>
+                          <option value="3-5">3 - 5 years</option>
+                          <option value="6-8">6 - 8 years</option>
+                          <option value="9-12">9 - 12 years</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <div className="flex gap-2">
+                          {[3, 5, 10, 20].map(num => (
+                            <button
+                              key={num}
+                              onClick={() => setGenerateCount(num)}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                            >
+                              {num}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button variant="secondary" className="flex-1" onClick={() => setShowGenerateTasksModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="primary" className="flex-1" onClick={handleGenerateTasks}>
+                        Generate
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-slate-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</p>
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                      {generatedTasksToPreview.map(task => {
+                        const isEditing = editingPreviewId === task.id;
+                        return (
+                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                            {isEditing ? (
+                              <div className="flex flex-col gap-2 w-full">
+                                <input 
+                                  type="text" 
+                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                  value={previewEditTitle} 
+                                  onChange={(e) => setPreviewEditTitle(e.target.value)} 
+                                />
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="number" 
+                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                    value={previewEditPoints} 
+                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
+                                  />
+                                  <Button size="sm" variant="primary" onClick={() => {
+                                    setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: previewEditPoints } : t));
+                                    setEditingPreviewId(null);
+                                  }}>Save</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start justify-between gap-3 group">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1">
+                                  <input 
+                                    type="checkbox" 
+                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                    checked={selectedTaskIdsForImport.includes(task.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedTaskIdsForImport(prev => [...prev, task.id]);
+                                      } else {
+                                        setSelectedTaskIdsForImport(prev => prev.filter(id => id !== task.id));
+                                      }
+                                    }}
+                                  />
+                                  <div className="flex-1">
+                                    <p className="font-bold text-slate-900 text-sm">{task.title}</p>
+                                    <p className="text-xs text-slate-500">{task.points} pts • {task.recurrence}</p>
+                                  </div>
+                                </label>
+                                <button 
+                                  type="button"
+                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setPreviewEditTitle(task.title);
+                                    setPreviewEditPoints(task.points);
+                                    setEditingPreviewId(task.id);
+                                  }}
+                                >
+                                  <FaPen className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="secondary" className="flex-1" onClick={() => { setGeneratedTasksToPreview(null); setShowGenerateTasksModal(false); }}>
+                        Cancel
+                      </Button>
+                      <Button variant="primary" className="flex-1" onClick={handleImportGeneratedTasks} disabled={selectedTaskIdsForImport.length === 0}>
+                        Import Selected
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Generate Prizes Modal */}
+      <AnimatePresence>
+        {showGenerateRewardsModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGenerateRewardsModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
+                  <Gift className="w-6 h-6" />
+                </div>
+                <h2 className="text-xl font-black text-slate-900 mb-2">
+                  {generatedRewardsToPreview ? "Select Prizes to Keep" : "Generate Prizes"}
+                </h2>
+                
+                {!generatedRewardsToPreview ? (
+                  <>
+                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</p>
+                    
+                    <div className="space-y-4 mb-8">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <select
+                          value={generateAgeRange}
+                          onChange={(e) => setGenerateAgeRange(e.target.value as any)}
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <option value="all">All Ages</option>
+                          <option value="3-5">3 - 5 years</option>
+                          <option value="6-8">6 - 8 years</option>
+                          <option value="9-12">9 - 12 years</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <div className="flex gap-2">
+                          {[3, 5, 10, 20].map(num => (
+                            <button
+                              key={num}
+                              onClick={() => setGenerateCount(num)}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                            >
+                              {num}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button variant="secondary" className="flex-1" onClick={() => setShowGenerateRewardsModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button variant="warning" className="flex-1" onClick={handleGenerateRewards}>
+                        Generate
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-slate-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</p>
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                      {generatedRewardsToPreview.map(reward => {
+                        const isEditing = editingPreviewId === reward.id;
+                        return (
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                            {isEditing ? (
+                              <div className="flex flex-col gap-2 w-full">
+                                <input 
+                                  type="text" 
+                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                  value={previewEditTitle} 
+                                  onChange={(e) => setPreviewEditTitle(e.target.value)} 
+                                />
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="number" 
+                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                    value={previewEditPoints} 
+                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
+                                  />
+                                  <Button size="sm" variant="warning" onClick={() => {
+                                    setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: previewEditPoints } : r));
+                                    setEditingPreviewId(null);
+                                  }}>Save</Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start justify-between gap-3 group">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1">
+                                  <input 
+                                    type="checkbox" 
+                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                                    checked={selectedRewardIdsForImport.includes(reward.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedRewardIdsForImport(prev => [...prev, reward.id]);
+                                      } else {
+                                        setSelectedRewardIdsForImport(prev => prev.filter(id => id !== reward.id));
+                                      }
+                                    }}
+                                  />
+                                  <div className="flex-1">
+                                    <p className="font-bold text-slate-900 text-sm">{reward.title}</p>
+                                    <p className="text-xs text-slate-500">{reward.cost_points} pts • {reward.limit_type}</p>
+                                  </div>
+                                </label>
+                                <button 
+                                  type="button"
+                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setPreviewEditTitle(reward.title);
+                                    setPreviewEditPoints(reward.cost_points);
+                                    setEditingPreviewId(reward.id);
+                                  }}
+                                >
+                                  <FaPen className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="secondary" className="flex-1" onClick={() => { setGeneratedRewardsToPreview(null); setShowGenerateRewardsModal(false); }}>
+                        Cancel
+                      </Button>
+                      <Button variant="warning" className="flex-1" onClick={handleImportGeneratedRewards} disabled={selectedRewardIdsForImport.length === 0}>
+                        Import Selected
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

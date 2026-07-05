@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'framer-motion';
-import { Child, Task, TaskCompletion, RewardRedemption, Reward } from '../types';
+import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString } from '../utils/date';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
@@ -18,6 +18,7 @@ interface ChildHomeTabProps {
   handleTaskCheck: (taskId: string, title: string) => void;
   potReminders?: string[];
   onOpenBadges: () => void;
+  parentProfile?: ParentProfile | null;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -28,10 +29,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   rewards,
   handleTaskCheck,
   potReminders = [],
-  onOpenBadges
+  onOpenBadges,
+  parentProfile
 }) => {
-  // Daily Goal Logic (Assume 50 points daily goal)
-  const DAILY_GOAL = 50;
+  // Daily Goal Logic
+  const DAILY_GOAL = parentProfile?.daily_points_target ?? 50;
   
   // Calculate points earned today
   const todayLogicalDate = getLogicalDateString(new Date());
