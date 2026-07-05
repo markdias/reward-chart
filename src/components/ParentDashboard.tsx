@@ -1291,7 +1291,7 @@ export default function ParentDashboard({
                     </button>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                     <Button
                       variant="outline"
                       className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
@@ -1635,7 +1635,7 @@ export default function ParentDashboard({
                     </button>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                     <Button
                       variant="outline"
                       className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
