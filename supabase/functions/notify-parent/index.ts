@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // Fetch the child details and their family
     const { data: child, error: childError } = await supabase
       .from('children')
-      .select('name, family_id')
+      .select('name, parent_id')
       .eq('id', record.child_id)
       .single()
 
@@ -33,11 +33,11 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch child: ${childError?.message}`)
     }
 
-    // Fetch the parents of this family to get their IDs
+    // Fetch the parents of this family to get their user IDs
     const { data: parents, error: parentError } = await supabase
       .from('parent_profiles')
-      .select('id')
-      .eq('family_id', child.family_id)
+      .select('user_id')
+      .eq('family_id', child.parent_id)
 
     if (parentError || !parents || parents.length === 0) {
       throw new Error(`Failed to fetch parents: ${parentError?.message}`)
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       return new Response('Notification skipped due to missing API keys', { status: 200 })
     }
 
-    const parentIds = parents.map(p => p.id)
+    const parentIds = parents.map(p => p.user_id)
 
     const notificationPayload = {
       app_id: oneSignalAppId,
