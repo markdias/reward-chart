@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     let title = 'Reward Chart'
     let body = ''
 
-    if (table === 'task_completions') {
+    if (table === 'completions') {
       // Fetch the task name
       const { data: task } = await supabase
         .from('tasks')
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         .single()
         
       body = `${child.name} has completed a task: ${task?.title || 'Unknown Task'}`
-    } else if (table === 'redemptions') {
+    } else if (table === 'reward_redemptions') {
       // Fetch the reward name
       const { data: reward } = await supabase
         .from('rewards')
@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
 
       body = `${child.name} has claimed a reward: ${reward?.title || 'Unknown Reward'}`
     } else {
-       return new Response('Unhandled table type', { status: 200 })
+       console.log(`Unhandled table type: ${table}`)
+       return new Response(`Unhandled table type: ${table}`, { status: 200 })
     }
 
     // Send OneSignal Notification
