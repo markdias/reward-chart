@@ -72,7 +72,7 @@ export async function checkAndUnlockBadges(child: Child) {
   // 3. Compute dynamic stats (Tasks breakdown)
   const { data: completions } = await supabase
     .from('completions')
-    .select('status, tasks(category)')
+    .select('task_id, status')
     .eq('child_id', child.id)
     .eq('status', 'approved');
 
@@ -86,12 +86,28 @@ export async function checkAndUnlockBadges(child: Child) {
     other: 0
   };
 
-  if (completions) {
-    for (const c of completions) {
-      total_tasks++;
-      const cat = (c.tasks as any)?.category;
-      if (cat && categories[cat] !== undefined) {
-        categories[cat]++;
+  if (completions && completions.length > 0) {
+    total_tasks = completions.length;
+    
+    const taskIds = Array.from(new Set(completions.map(c => c.task_id).filter(id => id !== 'penalty')));
+    
+    if (taskIds.length > 0) {
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id, category')
+        .in('id', taskIds);
+        
+      const taskCategoryMap = new Map();
+      if (tasks) {
+        tasks.forEach(t => taskCategoryMap.set(t.id, t.category));
+      }
+      
+      for (const c of completions) {
+        if (c.task_id === 'penalty') continue;
+        const cat = taskCategoryMap.get(c.task_id);
+        if (cat && categories[cat] !== undefined) {
+          categories[cat]++;
+        }
       }
     }
   }
