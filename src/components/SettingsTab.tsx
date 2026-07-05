@@ -353,26 +353,30 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                   return;
                 }
 
-                if (!import.meta.env.VITE_ONESIGNAL_APP_ID) {
-                  alert("OneSignal App ID is missing. If you are running locally, please restart your 'npm run dev' server to load the new .env variables!");
-                  return;
-                }
-
-                if (OneSignal.Notifications) {
-                  if (!OneSignal.Notifications.isPushSupported()) {
-                    alert("Push Notifications are not supported on this browser/device. (If on iOS, you must use iOS 16.4+ and add the app to your Home Screen first).");
-                    return;
-                  }
-                  
-                  if (OneSignal.Notifications.permission === true) {
-                    alert("Push Notifications are already enabled for this device!");
-                    return;
-                  }
-                }
-
                 try {
+                  alert(`DEBUG: VITE_ONESIGNAL_APP_ID is ${import.meta.env.VITE_ONESIGNAL_APP_ID}. OneSignal defined? ${!!OneSignal}. Notifications defined? ${!!OneSignal?.Notifications}. isPushSupported? ${OneSignal?.Notifications?.isPushSupported ? OneSignal.Notifications.isPushSupported() : 'unknown'}`);
+                  
+                  if (!import.meta.env.VITE_ONESIGNAL_APP_ID) {
+                    alert("OneSignal App ID is missing. Please restart your dev server!");
+                    return;
+                  }
+
+                  if (OneSignal.Notifications) {
+                    if (!OneSignal.Notifications.isPushSupported()) {
+                      alert("Push Notifications are not supported on this browser/device. (If on iOS, you must use iOS 16.4+ and add the app to your Home Screen first).");
+                      return;
+                    }
+                    
+                    if (OneSignal.Notifications.permission === true) {
+                      alert("Push Notifications are already enabled for this device!");
+                      return;
+                    }
+                  }
+
+                  alert("Calling requestPermission()...");
                   const accepted = await OneSignal.Notifications.requestPermission();
-                  console.log("Push permission accepted:", accepted);
+                  alert(`Push permission returned: ${accepted}`);
+                  
                   if (accepted) {
                     alert("Success! Push notifications are now enabled.");
                   } else {
