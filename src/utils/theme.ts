@@ -35,7 +35,7 @@ export const THEME_PRESETS: Record<ThemeId, ThemeStyles> = {
     bodyBg: 'bg-[#F5F2EA] text-[#292524]',
     textColor: 'text-[#292524]',
     textMuted: 'text-[#78716C]',
-    cardBg: 'bg-white rounded-3xl shadow-lg shadow-orange-900/5 border border-stone-100 text-[#292524]',
+    cardBg: 'bg-white rounded-3xl shadow-lg shadow-orange-900/5 border border-stone-100 text-[#292524] dashboard-card',
     headerBg: 'bg-white/90 border-b border-stone-100 backdrop-blur-md',
     btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
     btnSecondary: 'bg-white border border-stone-200 text-stone-700 shadow-sm hover:bg-stone-50 active:scale-[0.98] transition-all rounded-2xl',

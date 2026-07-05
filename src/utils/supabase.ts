@@ -5,8 +5,8 @@ let currentInitializedUrl = '';
 let currentInitializedKey = '';
 
 export function getSupabaseConfig() {
-  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  const envUrl = (import.meta as any).env.VITE_SUPABASE_URL || '';
+  const envKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
   return { url: envUrl.trim(), key: envKey.trim() };
 }
 

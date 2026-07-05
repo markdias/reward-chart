@@ -1,10 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght=400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Nunito", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.75rem;
+  
+  --text-3xs: 0.5625rem;
+  --text-3xs--line-height: 0.75rem;
 
   /* Unified OKLCH Color Palette */
   --color-primary: oklch(65% 0.22 142);
@@ -38,82 +44,17 @@
 }
 
 @layer utilities {
-  /* Duolingo UI Styles */
-
-  .btn-primary {
-    @apply bg-primary hover:bg-primary-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-primary-shadow);
-  }
-  .btn-primary:active {
-    box-shadow: 0 0px 0 0 var(--color-primary-shadow);
-  }
-  .btn-primary:disabled {
-    @apply bg-gray-300 text-gray-500 opacity-100 cursor-not-allowed;
-    box-shadow: 0 4px 0 0 #D1D5DB;
-  }
-  .btn-primary:disabled:active {
-    @apply translate-y-0;
-    box-shadow: 0 4px 0 0 #D1D5DB;
-  }
-
-  .btn-secondary {
-    @apply bg-surface hover:bg-surface-alt text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-neutral-border);
-  }
-  .btn-secondary:active {
-    box-shadow: 0 0px 0 0 var(--color-neutral-border);
-  }
-
-  .btn-danger {
-    @apply bg-danger hover:bg-danger-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-danger-shadow);
-  }
-  .btn-danger:active {
-    box-shadow: 0 0px 0 0 var(--color-danger-shadow);
-  }
-
-  .btn-blue {
-    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-info-shadow);
-  }
-  .btn-blue:active {
-    box-shadow: 0 0px 0 0 var(--color-info-shadow);
-  }
-
-  .btn-info {
-    @apply bg-info hover:bg-info-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-info-shadow);
-  }
-  .btn-info:active {
-    box-shadow: 0 0px 0 0 var(--color-info-shadow);
-  }
-
-  .btn-purple {
-    @apply bg-accent-purple hover:bg-accent-purple-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-accent-purple-shadow);
-  }
-  .btn-purple:active {
-    box-shadow: 0 0px 0 0 var(--color-accent-purple-shadow);
-  }
-
-  .btn-warning {
-    @apply bg-warning hover:bg-warning-hover text-dark border-2 border-neutral-border font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-warning-shadow);
-  }
-  .btn-warning:active {
-    box-shadow: 0 0px 0 0 var(--color-warning-shadow);
-  }
-
-  .btn-dark {
-    @apply bg-dark hover:bg-dark-hover text-white font-bold rounded-2xl px-6 py-3 transition-all active:translate-y-1 select-none inline-flex items-center justify-center cursor-pointer;
-    box-shadow: 0 4px 0 0 var(--color-dark-shadow);
-  }
-  .btn-dark:active {
-    box-shadow: 0 0px 0 0 var(--color-dark-shadow);
-  }
 
   .duo-card {
     @apply bg-surface border-2 border-neutral-border rounded-3xl p-5;
+  }
+  
+  .card-panel {
+    @apply bg-white border border-gray-200 shadow-sm rounded-3xl p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border-2 border-gray-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 text-xs font-mono transition-all;
   }
 
   .flame-active {
@@ -136,15 +77,190 @@
   50% { transform: translateY(-6px); }
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   background-color: var(--color-page);
   color: var(--color-dark);
 }
 
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+
+p, li {
+  text-wrap: pretty;
+}
+
 /* iOS Safe Area Support */
 #app-main {
-  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+}
+
+/* PLAYFUL POP THEME OVERRIDES */
+[data-theme="playful_pop"] .task-card:nth-child(3n+1) { background-color: #7dd3fc !important; } /* sky-300 */
+[data-theme="playful_pop"] .task-card:nth-child(3n+2) { background-color: #fde047 !important; } /* yellow-300 */
+[data-theme="playful_pop"] .task-card:nth-child(3n+3) { background-color: #f9a8d4 !important; } /* pink-300 */
+[data-theme="playful_pop"] .task-card.opacity-75 { opacity: 0.5 !important; filter: grayscale(1) !important; background-color: #e5e7eb !important; } /* gray-200 for disabled/completed */
+
+[data-theme="playful_pop"] .reward-card { background-color: #fdba74 !important; } /* orange-300 */
+[data-theme="playful_pop"] .reward-card-saving { background-color: #6ee7b7 !important; } /* emerald-300 */
+[data-theme="playful_pop"] .reward-card-disabled { background-color: #d1d5db !important; } /* gray-300 */
+
+[data-theme="playful_pop"] .pot-gold { background-color: #fcd34d !important; } /* amber-300 */
+[data-theme="playful_pop"] .pot-savings { background-color: #6ee7b7 !important; } /* emerald-300 */
+[data-theme="playful_pop"] .pot-food { background-color: #fdba74 !important; } /* orange-300 */
+[data-theme="playful_pop"] .pot-gifting { background-color: #d8b4fe !important; } /* purple-300 */
+
+/* Global playful pop styles for cards */
+[data-theme="playful_pop"] .task-card,
+[data-theme="playful_pop"] .reward-card,
+[data-theme="playful_pop"] .reward-card-saving,
+[data-theme="playful_pop"] .reward-card-disabled,
+[data-theme="playful_pop"] .pot-card {
+  border: 3px solid black !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transform: translateY(0) translateX(0) !important;
+}
+
+[data-theme="playful_pop"] .task-card:active,
+[data-theme="playful_pop"] .reward-card:active,
+[data-theme="playful_pop"] .reward-card-saving:active,
+[data-theme="playful_pop"] .pot-card:active {
+  box-shadow: none !important;
+  transform: translateY(4px) translateX(4px) !important;
+}
+
+[data-theme="playful_pop"] .task-card:hover,
+[data-theme="playful_pop"] .reward-card:hover,
+[data-theme="playful_pop"] .reward-card-saving:hover,
+[data-theme="playful_pop"] .pot-card:hover {
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+  transform: translateY(2px) translateX(2px) !important;
+}
+
+/* Playful Pop inner elements */
+[data-theme="playful_pop"] .task-card h4,
+[data-theme="playful_pop"] .reward-card h4,
+[data-theme="playful_pop"] .reward-card-saving h4,
+[data-theme="playful_pop"] .pot-card h3 {
+  color: black !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+}
+
+[data-theme="playful_pop"] .task-card .rounded-full,
+[data-theme="playful_pop"] .reward-card .rounded-full,
+[data-theme="playful_pop"] .reward-card-saving .rounded-full,
+[data-theme="playful_pop"] .pot-card .rounded-2xl {
+  border: 2px solid black !important;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+  background-color: white !important;
+  color: black !important;
+}
+
+[data-theme="playful_pop"] .pot-card .rounded-full {
+  border: 3px solid black !important;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+  background-color: white !important;
+  color: black !important;
+}
+
+[data-theme="playful_pop"] #child-root {
+  background-color: #FDF9F1 !important;
+}
+
+[data-theme="playful_pop"] .pot-maintenance { background-color: #fef08a !important; } /* yellow-200 */
+
+/* Global UI Playful Pop Overrides */
+[data-theme="playful_pop"] .btn-primary,
+[data-theme="playful_pop"] .btn-secondary,
+[data-theme="playful_pop"] .btn-warning,
+[data-theme="playful_pop"] .btn-danger,
+[data-theme="playful_pop"] .btn-info,
+[data-theme="playful_pop"] .btn-purple,
+[data-theme="playful_pop"] .btn-dark,
+[data-theme="playful_pop"] .btn-outline {
+  border: 3px solid black !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+  color: black !important;
+  font-weight: 900 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transform: translateY(0) translateX(0) !important;
+}
+
+[data-theme="playful_pop"] .btn-primary:active,
+[data-theme="playful_pop"] .btn-secondary:active,
+[data-theme="playful_pop"] .btn-warning:active,
+[data-theme="playful_pop"] .btn-danger:active,
+[data-theme="playful_pop"] .btn-info:active,
+[data-theme="playful_pop"] .btn-purple:active,
+[data-theme="playful_pop"] .btn-dark:active,
+[data-theme="playful_pop"] .btn-outline:active {
+  box-shadow: none !important;
+  transform: translateY(4px) translateX(4px) !important;
+}
+
+[data-theme="playful_pop"] .btn-primary:hover,
+[data-theme="playful_pop"] .btn-secondary:hover,
+[data-theme="playful_pop"] .btn-warning:hover,
+[data-theme="playful_pop"] .btn-danger:hover,
+[data-theme="playful_pop"] .btn-info:hover,
+[data-theme="playful_pop"] .btn-purple:hover,
+[data-theme="playful_pop"] .btn-dark:hover,
+[data-theme="playful_pop"] .btn-outline:hover {
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+  transform: translateY(2px) translateX(2px) !important;
+}
+
+/* Base button color overrides for higher contrast in Playful Pop */
+[data-theme="playful_pop"] .btn-primary { background-color: #38bdf8 !important; } /* sky-400 */
+[data-theme="playful_pop"] .btn-warning { background-color: #fde047 !important; } /* yellow-300 */
+[data-theme="playful_pop"] .btn-danger { background-color: #f87171 !important; } /* red-400 */
+[data-theme="playful_pop"] .btn-info { background-color: #818cf8 !important; } /* indigo-400 */
+[data-theme="playful_pop"] .btn-purple { background-color: #c084fc !important; } /* purple-400 */
+[data-theme="playful_pop"] .btn-secondary { background-color: #ffffff !important; } /* white */
+[data-theme="playful_pop"] .btn-dark { background-color: #333333 !important; color: white !important; }
+
+/* Cards */
+[data-theme="playful_pop"] .card-panel,
+[data-theme="playful_pop"] .duo-card {
+  border: 3px solid black !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+  border-radius: 1.5rem !important;
+}
+
+/* Inputs */
+[data-theme="playful_pop"] .input-field {
+  border: 3px solid black !important;
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1) !important;
+  border-radius: 1rem !important;
+  font-weight: 700 !important;
+}
+[data-theme="playful_pop"] .input-field:focus {
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+  transform: translateY(-2px) translateX(-2px) !important;
+}
+
+/* Background */
+[data-theme="playful_pop"]#app-main {
+  background-color: #FDF9F1 !important;
+}
+
+/* Typography headings inside playful pop */
+[data-theme="playful_pop"] h1, 
+[data-theme="playful_pop"] h2 {
+  font-weight: 900 !important;
+  color: black !important;
+}
+[data-theme="playful_pop"] .dashboard-card {
+  border: 3px solid black !important;
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+  border-radius: 1.5rem !important;
 }

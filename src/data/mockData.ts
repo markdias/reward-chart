@@ -5,12 +5,14 @@ export const INITIAL_CHILDREN: Child[] = [
     id: 'child_leo',
     parent_id: 'parent_demo',
     name: 'Leo the Adventurer',
-    avatar_url: '/avatars/boy_fox.png',
+    avatar_url: 'Rocket',
     character_id: 'dragon',
     points: 125,
     level: 2,
+    lifetime_points: 0,
     streak_days: 5,
     last_active_date: new Date().toISOString().split('T')[0],
+
     savings_pot: 25,
     savings_unlocked: true,
     savings_unlock_seen: true,
@@ -20,16 +22,19 @@ export const INITIAL_CHILDREN: Child[] = [
     pet_unhappy: false,
     last_fed_date: null,
     last_hunger_check_date: new Date().toISOString().split('T')[0],
+    gold_pot_broken: false,
+    gold_pot_last_check_date: new Date().toISOString().split('T')[0],
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString()
   },
   {
     id: 'child_lily',
     parent_id: 'parent_demo',
     name: 'Lily the Dreamer',
-    avatar_url: '/avatars/girl_kitten.png',
+    avatar_url: 'Cat',
     character_id: 'unicorn',
     points: 42,
     level: 1,
+    lifetime_points: 0,
     streak_days: 3,
     last_active_date: new Date().toISOString().split('T')[0],
     savings_pot: 0,
@@ -41,16 +46,19 @@ export const INITIAL_CHILDREN: Child[] = [
     pet_unhappy: false,
     last_fed_date: null,
     last_hunger_check_date: new Date().toISOString().split('T')[0],
+    gold_pot_broken: false,
+    gold_pot_last_check_date: new Date().toISOString().split('T')[0],
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
   },
   {
     id: 'child_sammy',
     parent_id: 'parent_demo',
     name: 'Sammy the Creator',
-    avatar_url: '/avatars/boy_puppy.png',
+    avatar_url: 'Dog',
     character_id: 'robot',
     points: 185,
     level: 3,
+    lifetime_points: 0,
     streak_days: 8,
     last_active_date: new Date().toISOString().split('T')[0],
     savings_pot: 50,
@@ -62,7 +70,9 @@ export const INITIAL_CHILDREN: Child[] = [
     pet_unhappy: false,
     last_fed_date: null,
     last_hunger_check_date: new Date().toISOString().split('T')[0],
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString()
+    gold_pot_broken: false,
+    gold_pot_last_check_date: new Date().toISOString().split('T')[0],
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString()
   }
 ];
 

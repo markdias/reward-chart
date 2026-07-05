@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Coins, Target, Utensils } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils } from 'lucide-react';
+import { Button } from './ui/Button';
+import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getCharacterStage } from '../data/characters';
@@ -100,48 +103,47 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
   };
 
   return (
-    <div className={`min-h-screen ${styles.bodyBg} flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300`} id="landing-page-root">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="landing-page-root">
       
-      {/* Sweeping Curved Header Background */}
-      <div className="absolute top-0 left-0 right-0 h-[88px] sm:h-[96px] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 rounded-b-2xl shadow-sm z-0 pointer-events-none transition-all duration-500"></div>
-
-      {/* High-Tech Animated Background */}
-      <div className={`absolute inset-0 ${styles.gridStyle} pointer-events-none z-10`} />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-200/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Retro Header Console */}
-      <header className={`w-full max-w-7xl mx-auto px-6 pt-safe-top pt-6 pb-6 flex items-center justify-between border-none relative z-40`}>
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-orange-500/20">
-            <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
+      {/* Clean White Header */}
+      <header 
+        className="w-full bg-white border-b border-gray-100 relative z-40"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm">
+              <Gamepad2 className="w-6 h-6 text-orange-500 animate-pulse" />
+            </div>
+            <div>
+              <Typography variant="h2" as="span">
+                REWARD CHART
+              </Typography>
+              <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
+            </div>
           </div>
-          <div>
-            <span className={`text-2xl font-black font-display tracking-wider text-white drop-shadow-sm`}>
-              REWARD CHART
-            </span>
-            <span className="block text-[9px] text-orange-100 font-mono tracking-widest font-extrabold">MAKE HABITS FUN</span>
-          </div>
+
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={() => {
+              playSound.click();
+              if (onSignIn) {
+                onSignIn();
+              } else {
+                handleEnterClick('parent');
+              }
+            }}
+            id="landing-signin-btn"
+          >
+            Sign In
+          </Button>
         </div>
-
-        <button
-          onClick={() => {
-            playSound.click();
-            if (onSignIn) {
-              onSignIn();
-            } else {
-              handleEnterClick('parent');
-            }
-          }}
-          className={`bg-white text-orange-600 hover:bg-orange-50 shadow-md shadow-orange-500/20 py-2 px-5 rounded-2xl text-xs font-bold uppercase font-display tracking-wide flex items-center gap-1.5 transition-all`}
-          id="landing-signin-btn"
-        >
-          Sign In
-        </button>
       </header>
 
       {/* Main Section */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 mt-6 sm:mt-10">
-        <div className="bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-xl shadow-orange-900/10 border border-white/50 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-200 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
           {/* Left Column: Marketing Info and CTA */}
           <div className="lg:col-span-6 flex flex-col space-y-8">
             <div className="space-y-4">
@@ -159,24 +161,29 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           <div className="w-full max-w-md pt-2 pb-4">
             <h3 className={`text-sm font-bold uppercase tracking-widest font-mono mb-3 ${styles.textMuted}`}>Who is starting the adventure today?</h3>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
                 onClick={() => handleEnterClick('parent')}
-                className={`flex-1 btn-primary bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-sm border border-indigo-200 cursor-pointer text-sm uppercase font-display tracking-wide transition-all`}
               >
                 I'm a Grown-up
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                className="flex-1"
+                rightIcon={<ArrowRight className="w-5 h-5" />}
                 onClick={() => handleEnterClick('child')}
-                className={`flex-1 btn-primary ${styles.btnPrimary} py-4 px-6 rounded-2xl flex items-center justify-center gap-2.5 shadow-lg cursor-pointer text-sm uppercase font-display tracking-wide`}
               >
-                I'm a Kid <ArrowRight className="w-4 h-4" />
-              </button>
+                I'm a Kid
+              </Button>
             </div>
           </div>
 
           {/* Value Badges */}
           <div className="grid grid-cols-2 gap-3 max-w-lg">
-            <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
               </div>
@@ -186,7 +193,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </div>
             </div>
 
-            <div className={`p-3 rounded-2xl ${styles.innerCard} flex items-center gap-3`}>
+            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
                 <PiggyBank className="w-4 h-4" />
               </div>
@@ -200,7 +207,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
         {/* Right Column: Evolved Companion Showcase */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          <div className={`p-4 sm:p-6 rounded-3xl ${styles.cardBg} relative overflow-hidden flex flex-col md:flex-row gap-6 items-center`}>
+          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-gray-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row gap-6 items-center">
             {/* Ambient Scanlines */}
             <div className={`absolute inset-0 ${styles.overlayCrt} pointer-events-none`} />
             
@@ -222,7 +229,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                   <img 
                     src={activeChar.image} 
                     alt={activeChar.name} 
-                    className="w-full h-full object-contain p-2 animate-bounce-slow drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)]" 
+                    className="w-full h-full object-contain p-2 animate-bounce-slow drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] outline outline-1 -outline-offset-1 outline-black/10" 
                   />
                 ) : (
                   <span className="text-6xl md:text-8xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] animate-bounce-slow">
@@ -244,7 +251,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <h3 className={`text-xl font-black font-display tracking-wide ${styles.titleColor}`}>
                   {activeChar.name}
                 </h3>
-                <div className={`p-3 ${styles.innerCard} rounded-xl relative`}>
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative">
                   <div className="absolute left-4 -top-2 w-3 h-3 bg-[#F5F2EA] border-t border-l border-stone-200 rotate-45" />
                   <p className="text-xs italic text-stone-700">
                     "{activeChar.greeting}"
@@ -253,7 +260,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </div>
 
               {/* Progression Preview */}
-              <div className={`p-4 rounded-2xl ${styles.innerCard} border border-stone-200/50 space-y-3 mt-2`}>
+              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3 mt-2">
                 <div className="flex justify-between items-end">
                   <div>
                     <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
@@ -264,9 +271,9 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-amber-500 animate-pulse flex items-center gap-1 justify-end">
-                      <Coins className="w-3 h-3" /> +50 Coins
-                    </span>
+                    <div className="flex items-center gap-1 justify-end animate-pulse">
+                      <CoinBadge points={50} size="sm" />
+                    </div>
                   </div>
                 </div>
                 
@@ -299,7 +306,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 return (
                   <motion.button
                     whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => handleCharacterSelect(index)}
                     key={char.id}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center border transition-all cursor-pointer relative overflow-hidden ${
@@ -312,7 +319,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                       <img 
                         src={char.image} 
                         alt={char.name} 
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain p-1 outline outline-1 -outline-offset-1 outline-black/10"
                       />
                     ) : (
                       <span className="text-2xl sm:text-3xl">{char.emoji}</span>
@@ -331,7 +338,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
       {/* Financial Literacy Journey Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
-        <div className={`p-8 sm:p-12 rounded-[2.5rem] bg-white border border-stone-100 shadow-xl shadow-orange-900/5 relative overflow-hidden`}>
+        <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border border-gray-200 shadow-sm relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
@@ -342,9 +349,9 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <PiggyBank className="w-4 h-4 text-amber-500" />
                 LEARN REAL MONEY SKILLS
               </div>
-              <h2 className="text-3xl md:text-5xl font-black font-display text-stone-900">
+              <Typography variant="h1" as="h2">
                 A Financial Journey for Kids
-              </h2>
+              </Typography>
               <p className="text-sm md:text-base text-stone-600 leading-relaxed max-w-2xl mx-auto">
                 Reward Chart isn't just about finishing tasks. It's about teaching the value of patience, planning, and delayed gratification through a fun, game-like economy.
               </p>
@@ -352,8 +359,8 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
             <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-5 border border-amber-200">
-                  <Coins className="w-6 h-6" />
+                <div className="mb-5">
+                  <CoinBadge iconOnly size="lg" />
                 </div>
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">1. Earn & Manage</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">

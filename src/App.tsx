@@ -10,6 +10,7 @@ import Confetti from './components/Confetti';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
+import ButtonShowcase from './components/ButtonShowcase';
 import { 
   INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
 } from './data/mockData';
@@ -19,11 +20,61 @@ import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
+import { revokeInvalidLevelBadges } from './utils/badgeService';
+
+import TypographyShowcase from './components/TypographyShowcase';
+import TaskCardShowcase from './components/TaskCardShowcase';
+import RewardCardShowcase from './components/RewardCardShowcase';
+import PotsShowcase from './components/PotsShowcase';
+import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
+import { IosTabBarShowcase } from './components/IosTabBarShowcase';
+import ChildCardShowcase from './components/ChildCardShowcase';
+import WellDoneShowcase from './components/WellDoneShowcase';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
+  
+  if (new URLSearchParams(window.location.search).get('showcase') === 'buttons') {
+    return <ButtonShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'typography') {
+    return <TypographyShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'tasks') {
+    return <TaskCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'rewards') {
+    return <RewardCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'pots') {
+    return <PotsShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'player-selection') {
+    return <PlayerSelectionShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'ios-tab-bar') {
+    return <IosTabBarShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'child-card') {
+    return <ChildCardShowcase />;
+  }
+
+  if (new URLSearchParams(window.location.search).get('showcase') === 'welldone') {
+    return <WellDoneShowcase />;
+  }
 
   // Auth state
+  const [globalTheme, setGlobalTheme] = useState<string>(
+    localStorage.getItem('RCH_GLOBAL_THEME') || 'modern'
+  );
+  
   const [parentEmail, setParentEmail] = useState<string | null>(
     localStorage.getItem('RCH_PARENT_EMAIL')
   );
@@ -40,6 +91,14 @@ export default function App() {
   );
   
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
+  
+  useEffect(() => {
+    if (parentProfile?.dashboard_style) {
+      setGlobalTheme(parentProfile.dashboard_style);
+      localStorage.setItem('RCH_GLOBAL_THEME', parentProfile.dashboard_style);
+    }
+  }, [parentProfile?.dashboard_style]);
+
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
   const [postSignUpData, setPostSignUpData] = useState<{ email: string, parentName: string, familyName: string } | null>(null);
 
@@ -197,10 +256,17 @@ export default function App() {
                 savings_pot_unlock_level: 2,
                 food_pot_unlock_level: 4,
                 gifting_pot_unlock_level: 6,
+                gold_pot_maintenance_unlock_level: 8,
+                gold_pot_maintenance_cost: 2,
                 points_to_level_up: 500,
                 level_up_gold_reward: 500
               };
-              await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
+              const { error: profileError } = await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
+              
+              if (profileError) {
+                console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
+                return; // Abort further inserts if profile fails
+              }
               
               // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
               if (!shareToken) {
@@ -502,7 +568,23 @@ export default function App() {
           last_fed_date: updatedChild.last_fed_date,
           last_hunger_check_date: updatedChild.last_hunger_check_date,
           gifting_unlocked: updatedChild.gifting_unlocked,
-          gifting_unlock_seen: updatedChild.gifting_unlock_seen
+          gifting_unlock_seen: updatedChild.gifting_unlock_seen,
+          gold_pot_maintenance_unlock_seen: updatedChild.gold_pot_maintenance_unlock_seen,
+          gold_pot_broken: updatedChild.gold_pot_broken,
+          gold_pot_break_count_this_week: updatedChild.gold_pot_break_count_this_week,
+          gold_pot_break_week: updatedChild.gold_pot_break_week,
+          gold_pot_last_check_date: updatedChild.gold_pot_last_check_date,
+          gold_pot_last_leak_date: updatedChild.gold_pot_last_leak_date,
+          gold_pot_last_fix_date: updatedChild.gold_pot_last_fix_date,
+          gold_pot_total_leaked: updatedChild.gold_pot_total_leaked,
+          gold_pot_intro_seen: updatedChild.gold_pot_intro_seen,
+          last_saved_date: updatedChild.last_saved_date,
+          last_gifting_date: updatedChild.last_gifting_date,
+          savings_deposits: updatedChild.savings_deposits,
+          pet_fed_total: updatedChild.pet_fed_total,
+          gifts_made: updatedChild.gifts_made,
+          gold_pot_fixes: updatedChild.gold_pot_fixes,
+          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -534,6 +616,8 @@ export default function App() {
       savings_pot_unlock_level: 2,
       food_pot_unlock_level: 4,
       gifting_pot_unlock_level: 6,
+      gold_pot_maintenance_unlock_level: 8,
+      gold_pot_maintenance_cost: 2,
       points_to_level_up: 500,
       level_up_gold_reward: 500
     };
@@ -708,6 +792,7 @@ export default function App() {
       const childIds = children.map(c => c.id);
       if (childIds.length > 0) {
         await supabase.from('completions').delete().in('child_id', childIds);
+        await supabase.from('child_badges').delete().in('child_id', childIds);
       }
       await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
       await supabase.from('gifting_requests').delete().eq('family_id', familyId);
@@ -717,7 +802,22 @@ export default function App() {
         points: 0,
         level: 1,
         streak_days: 0,
-        monthly_points: 0
+        monthly_points: 0,
+        lifetime_points: 0,
+        pet_food: 0,
+        weekly_points: 0,
+        savings_pot: 0,
+        savings_unlocked: false,
+        savings_unlock_seen: false,
+        food_pot_unlocked: false,
+        food_pot_unlock_seen: false,
+        savings_goal_name: null,
+        savings_goal_amount: null,
+        savings_goal_reward_id: null,
+        pet_fed_today: false,
+        pet_unhappy: false,
+        last_fed_date: null,
+        last_saved_date: null
       }));
       syncChildren(updatedChildren);
       for (const child of updatedChildren) {
@@ -769,11 +869,12 @@ export default function App() {
   };
 
   // Operations: Children
-  const handleAddChild = async (name: string, characterId: string, avatarUrl: string) => {
+  const handleAddChild = async (name: string, characterId: string, avatarUrl: string, age?: number) => {
     const newChild: Child = {
       id: `child_${Date.now()}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       name,
+      age,
       avatar_url: avatarUrl,
       character_id: characterId,
       points: 0,
@@ -835,6 +936,12 @@ export default function App() {
       newPoints += levelUpBonus;
       bonusesReceived++;
       setTimeout(() => playSound.levelUp(), 300);
+    }
+
+    // 1b. Level down check
+    while (newLevel > 1 && newLifetimePoints < ((newLevel - 1) * pointsToLevelUp)) {
+      newLevel--;
+      bonusesReceived = Math.max(0, bonusesReceived - 1);
     }
 
     // 2. Weekly / Monthly Tracking (Explicit Reset Logging)
@@ -929,7 +1036,9 @@ export default function App() {
     if (updates.points !== undefined && updates.points > child.points) {
       const addedPoints = updates.points - child.points;
       targetChild = processLifetimePoints(targetChild, addedPoints);
-      // Let it update points through the pipeline, but we still apply the exact updates below
+      // Let it update points through the pipeline, but we must explicitly add the new points
+      // because processLifetimePoints only handles lifetime and bonuses.
+      targetChild.points += addedPoints;
       delete updates.points; 
     }
 
@@ -1063,7 +1172,8 @@ export default function App() {
     title: string, 
     cost: number, 
     iconName: string,
-    limitType: any
+    limitType: any,
+    isBadgeEligible: boolean = false
   ) => {
     const newReward: Reward = {
       id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -1075,6 +1185,7 @@ export default function App() {
       is_template: true,
       icon_name: iconName,
       limit_type: limitType,
+      is_badge_eligible: isBadgeEligible,
       created_at: new Date().toISOString()
     };
     syncRewards([...rewards, newReward]);
@@ -1164,31 +1275,81 @@ export default function App() {
     }
   };
 
-  const handleClaimReward = async (rewardId: string, childId: string, paymentSource: 'main' | 'savings' = 'main') => {
+  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    // Let processLifetimePoints handle lifetime points and level recalculation.
+    // It will process the negative amount.
+    let targetChild = processLifetimePoints(child, -amount);
+    
+    // Explicitly subtract the actual points
+    targetChild.points = Math.max(0, child.points - amount);
+    
+    const levelDropped = (targetChild.level || 1) < (child.level || 1);
+
+    const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+    syncChildren(updatedChildren);
+
+    if (levelDropped) {
+      revokeInvalidLevelBadges(childId, targetChild.level || 1);
+    }
+
+    // Create a penalty completion
+    const newCompletion: TaskCompletion = {
+      id: `comp_penalty_${Date.now()}`,
+      task_id: 'penalty',
+      child_id: childId,
+      points_awarded: -amount,
+      status: 'approved',
+      completed_at: new Date().toISOString(),
+      notes: reason
+    };
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      const { error: childError } = await supabase.from('children').update({
+        points: targetChild.points,
+        lifetime_points: targetChild.lifetime_points,
+        level: targetChild.level,
+        level_up_bonuses_received: targetChild.level_up_bonuses_received
+      }).eq('id', targetChild.id);
+      if (childError) console.warn('Failed to update child points for penalty in Supabase:', childError.message);
+
+      const { error: compError } = await supabase.from('completions').insert(newCompletion);
+      if (compError) console.warn('Failed to sync penalty completion to Supabase:', compError.message);
+    }
+  };
+
+  const handleClaimReward = async (rewardId: string, childId: string, paymentSource: 'main' | 'savings' | 'badge_freebie' = 'main') => {
     const reward = rewards.find(r => r.id === rewardId);
     const child = children.find(c => c.id === childId);
     const availablePoints = paymentSource === 'savings' ? (child?.savings_pot || 0) : (child?.points || 0);
-    if (!reward || !child || availablePoints < reward.cost_points || !reward.is_available) return;
+    const hasEnoughPoints = paymentSource === 'badge_freebie' ? true : availablePoints >= (reward?.cost_points || 0);
+    if (!reward || !child || !hasEnoughPoints || !reward.is_available) return;
 
     // --- Limit Checks ---
     const now = new Date();
     const childRedemptions = redemptions.filter(r => r.child_id === childId && r.reward_id === rewardId);
     
-    if (reward.limit_type === 'daily') {
-      const startOfDay = getStartOfDailyReset(now);
-      const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
-      if (todayRedemptions.length >= 1) return; // Limit reached
-    } 
-    else if (reward.limit_type === 'twice_daily') {
-      const startOfDay = getStartOfDailyReset(now);
-      const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
-      if (todayRedemptions.length >= 2) return; // Limit reached
-      
-      // Wait at least 6 hours between redemptions
-      if (todayRedemptions.length === 1) {
-        const lastRedeem = new Date(todayRedemptions[0].redeemed_at).getTime();
-        const hrsSinceLast = (now.getTime() - lastRedeem) / (1000 * 60 * 60);
-        if (hrsSinceLast < 6) return;
+    if (paymentSource !== 'badge_freebie') {
+      if (reward.limit_type === 'daily') {
+        const startOfDay = getStartOfDailyReset(now);
+        const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
+        if (todayRedemptions.length >= 1) return; // Limit reached
+      } 
+      else if (reward.limit_type === 'twice_daily') {
+        const startOfDay = getStartOfDailyReset(now);
+        const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
+        if (todayRedemptions.length >= 2) return; // Limit reached
+        
+        // Wait at least 6 hours between redemptions
+        if (todayRedemptions.length === 1) {
+          const lastRedeem = new Date(todayRedemptions[0].redeemed_at).getTime();
+          const hrsSinceLast = (now.getTime() - lastRedeem) / (1000 * 60 * 60);
+          if (hrsSinceLast < 6) return;
+        }
       }
     }
 
@@ -1229,13 +1390,13 @@ export default function App() {
     const child = children.find(c => c.id === redemption.child_id);
 
     if (child) {
-      const cost = reward ? reward.cost_points : 0;
+      const cost = (reward && redemption.payment_source !== 'badge_freebie') ? reward.cost_points : 0;
       const isSavingsPurchase = redemption.payment_source === 'savings';
       const targetChild = {
         ...child,
         points: isSavingsPurchase ? child.points : Math.max(0, child.points - cost),
         savings_pot: isSavingsPurchase ? Math.max(0, (child.savings_pot || 0) - cost) : child.savings_pot,
-        pet_food: (child.pet_food || 0) + 1,
+        pet_food: (child.pet_food || 0) + (cost > 0 || redemption.payment_source === 'badge_freebie' ? 1 : 0),
       };
 
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
@@ -1305,7 +1466,23 @@ export default function App() {
       ...child,
       points: child.points - 1,
       pet_food: (child.pet_food || 0) + 1,
-      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1
+      food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1,
+      last_fed_date: new Date().toISOString()
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleSellPetFood = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child || (child.pet_food || 0) < 1) return;
+
+    const targetChild = {
+      ...child,
+      points: child.points + 1,
+      pet_food: child.pet_food! - 1,
+      food_pot_weekly_contribution: Math.max(0, (child.food_pot_weekly_contribution || 0) - 1)
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1335,7 +1512,8 @@ export default function App() {
     const targetChild = {
       ...child,
       points: child.points - amount,
-      savings_pot: (child.savings_pot || 0) + amount
+      savings_pot: (child.savings_pot || 0) + amount,
+      last_saved_date: new Date().toISOString()
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1387,6 +1565,19 @@ export default function App() {
       savings_goal_name: null,
       savings_goal_amount: null,
       savings_goal_reward_id: null
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
+
+  const handleAppIntroSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      gold_pot_intro_seen: true
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
@@ -1661,11 +1852,24 @@ export default function App() {
     syncChildren(updatedChildren);
     updateChildInSupabase(targetChild);
   };
+  const handleGoldPotMaintenanceUnlockSeen = async (childId: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    const targetChild = {
+      ...child,
+      gold_pot_maintenance_unlock_seen: true,
+      gold_pot_last_check_date: new Date().toISOString().split('T')[0]
+    };
+    const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
+    syncChildren(updatedChildren);
+    updateChildInSupabase(targetChild);
+  };
 
 
   return (
     <>
-    <div className={`relative min-h-screen ${THEME_PRESETS[activeTheme].bodyBg} transition-all duration-300`} id="app-main">
+    <div className={`relative min-h-screen transition-all duration-300`} id="app-main" data-theme={globalTheme}>
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
@@ -1737,6 +1941,7 @@ export default function App() {
               onAddChild={handleAddChild}
               onEditChild={handleEditChild}
               onUpdateChildStats={handleUpdateChildStats}
+              onDeductCoins={handleDeductCoins}
               onAddTask={handleAddTask}
               onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
@@ -1790,11 +1995,15 @@ export default function App() {
               onSavingsGoal={handleSavingsGoal}
               onClearSavingsGoal={handleClearSavingsGoal}
               onSavingsUnlockSeen={handleSavingsUnlockSeen}
+              onEditChild={handleEditChild}
+              onAppIntroSeen={handleAppIntroSeen}
               onBuyPetFood={handleBuyPetFood}
+              onSellPetFood={handleSellPetFood}
               onFoodPotUnlockSeen={handleFoodPotUnlockSeen}
               onGiftingRequestCharity={handleGiftingRequestCharity}
               onGiftingRequestSibling={handleGiftingRequestSibling}
               onGiftingUnlockSeen={handleGiftingUnlockSeen}
+              onGoldPotMaintenanceUnlockSeen={handleGoldPotMaintenanceUnlockSeen}
               onUpdateChildStats={handleUpdateChildStats}
               lockedChildId={lockedChildId}
               onLockChild={(childId) => {
