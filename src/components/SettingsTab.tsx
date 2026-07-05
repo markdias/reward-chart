@@ -353,6 +353,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                   return;
                 }
 
+                if (!import.meta.env.VITE_ONESIGNAL_APP_ID) {
+                  alert("OneSignal App ID is missing. If you are running locally, please restart your 'npm run dev' server to load the new .env variables!");
+                  return;
+                }
+
                 if (OneSignal.Notifications) {
                   if (!OneSignal.Notifications.isPushSupported()) {
                     alert("Push Notifications are not supported on this browser/device. (If on iOS, you must use iOS 16.4+ and add the app to your Home Screen first).");
