@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'framer-motion';
-import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound } from 'lucide-react';
+import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell } from 'lucide-react';
+import OneSignal from 'react-onesignal';
 import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -75,8 +76,9 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
 
   const c = getThemeClasses();
   
+  const baseUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
   const shareLink = parentProfile?.share_token 
-    ? `${window.location.origin}/?share=${parentProfile.share_token}`
+    ? `${baseUrl}/?share=${parentProfile.share_token}`
     : 'Generating...';
 
   const handleSaveProfile = async () => {
@@ -332,6 +334,29 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               <option value="playful_pop">Playful Pop</option>
             </select>
             <p className="text-[10px] mt-2 text-stone-500">Choose between the clean modern look or the bold & chunky "Playful Pop" aesthetic.</p>
+          </div>
+
+          <div className="bg-white p-4 rounded-xl border border-stone-200">
+            <h4 className={`text-sm font-bold border-b pb-2 mb-4 border-stone-100 text-indigo-600`}>Notifications</h4>
+            <Button 
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={async () => {
+                playSound.click();
+                try {
+                  await OneSignal.Slidedown.promptPush({ force: true });
+                  console.log("Push prompt shown");
+                } catch (e: any) {
+                  console.error("Push prompt error:", e);
+                  alert("Error showing prompt or notifications are blocked by an ad-blocker. Error: " + (e?.message || e));
+                }
+              }}
+              leftIcon={<Bell className="w-4 h-4" />}
+            >
+              ENABLE PUSH NOTIFICATIONS
+            </Button>
+            <p className="text-[10px] mt-2 text-stone-500">Receive alerts when a child completes a task or claims a reward. Note: iOS users must add the app to their Home Screen first.</p>
           </div>
 
           <Button 

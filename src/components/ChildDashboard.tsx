@@ -1310,19 +1310,9 @@ export default function ChildDashboard({
       {/* Simple Navigation for Profile Selection */}
       {!selectedChildId && (
         <header 
-          className="px-4 sm:px-6 pb-2 flex justify-between items-center relative z-40 bg-transparent"
+          className="px-4 sm:px-6 pb-2 flex justify-end items-center relative z-40 bg-transparent"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-white shadow-sm flex items-center justify-center text-sm sm:text-lg border border-gray-100`}>
-              🎮
-            </div>
-            <div className="flex flex-col ml-1">
-              <span className={`text-[12px] sm:text-base font-black tracking-widest uppercase text-slate-900 drop-shadow-sm`}>
-                SELECT PROFILE
-              </span>
-            </div>
-          </div>
           <Button
             variant="outline"
             size="sm"
