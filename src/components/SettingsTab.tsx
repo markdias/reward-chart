@@ -353,17 +353,38 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                   return;
                 }
 
-                if (OneSignal.Notifications && OneSignal.Notifications.permission === true) {
-                  alert("Push Notifications are already enabled for this device!");
-                  return;
-                }
-
                 try {
-                  await OneSignal.Slidedown.promptPush({ force: true });
-                  console.log("Push prompt shown");
+                  alert(`DEBUG: VITE_ONESIGNAL_APP_ID is ${import.meta.env.VITE_ONESIGNAL_APP_ID}. OneSignal defined? ${!!OneSignal}. Notifications defined? ${!!OneSignal?.Notifications}. isPushSupported? ${OneSignal?.Notifications?.isPushSupported ? OneSignal.Notifications.isPushSupported() : 'unknown'}`);
+                  
+                  if (!import.meta.env.VITE_ONESIGNAL_APP_ID) {
+                    alert("OneSignal App ID is missing. Please restart your dev server!");
+                    return;
+                  }
+
+                  if (OneSignal.Notifications) {
+                    if (!OneSignal.Notifications.isPushSupported()) {
+                      alert("Push Notifications are not supported on this browser/device. (If on iOS, you must use iOS 16.4+ and add the app to your Home Screen first).");
+                      return;
+                    }
+                    
+                    if (OneSignal.Notifications.permission === true) {
+                      alert("Push Notifications are already enabled for this device!");
+                      return;
+                    }
+                  }
+
+                  alert("Calling requestPermission()...");
+                  const accepted = await OneSignal.Notifications.requestPermission();
+                  alert(`Push permission returned: ${accepted}`);
+                  
+                  if (accepted) {
+                    alert("Success! Push notifications are now enabled.");
+                  } else {
+                    alert("Permission was not granted. Please check your device settings.");
+                  }
                 } catch (e: any) {
                   console.error("Push prompt error:", e);
-                  alert("Error showing prompt or notifications are blocked by an ad-blocker. Error: " + (e?.message || e));
+                  alert("Error requesting permission: " + (e?.message || e));
                 }
               }}
               leftIcon={<Bell className="w-4 h-4" />}
