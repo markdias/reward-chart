@@ -2,12 +2,29 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Plane, Crown, Ticket, Sparkles, QrCode } from 'lucide-react';
 import { Typography } from './ui/Typography';
-import { INITIAL_CHILDREN } from '../data/mockData';
+
 import { ChildAvatar } from './ChildAvatar';
 
 export default function PlayerSelectionShowcase() {
   const [selectedVariation, setSelectedVariation] = useState<number>(1);
-  const children = INITIAL_CHILDREN;
+  const children = [
+    {
+      id: 'mock-1',
+      name: 'Leo',
+      avatar_url: 'lion',
+      level: 4,
+      streak_days: 12,
+      points: 450,
+    },
+    {
+      id: 'mock-2',
+      name: 'Lily',
+      avatar_url: 'butterfly',
+      level: 2,
+      streak_days: 5,
+      points: 120,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 flex flex-col font-sans overflow-hidden">

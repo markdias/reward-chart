@@ -178,7 +178,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
             </div>
 
             <div className="flex gap-2 pt-2">
-              {children.length > 0 && (
+              {children.length > 0 ? (
                 <Button
                   variant="ghost"
                   type="button"
@@ -192,6 +192,17 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                 >
                   Cancel
                 </Button>
+              ) : (
+                onBack && (
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    onClick={onBack}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                )
               )}
               <Button
                 variant="dark"

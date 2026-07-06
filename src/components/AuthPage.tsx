@@ -276,7 +276,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-slate-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
             </div>
           </div>
         </div>
@@ -298,7 +298,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <p className={`text-xs ${styles.textMuted} mb-3`}>
                 {hasShareToken && isSignUp && inviterInfo 
                   ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}`
-                  : 'Requires parent credentials to manage quests and rewards'
+                  : isSignUp ? 'Set up your family account to get started' : 'Sign in to manage quests and rewards'
                 }
               </p>
             </div>
