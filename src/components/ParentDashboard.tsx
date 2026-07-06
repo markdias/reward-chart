@@ -25,6 +25,7 @@ import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
 import { CoinBadge } from './CoinBadge';
+import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
@@ -68,6 +69,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
+  initialTab?: 'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
 }
 
 export default function ParentDashboard({
@@ -108,10 +110,15 @@ export default function ParentDashboard({
   onApproveGiftingRequest,
   onRejectGiftingRequest,
   onLogout,
-  onUpdateParentProfile
+  onUpdateParentProfile,
+  initialTab = 'approvals'
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
   
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   // Scroll to top when switching tabs
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -130,7 +137,8 @@ export default function ParentDashboard({
   // Custom Confirmation Modal State
   const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak'} | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{childId: string, childName: string} | null>(null);
-  
+  const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
+  const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
   // Penalty Modal State
   const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
   const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
@@ -585,17 +593,19 @@ export default function ParentDashboard({
       </div>
 
       <header 
-        className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 pb-2 sm:pb-3"
+        className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3">
           <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              onClick={() => setActiveTab('settings')}
-              className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
-            >
-              <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
+            <Tooltip content="Settings" position="bottom">
+              <button
+                onClick={() => setActiveTab('settings')}
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
+              >
+                <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            </Tooltip>
             <div className="flex flex-col justify-center">
               <h1 className="text-2xl sm:text-4xl font-black text-slate-900 leading-none tracking-tight font-display">
                 Parent Center
@@ -613,30 +623,32 @@ export default function ParentDashboard({
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
               {onLogout && (
+                <Tooltip content="Sign Out" position="bottom">
+                  <button
+                    onClick={() => {
+                      playSound.click();
+                      onLogout();
+                    }}
+                    className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
+                    id="global-logout-btn"
+                  >
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    <span className="hidden sm:inline">SIGN OUT</span>
+                  </button>
+                </Tooltip>
+              )}
+              <Tooltip content="Switch to Kid View" position="bottom">
                 <button
                   onClick={() => {
                     playSound.click();
-                    onLogout();
+                    onExitParentMode();
                   }}
-                  className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
-                  id="global-logout-btn"
-                  title="Sign Out"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                  id="exit-to-child-view-btn"
                 >
-                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  <span className="hidden sm:inline">SIGN OUT</span>
+                  <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-              )}
-              <button
-                onClick={() => {
-                  playSound.click();
-                  onExitParentMode();
-                }}
-                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
-                id="exit-to-child-view-btn"
-                title="Switch to Kid View"
-              >
-                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -1011,15 +1023,16 @@ export default function ParentDashboard({
                       >
                         {onDeleteChild && (
                           <div className="absolute top-4 right-4 z-20">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                              title="Delete child"
-                              className="text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-full h-8 w-8 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <Tooltip content="Delete Child" position="top">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
+                                className="text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-full h-8 w-8 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
                           </div>
                         )}
                         
@@ -1080,28 +1093,41 @@ export default function ParentDashboard({
                           
                           <div className="mt-4 flex gap-2">
                             {onUpdateChildStats && (
-                              <button 
-                                onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
-                                className={`flex-1 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
-                              >
-                                <Settings className="w-4 h-4" /> Quick Adjustments
-                              </button>
+                              <Tooltip content="Quick Adjustments" position="top">
+                                <button 
+                                  onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
+                                  className={`px-4 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </button>
+                              </Tooltip>
                             )}
                             {onDeductCoins && (
-                              <button 
-                                onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }}
-                                className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center justify-center hover:bg-rose-100 transition-colors"
-                                title="Take Coins"
-                              >
-                                <MinusCircle className="w-4 h-4" />
-                              </button>
+                              <Tooltip content="Take Coins" position="top">
+                                <button 
+                                  onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }}
+                                  className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center justify-center hover:bg-rose-100 transition-colors"
+                                >
+                                  <MinusCircle className="w-4 h-4" />
+                                </button>
+                              </Tooltip>
                             )}
-                            <button 
-                              onClick={() => openEditChild(child)}
-                              className="px-4 py-2.5 rounded-xl bg-stone-100/50 border border-stone-200/50 text-stone-500 text-xs font-bold flex items-center justify-center hover:bg-stone-100 hover:text-stone-700 transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
+                            <Tooltip content="Edit Child" position="top">
+                              <button 
+                                onClick={() => openEditChild(child)}
+                                className="px-4 py-2.5 rounded-xl bg-stone-100/50 border border-stone-200/50 text-stone-500 text-xs font-bold flex items-center justify-center hover:bg-stone-100 hover:text-stone-700 transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content="History" position="top">
+                              <button 
+                                onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }}
+                                className="px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center hover:bg-indigo-100 transition-colors"
+                              >
+                                <ScrollText className="w-4 h-4" />
+                              </button>
+                            </Tooltip>
                           </div>
 
                           {onUpdateChildStats && (
@@ -1121,7 +1147,7 @@ export default function ParentDashboard({
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
                                         }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
@@ -1132,7 +1158,7 @@ export default function ParentDashboard({
                                           playSound.click(); 
                                           setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
                                         }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
+                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
                                         <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
                                       </div>
                                     </div>
@@ -1373,12 +1399,16 @@ export default function ParentDashboard({
                             </button>
 
                             <div className="flex gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <Tooltip content="Edit Blueprint" position="top">
+                                <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip content="Delete Blueprint" position="top">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
                             </div>
                           </div>
 
@@ -1473,12 +1503,16 @@ export default function ParentDashboard({
                           </Button>
 
                           <div className="flex gap-2">
-                            <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <Tooltip content="Edit Assigned Quest" position="top">
+                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content="Delete Assigned Quest" position="top">
+                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
@@ -1716,12 +1750,16 @@ export default function ParentDashboard({
                             </button>
 
                             <div className="flex gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <Tooltip content="Edit Token" position="top">
+                                <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip content="Delete Token" position="top">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
                             </div>
                           </div>
 
@@ -1814,12 +1852,16 @@ export default function ParentDashboard({
 
                         <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <Tooltip content="Edit Assigned Token" position="top">
+                              <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip content="Delete Assigned Token" position="top">
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
@@ -2121,7 +2163,7 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/60 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
+        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
           {[
             { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
             { id: 'children', label: 'Children', icon: Users },
@@ -2135,14 +2177,21 @@ export default function ParentDashboard({
               <button
                 key={tab.id}
                 onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-all duration-300 rounded-[1.25rem] ${
-                  isSelected ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
+                  isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />
-                <span className={`text-[9px] font-bold tracking-tight`}>{tab.label}</span>
+                {isSelected && (
+                  <motion.div
+                    layoutId="parent-nav-pill"
+                    className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />
+                <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-20">
                     {tab.badge}
                   </span>
                 )}
@@ -2452,6 +2501,198 @@ export default function ParentDashboard({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showHistoryForChild && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className={`bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+            >
+              <button 
+                onClick={() => {
+                  if (historyDetailView) setHistoryDetailView(null);
+                  else setShowHistoryForChild(null);
+                }}
+                className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 p-2 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              {(() => {
+                const child = children.find(c => c.id === showHistoryForChild);
+                if (!child) return null;
+                const approvedTasks = completions.filter(c => c.child_id === child.id && c.status === 'approved');
+                const tasksDone = approvedTasks.length;
+                const penaltyCompletionsList = completions.filter(c => c.child_id === child.id && c.task_id === 'penalty');
+                const penaltyCompletions = penaltyCompletionsList.length;
+                const coinsTakenOff = penaltyCompletions + (child.gold_pot_total_leaked || 0) + (child.manual_deductions || 0);
+                const claimedRewardsList = redemptions.filter(r => r.child_id === child.id && r.status === 'delivered');
+                const rewardsClaimed = claimedRewardsList.length;
+
+                if (historyDetailView) {
+                  return (
+                    <div className="flex flex-col h-full max-h-[80vh]">
+                      <div className="flex items-center gap-3 mb-6">
+                        <button onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 transition-colors">
+                          <RotateCcw className="w-5 h-5" />
+                        </button>
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-display uppercase tracking-wide">
+                          {historyDetailView === 'tasks' ? 'Tasks Completed' : historyDetailView === 'deductions' ? 'Deductions' : 'Rewards Claimed'}
+                        </h2>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                        {historyDetailView === 'tasks' && (
+                          approvedTasks.length === 0 ? <p className="text-stone-500 text-center py-8">No tasks completed yet.</p> :
+                          [...approvedTasks].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
+                            const task = tasks.find(t => t.id === c.task_id);
+                            return (
+                              <div key={c.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</p>
+                                  <p className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</p>
+                                </div>
+                                <span className="text-emerald-600 font-bold">+{c.points_awarded}</span>
+                              </div>
+                            );
+                          })
+                        )}
+                        {historyDetailView === 'deductions' && (
+                          <>
+                            {[...penaltyCompletionsList].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => (
+                              <div key={c.id} className="p-3 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-rose-800">{c.notes || 'Penalty'}</p>
+                                  <p className="text-xs text-rose-500">{new Date(c.completed_at).toLocaleDateString()}</p>
+                                </div>
+                                <span className="text-rose-600 font-bold">{c.points_awarded}</span>
+                              </div>
+                            ))}
+                            {(child.manual_deductions || 0) > 0 && (
+                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-stone-800">Quick Adjustments (Manual)</p>
+                                </div>
+                                <span className="text-stone-600 font-bold">{child.manual_deductions} times</span>
+                              </div>
+                            )}
+                            {(child.gold_pot_total_leaked || 0) > 0 && (
+                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-stone-800">Gold Pot Leaks</p>
+                                </div>
+                                <span className="text-stone-600 font-bold">{child.gold_pot_total_leaked} coins</span>
+                              </div>
+                            )}
+                            {coinsTakenOff === 0 && <p className="text-stone-500 text-center py-8">No deductions recorded.</p>}
+                          </>
+                        )}
+                        {historyDetailView === 'rewards' && (
+                          claimedRewardsList.length === 0 ? <p className="text-stone-500 text-center py-8">No rewards claimed yet.</p> :
+                          [...claimedRewardsList].sort((a,b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
+                            const reward = rewards.find(rw => rw.id === r.reward_id);
+                            return (
+                              <div key={r.id} className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</p>
+                                  <p className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</p>
+                                </div>
+                                <span className="text-indigo-600 font-bold">-{r.payment_source === 'badge_freebie' ? 0 : (reward?.cost_points || 0)}</span>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
+                      <ScrollText className="w-6 h-6 text-indigo-500" />
+                      {child.name}'s History
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                        <span className="font-bold text-amber-900">Total Lifetime Earned</span>
+                        <CoinBadge points={child.lifetime_points || 0} size="md" />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
+                          <span className="text-2xl font-black text-stone-800">{child.weekly_points || 0}</span>
+                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Weekly Coins</span>
+                        </div>
+                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
+                          <span className="text-2xl font-black text-stone-800">{child.monthly_points || 0}</span>
+                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Monthly Coins</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <button onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center hover:bg-emerald-100 transition-colors cursor-pointer w-full">
+                          <CheckSquare className="w-5 h-5 text-emerald-500 mb-2" />
+                          <span className="text-lg font-black text-emerald-700">{tasksDone}</span>
+                          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1 leading-tight">Tasks<br/>Done</span>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center hover:bg-indigo-100 transition-colors cursor-pointer w-full">
+                          <Gift className="w-5 h-5 text-indigo-500 mb-2" />
+                          <span className="text-lg font-black text-indigo-700">{rewardsClaimed}</span>
+                          <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-1 leading-tight">Rewards<br/>Claimed</span>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center justify-center text-center hover:bg-rose-100 transition-colors cursor-pointer w-full">
+                          <MinusCircle className="w-5 h-5 text-rose-500 mb-2" />
+                          <span className="text-lg font-black text-rose-700">{coinsTakenOff}</span>
+                          <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest mt-1 leading-tight">Times<br/>Deducted</span>
+                        </button>
+                      </div>
+
+                      <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold text-stone-600">Current Level</span>
+                          <span className="font-black text-stone-800">Lvl {child.level}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold text-stone-600">Current Streak</span>
+                          <span className="font-black text-stone-800">{child.streak_days} Days</span>
+                        </div>
+                        {child.savings_unlocked && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-stone-600">Savings Total</span>
+                            <span className="font-black text-emerald-600 flex items-center gap-1"><Coins className="w-3.5 h-3.5" />{child.savings_pot || 0}</span>
+                          </div>
+                        )}
+                        {child.food_pot_unlocked && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-stone-600">Pet Fed Total</span>
+                            <span className="font-black text-stone-800">{child.pet_fed_total || 0} times</span>
+                          </div>
+                        )}
+                        {child.gifting_unlocked && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-stone-600">Gifts Made</span>
+                            <span className="font-black text-stone-800">{child.gifts_made || 0}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
