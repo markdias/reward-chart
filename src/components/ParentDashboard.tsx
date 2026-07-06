@@ -1093,12 +1093,14 @@ export default function ParentDashboard({
                           
                           <div className="mt-4 flex gap-2">
                             {onUpdateChildStats && (
-                              <button 
-                                onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
-                                className={`flex-1 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
-                              >
-                                <Settings className="w-4 h-4" /> Quick Adjustments
-                              </button>
+                              <Tooltip content="Quick Adjustments" position="top">
+                                <button 
+                                  onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
+                                  className={`px-4 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </button>
+                              </Tooltip>
                             )}
                             {onDeductCoins && (
                               <Tooltip content="Take Coins" position="top">
