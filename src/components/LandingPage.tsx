@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils, Wrench } from 'lucide-react';
 import { Button } from './ui/Button';
 import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
@@ -119,7 +119,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-gray-500 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-slate-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
             </div>
           </div>
 
@@ -147,36 +147,35 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
           {/* Left Column: Marketing Info and CTA */}
           <div className="lg:col-span-6 flex flex-col space-y-8">
             <div className="space-y-4">
-            <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-6xl font-black font-display tracking-tight leading-tight">
               A Reward System That Feels Like a <br className="hidden sm:block" />
               <span className={styles.titleGradient}>
                 Magical Adventure
               </span>
             </h1>
-            <p className={`${styles.textMuted} text-xs sm:text-base max-w-xl`}>
+            <p className={`${styles.textMuted} text-sm sm:text-base max-w-xl`}>
               Turn bed-making, tooth-brushing, and reading into gold coins. Power up, unlock legendary companions, learn money skills, and have fun!
             </p>
           </div>
 
           <div className="w-full max-w-md pt-2 pb-4">
-            <h3 className={`text-sm font-bold uppercase tracking-widest font-mono mb-3 ${styles.textMuted}`}>Who is starting the adventure today?</h3>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="flex-1"
-                onClick={() => handleEnterClick('parent')}
-              >
-                I'm a Grown-up
-              </Button>
+            <div className="flex flex-col gap-3">
               <Button
                 variant="primary"
                 size="lg"
-                className="flex-1"
+                className="w-full sm:w-auto shadow-lg"
                 rightIcon={<ArrowRight className="w-5 h-5" />}
+                onClick={() => handleEnterClick('parent')}
+              >
+                Parents: Get Started
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full sm:w-auto"
                 onClick={() => handleEnterClick('child')}
               >
-                I'm a Kid
+                Kids: Enter Arcade
               </Button>
             </div>
           </div>
@@ -357,7 +356,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </p>
             </div>
 
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
               <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
                 <div className="mb-5">
                   <CoinBadge iconOnly size="lg" />
@@ -395,6 +394,16 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <h3 className="text-stone-900 font-bold font-display text-lg mb-2">4. Gifting & Generosity</h3>
                 <p className="text-xs text-stone-600 leading-relaxed">
                   Reach higher levels to unlock the Gifting Pot. Donate coins to charity or gift them to a sibling to learn the value of giving back!
+                </p>
+              </div>
+
+              <div className="bg-stone-50 border border-stone-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500 mb-5 border border-amber-200">
+                  <Wrench className="w-6 h-6" />
+                </div>
+                <h3 className="text-stone-900 font-bold font-display text-lg mb-2">5. Maintenance</h3>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Protect your wealth! Higher levels introduce the Gold Pot Maintenance cost. Keep it fixed or risk losing your hard-earned coins.
                 </p>
               </div>
             </div>
