@@ -354,8 +354,6 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                 }
 
                 try {
-                  alert(`DEBUG: VITE_ONESIGNAL_APP_ID is ${import.meta.env.VITE_ONESIGNAL_APP_ID}. OneSignal defined? ${!!OneSignal}. Notifications defined? ${!!OneSignal?.Notifications}. isPushSupported? ${OneSignal?.Notifications?.isPushSupported ? OneSignal.Notifications.isPushSupported() : 'unknown'}`);
-                  
                   if (!import.meta.env.VITE_ONESIGNAL_APP_ID) {
                     alert("OneSignal App ID is missing. Please restart your dev server!");
                     return;
@@ -373,9 +371,9 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                     }
                   }
 
-                  alert("Calling requestPermission()...");
+                  // DO NOT PUT ANY ALERTS OR AWAITS BEFORE THIS LINE
+                  // Safari will kill the user-gesture token if an alert pops up first!
                   const accepted = await OneSignal.Notifications.requestPermission();
-                  alert(`Push permission returned: ${accepted}`);
                   
                   if (accepted) {
                     alert("Success! Push notifications are now enabled.");
