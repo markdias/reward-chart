@@ -577,7 +577,7 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
       {/* Ambient Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px]"></div>
@@ -585,7 +585,7 @@ export default function ParentDashboard({
       </div>
 
       <header 
-        className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 pb-2 sm:pb-3"
+        className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3">
