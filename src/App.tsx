@@ -114,13 +114,7 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (parentProfile?.user_id) {
-      OneSignal.login(parentProfile.user_id).catch(console.error);
-    } else if (!parentProfile?.user_id) {
-      OneSignal.logout().catch(console.error);
-    }
-  }, [parentProfile?.user_id]);
+
 
   const [linkedParents, setLinkedParents] = useState<ParentProfile[]>([]);
   const [postSignUpData, setPostSignUpData] = useState<{ email: string, parentName: string, familyName: string } | null>(null);
