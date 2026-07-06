@@ -269,12 +269,15 @@ export default function ParentDashboard({
     const shuffled = [...available].sort(() => 0.5 - Math.random());
     const picked = shuffled.slice(0, generateCount);
 
-    const tasksToPreview = picked.map(t => ({ 
-      ...t, 
-      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      created_at: new Date().toISOString(),
-      parent_id: parentProfile?.family_id || ''
-    }));
+    const tasksToPreview = picked.map(t => {
+      const { age_range, ...rest } = t;
+      return { 
+        ...rest, 
+        id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        created_at: new Date().toISOString(),
+        parent_id: parentProfile?.family_id || ''
+      };
+    });
     
     setGeneratedTasksToPreview(tasksToPreview);
     setSelectedTaskIdsForImport(tasksToPreview.map(t => t.id));
@@ -323,12 +326,15 @@ export default function ParentDashboard({
     const shuffled = [...available].sort(() => 0.5 - Math.random());
     const picked = shuffled.slice(0, generateCount);
 
-    const rewardsToPreview = picked.map(r => ({ 
-      ...r, 
-      id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      created_at: new Date().toISOString(),
-      parent_id: parentProfile?.family_id || ''
-    }));
+    const rewardsToPreview = picked.map(r => {
+      const { age_range, ...rest } = r;
+      return { 
+        ...rest, 
+        id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        created_at: new Date().toISOString(),
+        parent_id: parentProfile?.family_id || ''
+      };
+    });
     
     setGeneratedRewardsToPreview(rewardsToPreview);
     setSelectedRewardIdsForImport(rewardsToPreview.map(r => r.id));
