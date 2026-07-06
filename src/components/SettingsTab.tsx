@@ -9,6 +9,7 @@ import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
 import { evaluatePassword, hashPassword } from '../utils/security';
 import { PasswordInput } from './PasswordInput';
+import { Tooltip } from './ui/Tooltip';
 import { Button } from './ui/Button';
 
 interface SettingsTabProps {
@@ -549,15 +550,16 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                       </div>
                     </div>
                     {!isMe && (
-                      <Button 
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleUnlinkAccount(parent.user_id)}
-                        className="text-rose-500"
-                        title="Remove Link"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Tooltip content="Remove Link" position="top">
+                        <Button 
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleUnlinkAccount(parent.user_id)}
+                          className="text-rose-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </Tooltip>
                     )}
                   </div>
                 );

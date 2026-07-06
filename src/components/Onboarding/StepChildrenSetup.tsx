@@ -4,6 +4,7 @@ import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { Child } from '../../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
+import { Tooltip } from '../ui/Tooltip';
 import { Button } from '../ui/Button';
 import { ChildAvatar } from '../ChildAvatar';
 
@@ -98,14 +99,16 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                       {child.age && <span className={`text-[10px] ${styles.textMuted}`}>Age {child.age}</span>}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    onClick={() => handleEditChild(child)}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
+                  <Tooltip content="Edit Child" position="top">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      onClick={() => handleEditChild(child)}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  </Tooltip>
                 </div>
               ))}
             </div>

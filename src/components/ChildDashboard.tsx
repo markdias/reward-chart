@@ -521,12 +521,14 @@ export default function ChildDashboard({
         >
           <div className="flex items-center flex-1 gap-3 sm:gap-4">
             {!lockedChildId && (
-              <button
-                onClick={() => setSelectedChildId(null)}
-                className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-100 hover:text-slate-800 transition-all active:scale-95"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
+              <Tooltip content="Go Back to Selection" position="bottom">
+                <button
+                  onClick={() => setSelectedChildId(null)}
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-100 hover:text-slate-800 transition-all active:scale-95"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </Tooltip>
             )}
             <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
               <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
@@ -2833,7 +2835,7 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/60 backdrop-blur-xl rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-slate-100 z-50">
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
             {[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle },
@@ -2847,12 +2849,19 @@ export default function ChildDashboard({
                 <button
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-all duration-300 rounded-[1.25rem] ${
-                    isSelected ? 'bg-sky-50 text-sky-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
+                    isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
-                  {Icon && <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
-                  <span className={`text-[9px] font-bold tracking-tight`}>
+                  {isSelected && (
+                    <motion.div
+                      layoutId="child-nav-pill"
+                      className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  {Icon && <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
+                  <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>
                     {tab.label}
                   </span>
                 </button>

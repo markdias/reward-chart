@@ -80,6 +80,7 @@ export interface Child {
   gifts_made?: number;
   gold_pot_fixes?: number;
   gold_pot_unbroken_days?: number;
+  manual_deductions?: number;
   created_at: string;
 }
 
