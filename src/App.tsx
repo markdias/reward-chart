@@ -106,9 +106,13 @@ export default function App() {
       OneSignal.init({
         appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
         allowLocalhostAsSecureOrigin: true
-      }).then(() => {
-        if (parentProfile?.user_id) {
-          OneSignal.login(parentProfile.user_id);
+      }).then(async () => {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.user?.id) {
+            OneSignal.login(data.session.user.id).catch(() => {});
+          }
         }
       }).catch(err => console.error("OneSignal init error:", err));
     }
