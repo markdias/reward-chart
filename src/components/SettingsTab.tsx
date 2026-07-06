@@ -233,39 +233,47 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       
-      <div className="flex bg-stone-100 p-1.5 rounded-xl mb-6 shadow-inner overflow-x-auto gap-1">
-        <Button
-          variant={activeSubTab === 'profile' ? 'secondary' : 'ghost'}
-          size="sm"
-          className="flex-1 whitespace-nowrap"
+      <div className="flex border-b-2 border-stone-100 mb-8 w-full">
+        <button
           onClick={() => { playSound.click(); setActiveSubTab('profile'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'profile' 
+              ? 'border-sky-500 text-sky-600'
+              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+            }`}
         >
           PROFILE
-        </Button>
-        <Button
-          variant={activeSubTab === 'security' ? 'secondary' : 'ghost'}
-          size="sm"
-          className="flex-1 whitespace-nowrap"
+        </button>
+        <button
           onClick={() => { playSound.click(); setActiveSubTab('security'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'security' 
+              ? 'border-sky-500 text-sky-600'
+              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+            }`}
         >
           SECURITY
-        </Button>
-        <Button
-          variant={activeSubTab === 'sharing' ? 'secondary' : 'ghost'}
-          size="sm"
-          className="flex-1 whitespace-nowrap"
+        </button>
+        <button
           onClick={() => { playSound.click(); setActiveSubTab('sharing'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'sharing' 
+              ? 'border-sky-500 text-sky-600'
+              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+            }`}
         >
           SHARING
-        </Button>
-        <Button
-          variant={activeSubTab === 'danger' ? 'danger' : 'ghost'}
-          size="sm"
-          className={`flex-1 whitespace-nowrap ${activeSubTab !== 'danger' ? 'text-rose-400 hover:text-rose-500' : ''}`}
+        </button>
+        <button
           onClick={() => { playSound.click(); setActiveSubTab('danger'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'danger' 
+              ? 'border-rose-500 text-rose-600'
+              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+            }`}
         >
           DANGER
-        </Button>
+        </button>
       </div>
 
       {activeSubTab === 'profile' && (

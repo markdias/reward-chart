@@ -68,6 +68,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
+  initialTab?: 'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
 }
 
 export default function ParentDashboard({
@@ -108,10 +109,15 @@ export default function ParentDashboard({
   onApproveGiftingRequest,
   onRejectGiftingRequest,
   onLogout,
-  onUpdateParentProfile
+  onUpdateParentProfile,
+  initialTab = 'approvals'
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
   
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   // Scroll to top when switching tabs
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

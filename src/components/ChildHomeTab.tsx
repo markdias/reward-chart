@@ -7,7 +7,7 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -110,17 +110,18 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Daily Goal Card */}
         <div className="bg-white rounded-3xl p-5 border-2 border-stone-100 shadow-sm flex items-center gap-5 dashboard-card transition-all hover:border-cyan-300">
-          <CircularProgressBar progress={progressPercent} className="w-16 h-16 shrink-0">
-            <span className="text-[10px] font-bold text-gray-400">PTS</span>
-            <span className="text-sm font-black text-slate-800 leading-none">{pointsEarnedToday}</span>
-          </CircularProgressBar>
+          <div className="w-16 h-16 shrink-0 flex items-center justify-center">
+            <div className="transform scale-[1.35]">
+              <CoinBadge points={pointsEarnedToday} />
+            </div>
+          </div>
           
           <div>
             <h2 className="text-lg font-black text-slate-900">Daily Goal</h2>
             <p className="text-xs text-stone-500 mt-0.5">
               {pointsRemaining > 0 
-                ? `You need ${pointsRemaining} more points to reach your daily goal of ${DAILY_GOAL}.`
-                : `Awesome! You've reached your daily goal of ${DAILY_GOAL} points!`
+                ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
+                : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
               }
             </p>
           </div>

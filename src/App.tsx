@@ -29,6 +29,7 @@ import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
 import { IosTabBarShowcase } from './components/IosTabBarShowcase';
 import ChildCardShowcase from './components/ChildCardShowcase';
 import WellDoneShowcase from './components/WellDoneShowcase';
+import { TabsShowcase } from './components/TabsShowcase';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -69,6 +70,10 @@ export default function App() {
     return <WellDoneShowcase />;
   }
 
+  if (new URLSearchParams(window.location.search).get('showcase') === 'tabs') {
+    return <TabsShowcase />;
+  }
+
   // Auth state
   const [globalTheme, setGlobalTheme] = useState<string>(
     localStorage.getItem('RCH_GLOBAL_THEME') || 'modern'
@@ -77,7 +82,9 @@ export default function App() {
   const [parentEmail, setParentEmail] = useState<string | null>(
     localStorage.getItem('RCH_PARENT_EMAIL')
   );
-  const [isParentMode, setIsParentMode] = useState<boolean>(false);
+  const [isParentMode, setIsParentMode] = useState<boolean>(
+    localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'
+  );
   
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
     localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
@@ -112,6 +119,15 @@ export default function App() {
             OneSignal.login(data.session.user.id).catch(() => {});
           }
         }
+        
+        // Handle push notification clicks
+        if (OneSignal.Notifications) {
+          OneSignal.Notifications.addEventListener('click', (event) => {
+            console.log('Push notification clicked!', event);
+            setInitialParentTab('approvals');
+            setShowLockScreen(true);
+          });
+        }
       }).catch(err => console.error("OneSignal init error:", err));
     }
   }, []);
@@ -133,6 +149,37 @@ export default function App() {
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
+  const [initialParentTab, setInitialParentTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  
+  // Auto-logout parent mode after 5 minutes of inactivity
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      // 5 minutes = 300000 ms
+      timeoutId = setTimeout(() => {
+        setIsParentMode(false);
+        localStorage.removeItem('RCH_PARENT_MODE_ACTIVE');
+        // If we are in the middle of something we might want to close overlays too
+        setShowLockScreen(false);
+      }, 300000);
+    };
+
+    if (isParentMode) {
+      resetTimer();
+      // Listen for user activity
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      events.forEach(event => document.addEventListener(event, resetTimer, true));
+
+      return () => {
+        clearTimeout(timeoutId);
+        events.forEach(event => document.removeEventListener(event, resetTimer, true));
+      };
+    }
+  }, [isParentMode]);
+
+
   
   // Guided Access Lock
   const [lockedChildId, setLockedChildId] = useState<string | null>(
@@ -782,7 +829,9 @@ export default function App() {
       await supabase.auth.signOut();
     }
     setParentEmail(null);
+    setParentProfile(null);
     setIsParentMode(false);
+    localStorage.removeItem('RCH_PARENT_MODE_ACTIVE');
     localStorage.removeItem('RCH_PARENT_EMAIL');
     localStorage.removeItem('RCH_CHILDREN');
     localStorage.removeItem('RCH_TASKS');
@@ -793,6 +842,7 @@ export default function App() {
     localStorage.removeItem('RCH_LOCKED_CHILD_ID');
     window.location.reload();
   };
+
 
   const handleResetData = async (keepBlueprints: boolean) => {
     const familyId = parentProfile?.family_id || parentEmail;
@@ -879,12 +929,14 @@ export default function App() {
   const handleParentLockSuccess = () => {
     setShowLockScreen(false);
     setIsParentMode(true);
+    localStorage.setItem('RCH_PARENT_MODE_ACTIVE', 'true');
     setLockedChildId(null);
     localStorage.removeItem('RCH_LOCKED_CHILD_ID');
   };
 
   const handleExitParentMode = () => {
     setIsParentMode(false);
+    localStorage.removeItem('RCH_PARENT_MODE_ACTIVE');
   };
 
   // Operations: Children
@@ -1951,6 +2003,7 @@ export default function App() {
             className="w-full"
           >
             <ParentDashboard
+              initialTab={initialParentTab}
               children={children}
               tasks={tasks}
               completions={completions}
