@@ -12,9 +12,7 @@ import OnboardingWizard, { OnboardingData } from './components/Onboarding/Onboar
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
 import ButtonShowcase from './components/ButtonShowcase';
-import { 
-  INITIAL_CHILDREN, INITIAL_TASKS, INITIAL_COMPLETIONS, INITIAL_REWARDS, INITIAL_REDEMPTIONS
-} from './data/mockData';
+// Removed mockData import
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
@@ -144,7 +142,7 @@ export default function App() {
 
 
   // Helper fallback to load local storage state or blank state
-  const loadLocalStorageFallback = (isDemo: boolean) => {
+  const loadLocalStorageFallback = () => {
     const keyChildren = parentEmail ? `RCH_CHILDREN_${parentEmail}` : 'RCH_CHILDREN';
     const keyTasks = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
     const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
@@ -167,7 +165,7 @@ export default function App() {
     if (savedChildren) {
       setChildren(JSON.parse(savedChildren));
     } else {
-      const initial = isDemo ? INITIAL_CHILDREN : [];
+      const initial: any[] = [];
       setChildren(initial);
       localStorage.setItem(keyChildren, JSON.stringify(initial));
     }
@@ -175,7 +173,7 @@ export default function App() {
     if (savedTasks) {
       setTasks(JSON.parse(savedTasks));
     } else {
-      const initial = isDemo ? INITIAL_TASKS : [];
+      const initial: any[] = [];
       setTasks(initial);
       localStorage.setItem(keyTasks, JSON.stringify(initial));
     }
@@ -183,7 +181,7 @@ export default function App() {
     if (savedCompletions) {
       setCompletions(JSON.parse(savedCompletions));
     } else {
-      const initial = isDemo ? INITIAL_COMPLETIONS : [];
+      const initial: any[] = [];
       setCompletions(initial);
       localStorage.setItem(keyCompletions, JSON.stringify(initial));
     }
@@ -191,7 +189,7 @@ export default function App() {
     if (savedRewards) {
       setRewards(JSON.parse(savedRewards));
     } else {
-      const initial = isDemo ? INITIAL_REWARDS : [];
+      const initial: any[] = [];
       setRewards(initial);
       localStorage.setItem(keyRewards, JSON.stringify(initial));
     }
@@ -199,7 +197,7 @@ export default function App() {
     if (savedRedemptions) {
       setRedemptions(JSON.parse(savedRedemptions));
     } else {
-      const initial = isDemo ? INITIAL_REDEMPTIONS : [];
+      const initial: any[] = [];
       setRedemptions(initial);
       localStorage.setItem(keyRedemptions, JSON.stringify(initial));
     }
@@ -218,11 +216,11 @@ export default function App() {
       return;
     }
 
-    const isDemo = parentEmail === 'demo_parent@rewardchart.app';
+    
     const isLocal = parentEmail === 'local_parent@rewardchart.app';
     const supabase = getSupabaseClient();
 
-    if (supabase && !isDemo && !isLocal) {
+    if (supabase && !isLocal) {
       // Real Supabase backend - fetch live DB rows
       const fetchSupabaseData = async () => {
         try {
@@ -410,7 +408,7 @@ export default function App() {
             localStorage.setItem(keyChildren, JSON.stringify(processedChildren));
           } else {
             console.warn('Could not load children from Supabase, using localStorage:', errChildren.message);
-            loadLocalStorageFallback(isDemo);
+            loadLocalStorageFallback();
             return;
           }
 
@@ -479,7 +477,7 @@ export default function App() {
 
         } catch (err) {
           console.warn('Error loading Supabase data:', err);
-          loadLocalStorageFallback(isDemo);
+          loadLocalStorageFallback();
         }
       };
 
@@ -510,7 +508,7 @@ export default function App() {
       };
     } else {
       // Local/demo mode - fetch from localStorage or defaults
-      loadLocalStorageFallback(isDemo);
+      loadLocalStorageFallback();
     }
   }, [parentEmail, hasCompletedOnboarding]);
 
@@ -555,7 +553,7 @@ export default function App() {
   // Supabase update helper
   const updateChildInSupabase = async (updatedChild: Child) => {
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase
         .from('children')
         .update({
@@ -798,7 +796,7 @@ export default function App() {
 
   const handleResetData = async (keepBlueprints: boolean) => {
     const familyId = parentProfile?.family_id || parentEmail;
-    if (!familyId || familyId === 'demo_parent@rewardchart.app') return;
+    if (!familyId) return;
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -920,7 +918,7 @@ export default function App() {
     syncChildren([...children, newChild]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('children').insert(newChild);
       if (error) console.warn('Failed to sync new child to Supabase:', error.message);
     }
@@ -938,7 +936,7 @@ export default function App() {
     syncChildren(updatedChildren);
 
     const supabase = getSupabaseClient();
-    if (supabase && updatedChild && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase && updatedChild) {
       const { error } = await supabase.from('children').update(updatedChild).eq('id', id);
       if (error) console.warn('Failed to update child in Supabase:', error.message);
     }
@@ -1127,7 +1125,7 @@ export default function App() {
     syncTasks([...tasks, newTask]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('tasks').insert(newTask);
       if (error) console.warn('Failed to sync task to Supabase:', error.message);
     }
@@ -1152,7 +1150,7 @@ export default function App() {
     syncTasks([...nextTasks, ...newTasks]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       if (instancesToDelete.length > 0) {
         await supabase.from('tasks').delete().in('id', instancesToDelete.map(t => t.id));
       }
@@ -1172,7 +1170,7 @@ export default function App() {
     syncTasks(updatedTasks);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('tasks').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
@@ -1182,7 +1180,7 @@ export default function App() {
     syncTasks(tasks.filter(t => t.id !== id && t.template_id !== id));
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('tasks').delete().or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to delete task in Supabase:', error.message);
     }
@@ -1212,7 +1210,7 @@ export default function App() {
     syncRewards([...rewards, newReward]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('rewards').insert(newReward);
       if (error) console.warn('Failed to sync reward to Supabase:', error.message);
     }
@@ -1237,7 +1235,7 @@ export default function App() {
     syncRewards([...nextRewards, ...newRewards]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       if (instancesToDelete.length > 0) {
         await supabase.from('rewards').delete().in('id', instancesToDelete.map(r => r.id));
       }
@@ -1257,7 +1255,7 @@ export default function App() {
     syncRewards(updatedRewards);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('rewards').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to update reward in Supabase:', error.message);
     }
@@ -1267,7 +1265,7 @@ export default function App() {
     syncRewards(rewards.filter(r => r.id !== id && r.template_id !== id));
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('rewards').delete().or(`id.eq.${id},template_id.eq.${id}`);
       if (error) console.warn('Failed to delete reward in Supabase:', error.message);
     }
@@ -1290,7 +1288,7 @@ export default function App() {
     syncCompletions([...completions, newCompletion]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('completions').insert(newCompletion);
       if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
@@ -1329,7 +1327,7 @@ export default function App() {
     syncCompletions([...completions, newCompletion]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error: childError } = await supabase.from('children').update({
         points: targetChild.points,
         lifetime_points: targetChild.lifetime_points,
@@ -1396,7 +1394,7 @@ export default function App() {
     }
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('reward_redemptions').insert(newRedemption);
       if (error) console.warn('Failed to sync redemption to Supabase:', error.message);
     }
@@ -1425,7 +1423,7 @@ export default function App() {
       
       // Explicitly wait for child to update in DB before updating the redemption
       const supabase = getSupabaseClient();
-      if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+      if (supabase) {
         const { error } = await supabase.from('children').update(targetChild).eq('id', targetChild.id);
         if (error) {
           console.error("Failed to update child:", error);
@@ -1441,7 +1439,7 @@ export default function App() {
     syncRedemptions(updated);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('reward_redemptions').update({ status: 'delivered' }).eq('id', redemptionId);
       if (error) console.warn('Failed to update redemption in Supabase:', error.message);
     }
@@ -1464,7 +1462,7 @@ export default function App() {
     syncChildren(updatedChildren);
     
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('children').update({
         pet_food: targetChild.pet_food,
         pet_fed_today: targetChild.pet_fed_today,
@@ -1634,7 +1632,7 @@ export default function App() {
     syncRedemptions(updatedRedemptions);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('reward_redemptions').update(targetRedemption).eq('id', redemption.id);
       if (error) {
         console.error("Failed to update redemption:", error);
@@ -1663,7 +1661,7 @@ export default function App() {
     syncCompletions([...completions, newCompletion]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('completions').insert(newCompletion);
       if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
@@ -1707,7 +1705,7 @@ export default function App() {
     syncCompletions(updatedCompletions);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase
         .from('completions')
         .update({ status: 'approved' })
@@ -1753,7 +1751,7 @@ export default function App() {
     syncCompletions(updatedCompletions);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('completions').delete().eq('id', completionId);
       if (error) console.warn('Failed to delete completion in Supabase:', error.message);
     }
@@ -1777,7 +1775,7 @@ export default function App() {
     syncGiftingRequests([...giftingRequests, newRequest]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('gifting_requests').insert(newRequest);
       if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
     }
@@ -1800,7 +1798,7 @@ export default function App() {
     syncGiftingRequests([...giftingRequests, newRequest]);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('gifting_requests').insert(newRequest);
       if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
     }
@@ -1841,7 +1839,7 @@ export default function App() {
     syncGiftingRequests(updatedRequests);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('gifting_requests').update({ status: 'approved' }).eq('id', requestId);
       if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
     }
@@ -1855,7 +1853,7 @@ export default function App() {
     syncGiftingRequests(updatedRequests);
 
     const supabase = getSupabaseClient();
-    if (supabase && parentEmail !== 'demo_parent@rewardchart.app') {
+    if (supabase) {
       const { error } = await supabase.from('gifting_requests').update({ status: 'rejected' }).eq('id', requestId);
       if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
     }

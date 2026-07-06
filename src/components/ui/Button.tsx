@@ -112,6 +112,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabledClass,
       baseClasses,
       'items-center gap-2 uppercase tracking-wider',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-500',
       className
     ].filter(Boolean).join(' ');
 
