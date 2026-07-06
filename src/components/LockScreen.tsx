@@ -38,7 +38,7 @@ export default function LockScreen({
 
     try {
       const supabase = getSupabaseClient();
-      if (supabase && parentEmail && parentEmail !== 'demo_parent@rewardchart.app') {
+      if (supabase && parentEmail) {
         const { error: authError } = await supabase.auth.signInWithPassword({
           email: parentEmail,
           password: password,
@@ -53,13 +53,12 @@ export default function LockScreen({
         }
       } else {
         // Offline / Local / Demo fallback
-        const emailKey = (parentEmail || 'demo_parent@rewardchart.app').trim().toLowerCase();
+        const emailKey = parentEmail ? parentEmail.trim().toLowerCase() : '';
         const stored = localStorage.getItem('RCH_LOCAL_CREDENTIALS');
         const creds = stored ? JSON.parse(stored) : {};
         const savedPass = creds[emailKey];
 
-        const isCorrect = (savedPass && savedPass === password) ||
-                          (emailKey === 'demo_parent@rewardchart.app' && (password === 'password' || password === '1234'));
+        const isCorrect = (savedPass && savedPass === password);
 
         // Check if the stored credentials contains a SHA-256 hash (64 hex characters)
         let matched = false;
