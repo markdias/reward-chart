@@ -150,6 +150,7 @@ export default function App() {
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
   const [initialParentTab, setInitialParentTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   
   // Auto-logout parent mode after 5 minutes of inactivity
   useEffect(() => {
@@ -255,6 +256,8 @@ export default function App() {
       setGiftingRequests([]);
       localStorage.setItem(keyGiftingRequests, JSON.stringify([]));
     }
+    
+    setIsLoadingData(false);
   };
 
   // Load records on start/auth change from localStorage or Supabase
@@ -521,6 +524,8 @@ export default function App() {
           if (new URLSearchParams(window.location.search).has('share')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
+          
+          setIsLoadingData(false);
 
         } catch (err) {
           console.warn('Error loading Supabase data:', err);
@@ -2003,6 +2008,7 @@ export default function App() {
             className="w-full"
           >
             <ParentDashboard
+              isLoading={isLoadingData}
               initialTab={initialParentTab}
               children={children}
               tasks={tasks}
@@ -2052,6 +2058,7 @@ export default function App() {
             className="w-full"
           >
             <ChildDashboard
+              isLoading={isLoadingData}
               parentProfile={parentProfile}
               children={children}
               tasks={tasks}

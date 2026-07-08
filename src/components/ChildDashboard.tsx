@@ -67,6 +67,7 @@ interface ChildDashboardProps {
   lockedChildId?: string | null;
   onLockChild?: (childId: string | null) => void;
   theme: ThemeId;
+  isLoading?: boolean;
 }
 
 export default function ChildDashboard({
@@ -97,7 +98,8 @@ export default function ChildDashboard({
   onEditChild,
   lockedChildId,
   onLockChild,
-  theme
+  theme,
+  isLoading = false
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const isPlayfulPop = parentProfile?.dashboard_style === 'playful_pop';
@@ -1371,7 +1373,91 @@ export default function ChildDashboard({
               </div>
 
               <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
-                {children.map((child) => {
+                {isLoading ? (
+                  <>
+                    {[1, 2].map((i) => (
+                      <div key={`skel-${i}`} className="w-full flex shadow-lg rounded-2xl overflow-hidden relative animate-pulse">
+                        {/* Main Pass Body */}
+                        <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
+                          {/* Header */}
+                          <div className="h-8 sm:h-10 bg-slate-200 flex items-center justify-between px-3 sm:px-6 border-b border-slate-300">
+                            <div className="flex items-center gap-2 text-transparent font-bold tracking-widest text-xs uppercase">
+                              <Plane className="w-4 h-4 text-transparent" /> <span>Reward Airways</span>
+                            </div>
+                            <div className="text-transparent font-mono text-[10px] tracking-widest uppercase">
+                              First Class
+                            </div>
+                          </div>
+                          
+                          <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
+                            
+                            <div className="flex items-center gap-2 sm:gap-6">
+                              <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-200 border-2 border-white shadow-md overflow-hidden" />
+                              
+                              <div className="flex flex-col justify-center py-1 sm:py-2">
+                                <div>
+                                  <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block w-fit">Name of Passenger</span>
+                                  <h3 className="text-xl sm:text-3xl font-black font-display text-transparent bg-slate-200 rounded uppercase tracking-tight leading-none w-fit">
+                                    LOADING...
+                                  </h3>
+                                </div>
+                                
+                                <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
+                                  <div className="flex flex-col">
+                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Flight</span>
+                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">RW-000</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Gate</span>
+                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">TBD</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Seat</span>
+                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">00A</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
+                              <div className="w-16 sm:w-32 h-8 sm:h-16 bg-slate-200 rounded opacity-60" />
+                              <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-transparent bg-slate-200 rounded tracking-widest uppercase w-fit inline-block">TKT-12345678</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Divider with Notches */}
+                        <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
+                          <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
+                        </div>
+                        
+                        {/* Tear-off Stub */}
+                        <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
+                          <div className="h-10 bg-slate-200 w-full border-b border-slate-300" />
+                          <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
+                            <div className="w-full text-center mb-2 sm:mb-4 relative z-10 flex flex-col items-center">
+                              <span className="text-[8px] sm:text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider block mb-0.5 sm:mb-1 w-fit">Boarding Time</span>
+                              <span className="font-mono font-black text-transparent bg-slate-200 rounded text-lg sm:text-xl inline-block w-fit">NOW</span>
+                            </div>
+
+                            <div className="w-full flex justify-between relative z-10">
+                              <div className="flex flex-col text-center w-1/2 items-center">
+                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Zone</span>
+                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">1</span>
+                              </div>
+                              <div className="flex flex-col text-center w-1/2 items-center">
+                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Class</span>
+                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">F</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : children.map((child) => {
                   const stage = getCharacterStage(child.character_id, child.level);
                   return (
                     <motion.div
