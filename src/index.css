@@ -33,28 +33,50 @@
   --color-warning-hover: oklch(80% 0.18 70);
   --color-warning-shadow: oklch(63% 0.18 70);
   
-  --color-dark: oklch(20% 0.015 30);
-  --color-dark-hover: oklch(30% 0.015 30);
-  --color-dark-shadow: oklch(12% 0.015 30);
+  --color-dark: var(--color-stone-900);
+  --color-dark-hover: var(--color-stone-800);
+  --color-dark-shadow: var(--color-stone-950);
   
-  --color-page: oklch(96% 0.012 85);
-  --color-surface: oklch(100% 0 0);
-  --color-surface-alt: oklch(98.5% 0.006 85);
-  --color-neutral-border: oklch(90% 0.01 85);
+  --color-page: var(--color-stone-50);
+  --color-surface: var(--color-white);
+  --color-surface-alt: var(--color-stone-50);
+  --color-neutral-border: var(--color-stone-200);
+
+  /* Semantic Text Colors */
+  --color-text-primary: var(--color-stone-900);
+  --color-text-muted: var(--color-stone-500);
+  --color-text-subtle: var(--color-stone-400);
 }
 
 @layer utilities {
 
-  .duo-card {
-    @apply bg-surface border-2 border-neutral-border rounded-3xl p-5;
-  }
-  
-  .card-panel {
-    @apply bg-white border border-gray-200 shadow-sm rounded-3xl p-6;
+  .duo-card, .card-panel {
+    @apply bg-white border border-stone-200 shadow-sm rounded-3xl p-6;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 bg-white border-2 border-gray-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 text-xs font-mono transition-all;
+    @apply w-full px-4 py-3 bg-white border-2 border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20 text-sm font-mono transition-all;
+  }
+
+  .input-field-sm {
+    @apply w-full px-3 py-2 bg-white border border-stone-200 text-stone-900 placeholder-stone-400 rounded-lg focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 text-xs font-mono transition-all;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex justify-center items-center p-4;
+  }
+
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px] flex items-center justify-center;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 
   .flame-active {
@@ -84,7 +106,14 @@ html {
 
 body {
   background-color: var(--color-page);
-  color: var(--color-dark);
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+@media (min-width: 640px) {
+  body {
+    font-size: 16px;
+  }
 }
 
 h1, h2, h3, h4 {
