@@ -13,7 +13,7 @@ export type ButtonVariant =
   | 'outline'
   | 'none';
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'none';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'none';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -85,16 +85,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     let sizeClasses = '';
     switch (size) {
       case 'sm':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-xs px-4 py-2 rounded-xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-xs px-4 py-2 rounded-xl';
         break;
       case 'md':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-sm px-6 py-3 rounded-2xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-sm px-6 py-3 rounded-2xl';
         break;
       case 'lg':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-lg px-8 py-4 rounded-3xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-lg px-8 py-4 rounded-3xl';
         break;
       case 'icon':
-        sizeClasses = 'p-2 rounded-xl';
+        sizeClasses = 'p-3 rounded-xl touch-target';
+        break;
+      case 'icon-sm':
+        sizeClasses = 'p-2 rounded-lg touch-target';
         break;
       case 'none':
         sizeClasses = '';

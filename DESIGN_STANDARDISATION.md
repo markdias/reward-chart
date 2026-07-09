@@ -36,7 +36,7 @@
 ---
 
 ## Phase 2: Extend UI Component Library
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - Typography: add `h3`, `h4`, `caption`, `badge` variants
@@ -121,3 +121,4 @@
 _Entries will be added below as each phase is completed._
 
 - **Phase 1: Foundation — Design Tokens & Utilities**: Completed. Updated `index.css` with mobile utilities (`.touch-target`, `.safe-area-bottom`, `.modal-overlay`), standardised neutral colors to the `stone` palette, consolidated card classes to `card-panel`, and added input-field variants.
+- **Phase 2: Extend UI Component Library**: Completed. Added variants to `Typography` and `Button`. Created new `Card`, `Modal`, `Input`, `BottomTabBar`, and `BoardingPassCard` components.
