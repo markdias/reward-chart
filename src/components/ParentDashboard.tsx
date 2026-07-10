@@ -677,7 +677,7 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
                     isSelected 
-                      ? 'bg-stone-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
+                      ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
                       : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
                   }`}
                 >

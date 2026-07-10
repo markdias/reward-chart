@@ -25,10 +25,10 @@ export const Tooltip = ({
   const getArrowClasses = () => {
     switch (position) {
       case 'top':
-        return '-bottom-1 border-t-slate-800';
+        return '-bottom-1 border-t-stone-800';
       case 'bottom':
       default:
-        return '-top-1 border-b-slate-800';
+        return '-top-1 border-b-stone-800';
     }
   };
 
