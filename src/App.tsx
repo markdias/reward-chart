@@ -11,8 +11,6 @@ import Confetti from './components/Confetti';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
-import ButtonShowcase from './components/ButtonShowcase';
-// Removed mockData import
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
@@ -21,58 +19,8 @@ import { getSupabaseClient } from './utils/supabase';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 import { revokeInvalidLevelBadges } from './utils/badgeService';
 
-import TypographyShowcase from './components/TypographyShowcase';
-import TaskCardShowcase from './components/TaskCardShowcase';
-import RewardCardShowcase from './components/RewardCardShowcase';
-import PotsShowcase from './components/PotsShowcase';
-import PlayerSelectionShowcase from './components/PlayerSelectionShowcase';
-import { IosTabBarShowcase } from './components/IosTabBarShowcase';
-import ChildCardShowcase from './components/ChildCardShowcase';
-import WellDoneShowcase from './components/WellDoneShowcase';
-import { TabsShowcase } from './components/TabsShowcase';
-
 export default function App() {
   const activeTheme = 'sunny_toybox';
-  
-  if (new URLSearchParams(window.location.search).get('showcase') === 'buttons') {
-    return <ButtonShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'typography') {
-    return <TypographyShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'tasks') {
-    return <TaskCardShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'rewards') {
-    return <RewardCardShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'pots') {
-    return <PotsShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'player-selection') {
-    return <PlayerSelectionShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'ios-tab-bar') {
-    return <IosTabBarShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'child-card') {
-    return <ChildCardShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'welldone') {
-    return <WellDoneShowcase />;
-  }
-
-  if (new URLSearchParams(window.location.search).get('showcase') === 'tabs') {
-    return <TabsShowcase />;
-  }
 
   // Auth state
   const [globalTheme, setGlobalTheme] = useState<string>(
