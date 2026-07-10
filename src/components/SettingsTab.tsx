@@ -663,7 +663,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <p className={`text-center text-sm font-mono mb-6 ${c.textMuted}`}>
               This will reset all children's progress to 0 and delete all history.
             </p>
-            <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-slate-800 rounded-xl">
+            <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
               <input 
                 type="checkbox" 
                 id="keep-blueprints"

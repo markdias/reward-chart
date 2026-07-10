@@ -178,7 +178,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
-        className="w-full h-full min-h-screen bg-white text-slate-900"
+        className="w-full h-full min-h-screen bg-white text-stone-900"
       >
         {renderStep()}
       </motion.div>

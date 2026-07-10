@@ -16,7 +16,7 @@ export const ChildAvatar: React.FC<ChildAvatarProps> = ({
   const Icon = (LucideIcons as any)[iconName] || (LucideIcons as any)[fallbackIcon] || LucideIcons.Smile;
   
   return (
-    <div className={`flex items-center justify-center bg-stone-100 text-slate-700 rounded-full border-2 border-stone-200 overflow-hidden ${className}`}>
+    <div className={`flex items-center justify-center bg-stone-100 text-stone-700 rounded-full border-2 border-stone-200 overflow-hidden ${className}`}>
       <Icon className="w-3/5 h-3/5" strokeWidth={2.5} />
     </div>
   );

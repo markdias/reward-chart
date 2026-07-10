@@ -91,7 +91,7 @@ export default function LockScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm"
       id="lock-screen-container"
     >
 
@@ -99,11 +99,11 @@ export default function LockScreen({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl relative"
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-xl relative"
         id="lock-panel"
       >
         {/* Vault Frame Header */}
-        <div className="bg-gray-50/50 p-6 text-center border-b border-gray-100 relative">
+        <div className="bg-stone-50/50 p-6 text-center border-b border-stone-100 relative">
           <Button 
             variant="ghost"
             size="icon"
@@ -132,7 +132,7 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="Enter Password"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-gray-200 bg-gray-50 text-slate-900 font-mono text-center text-sm shadow-sm focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:text-stone-400"
+              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-stone-200 bg-stone-50 text-stone-900 font-mono text-center text-sm shadow-sm focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:text-stone-400"
               autoFocus
             />
             <button

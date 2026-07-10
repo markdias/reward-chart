@@ -46,7 +46,7 @@ export const Tooltip = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: position === 'top' ? 5 : -5 }}
             transition={{ duration: 0.15 }}
-            className={`absolute ${getPositionClasses()} px-3 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none`}
+            className={`absolute ${getPositionClasses()} px-3 py-1.5 bg-stone-800 text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none`}
           >
             {content}
             <div className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${getArrowClasses()}`} />

@@ -51,10 +51,10 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
 
   const getThemeClasses = () => {
     return {
-      card: 'bg-white border-[3px] border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)]',
-      text: 'text-slate-900',
-      textMuted: 'text-slate-400',
-      input: 'bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder-slate-400 rounded-2xl px-4 py-3 font-bold focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 outline-none transition-all',
+      card: 'bg-white border-[3px] border-stone-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)]',
+      text: 'text-stone-900',
+      textMuted: 'text-stone-400',
+      input: 'bg-stone-50 border-2 border-stone-200 text-stone-900 placeholder-stone-400 rounded-2xl px-4 py-3 font-bold focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 outline-none transition-all',
       primaryBtn: 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold border-2 border-indigo-600 shadow-[0_4px_0_0_rgb(79,70,229)] hover:shadow-[0_2px_0_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none transition-all uppercase',
     };
   };
@@ -129,8 +129,8 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
             <Target className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
-            <h3 className={`text-xl sm:text-2xl font-black font-display tracking-tight text-slate-800`}>Global Rewards & Targets</h3>
-            <p className={`text-xs sm:text-sm font-semibold text-slate-500 mt-0.5`}>Set global milestones for the family.</p>
+            <h3 className={`text-xl sm:text-2xl font-black font-display tracking-tight text-stone-800`}>Global Rewards & Targets</h3>
+            <p className={`text-xs sm:text-sm font-semibold text-stone-500 mt-0.5`}>Set global milestones for the family.</p>
           </div>
         </div>
         
@@ -187,8 +187,8 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
             </div>
           </div>
           
-          <div className="pt-8 border-t border-slate-100 mt-8">
-            <h3 className={`text-lg sm:text-xl font-black font-display tracking-tight text-slate-800 mb-6`}>Levels & Pots Configuration</h3>
+          <div className="pt-8 border-t border-stone-100 mt-8">
+            <h3 className={`text-lg sm:text-xl font-black font-display tracking-tight text-stone-800 mb-6`}>Levels & Pots Configuration</h3>
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -206,7 +206,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={levelUpGoldReward}
                     onChange={(e) => setLevelUpGoldReward(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-indigo-200 text-slate-700 bg-indigo-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-indigo-200 text-stone-700 bg-indigo-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={savingsPotUnlockLevel}
                     onChange={(e) => setSavingsPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-emerald-200 text-slate-700 bg-emerald-50 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-emerald-200 text-stone-700 bg-emerald-50 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
                 <div>
@@ -226,7 +226,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={foodPotUnlockLevel}
                     onChange={(e) => setFoodPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-orange-200 text-slate-700 bg-orange-50 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-orange-200 text-stone-700 bg-orange-50 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
                 <div>
@@ -235,7 +235,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={giftingPotUnlockLevel}
                     onChange={(e) => setGiftingPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-rose-200 text-slate-700 bg-rose-50 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-rose-200 text-stone-700 bg-rose-50 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
                 <div>
@@ -244,7 +244,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={goldPotMaintenanceUnlockLevel}
                     onChange={(e) => setGoldPotMaintenanceUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-slate-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-stone-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
                     type="number" 
                     value={goldPotMaintenanceCost}
                     onChange={(e) => setGoldPotMaintenanceCost(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-slate-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
+                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-stone-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
                   />
                 </div>
 

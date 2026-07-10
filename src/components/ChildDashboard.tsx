@@ -518,7 +518,7 @@ export default function ChildDashboard({
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
         <header 
-          className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4 sm:px-8 pb-3 sm:pb-4"
+          className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 flex items-center justify-between px-4 sm:px-8 pb-3 sm:pb-4"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
           <div className="flex items-center flex-1 gap-3 sm:gap-4">
@@ -526,18 +526,18 @@ export default function ChildDashboard({
               <Tooltip content="Go Back to Selection" position="bottom">
                 <button
                   onClick={() => setSelectedChildId(null)}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-100 hover:text-slate-800 transition-all active:scale-95"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-stone-50 text-stone-500 flex items-center justify-center shrink-0 border border-stone-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-stone-100 hover:text-stone-800 transition-all active:scale-95"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </Tooltip>
             )}
             <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
-              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
+              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-stone-800 flex items-center gap-2">
                 {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                {activeChild?.age && <span className="text-sm sm:text-xl text-slate-500 font-normal">({activeChild.age})</span>}
+                {activeChild?.age && <span className="text-sm sm:text-xl text-stone-500 font-normal">({activeChild.age})</span>}
               </h1>
-              <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+              <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
                 <Tooltip content="Current Gold Coins" position="bottom">
                   <div className="cursor-help">
                     <CoinBadge points={activeChild?.points || 0} />
@@ -547,7 +547,7 @@ export default function ChildDashboard({
                 <Tooltip content="Parent Dashboard" position="bottom">
                   <button 
                     onClick={() => { playSound.click(); onEnterParentMode(); }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
                   >
                     <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
@@ -557,7 +557,7 @@ export default function ChildDashboard({
                   <Tooltip content="Lock Device to Child" position="bottom">
                     <button 
                       onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                     >
                       <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
@@ -583,8 +583,8 @@ export default function ChildDashboard({
                 <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 text-sm sm:text-base">You have a message!</h3>
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
+                <h3 className="font-bold text-stone-800 text-sm sm:text-base">You have a message!</h3>
+                <p className="text-xs sm:text-sm text-stone-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
               </div>
             </div>
             <button
@@ -633,7 +633,7 @@ export default function ChildDashboard({
                 {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
               </h2>
 
-              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
                 {isHatching && hatchPhase !== 'reveal' ? (
                   <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
                 ) : (
@@ -820,12 +820,12 @@ export default function ChildDashboard({
 
                 <div className="space-y-1">
                   <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
-                  <h3 className="font-black font-display text-2xl text-slate-800 uppercase tracking-wide leading-none">
+                  <h3 className="font-black font-display text-2xl text-stone-800 uppercase tracking-wide leading-none">
                     How it Works
                   </h3>
                 </div>
 
-                <p className="text-sm font-bold text-slate-600 leading-relaxed px-4">
+                <p className="text-sm font-bold text-stone-600 leading-relaxed px-4">
                   Watch this quick video to learn how to earn gold coins and unlock awesome prizes!
                 </p>
 
@@ -888,7 +888,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -964,7 +964,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -1040,7 +1040,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -1116,7 +1116,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -1191,7 +1191,7 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-rose-100 border border-rose-300 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="w-10 h-10 text-rose-600 animate-bounce" />
@@ -1232,7 +1232,7 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-amber-100 border border-amber-300 rounded-2xl flex items-center justify-center">
                 <FaTriangleExclamation className="w-10 h-10 text-amber-600 animate-pulse" />
@@ -1277,7 +1277,7 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-orange-100 border border-orange-300 rounded-2xl flex items-center justify-center">
                 <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
@@ -1339,7 +1339,7 @@ export default function ChildDashboard({
             variant="outline"
             size="sm"
             onClick={() => { playSound.click(); onEnterParentMode(); }}
-            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400`} />}
+            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400`} />}
           >
             PARENT MODE
           </Button>
@@ -1364,10 +1364,10 @@ export default function ChildDashboard({
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
                   <Plane className="w-3.5 h-3.5" /> BOARDING NOW
                 </div>
-                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-slate-800`}>
+                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
                   Grab your ticket!
                 </h1>
-                <p className={`text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed`}>
+                <p className={`text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed`}>
                   Select your boarding pass to start your adventure and claim your rewards!
                 </p>
               </div>
@@ -1378,9 +1378,9 @@ export default function ChildDashboard({
                     {[1, 2].map((i) => (
                       <div key={`skel-${i}`} className="w-full flex shadow-lg rounded-2xl overflow-hidden relative animate-pulse">
                         {/* Main Pass Body */}
-                        <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
+                        <div className="flex-[3] bg-white border border-stone-200 border-r-0 flex flex-col relative z-10">
                           {/* Header */}
-                          <div className="h-8 sm:h-10 bg-slate-200 flex items-center justify-between px-3 sm:px-6 border-b border-slate-300">
+                          <div className="h-8 sm:h-10 bg-stone-200 flex items-center justify-between px-3 sm:px-6 border-b border-stone-300">
                             <div className="flex items-center gap-2 text-transparent font-bold tracking-widest text-xs uppercase">
                               <Plane className="w-4 h-4 text-transparent" /> <span>Reward Airways</span>
                             </div>
@@ -1392,64 +1392,64 @@ export default function ChildDashboard({
                           <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
                             
                             <div className="flex items-center gap-2 sm:gap-6">
-                              <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-200 border-2 border-white shadow-md overflow-hidden" />
+                              <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-stone-200 border-2 border-white shadow-md overflow-hidden" />
                               
                               <div className="flex flex-col justify-center py-1 sm:py-2">
                                 <div>
-                                  <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block w-fit">Name of Passenger</span>
-                                  <h3 className="text-xl sm:text-3xl font-black font-display text-transparent bg-slate-200 rounded uppercase tracking-tight leading-none w-fit">
+                                  <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block w-fit">Name of Passenger</span>
+                                  <h3 className="text-xl sm:text-3xl font-black font-display text-transparent bg-stone-200 rounded uppercase tracking-tight leading-none w-fit">
                                     LOADING...
                                   </h3>
                                 </div>
                                 
                                 <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
                                   <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Flight</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">RW-000</span>
+                                    <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase tracking-wider w-fit">Flight</span>
+                                    <span className="font-mono font-bold text-transparent bg-stone-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">RW-000</span>
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Gate</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">TBD</span>
+                                    <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase tracking-wider w-fit">Gate</span>
+                                    <span className="font-mono font-bold text-transparent bg-stone-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">TBD</span>
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Seat</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">00A</span>
+                                    <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase tracking-wider w-fit">Seat</span>
+                                    <span className="font-mono font-bold text-transparent bg-stone-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">00A</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
                             
                             <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
-                              <div className="w-16 sm:w-32 h-8 sm:h-16 bg-slate-200 rounded opacity-60" />
-                              <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-transparent bg-slate-200 rounded tracking-widest uppercase w-fit inline-block">TKT-12345678</span>
+                              <div className="w-16 sm:w-32 h-8 sm:h-16 bg-stone-200 rounded opacity-60" />
+                              <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-transparent bg-stone-200 rounded tracking-widest uppercase w-fit inline-block">TKT-12345678</span>
                             </div>
                           </div>
                         </div>
                         
                         {/* Divider with Notches */}
-                        <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
-                          <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
+                        <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-stone-200 z-0">
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-stone-100 rounded-b-full absolute top-0 left-0 border-b border-stone-200 shadow-inner" />
+                          <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-stone-300" />
+                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-stone-100 rounded-t-full absolute bottom-0 left-0 border-t border-stone-200 shadow-inner" />
                         </div>
                         
                         {/* Tear-off Stub */}
-                        <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
-                          <div className="h-10 bg-slate-200 w-full border-b border-slate-300" />
+                        <div className="flex-1 shrink-0 bg-stone-50 border border-stone-200 border-l-0 flex flex-col relative overflow-hidden z-10">
+                          <div className="h-10 bg-stone-200 w-full border-b border-stone-300" />
                           <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
                             <div className="w-full text-center mb-2 sm:mb-4 relative z-10 flex flex-col items-center">
-                              <span className="text-[8px] sm:text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider block mb-0.5 sm:mb-1 w-fit">Boarding Time</span>
-                              <span className="font-mono font-black text-transparent bg-slate-200 rounded text-lg sm:text-xl inline-block w-fit">NOW</span>
+                              <span className="text-[8px] sm:text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase tracking-wider block mb-0.5 sm:mb-1 w-fit">Boarding Time</span>
+                              <span className="font-mono font-black text-transparent bg-stone-200 rounded text-lg sm:text-xl inline-block w-fit">NOW</span>
                             </div>
 
                             <div className="w-full flex justify-between relative z-10">
                               <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Zone</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">1</span>
+                                <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase w-fit">Zone</span>
+                                <span className="font-black text-3xl text-transparent bg-stone-200 rounded leading-none mt-1 inline-block w-fit">1</span>
                               </div>
                               <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Class</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">F</span>
+                                <span className="text-[9px] text-transparent bg-stone-200 rounded font-bold uppercase w-fit">Class</span>
+                                <span className="font-black text-3xl text-transparent bg-stone-200 rounded leading-none mt-1 inline-block w-fit">F</span>
                               </div>
                             </div>
                           </div>
@@ -1470,7 +1470,7 @@ export default function ChildDashboard({
                       className="w-full cursor-pointer group flex shadow-lg hover:shadow-xl transition-shadow rounded-2xl overflow-hidden relative"
                     >
                       {/* Main Pass Body */}
-                      <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
+                      <div className="flex-[3] bg-white border border-stone-200 border-r-0 flex flex-col relative z-10">
                         {/* Header */}
                         <div className="h-8 sm:h-10 bg-[#0033A0] flex items-center justify-between px-3 sm:px-6 border-b border-[#002277]">
                           <div className="flex items-center gap-2 text-white font-bold tracking-widest text-xs uppercase">
@@ -1484,30 +1484,30 @@ export default function ChildDashboard({
                         <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
                           
                           <div className="flex items-center gap-2 sm:gap-6">
-                            <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
+                            <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-stone-100 border-2 border-white shadow-md overflow-hidden bg-white">
                               <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
                             </div>
                             
                             <div className="flex flex-col justify-center py-1 sm:py-2">
                               <div>
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
-                                <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
+                                <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
+                                <h3 className="text-xl sm:text-3xl font-black font-display text-stone-900 uppercase tracking-tight leading-none">
                                   {child.name}
-                                  {child.age && <span className="text-sm sm:text-xl text-slate-500 font-normal ml-2">({child.age})</span>}
+                                  {child.age && <span className="text-sm sm:text-xl text-stone-500 font-normal ml-2">({child.age})</span>}
                                 </h3>
                               </div>
                               
                               <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
                               <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Flight</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
+                                <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Flight</span>
+                                <span className="font-mono font-bold text-stone-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Gate</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
+                                <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Gate</span>
+                                <span className="font-mono font-bold text-stone-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Seat</span>
+                                <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Seat</span>
                                 <span className="font-mono font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
                               </div>
                             </div>
@@ -1516,58 +1516,58 @@ export default function ChildDashboard({
                         
                         <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
                           <div className="w-16 sm:w-32 h-8 sm:h-16 flex justify-between items-end opacity-60">
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1.5 sm:w-3 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-1.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
+                            <div className="w-1 sm:w-2 h-full bg-stone-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
+                            <div className="w-1.5 sm:w-3 h-full bg-stone-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-stone-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
+                            <div className="w-1 sm:w-2 h-full bg-stone-800" />
+                            <div className="w-1 sm:w-1.5 h-full bg-stone-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-stone-800" />
+                            <div className="w-1 sm:w-2 h-full bg-stone-800" />
+                            <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
+                            <div className="w-px sm:w-0.5 h-full bg-stone-800" />
                           </div>
-                          <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-slate-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
+                          <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-stone-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
                         </div>
                         
                       </div>
                     </div>
                     
                     {/* Divider with Notches */}
-                    <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
+                    <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-stone-200 z-0">
                       {/* Top Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-stone-100 rounded-b-full absolute top-0 left-0 border-b border-stone-200 shadow-inner" />
                       
                       {/* Perforation Line */}
-                      <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
+                      <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-stone-300" />
                       
                       {/* Bottom Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-stone-100 rounded-t-full absolute bottom-0 left-0 border-t border-stone-200 shadow-inner" />
                     </div>
                     
                     {/* Tear-off Stub */}
-                    <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
+                    <div className="flex-1 shrink-0 bg-stone-50 border border-stone-200 border-l-0 flex flex-col relative overflow-hidden z-10">
                         <div className="h-10 bg-[#0033A0] w-full border-b border-[#002277]" />
                         <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
                           
-                          <Plane className="absolute -right-8 -bottom-8 w-24 h-24 sm:w-32 sm:h-32 text-slate-200 opacity-40 -rotate-45 pointer-events-none z-0" />
+                          <Plane className="absolute -right-8 -bottom-8 w-24 h-24 sm:w-32 sm:h-32 text-stone-200 opacity-40 -rotate-45 pointer-events-none z-0" />
 
                           <div className="w-full text-center mb-2 sm:mb-4 relative z-10">
-                            <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
+                            <span className="text-[8px] sm:text-[9px] text-stone-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
                             <span className="font-mono font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
                           </div>
 
                           <div className="w-full flex justify-between relative z-10">
                             <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Zone</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">1</span>
+                              <span className="text-[9px] text-stone-500 font-bold uppercase">Zone</span>
+                              <span className="font-black text-3xl text-stone-800 leading-none mt-1">1</span>
                             </div>
                             <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Class</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">F</span>
+                              <span className="text-[9px] text-stone-500 font-bold uppercase">Class</span>
+                              <span className="font-black text-3xl text-stone-800 leading-none mt-1">F</span>
                             </div>
                           </div>
                         </div>
@@ -1841,13 +1841,13 @@ export default function ChildDashboard({
                   <div className={`lg:col-span-8 space-y-2 sm:space-y-3 ${activeChildTab === 'companion' ? 'hidden lg:block' : ''}`}>
                     
                     {/* Desktop style switcher tabs (Hidden on mobile) */}
-                    <div className={`hidden lg:flex gap-2 p-1 bg-gray-50 border border-gray-100 rounded-2xl`} id="kid-dashboard-tabs">
+                    <div className={`hidden lg:flex gap-2 p-1 bg-stone-50 border border-stone-100 rounded-2xl`} id="kid-dashboard-tabs">
                       <button
                         onClick={() => { playSound.click(); setActiveChildTab('home'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'home' || activeChildTab === 'companion'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
+                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                            : 'text-stone-400 hover:text-stone-600'
                         }`}
                       >
                         <Home className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" /> <span className="hidden sm:inline">HOME</span>
@@ -1856,8 +1856,8 @@ export default function ChildDashboard({
                         onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'tasks'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
+                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                            : 'text-stone-400 hover:text-stone-600'
                         }`}
                       >
                         <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" /> <span className="hidden sm:inline">TASKS</span>
@@ -1866,8 +1866,8 @@ export default function ChildDashboard({
                         onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'rewards'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
+                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                            : 'text-stone-400 hover:text-stone-600'
                         }`}
                       >
                         <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" /> <span className="hidden sm:inline">PRIZES</span>
@@ -1876,8 +1876,8 @@ export default function ChildDashboard({
                         onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
                         className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           activeChildTab === 'pots'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
+                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
+                            : 'text-stone-400 hover:text-stone-600'
                         }`}
                       >
                         <FaJar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> <span className="hidden sm:inline">POTS</span>
@@ -1906,10 +1906,10 @@ export default function ChildDashboard({
                           key="child-tasks-tab"
                           className="flex flex-col"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-gray-200 border flex items-center justify-between mb-3 sm:mb-4`}>
+                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-stone-200 border flex items-center justify-between mb-3 sm:mb-4`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900`}>Daily Quests</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono text-gray-400`}>Complete tasks to earn more gold coins!</p>
+                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900`}>Daily Quests</h3>
+                              <p className={`text-[10px] sm:text-xs font-mono text-stone-400`}>Complete tasks to earn more gold coins!</p>
                             </div>
                           </div>
                           
@@ -1921,7 +1921,7 @@ export default function ChildDashboard({
                             }
                             return true;
                           }).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-3`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
                               <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
@@ -1985,7 +1985,7 @@ export default function ChildDashboard({
                               const cardContent = (
                                 <>
                                   <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-gray-200 text-gray-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-stone-200 text-stone-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
                                       <catMeta.Icon className="w-4 h-4" />
                                     </div>
                                   </div>
@@ -1993,7 +1993,7 @@ export default function ChildDashboard({
                                     <CoinBadge points={task.points} disabled={isApproved} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className={`font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                    <h4 className={`font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
                                       {task.title}
                                     </h4>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
@@ -2035,7 +2035,7 @@ export default function ChildDashboard({
                                   key={task.id}
                                   className={`${baseCardClasses} ${
                                     isApproved
-                                      ? `bg-gray-50 border-gray-100`
+                                      ? `bg-stone-50 border-stone-100`
                                       : isPending
                                         ? 'bg-indigo-50 border-indigo-100'
                                         : 'bg-amber-50 border-amber-100 opacity-75'
@@ -2067,7 +2067,7 @@ export default function ChildDashboard({
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
                               <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
                               <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
@@ -2139,7 +2139,7 @@ export default function ChildDashboard({
                                     <CoinBadge points={rew.cost_points} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight">{rew.title}</h4>
+                                    <h4 className="font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight">{rew.title}</h4>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
                                       {statusBadge}
                                     </div>
@@ -2176,8 +2176,8 @@ export default function ChildDashboard({
                           key="child-pots-tab"
                           className="space-y-4"
                         >
-                          <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">POTS</h2>
+                          <div className="bg-white border border-stone-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
+                            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900">POTS</h2>
                             <p className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</p>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
@@ -2185,7 +2185,7 @@ export default function ChildDashboard({
                           {/* === MAIN GOLD POT SECTION === */}
                           <div 
                             onClick={() => setExpandedPot(expandedPot === 'gold' ? null : 'gold')}
-                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
                           >
                             <div className="flex justify-between items-start mb-4">
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
@@ -2195,9 +2195,9 @@ export default function ChildDashboard({
                             </div>
                             <div>
                               <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
-                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Gold Pot</h3>
+                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-900'}`}>Gold Pot</h3>
                               <div className="flex gap-2 mt-3 flex-wrap">
-                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                   <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
                                 </button>
                                 <button 
@@ -2215,10 +2215,10 @@ export default function ChildDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                                  <p className="text-[10px] text-stone-500 leading-relaxed">
                                     This is your main pocket where all the gold coins you earn are kept. You can use these coins to buy rewards, save them in your Savings Pot, or spend them on your pets!
                                   </p>
                                 </motion.div>
@@ -2232,7 +2232,7 @@ export default function ChildDashboard({
                           {isSavingsUnlocked && activeChild.savings_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'savings' ? null : 'savings')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-slate-200 hover:border-emerald-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-stone-200 hover:border-emerald-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
@@ -2242,9 +2242,9 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Savings</h3>
+                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Savings</h3>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
                                   </button>
                                   <button 
@@ -2262,10 +2262,10 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
+                                    <p className="text-[10px] text-stone-500 leading-relaxed mb-3">
                                       Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
                                     </p>
 
@@ -2309,7 +2309,7 @@ export default function ChildDashboard({
                                       <button
                                         onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
                                         disabled={(activeChild.savings_pot || 0) <= 0}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Withdraw All
                                       </button>
@@ -2439,7 +2439,7 @@ export default function ChildDashboard({
                           {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'food' ? null : 'food')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-slate-200 hover:border-orange-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-stone-200 hover:border-orange-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
@@ -2452,9 +2452,9 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Food</h3>
+                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Food</h3>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
                                   </button>
                                   <button 
@@ -2472,7 +2472,7 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
 
@@ -2515,7 +2515,7 @@ export default function ChildDashboard({
                                       <button
                                         onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
                                         disabled={(activeChild.pet_food || 0) < 1}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Sell (+1g)
                                       </button>
@@ -2556,7 +2556,7 @@ export default function ChildDashboard({
                           {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'gifting' ? null : 'gifting')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-slate-200 hover:border-purple-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-stone-200 hover:border-purple-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
@@ -2565,9 +2565,9 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Gifting</h3>
+                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Gifting</h3>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
                                   </button>
                                   <button 
@@ -2585,7 +2585,7 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
 
@@ -2790,7 +2790,7 @@ export default function ChildDashboard({
                           {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'maintenance' ? null : 'maintenance')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
@@ -2802,9 +2802,9 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Maintenance</h3>
+                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-900'}`}>Maintenance</h3>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
                                   </button>
                                   <button 
@@ -2824,22 +2824,22 @@ export default function ChildDashboard({
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="mt-4 pt-4 border-t-2 border-slate-100">
-                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-slate-500'}`}>
+                                    <div className="mt-4 pt-4 border-t-2 border-stone-100">
+                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-stone-500'}`}>
                                         Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
                                       </p>
 
                                       {/* Status Info */}
-                                      <div className={`grid grid-cols-2 gap-2 bg-slate-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
+                                      <div className={`grid grid-cols-2 gap-2 bg-stone-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200'}`}>
                                         <div className="text-center">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
                                             {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
                                           </div>
                                         </div>
-                                        <div className="text-center border-l border-slate-200">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                        <div className="text-center border-l border-stone-200">
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
                                             {activeChild.gold_pot_total_leaked || 0} Coins
                                           </div>
                                         </div>
@@ -2936,7 +2936,7 @@ export default function ChildDashboard({
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
                   className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                    isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
+                    isSelected ? 'text-sky-600' : 'text-stone-400 hover:text-stone-600'
                   }`}
                 >
                   {isSelected && (

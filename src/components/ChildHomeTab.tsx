@@ -117,7 +117,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           </div>
           
           <div>
-            <h2 className="text-lg font-black text-slate-900">Daily Goal</h2>
+            <h2 className="text-lg font-black text-stone-900">Daily Goal</h2>
             <p className="text-xs text-stone-500 mt-0.5">
               {pointsRemaining > 0 
                 ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
@@ -136,7 +136,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             <Trophy className="w-8 h-8 text-amber-500" fill="currentColor" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900">Check Badges</h2>
+            <h2 className="text-lg font-black text-stone-900">Check Badges</h2>
             <p className="text-xs text-stone-500 mt-0.5">
               View your achievements and claim your free rewards!
             </p>
@@ -165,7 +165,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {/* Combined Activity Section */}
       <div className="space-y-4 pt-2">
         <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left dashboard-card transition-all">
-          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">TODAY'S ACTIVITY</h2>
+          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900">TODAY'S ACTIVITY</h2>
           <p className="text-[10px] sm:text-xs font-mono text-stone-500">Everything you earned, claimed, or lost today.</p>
         </div>
         

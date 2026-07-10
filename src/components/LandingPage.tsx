@@ -103,11 +103,11 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="landing-page-root">
+    <div className="min-h-screen bg-white text-stone-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="landing-page-root">
       
       {/* Clean White Header */}
       <header 
-        className="w-full bg-white border-b border-gray-100 relative z-40"
+        className="w-full bg-white border-b border-stone-100 relative z-40"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
@@ -119,7 +119,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-slate-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
       {/* Main Section */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 mt-6 sm:mt-10">
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-200 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-stone-200 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
           {/* Left Column: Marketing Info and CTA */}
           <div className="lg:col-span-6 flex flex-col space-y-8">
             <div className="space-y-4">
@@ -182,7 +182,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
           {/* Value Badges */}
           <div className="grid grid-cols-2 gap-3 max-w-lg">
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
               </div>
@@ -192,7 +192,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
                 <PiggyBank className="w-4 h-4" />
               </div>
@@ -206,7 +206,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
         {/* Right Column: Evolved Companion Showcase */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-gray-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row gap-6 items-center">
+          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-stone-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row gap-6 items-center">
             {/* Ambient Scanlines */}
             <div className={`absolute inset-0 ${styles.overlayCrt} pointer-events-none`} />
             
@@ -250,7 +250,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <h3 className={`text-xl font-black font-display tracking-wide ${styles.titleColor}`}>
                   {activeChar.name}
                 </h3>
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative">
+                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl relative">
                   <div className="absolute left-4 -top-2 w-3 h-3 bg-[#F5F2EA] border-t border-l border-stone-200 rotate-45" />
                   <p className="text-xs italic text-stone-700">
                     "{activeChar.greeting}"
@@ -259,7 +259,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </div>
 
               {/* Progression Preview */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3 mt-2">
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3 mt-2">
                 <div className="flex justify-between items-end">
                   <div>
                     <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
@@ -337,7 +337,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
       {/* Financial Literacy Journey Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
-        <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border border-gray-200 shadow-sm relative overflow-hidden">
+        <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border border-stone-200 shadow-sm relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
@@ -419,7 +419,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
         <div className="flex gap-4 font-mono text-[10px]">
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
-          <span className="text-slate-600">|</span>
+          <span className="text-stone-600">|</span>
           <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>

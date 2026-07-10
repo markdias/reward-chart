@@ -21,7 +21,7 @@ export default function StepHandover({ theme, onNext, onBack }: StepHandoverProp
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-6 shadow-xl relative z-10 text-center`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm space-y-6 shadow-xl relative z-10 text-center`}>
         <div className="w-20 h-20 rounded-3xl bg-info/15 flex items-center justify-center mx-auto shadow-sm mb-4">
           <User className="w-10 h-10 text-info" />
         </div>

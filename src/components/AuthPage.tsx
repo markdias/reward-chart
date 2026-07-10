@@ -252,11 +252,11 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
   const styles = THEME_PRESETS[theme];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="auth-page-root">
+    <div className="min-h-screen bg-white text-stone-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="auth-page-root">
       
       {/* Clean White Header */}
       <header 
-        className="w-full bg-white border-b border-gray-100 relative z-40"
+        className="w-full bg-white border-b border-stone-100 relative z-40"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
@@ -276,7 +276,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-slate-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
             </div>
           </div>
         </div>
@@ -401,7 +401,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
 
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
-          <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-xl bg-warning/15 text-dark">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -410,7 +410,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-xl bg-danger/10 text-danger">
               <Heart className="w-4 h-4" />
             </div>
@@ -430,7 +430,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
         <div className="flex gap-4 font-mono text-[10px]">
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
-          <span className="text-slate-600">|</span>
+          <span className="text-stone-600">|</span>
           <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>

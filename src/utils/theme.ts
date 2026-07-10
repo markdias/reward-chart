@@ -40,7 +40,7 @@ export const THEME_PRESETS: Record<ThemeId, ThemeStyles> = {
     btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
     btnSecondary: 'bg-white border border-stone-200 text-stone-700 shadow-sm hover:bg-stone-50 active:scale-[0.98] transition-all rounded-2xl',
     tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
-    tabInactive: 'text-slate-400 hover:text-slate-600 bg-transparent',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
     inputBg: 'bg-stone-50 border border-stone-200 rounded-2xl text-stone-900 placeholder-[#A8A29E] focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
     accentGlow: 'bg-orange-100/40 opacity-50',
     tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',

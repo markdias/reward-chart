@@ -587,7 +587,7 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-stone-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
       {/* Ambient Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px]"></div>
@@ -595,7 +595,7 @@ export default function ParentDashboard({
       </div>
 
       <header 
-        className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 pb-2 sm:pb-3"
+        className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3">
@@ -603,16 +603,16 @@ export default function ParentDashboard({
             <Tooltip content="Settings" position="bottom">
               <button
                 onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
               >
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </Tooltip>
             <div className="flex flex-col justify-center">
-              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 leading-none tracking-tight font-display">
+              <h1 className="text-2xl sm:text-4xl font-black text-stone-900 leading-none tracking-tight font-display">
                 Parent Center
               </h1>
-              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-slate-500 font-semibold mt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 font-semibold mt-1.5">
                 {parentProfile?.name && <span>{parentProfile.name}</span>}
                 {parentProfile?.name && parentProfile?.family_name && <span className="opacity-50">•</span>}
                 {parentProfile?.family_name && <span>{parentProfile.family_name}</span>}
@@ -623,7 +623,7 @@ export default function ParentDashboard({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+            <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
               {onLogout && (
                 <Tooltip content="Sign Out" position="bottom">
                   <button
@@ -631,7 +631,7 @@ export default function ParentDashboard({
                       playSound.click();
                       onLogout();
                     }}
-                    className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
+                    className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-stone-600 font-bold text-xs sm:text-sm tracking-widest hover:text-stone-800 hover:bg-stone-200 transition-colors shrink-0"
                     id="global-logout-btn"
                   >
                     <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
@@ -645,7 +645,7 @@ export default function ParentDashboard({
                     playSound.click();
                     onExitParentMode();
                   }}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
                   id="exit-to-child-view-btn"
                 >
                   <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -676,12 +676,12 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
                     isSelected 
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-slate-900 hover:scale-[1.01]'
+                      ? 'bg-stone-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
+                      : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
@@ -690,7 +690,7 @@ export default function ParentDashboard({
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-400' : 'text-gray-400'} font-bold`}>
+                    <span className={`text-[10px] font-mono ${isSelected ? 'text-stone-400' : 'text-stone-400'} font-bold`}>
                       ({tab.count})
                     </span>
                   )}
@@ -700,17 +700,17 @@ export default function ParentDashboard({
           </nav>
         </aside>
 
-        <main className="lg:col-span-9 card-panel min-h-[600px] z-10">
+        <main className="lg:col-span-9 min-h-[600px] z-10">
           
           <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
-            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{approvedCompletionsCount}</span>
-              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">COMPLETED</span>
+            <div className="bg-stone-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-stone-900 leading-none mb-1 sm:mb-2">{approvedCompletionsCount}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-stone-400 uppercase">COMPLETED</span>
             </div>
             
-            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{children.length}</span>
-              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">ACTIVE</span>
+            <div className="bg-stone-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl sm:text-4xl font-black text-stone-900 leading-none mb-1 sm:mb-2">{children.length}</span>
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-stone-400 uppercase">ACTIVE</span>
             </div>
             
             <div className="bg-rose-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
@@ -734,7 +734,7 @@ export default function ParentDashboard({
                 {/* Smart Reminders */}
                 {childrenToNudge.length > 0 && (
                   <div className="space-y-3">
-                    <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-indigo-500" />
                       Smart Reminders
                     </h2>
@@ -746,8 +746,8 @@ export default function ParentDashboard({
                             <div className="flex items-center gap-3">
                               <ChildAvatar iconName={child.avatar_url} className="w-10 h-10" />
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{child.name} hasn't logged any activity today.</h3>
-                                <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
+                                <h3 className="font-bold text-stone-900 text-sm">{child.name} hasn't logged any activity today.</h3>
+                                <p className="text-stone-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
                               </div>
                             </div>
                             <Button 
@@ -775,15 +775,15 @@ export default function ParentDashboard({
 
                 {/* Needs Approval */}
                 <div className="space-y-3">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <h2 className="text-base sm:text-lg font-black text-stone-900">
                     Needs Approval
                   </h2>
                   
                   {totalPending === 0 ? (
-                    <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+                    <div className="bg-stone-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
                       <div className="text-4xl mb-3 text-amber-400">✨</div>
-                      <h3 className="font-black text-slate-900 text-sm mb-1">All Caught Up!</h3>
-                      <p className="text-gray-400 text-xs">No pending tasks to approve.</p>
+                      <h3 className="font-black text-stone-900 text-sm mb-1">All Caught Up!</h3>
+                      <p className="text-stone-400 text-xs">No pending tasks to approve.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -791,12 +791,12 @@ export default function ParentDashboard({
                         const child = children.find(c => c.id === appr.child_id);
                         const task = tasks.find(t => t.id === appr.task_id);
                         return (
-                          <div key={appr.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={appr.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
-                              <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-12 h-12 !rounded-xl bg-gray-50" />
+                              <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-12 h-12 !rounded-xl bg-stone-50" />
                               <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} finished {task?.title}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
+                                <p className="font-bold text-stone-900 text-sm">{child?.name} finished {task?.title}</p>
+                                <p className="text-xs text-stone-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -811,12 +811,12 @@ export default function ParentDashboard({
                         const child = children.find(c => c.id === req.child_id);
                         const reward = rewards.find(r => r.id === req.reward_id);
                         return (
-                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={req.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
                               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>
                               <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} claimed {reward?.title}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{new Date(req.redeemed_at).toLocaleString()}</p>
+                                <p className="font-bold text-stone-900 text-sm">{child?.name} claimed {reward?.title}</p>
+                                <p className="text-xs text-stone-400 mt-0.5">{new Date(req.redeemed_at).toLocaleString()}</p>
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -832,15 +832,15 @@ export default function ParentDashboard({
                         const typeIcon = req.type === 'charity' ? '🌍' : '💝';
                         const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
                         return (
-                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
+                          <div key={req.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
                             <div className="flex gap-4">
                               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>
                                 {typeIcon}
                               </div>
                               <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} wants to give!</p>
-                                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">{title} (<CoinBadge points={req.amount} size="sm" />)</p>
-                                <p className="text-[10px] text-gray-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
+                                <p className="font-bold text-stone-900 text-sm">{child?.name} wants to give!</p>
+                                <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">{title} (<CoinBadge points={req.amount} size="sm" />)</p>
+                                <p className="text-[10px] text-stone-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -856,7 +856,7 @@ export default function ParentDashboard({
 
                 {/* Recent Activity */}
                 <div className="space-y-3">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <h2 className="text-base sm:text-lg font-black text-stone-900">
                     Recent Activity
                   </h2>
                   <div className="space-y-2">
@@ -876,14 +876,14 @@ export default function ParentDashboard({
                         date: new Date(r.redeemed_at),
                       }))
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10).map((activity, i) => (
-                      <div key={`${activity.id}-${i}`} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
+                      <div key={`${activity.id}-${i}`} className="bg-white border dashboard-card border-stone-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3 sm:gap-4">
-                          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-50 text-gray-500'}`}>
+                          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-stone-50 text-stone-500'}`}>
                             {activity.type === 'task' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : '🍦'}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 text-xs sm:text-sm">{activity.title}</p>
-                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="font-bold text-stone-900 text-xs sm:text-sm">{activity.title}</p>
+                            <p className="text-[10px] sm:text-xs text-stone-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                         </div>
                         <div className={`font-black text-xs sm:text-sm shrink-0 flex items-center justify-center`}>
@@ -892,7 +892,7 @@ export default function ParentDashboard({
                       </div>
                     ))}
                     {[...completions.filter(c => c.status === 'approved'), ...redemptions.filter(r => r.status === 'delivered')].length === 0 && (
-                      <div className="text-center p-8 text-gray-400 text-xs">No recent activity yet.</div>
+                      <div className="text-center p-8 text-stone-400 text-xs">No recent activity yet.</div>
                     )}
                   </div>
                 </div>
@@ -924,7 +924,7 @@ export default function ParentDashboard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-gray-200 shadow-2xl space-y-4`}
+                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4`}
                     id="add-child-box"
                   >
                     <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
@@ -979,7 +979,7 @@ export default function ParentDashboard({
                               key={url}
                               type="button"
                               onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
                             >
                               <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                             </button>
@@ -1413,18 +1413,18 @@ export default function ParentDashboard({
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
                                 <FaStar />
                               </div>
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <h3 className="font-bold text-stone-900 text-sm">{task.title}</h3>
+                                <p className="text-xs text-stone-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
                                   <span className="mx-2">•</span>
-                                  Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                  Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                                 </p>
                               </div>
                             </div>
@@ -1434,13 +1434,13 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
                             <button
                               onClick={() => {
                                 playSound.click();
                                 setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
                               }}
-                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
                               Assign to Child
                             </button>
@@ -1452,7 +1452,7 @@ export default function ParentDashboard({
                                 </Button>
                               </Tooltip>
                               <Tooltip content="Delete Blueprint" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
@@ -1465,9 +1465,9 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-gray-100"
+                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100"
                               >
-                                <p className="text-[10px] font-mono font-bold text-gray-500 uppercase">
+                                <p className="text-[10px] font-mono font-bold text-stone-500 uppercase">
                                   Select children to assign this quest:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1490,7 +1490,7 @@ export default function ParentDashboard({
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
-                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-slate-700/50" />
+                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-700/50" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
                                       </button>
@@ -1515,18 +1515,18 @@ export default function ParentDashboard({
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
-                      <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
                               <FaStar />
                             </div>
                             <div>
-                              <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Assigned: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                              <h3 className="font-bold text-stone-900 text-sm">{task.title}</h3>
+                              <p className="text-xs text-stone-400 mt-0.5">
+                                Assigned: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
                                 <span className="mx-2">•</span>
-                                Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                               </p>
                             </div>
                           </div>
@@ -1536,7 +1536,7 @@ export default function ParentDashboard({
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                        <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
                           <Button
                             variant="primary"
                             size="sm"
@@ -1551,12 +1551,12 @@ export default function ParentDashboard({
 
                           <div className="flex gap-2">
                             <Tooltip content="Edit Assigned Quest" position="top">
-                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-stone-400 hover:text-stone-900 hover:bg-stone-50">
                                 <Edit2 className="w-4 h-4" />
                               </button>
                             </Tooltip>
                             <Tooltip content="Delete Assigned Quest" position="top">
-                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
+                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-stone-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </Tooltip>
@@ -1764,18 +1764,18 @@ export default function ParentDashboard({
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
                                 <FaGift />
                               </div>
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{reward.title}</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <h3 className="font-bold text-stone-900 text-sm">{reward.title}</h3>
+                                <p className="text-xs text-stone-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
                                   <span className="mx-2">•</span>
-                                  Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                  Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                 </p>
                               </div>
                             </div>
@@ -1785,13 +1785,13 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
                             <button
                               onClick={() => {
                                 playSound.click();
                                 setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
                               }}
-                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
                               Assign to Child
                             </button>
@@ -1803,7 +1803,7 @@ export default function ParentDashboard({
                                 </Button>
                               </Tooltip>
                               <Tooltip content="Delete Token" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
@@ -1818,7 +1818,7 @@ export default function ParentDashboard({
                                 exit={{ height: 0, opacity: 0 }}
                                 className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
                               >
-                                <p className={`text-[10px] font-bold text-gray-500 uppercase`}>
+                                <p className={`text-[10px] font-bold text-stone-500 uppercase`}>
                                   Select children to assign this reward:
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1837,8 +1837,8 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-slate-900 border-slate-900 text-white')
-                                            : ('bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100')
+                                            ? ('bg-stone-900 border-stone-900 text-white')
+                                            : ('bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
                                         <ChildAvatar iconName={child.avatar_url} className="w-5 h-5" />
@@ -1867,14 +1867,14 @@ export default function ParentDashboard({
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
-                      <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
                               <FaGift />
                             </div>
                             <div>
-                              <h3 className="font-bold text-slate-900 text-sm">
+                              <h3 className="font-bold text-stone-900 text-sm">
                                 {reward.title}
                                 {!reward.is_available && reward.limit_type === 'one_time' && (
                                   <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
@@ -1882,10 +1882,10 @@ export default function ParentDashboard({
                                   </span>
                                 )}
                               </h3>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Available for: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                              <p className="text-xs text-stone-400 mt-0.5">
+                                Available for: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
                                 <span className="mx-2">•</span>
-                                Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                               </p>
                             </div>
                           </div>
@@ -1897,7 +1897,7 @@ export default function ParentDashboard({
                           </div>
                         </div>
 
-                        <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
+                        <div className="flex justify-end items-center border-t border-stone-50 pt-3 mt-1">
                           <div className="flex gap-2">
                             <Tooltip content="Edit Assigned Token" position="top">
                               <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
@@ -1905,7 +1905,7 @@ export default function ParentDashboard({
                               </Button>
                             </Tooltip>
                             <Tooltip content="Delete Assigned Token" position="top">
-                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </Tooltip>
@@ -1919,7 +1919,7 @@ export default function ParentDashboard({
                 )}
 
                 {/* History Log */}
-                <div className="pt-8 border-t border-slate-800">
+                <div className="pt-8 border-t border-stone-800">
                   <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
                     <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
                   </h3>
@@ -2021,7 +2021,7 @@ export default function ParentDashboard({
               <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-50 shadow-sm">
                 <MinusCircle className="w-8 h-8" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-2 font-display uppercase tracking-wide">
+              <h2 className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-2 font-display uppercase tracking-wide">
                 Take Coins
               </h2>
               <p className="text-center text-sm text-stone-500 mb-6">
@@ -2225,7 +2225,7 @@ export default function ParentDashboard({
                 key={tab.id}
                 onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                 className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                  isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
+                  isSelected ? 'text-sky-600' : 'text-stone-400 hover:text-stone-600'
                 }`}
               >
                 {isSelected && (
@@ -2256,33 +2256,33 @@ export default function ParentDashboard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGenerateTasksModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900 mb-2">
+                <h2 className="text-xl font-black text-stone-900 mb-2">
                   {generatedTasksToPreview ? "Select Quests to Keep" : "Generate Quests"}
                 </h2>
                 
                 {!generatedTasksToPreview ? (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</p>
+                    <p className="text-stone-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</p>
                     
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
                         <select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2291,13 +2291,13 @@ export default function ParentDashboard({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
                             <button
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                             >
                               {num}
                             </button>
@@ -2317,24 +2317,24 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</p>
+                    <p className="text-stone-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</p>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedTasksToPreview.map(task => {
                         const isEditing = editingPreviewId === task.id;
                         return (
-                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <input 
                                   type="text" 
-                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
                                   value={previewEditTitle} 
                                   onChange={(e) => setPreviewEditTitle(e.target.value)} 
                                 />
                                 <div className="flex gap-2">
                                   <input 
                                     type="number" 
-                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
                                     value={previewEditPoints} 
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
                                   />
@@ -2350,7 +2350,7 @@ export default function ParentDashboard({
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
                                   <input 
                                     type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-stone-300 focus:ring-indigo-500"
                                     checked={selectedTaskIdsForImport.includes(task.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2361,13 +2361,13 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <p className="font-bold text-slate-900 text-sm">{task.title}</p>
-                                    <p className="text-xs text-slate-500">{task.points} pts • {task.recurrence}</p>
+                                    <p className="font-bold text-stone-900 text-sm">{task.title}</p>
+                                    <p className="text-xs text-stone-500">{task.points} pts • {task.recurrence}</p>
                                   </div>
                                 </label>
                                 <button 
                                   type="button"
-                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(task.title);
@@ -2408,33 +2408,33 @@ export default function ParentDashboard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGenerateRewardsModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
                   <Gift className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900 mb-2">
+                <h2 className="text-xl font-black text-stone-900 mb-2">
                   {generatedRewardsToPreview ? "Select Prizes to Keep" : "Generate Prizes"}
                 </h2>
                 
                 {!generatedRewardsToPreview ? (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</p>
+                    <p className="text-stone-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</p>
                     
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
                         <select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2443,13 +2443,13 @@ export default function ParentDashboard({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
                             <button
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                             >
                               {num}
                             </button>
@@ -2469,24 +2469,24 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</p>
+                    <p className="text-stone-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</p>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedRewardsToPreview.map(reward => {
                         const isEditing = editingPreviewId === reward.id;
                         return (
-                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <input 
                                   type="text" 
-                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
                                   value={previewEditTitle} 
                                   onChange={(e) => setPreviewEditTitle(e.target.value)} 
                                 />
                                 <div className="flex gap-2">
                                   <input 
                                     type="number" 
-                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
                                     value={previewEditPoints} 
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
                                   />
@@ -2502,7 +2502,7 @@ export default function ParentDashboard({
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
                                   <input 
                                     type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-stone-300 focus:ring-amber-500"
                                     checked={selectedRewardIdsForImport.includes(reward.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2513,13 +2513,13 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <p className="font-bold text-slate-900 text-sm">{reward.title}</p>
-                                    <p className="text-xs text-slate-500">{reward.cost_points} pts • {reward.limit_type}</p>
+                                    <p className="font-bold text-stone-900 text-sm">{reward.title}</p>
+                                    <p className="text-xs text-stone-500">{reward.cost_points} pts • {reward.limit_type}</p>
                                   </div>
                                 </label>
                                 <button 
                                   type="button"
-                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(reward.title);
@@ -2593,7 +2593,7 @@ export default function ParentDashboard({
                         <button onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 transition-colors">
                           <RotateCcw className="w-5 h-5" />
                         </button>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-display uppercase tracking-wide">
+                        <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-display uppercase tracking-wide">
                           {historyDetailView === 'tasks' ? 'Tasks Completed' : historyDetailView === 'deductions' ? 'Deductions' : 'Rewards Claimed'}
                         </h2>
                       </div>
@@ -2666,7 +2666,7 @@ export default function ParentDashboard({
 
                 return (
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
+                    <h2 className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
                       <ScrollText className="w-6 h-6 text-indigo-500" />
                       {child.name}'s History
                     </h2>

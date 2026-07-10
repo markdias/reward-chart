@@ -74,7 +74,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
           <Icon className="w-16 h-16" strokeWidth={isUnlocked ? 2.5 : 2} />
         </div>
 
-        <h3 className={`text-2xl font-extrabold mb-3 ${isUnlocked ? 'text-slate-800' : 'text-stone-400'}`}>
+        <h3 className={`text-2xl font-extrabold mb-3 ${isUnlocked ? 'text-stone-800' : 'text-stone-400'}`}>
           {selectedBadge.name}
         </h3>
         
@@ -91,7 +91,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
             ) : (
               claiming ? (
                 <div className="w-full space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-200 animate-in fade-in zoom-in duration-200">
-                  <div className="text-sm font-bold text-slate-700 text-center mb-2">Choose your free prize:</div>
+                  <div className="text-sm font-bold text-stone-700 text-center mb-2">Choose your free prize:</div>
                   {eligibleRewards.length === 0 ? (
                     <p className="text-xs text-red-500 text-center font-medium">No eligible rewards available. Ask your parents to add some!</p>
                   ) : (
@@ -104,7 +104,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                             setUnlockedBadges(prev => prev.map(ub => ub.badge_id === selectedBadge.id ? { ...ub, reward_claimed: true } : ub));
                             setClaiming(false);
                           }}
-                          className="w-full text-left px-4 py-3 text-sm font-bold bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded-xl text-slate-700 transition-colors shadow-sm"
+                          className="w-full text-left px-4 py-3 text-sm font-bold bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded-xl text-stone-700 transition-colors shadow-sm"
                         >
                           {r.title}
                         </button>
@@ -121,7 +121,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
               ) : (
                 <button
                   onClick={() => setClaiming(true)}
-                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-sm font-bold tracking-wide shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl text-sm font-bold tracking-wide shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <Gift className="w-5 h-5" />
                   CLAIM FREE PRIZE
@@ -166,7 +166,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                   <Icon strokeWidth={isUnlocked ? 2.5 : 2} className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
                 <span className={`text-xs sm:text-sm font-bold text-center leading-tight px-1 ${
-                  isUnlocked ? 'text-slate-800' : 'text-stone-400'
+                  isUnlocked ? 'text-stone-800' : 'text-stone-400'
                 }`}>
                   {badge.name}
                 </span>
@@ -180,7 +180,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
       
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -190,7 +190,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
       >
         {/* Header */}
         <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-md z-10">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Badges</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-stone-800 tracking-tight">Badges</h2>
           <button 
             onClick={onClose}
             className="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-700 transition-colors"

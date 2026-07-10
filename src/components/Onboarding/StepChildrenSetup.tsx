@@ -74,7 +74,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-2">
           <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Setup Children</h2>
           <p className={`text-xs ${styles.textMuted}`}>Add the children who will be earning rewards.</p>
@@ -85,7 +85,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
             <h3 className={`text-xs font-bold font-mono tracking-widest uppercase ${styles.textMuted}`}>Added So Far</h3>
             <div className="space-y-2">
               {children.map(child => (
-                <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200`}>
+                <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200`}>
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden p-1 border shrink-0">
                       {child.avatar_url ? (
@@ -116,7 +116,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
         )}
 
         {isAdding ? (
-          <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-4`}>
+          <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-4`}>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Child's First Name</label>
@@ -172,7 +172,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     key={url}
                     type="button"
                     onClick={() => setSelectedAvatar(url)}
-                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
+                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
                   >
                     <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                   </button>
