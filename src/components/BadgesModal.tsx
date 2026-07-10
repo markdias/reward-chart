@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Coins, Medal, ArrowLeft, Lock, Gift } from 'lucide-react';
 import { Child, Reward } from '../types';
 import { getSupabaseClient } from '../utils/supabase';

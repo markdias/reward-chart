@@ -52,7 +52,7 @@
 ---
 
 ## Phase 3: Delete Showcase Files
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - Delete 10 showcase files
@@ -64,7 +64,7 @@
 ---
 
 ## Phase 4: Fix Animation Imports
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - Change all `from 'framer-motion'` → `from 'motion/react'`
@@ -122,3 +122,5 @@ _Entries will be added below as each phase is completed._
 
 - **Phase 1: Foundation — Design Tokens & Utilities**: Completed. Updated `index.css` with mobile utilities (`.touch-target`, `.safe-area-bottom`, `.modal-overlay`), standardised neutral colors to the `stone` palette, consolidated card classes to `card-panel`, and added input-field variants.
 - **Phase 2: Extend UI Component Library**: Completed. Added variants to `Typography` and `Button`. Created new `Card`, `Modal`, `Input`, `BottomTabBar`, and `BoardingPassCard` components.
+- **Phase 3: Delete Showcase Files**: Completed. Deleted 10 showcase files and removed all showcase imports/routes from `App.tsx`. Net -2162 lines.
+- **Phase 4: Fix Animation Imports**: Completed. Migrated 5 files from `framer-motion` to `motion/react`: `BadgesModal.tsx`, `ChildHomeTab.tsx`, `SettingsTab.tsx`, `TargetsTab.tsx`, `Tooltip.tsx`.

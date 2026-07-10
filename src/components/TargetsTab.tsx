@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Target, Save } from 'lucide-react';
 import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';

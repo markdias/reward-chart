@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell } from 'lucide-react';
 import OneSignal from 'react-onesignal';
 import { ThemeId } from '../utils/theme';

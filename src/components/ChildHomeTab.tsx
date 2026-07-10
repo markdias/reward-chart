@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString } from '../utils/date';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
