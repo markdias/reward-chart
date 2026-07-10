@@ -27,6 +27,7 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { BottomTabBar } from './ui/BottomTabBar';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
@@ -2921,39 +2922,18 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
-            {[
+          <BottomTabBar
+            tabs={[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle },
               { id: 'rewards', label: 'Prizes', icon: Gift },
               { id: 'companion', label: 'Pet', icon: FaCat },
               { id: 'pots', label: 'Pots', icon: FaJar }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeChildTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                    isSelected ? 'text-sky-600' : 'text-stone-400 hover:text-stone-600'
-                  }`}
-                >
-                  {isSelected && (
-                    <motion.div
-                      layoutId="child-nav-pill"
-                      className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  {Icon && <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
-                  <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+            ]}
+            activeTab={activeChildTab}
+            onTabChange={(id) => { playSound.click(); setActiveChildTab(id as any); }}
+            layoutId="child-nav-pill"
+          />
         )}
 
       {/* Badges Modal */}

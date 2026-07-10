@@ -1,11 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { LucideIcon } from 'lucide-react';
 
 export interface TabItem {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<any>;
   badge?: number;
 }
 
