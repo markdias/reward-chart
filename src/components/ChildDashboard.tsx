@@ -1408,10 +1408,51 @@ export default function ChildDashboard({
                   id="kid-dashboard-grid"
                 >
                 
-                {/* Left Column: Star-Pet Feeding Station (Hidden on mobile unless 'companion' tab is active) */}
-                {activeChild && activeChildStage && activeChildPack && (
-                  <div className={`lg:col-span-4 space-y-4 sm:space-y-6 ${activeChildTab !== 'companion' ? 'hidden lg:block' : ''}`}>
-                    
+                {/* Left Sidebar (Desktop Only) */}
+                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                  <nav className="flex flex-col gap-2">
+                    {[
+                      { id: 'home', label: 'HOME', icon: Home },
+                      { id: 'tasks', label: 'TASKS', icon: CheckCircle },
+                      { id: 'rewards', label: 'PRIZES', icon: Gift },
+                      { id: 'companion', label: 'PET', icon: FaCat },
+                      { id: 'pots', label: 'POTS', icon: FaJar }
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = activeChildTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
+                            isSelected 
+                              ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                              : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                            {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </aside>
+
+                <main className="lg:col-span-9 space-y-6">
+                  {/* Active Screen Frame */}
+                  <AnimatePresence mode="wait">
+                  
+                    {/* Pet / Companion Tab */}
+                    {activeChildTab === 'companion' && activeChild && activeChildStage && activeChildPack && (
+                      <motion.div
+                        key="companion-tab"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        className="space-y-4 sm:space-y-6"
+                      >
                     {/* Holo Pedestal */}
                     <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
                       
@@ -1647,61 +1688,11 @@ export default function ChildDashboard({
                         </>
                       );
                     })()}
+                      </motion.div>
+                    )}
 
-                  </div>
-                )}
-
-                {/* Right Column: Chores / Prize Cabinet (Hidden on mobile if 'companion' tab is active) */}
-                {activeChild && (
-                  <div className={`lg:col-span-8 space-y-2 sm:space-y-3 ${activeChildTab === 'companion' ? 'hidden lg:block' : ''}`}>
-                    
-                    {/* Desktop style switcher tabs (Hidden on mobile) */}
-                    <div className={`hidden lg:flex gap-2 p-1 bg-stone-50 border border-stone-100 rounded-2xl`} id="kid-dashboard-tabs">
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('home'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'home' || activeChildTab === 'companion'
-                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
-                            : 'text-stone-400 hover:text-stone-600'
-                        }`}
-                      >
-                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" /> <span className="hidden sm:inline">HOME</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'tasks'
-                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
-                            : 'text-stone-400 hover:text-stone-600'
-                        }`}
-                      >
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" /> <span className="hidden sm:inline">TASKS</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'rewards'
-                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
-                            : 'text-stone-400 hover:text-stone-600'
-                        }`}
-                      >
-                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" /> <span className="hidden sm:inline">PRIZES</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'pots'
-                            ? 'bg-white shadow-sm text-stone-900 border border-stone-200'
-                            : 'text-stone-400 hover:text-stone-600'
-                        }`}
-                      >
-                        <FaJar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> <span className="hidden sm:inline">POTS</span>
-                      </button>
-                    </div>
-
-                    {/* Active Screen Frame */}
-                    <AnimatePresence mode="wait">
-                      {activeChildTab === 'home' || activeChildTab === 'companion' ? (
+                    {/* Home Tab */}
+                    {activeChildTab === 'home' && activeChild && (
                         <ChildHomeTab
                           activeChild={activeChild}
                           tasks={tasks}
@@ -1713,7 +1704,9 @@ export default function ChildDashboard({
                           onOpenBadges={() => setShowBadgesModal(true)}
                           parentProfile={parentProfile}
                         />
-                      ) : activeChildTab === 'tasks' ? (
+                    )}
+                    {/* Tasks Tab */}
+                    {activeChildTab === 'tasks' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -1862,8 +1855,10 @@ export default function ChildDashboard({
                             })
                           )}
                           </div>
-                        </motion.div>
-                      ) : activeChildTab === 'rewards' ? (
+                          </motion.div>
+                    )}
+                    {/* Rewards Tab */}
+                    {activeChildTab === 'rewards' && activeChild && (
                         
                         /* PRIZE CABINET CONTENT */
                         <motion.div
@@ -1983,7 +1978,9 @@ export default function ChildDashboard({
                           )}
                           </div>
                         </motion.div>
-                      ) : activeChildTab === 'pots' ? (
+                    )}
+                    {/* Pots Tab */}
+                    {activeChildTab === 'pots' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -2720,10 +2717,9 @@ export default function ChildDashboard({
 
                         </div>
                         </motion.div>
-                      ) : null}
+                        )}
                     </AnimatePresence>
-                  </div>
-                )}
+                  </main>
 
               </motion.div>
             )}
