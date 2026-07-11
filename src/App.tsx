@@ -72,7 +72,7 @@ export default function App() {
         if (OneSignal.Notifications) {
           OneSignal.Notifications.addEventListener('click', (event) => {
             console.log('Push notification clicked!', event);
-            setInitialParentTab('approvals');
+            setInitialParentTab('home');
             setShowLockScreen(true);
           });
         }
@@ -97,7 +97,7 @@ export default function App() {
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
-  const [initialParentTab, setInitialParentTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('approvals');
+  const [initialParentTab, setInitialParentTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('home');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   
   // Auto-logout parent mode after 5 minutes of inactivity

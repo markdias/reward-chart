@@ -8,6 +8,7 @@ import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
+import { ActivityFeed } from './ui/ActivityFeed';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -71,7 +72,8 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         title: task?.title || 'Unknown Task',
         points: c.points_awarded,
         date: new Date(c.completed_at),
-        type: 'earn',
+        type: 'task',
+        status: 'completed',
         category: task?.category || 'other'
       });
     }
@@ -88,9 +90,10 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       recentActivities.push({
         id: `red-${r.id}`,
         title: reward.title,
-        points: -reward.cost_points, // Make it negative for UI
+        points: reward.cost_points, // ActivityCard will handle negative display
         date: new Date(r.redeemed_at),
-        type: 'spend'
+        type: 'reward',
+        status: 'delivered'
       });
     }
   });
@@ -109,7 +112,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {/* Top Cards: Daily Goal and Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Daily Goal Card */}
-        <div className="bg-white rounded-3xl p-5 border-2 border-stone-100 shadow-sm flex items-center gap-5 dashboard-card transition-all hover:border-cyan-300">
+        <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-cyan-300">
           <div className="w-16 h-16 shrink-0 flex items-center justify-center">
             <div className="transform scale-[1.35]">
               <CoinBadge points={pointsEarnedToday} />
@@ -117,7 +120,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           </div>
           
           <div>
-            <h2 className="text-lg font-black text-stone-900">Daily Goal</h2>
+            <Typography variant="h2">Daily Goal</Typography>
             <p className="text-xs text-stone-500 mt-0.5">
               {pointsRemaining > 0 
                 ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
@@ -130,13 +133,13 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         {/* Check Badges Card */}
         <button 
           onClick={onOpenBadges}
-          className="bg-white rounded-3xl p-5 border-2 border-stone-100 shadow-sm flex items-center gap-5 dashboard-card transition-all hover:border-amber-300 cursor-pointer text-left group"
+          className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-amber-300 cursor-pointer text-left group"
         >
           <div className="w-16 h-16 shrink-0 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Trophy className="w-8 h-8 text-amber-500" fill="currentColor" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-stone-900">Check Badges</h2>
+            <Typography variant="h2">Check Badges</Typography>
             <p className="text-xs text-stone-500 mt-0.5">
               View your achievements and claim your free rewards!
             </p>
@@ -164,62 +167,13 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
       {/* Combined Activity Section */}
       <div className="space-y-4 pt-2">
-        <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left dashboard-card transition-all">
-          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900">TODAY'S ACTIVITY</h2>
-          <p className="text-[10px] sm:text-xs font-mono text-stone-500">Everything you earned, claimed, or lost today.</p>
-        </div>
+        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Today's Activity</Typography>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-          {recentActivities.length === 0 ? (
-            <div className="col-span-full p-8 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-3xl">
-              No activity today.
-            </div>
-          ) : (
-            recentActivities.map((act) => {
-              let bgClass = "bg-stone-50 border-stone-100";
-              let iconBgClass = "bg-stone-200/50 text-stone-400";
-              let textClass = "text-stone-400";
-              let iconContent: React.ReactNode = <Sparkles className="w-6 h-6" />;
-
-              if (act.type === 'earn') {
-                const catMeta = CATEGORY_ICON_MAP[act.category as any] || CATEGORY_ICON_MAP.other;
-                iconContent = <catMeta.Icon className="w-6 h-6" />;
-                bgClass = `${catMeta.bg} bg-opacity-50`;
-                iconBgClass = `bg-white/60 ${catMeta.iconColor}`;
-                textClass = catMeta.iconColor;
-              } else if (act.type === 'spend') {
-                bgClass = "bg-purple-50/50 border-purple-100";
-                iconBgClass = "bg-purple-100 text-purple-400";
-                textClass = "text-purple-600";
-                iconContent = <Trophy className="w-6 h-6" />;
-              } else if (act.type === 'penalty') {
-                bgClass = "bg-rose-50/50 border-rose-100";
-                iconBgClass = "bg-rose-100 text-rose-400";
-                textClass = "text-rose-600";
-                iconContent = <AlertTriangle className="w-6 h-6" />;
-              }
-
-              return (
-                <div key={act.id} className={`relative p-4 rounded-[1.5rem] border-2 shadow-sm flex flex-col items-center text-center gap-3 opacity-90 transition-all dashboard-card hover:-translate-y-1 ${bgClass}`}>
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconBgClass}`}>
-                    {iconContent}
-                  </div>
-                  <div className="flex flex-col gap-1 w-full">
-                    <h3 className={`font-bold text-sm sm:text-base leading-tight ${act.type === 'earn' ? 'line-through opacity-70' : ''} ${textClass}`}>
-                      {act.title}
-                    </h3>
-                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">
-                      {act.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="mt-auto pt-2 w-full flex justify-center">
-                    <CoinBadge points={act.points} />
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        <ActivityFeed 
+          activities={recentActivities} 
+          emptyMessage="No activity today." 
+          className="space-y-2"
+        />
       </div>
 
     </motion.div>

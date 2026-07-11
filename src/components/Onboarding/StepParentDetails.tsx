@@ -4,6 +4,7 @@ import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 import { UserCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { playSound } from '../../utils/sound';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface StepParentDetailsProps {
   theme: ThemeId;
@@ -32,34 +33,28 @@ export default function StepParentDetails({ theme, onNext, onBack, initialName =
           <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto shadow-sm">
             <UserCircle className="w-8 h-8 text-amber-500" />
           </div>
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Parent Details</h2>
+          <Typography variant="h2" className={styles.titleColor}>Parent Details</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Tell us a bit about yourself so we can personalize the dashboard.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Your Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="E.g. Mummy, Daddy"
-              required
-              className={`w-full px-4 py-3 rounded-xl text-sm border ${styles.inputBg}`}
-            />
-          </div>
+          <Input
+            label="Your Name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="E.g. Mummy, Daddy"
+            required
+          />
 
-          <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Family Name</label>
-            <input
-              type="text"
-              value={familyName}
-              onChange={(e) => setFamilyName(e.target.value)}
-              placeholder="E.g. The Smiths"
-              required
-              className={`w-full px-4 py-3 rounded-xl text-sm border ${styles.inputBg}`}
-            />
-          </div>
+          <Input
+            label="Family Name"
+            type="text"
+            value={familyName}
+            onChange={(e) => setFamilyName(e.target.value)}
+            placeholder="E.g. The Smiths"
+            required
+          />
 
           <div className="flex gap-3 pt-2">
             {onBack && (

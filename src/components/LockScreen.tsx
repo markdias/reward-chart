@@ -21,8 +21,8 @@ export default function LockScreen({
   parentEmail,
   onSuccess,
   onClose,
-  title = "SECURE DECRYPTION CHECK",
-  subtitle = "Provide your parent account password to unlock mission variables",
+  title = "Parent Authentication",
+  subtitle = "Enter your parent account password to continue",
   theme
 }: LockScreenProps) {
   const [password, setPassword] = useState<string>('');
@@ -114,11 +114,11 @@ export default function LockScreen({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">
-            <Lock className="w-6 h-6 text-amber-500" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 shadow-sm">
+            <Lock className="w-6 h-6 text-stone-900" />
           </div>
           <Typography variant="h2">{title}</Typography>
-          <p className="font-mono text-[10px] tracking-widest mt-1.5 uppercase text-stone-500 font-bold">{subtitle}</p>
+          <p className="text-xs mt-1.5 text-stone-500">{subtitle}</p>
         </div>
 
         {/* Password Entry Form */}
@@ -132,10 +132,12 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="Enter Password"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-stone-200 bg-stone-50 text-stone-900 font-mono text-center text-sm shadow-sm focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:text-stone-400"
+              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-stone-200 bg-stone-50 text-stone-900 text-center text-sm shadow-sm focus:ring-2 focus:ring-stone-900/20 outline-none transition-all placeholder:text-stone-400"
               autoFocus
             />
-            <button
+            <Button
+              variant="none"
+              size="none"
               type="button"
               onClick={() => {
                 playSound.click();
@@ -144,7 +146,7 @@ export default function LockScreen({
               className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 cursor-pointer transition-colors"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+            </Button>
           </div>
 
           {error && (
@@ -169,7 +171,7 @@ export default function LockScreen({
               Cancel
             </Button>
             <Button
-              variant="warning"
+              variant="primary"
               fullWidth
               className="flex-1"
               type="submit"

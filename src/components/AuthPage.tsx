@@ -7,6 +7,7 @@ import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
 import { hashPassword, evaluatePassword } from '../utils/security';
 import { PasswordInput } from './PasswordInput';
+import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import pkg from '../../package.json';
 
@@ -313,49 +314,34 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                 </div>
               )}
 
-              <div>
-                <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                  Parent Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="parent@example.com"
-                  className={`input-field ${styles.inputBg}`}
-                />
-              </div>
+              <Input
+                label="Parent Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="parent@example.com"
+              />
 
               {isSignUp && (
                 <>
-                  <div>
-                    <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                      Your Name
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="E.g. Mum, Dad, etc."
-                      required
-                      className={`input-field ${styles.inputBg}`}
-                    />
-                  </div>
+                  <Input
+                    label="Your Name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="E.g. Mum, Dad, etc."
+                    required
+                  />
 
                   {!hasShareToken && (
-                    <div>
-                      <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                        Family Name
-                      </label>
-                      <input
-                        type="text"
-                        value={familyName}
-                        onChange={(e) => setFamilyName(e.target.value)}
-                        placeholder="E.g. The Smiths"
-                        required
-                        className={`input-field ${styles.inputBg}`}
-                      />
-                    </div>
+                    <Input
+                      label="Family Name"
+                      type="text"
+                      value={familyName}
+                      onChange={(e) => setFamilyName(e.target.value)}
+                      placeholder="E.g. The Smiths"
+                      required
+                    />
                   )}
                 </>
               )}

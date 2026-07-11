@@ -11,7 +11,7 @@ import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, ChevronRight, Lock, Star,
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
+  ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
@@ -333,7 +333,7 @@ export default function ChildDashboard({
           updates.points = points;
           updates.gold_pot_last_leak_date = todayStr;
           updates.gold_pot_total_leaked = (activeChild.gold_pot_total_leaked || 0) + 1;
-          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the Pots tab and fix it before it leaks all your gold.`);
           setTimeout(() => playSound.pinError(), 800);
         }
       } else {
@@ -343,7 +343,7 @@ export default function ChildDashboard({
             breakCount += 1;
             updates.gold_pot_broken = true;
             updates.gold_pot_break_count_this_week = breakCount;
-            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the Pots tab and fix it before it leaks all your gold.`);
             setTimeout(() => playSound.pinError(), 800);
           }
         }
@@ -515,30 +515,39 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+64px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+72px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
+    <div className={`min-h-screen bg-stone-50 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
       
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
         <header 
-          className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 flex items-center justify-between px-4 sm:px-8 pb-3 sm:pb-4"
+          className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex items-center flex-1 gap-3 sm:gap-4">
-            {!lockedChildId && (
-              <Tooltip content="Go Back to Selection" position="bottom">
-                <button
-                  onClick={() => setSelectedChildId(null)}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-stone-50 text-stone-500 flex items-center justify-center shrink-0 border border-stone-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-stone-100 hover:text-stone-800 transition-all active:scale-95"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              </Tooltip>
-            )}
-            <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
-              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-stone-800 flex items-center gap-2">
-                {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                {activeChild?.age && <span className="text-sm sm:text-xl text-stone-500 font-normal">({activeChild.age})</span>}
-              </h1>
+          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 sm:gap-4">
+              {!lockedChildId && (
+                <Tooltip content="Go Back to Selection" position="bottom">
+                  <Button
+                    variant="none"
+                    size="none"
+                    onClick={() => setSelectedChildId(null)}
+                    className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                </Tooltip>
+              )}
+              <div className="flex flex-col justify-center">
+                <Typography variant="h1" as="h1" className="text-2xl sm:text-4xl font-black text-stone-900 leading-none tracking-tight font-display">
+                  {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
+                </Typography>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 font-semibold mt-1.5">
+                  {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
                 <Tooltip content="Current Gold Coins" position="bottom">
                   <div className="cursor-help">
@@ -547,22 +556,26 @@ export default function ChildDashboard({
                 </Tooltip>
                 
                 <Tooltip content="Parent Dashboard" position="bottom">
-                  <button 
+                  <Button 
+                    variant="none"
+                    size="none"
                     onClick={() => { playSound.click(); onEnterParentMode(); }}
                     className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
                   >
                     <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                  </Button>
                 </Tooltip>
 
                 {!lockedChildId && onLockChild && activeChild && (
                   <Tooltip content="Lock Device to Child" position="bottom">
-                    <button 
+                    <Button 
+                      variant="none"
+                      size="none"
                       onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
                       className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                     >
                       <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+                    </Button>
                   </Tooltip>
                 )}
               </div>
@@ -585,19 +598,20 @@ export default function ChildDashboard({
                 <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-stone-800 text-sm sm:text-base">You have a message!</h3>
-                <p className="text-xs sm:text-sm text-stone-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
+                <Typography variant="h3" className="font-bold text-stone-900 text-sm sm:text-base">You have a message!</Typography>
+                <Typography variant="body" className="text-xs sm:text-sm text-stone-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</Typography>
               </div>
             </div>
-            <button
+            <Button
+              variant="purple"
               onClick={() => {
                 playSound.click();
                 onEditChild(activeChild.id, { has_pending_nudge: false });
               }}
-              className="px-6 py-3 rounded-full bg-indigo-500 text-white font-bold text-xs sm:text-sm tracking-widest uppercase hover:bg-indigo-600 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-indigo-500/20 whitespace-nowrap w-full sm:w-auto"
+              className="px-6 py-3 rounded-full text-xs sm:text-sm whitespace-nowrap w-full sm:w-auto"
             >
               I'm on it!
-            </button>
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -631,17 +645,17 @@ export default function ChildDashboard({
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
 
-              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
+              <Typography variant="h2" className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
                 {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
-              </h2>
+              </Typography>
 
-              <p className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
+              <Typography variant="body" className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
                 {isHatching && hatchPhase !== 'reveal' ? (
                   <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
                 ) : (
                   <>Spectacular progress! Companion <strong className="text-white">{evolvingStage.charName}</strong> is transmuting into a more powerful form!</>
                 )}
-              </p>
+              </Typography>
 
               {/* Evolution / Hatching Pedestal */}
               <div className="my-8 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
@@ -768,15 +782,15 @@ export default function ChildDashboard({
               </div>
 
               <div>
-                <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
+                <Typography variant="body" className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
                   {isHatching && hatchPhase !== 'reveal' ? 'HATCHING IN PROGRESS...' : 'UPGRADED FORM SPEC'}
-                </p>
-                <h3 className="text-2xl font-black text-white mt-1 uppercase tracking-wide">
+                </Typography>
+                <Typography variant="h3" className="text-2xl font-black text-white mt-1">
                   {isHatching && hatchPhase !== 'reveal'
                     ? ['🥚 Wobbling...', '💥 Cracking!', '✨ Splitting open!'][['wobble', 'crack', 'split'].indexOf(hatchPhase)] || evolvingStage.toStage
                     : evolvingStage.toStage
                   }
-                </h3>
+                </Typography>
               </div>
 
               <Button
@@ -822,14 +836,14 @@ export default function ChildDashboard({
 
                 <div className="space-y-1">
                   <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
-                  <h3 className="font-black font-display text-2xl text-stone-800 uppercase tracking-wide leading-none">
+                  <Typography variant="h3" className="uppercase tracking-wide leading-none">
                     How it Works
-                  </h3>
+                  </Typography>
                 </div>
 
-                <p className="text-sm font-bold text-stone-600 leading-relaxed px-4">
+                <Typography variant="body" className="text-sm font-bold text-stone-600 leading-relaxed px-4">
                   Watch this quick video to learn how to earn gold coins and unlock awesome prizes!
-                </p>
+                </Typography>
 
                 {/* Video Player */}
                 <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
@@ -847,7 +861,9 @@ export default function ChildDashboard({
                     Your browser does not support the video tag.
                   </video>
                   {!isVideoPlaying && (
-                    <button
+                    <Button
+                      variant="none"
+                      size="none"
                       onClick={() => {
                         videoRef.current?.play();
                       }}
@@ -856,7 +872,7 @@ export default function ChildDashboard({
                       <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                         <Play className="w-6 h-6 text-amber-600 ml-1" />
                       </div>
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -1199,9 +1215,9 @@ export default function ChildDashboard({
                 <AlertTriangle className="w-10 h-10 text-rose-600 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-rose-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-rose-600">
                 <FaHeartCrack className="inline-block mr-2 text-red-500" /> PET IS UNHAPPY!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {penaltyMessage}
@@ -1240,9 +1256,9 @@ export default function ChildDashboard({
                 <FaTriangleExclamation className="w-10 h-10 text-amber-600 animate-pulse" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-amber-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-amber-600">
                 GOLD POT BROKEN!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {goldPotPenaltyMessage}
@@ -1258,7 +1274,7 @@ export default function ChildDashboard({
                 }}
                 id="gold-pot-penalty-dismiss-btn"
               >
-                GO TO POTS <FaCoins className="inline-block ml-2 text-yellow-100" />
+                GO TO Pots <FaCoins className="inline-block ml-2 text-yellow-100" />
               </Button>
             </motion.div>
           </motion.div>
@@ -1285,9 +1301,9 @@ export default function ChildDashboard({
                 <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-orange-500">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-orange-500">
                 TIME TO FEED!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 Don't forget to feed <strong className="text-stone-900">{activeChildPack?.name.split(' the ')[0] || 'your pet'}</strong> today! A happy pet is a good companion.
@@ -1366,12 +1382,12 @@ export default function ChildDashboard({
                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
                   <Plane className="w-3.5 h-3.5" /> BOARDING NOW
                 </div>
-                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
+                <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
                   Grab your ticket!
-                </h1>
-                <p className={`text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed`}>
+                </Typography>
+                <Typography variant="body" className={`text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed`}>
                   Select your boarding pass to start your adventure and claim your rewards!
-                </p>
+                </Typography>
               </div>
 
               <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
@@ -1412,16 +1428,18 @@ export default function ChildDashboard({
                 <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
                   <nav className="flex flex-col gap-2">
                     {[
-                      { id: 'home', label: 'HOME', icon: Home },
-                      { id: 'tasks', label: 'TASKS', icon: CheckCircle },
-                      { id: 'rewards', label: 'PRIZES', icon: Gift },
-                      { id: 'companion', label: 'PET', icon: FaCat },
-                      { id: 'pots', label: 'POTS', icon: FaJar }
+                      { id: 'home', label: 'Home', icon: Home },
+                      { id: 'companion', label: 'Pets', icon: FaPaw },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
+                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'pots', label: 'Pots', icon: FaJar }
                     ].map((tab) => {
                       const Icon = tab.icon;
                       const isSelected = activeChildTab === tab.id;
                       return (
-                        <button
+                        <Button
+                          variant="none"
+                          size="none"
                           key={tab.id}
                           onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
                           className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
@@ -1434,7 +1452,7 @@ export default function ChildDashboard({
                             <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
                             {tab.label}
                           </span>
-                        </button>
+                        </Button>
                       );
                     })}
                   </nav>
@@ -1461,7 +1479,7 @@ export default function ChildDashboard({
                       <div className="flex justify-between w-full items-start mt-1">
                         <div className="text-left">
                           <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
-                          <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
+                          <Typography variant="h3" className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</Typography>
                         </div>
                       </div>
 
@@ -1520,7 +1538,9 @@ export default function ChildDashboard({
 
                       {isFoodPotUnlocked && (
                         <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 flex flex-col gap-2">
-                          <button
+                          <Button
+                            variant="none"
+                            size="none"
                             onClick={handleFeedCompanion}
                             disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
                             className={`w-full py-3 rounded-2xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
@@ -1538,7 +1558,7 @@ export default function ChildDashboard({
                             ) : (
                               <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
                             )}
-                          </button>
+                          </Button>
                           <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
                             <span>FOOD INVENTORY:</span>
                             <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
@@ -1570,17 +1590,21 @@ export default function ChildDashboard({
                         <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
                           {/* Streak Widget */}
-                          <button 
+                          <Button
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
                             <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
                             <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
-                          </button>
+                          </Button>
 
                           {/* Weekly Widget */}
-                          <button 
+                          <Button 
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
@@ -1590,10 +1614,12 @@ export default function ChildDashboard({
                             <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
-                          </button>
+                          </Button>
 
                           {/* Monthly Widget */}
-                          <button 
+                          <Button 
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
@@ -1603,7 +1629,7 @@ export default function ChildDashboard({
                             <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
                             <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
-                          </button>
+                          </Button>
                         </div>
                         
                         <AnimatePresence>
@@ -1615,12 +1641,14 @@ export default function ChildDashboard({
                               className="mt-4 overflow-hidden"
                             >
                               <div className={`p-5 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl relative`}>
-                                <button 
+                                <Button 
+                                  variant="ghost"
+                                  size="icon-sm"
                                   onClick={() => setExpandedGoal(null)}
-                                  className={`absolute top-4 right-4 p-1.5 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200`}
+                                  className="absolute top-4 right-4 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200"
                                 >
                                   <ChevronRight className="w-4 h-4 rotate-90" />
-                                </button>
+                                </Button>
                                 
                                 {expandedGoal === 'streak' && (
                                   <>
@@ -1628,11 +1656,11 @@ export default function ChildDashboard({
                                       <div className="h-10 w-10 rounded-xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center">
                                         <Flame className="w-5 h-5 text-orange-500 flame-active" />
                                       </div>
-                                      <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Daily Streak</h4>
+                                      <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Daily Streak</Typography>
                                     </div>
-                                    <p className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
+                                    <Typography variant="body" className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
                                       You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
-                                    </p>
+                                    </Typography>
                                   </>
                                 )}
                                 
@@ -1640,8 +1668,8 @@ export default function ChildDashboard({
                                   <>
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Weekly Target</h4>
-                                        {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Weekly Target</Typography>
+                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
                                         {parentProfile?.weekly_reward_points || 200} GOLD BONUS
@@ -1663,8 +1691,8 @@ export default function ChildDashboard({
                                   <>
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Monthly Target</h4>
-                                        {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Monthly Target</Typography>
+                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
                                       </div>
                                       <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
                                         {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
@@ -1716,8 +1744,8 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-stone-200 border flex items-center justify-between mb-3 sm:mb-4`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900`}>Daily Quests</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono text-stone-400`}>Complete tasks to earn more gold coins!</p>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Daily Quests</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-mono text-stone-400`}>Complete tasks to earn more gold coins!</Typography>
                             </div>
                           </div>
                           
@@ -1731,10 +1759,10 @@ export default function ChildDashboard({
                           }).length === 0 ? (
                             <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
-                              <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
-                              </p>
+                              </Typography>
                             </div>
                           ) : (
                             tasks.filter(t => {
@@ -1801,9 +1829,9 @@ export default function ChildDashboard({
                                     <CoinBadge points={task.points} disabled={isApproved} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className={`font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                    <Typography variant="h4" className={`font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
                                       {task.title}
-                                    </h4>
+                                    </Typography>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
                                       {isApproved ? (
                                         <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full">
@@ -1830,14 +1858,16 @@ export default function ChildDashboard({
                               const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
 
                               return isCompletable ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
                                   className={`${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] task-card`}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
                                 <div
                                   key={task.id}
@@ -1870,8 +1900,8 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Shop</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</p>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Reward Shop</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</Typography>
                             </div>
                           </div>
 
@@ -1879,8 +1909,8 @@ export default function ChildDashboard({
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                             <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
-                              <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                             </div>
                           ) : (
                             rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
@@ -1909,7 +1939,9 @@ export default function ChildDashboard({
                                   );
                                 } else {
                                   statusBadge = (
-                                    <button
+                                    <Button
+                                      variant="none"
+                                      size="none"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onSavingsGoal(activeChild.id, rew.id);
@@ -1918,7 +1950,7 @@ export default function ChildDashboard({
                                       className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
                                     >
                                       Set Goal
-                                    </button>
+                                    </Button>
                                   );
                                 }
                               }
@@ -1949,7 +1981,7 @@ export default function ChildDashboard({
                                     <CoinBadge points={rew.cost_points} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className="font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight">{rew.title}</h4>
+                                    <Typography variant="h4" className="font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight">{rew.title}</Typography>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
                                       {statusBadge}
                                     </div>
@@ -1958,7 +1990,9 @@ export default function ChildDashboard({
                               );
 
                               return canDispense ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={rew.id}
                                   onClick={() => isSavingFor
                                     ? handleClaimReward(rew.id, rew.cost_points, 'savings')
@@ -1968,7 +2002,7 @@ export default function ChildDashboard({
                                   className={wrapperClasses}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
                                 <div key={rew.id} className={wrapperClasses}>
                                   {cardContent}
@@ -1989,8 +2023,8 @@ export default function ChildDashboard({
                           className="space-y-4"
                         >
                           <div className="bg-white border border-stone-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-stone-900">POTS</h2>
-                            <p className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</p>
+                            <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Pots</Typography>
+                            <Typography variant="body" className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</Typography>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
@@ -2007,17 +2041,19 @@ export default function ChildDashboard({
                             </div>
                             <div>
                               <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
-                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-900'}`}>Gold Pot</h3>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Gold Pot</Typography>
                               <div className="flex gap-2 mt-3 flex-wrap">
-                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                   <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
-                                </button>
-                                <button 
+                                </Button>
+                                <Button 
+                                  variant="none"
+                                  size="none"
                                   onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
                                   className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
                                 >
                                   <Play className="w-3 h-3" fill="currentColor" /> Video
-                                </button>
+                                </Button>
                               </div>
                             </div>
                             
@@ -2030,9 +2066,9 @@ export default function ChildDashboard({
                                   className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <p className="text-[10px] text-stone-500 leading-relaxed">
+                                  <Typography variant="body" className="text-[10px] text-stone-500 leading-relaxed">
                                     This is your main pocket where all the gold coins you earn are kept. You can use these coins to buy rewards, save them in your Savings Pot, or spend them on your pets!
-                                  </p>
+                                  </Typography>
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -2054,17 +2090,19 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Savings</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Savings</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button 
+                                    variant="none"
+                                    size="none"
                                     onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2077,9 +2115,9 @@ export default function ChildDashboard({
                                     className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <p className="text-[10px] text-stone-500 leading-relaxed mb-3">
+                                    <Typography variant="body" className="text-[10px] text-stone-500 leading-relaxed mb-3">
                                       Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
-                                    </p>
+                                    </Typography>
 
                               {activeChild.savings_goal_name && (
                                 <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
@@ -2111,20 +2149,20 @@ export default function ChildDashboard({
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-2 relative mt-auto">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
                                         disabled={activeChild.points <= 0}
                                         className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2.5 rounded-xl font-bold text-xs border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaCoins /> Deposit
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
                                         disabled={(activeChild.savings_pot || 0) <= 0}
                                         className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Withdraw All
-                                      </button>
+                                      </Button>
                                     </div>
 
                               {/* Deposit Modal */}
@@ -2138,25 +2176,25 @@ export default function ChildDashboard({
                                   >
                                     <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Deposit how many coins?</label>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
                                         disabled={depositAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                 
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{depositAmount}</Typography>
                                       </div>
                                 
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
                                         disabled={depositAmount >= activeChild.points}
                                         className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2194,7 +2232,7 @@ export default function ChildDashboard({
                                     exit={{ opacity: 0, y: 10 }}
                                     className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2 relative z-20"
                                   >
-                                    <p className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</p>
+                                    <Typography variant="body" className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</Typography>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="danger"
@@ -2264,17 +2302,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Food</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Food</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-orange-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2311,26 +2349,26 @@ export default function ChildDashboard({
                                 </span>
                               </div>
 
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                              <Typography variant="body" className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                                 Add gold coins to your Food Pot to fund your pet's food. Once in the pot, use them to buy food pieces!
-                              </p>
+                              </Typography>
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-2 mt-auto relative">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
                                         disabled={(activeChild.points || 0) < 1}
                                         className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2.5 rounded-xl font-bold text-xs border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaBone /> Buy (1g)
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
                                         disabled={(activeChild.pet_food || 0) < 1}
                                         className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Sell (+1g)
-                                      </button>
+                                      </Button>
                                     </div>
 
                                   </motion.div>
@@ -2377,17 +2415,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                <h3 className="font-extrabold text-lg text-stone-900 leading-tight">Gifting</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Gifting</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-rose-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2401,9 +2439,9 @@ export default function ChildDashboard({
                                     onClick={(e) => e.stopPropagation()}
                                   >
 
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                              <Typography variant="body" className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                                 Donate to charity or gift to a sibling directly from your Main Gold Pot. It feels good to give!
-                              </p>
+                              </Typography>
 
                               {/* Gifting Reminder */}
                               {(() => {
@@ -2413,9 +2451,9 @@ export default function ChildDashboard({
                                   return (
                                     <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
                                       <span className="text-rose-500"><FaHeart /></span>
-                                      <p className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
+                                      <Typography variant="body" className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
                                         It's been a while since your last gift! Giving makes everyone happy.
-                                      </p>
+                                      </Typography>
                                     </div>
                                   );
                                 }
@@ -2424,20 +2462,20 @@ export default function ChildDashboard({
 
                                     {/* Action Buttons */}
                                     <div className="flex flex-col gap-2 mt-auto relative">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
                                         disabled={activeChild.points <= 0}
                                         className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-2.5 rounded-xl font-bold text-xs border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaGlobe /> Charity
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
                                         disabled={activeChild.points <= 0 || children.length <= 1}
                                         className="flex-1 flex items-center justify-center gap-2 bg-pink-50 text-pink-700 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-100 transition-colors border border-pink-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaGift /> Sibling
-                                      </button>
+                                      </Button>
                                     </div>
 
                               {/* Charity Modal */}
@@ -2460,23 +2498,23 @@ export default function ChildDashboard({
                                       <option value="CH-CHILDREN"><FaBook className="inline-block mr-2" /> Kids Education Charity</option>
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
                                         disabled={charityAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{charityAmount}</Typography>
                                       </div>
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
                                         disabled={charityAmount >= (activeChild.points || 0)}
                                         className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2525,23 +2563,23 @@ export default function ChildDashboard({
                                       ))}
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
                                         disabled={siblingAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{siblingAmount}</Typography>
                                       </div>
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
                                         disabled={siblingAmount >= (activeChild.points || 0)}
                                         className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2614,17 +2652,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-900'}`}>Maintenance</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Maintenance</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
                                     className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2637,9 +2675,9 @@ export default function ChildDashboard({
                                     className="overflow-hidden"
                                   >
                                     <div className="mt-4 pt-4 border-t-2 border-stone-100">
-                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-stone-500'}`}>
+                                      <Typography variant="body" className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-stone-500'}`}>
                                         Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
-                                      </p>
+                                      </Typography>
 
                                       {/* Status Info */}
                                       <div className={`grid grid-cols-2 gap-2 bg-stone-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200'}`}>
@@ -2659,9 +2697,9 @@ export default function ChildDashboard({
 
                               {activeChild.gold_pot_broken && (
                                 <>
-                                  <p className="text-[10px] text-red-700 mb-3 leading-relaxed font-bold">
+                                  <Typography variant="body" className="text-[10px] text-red-700 mb-3 leading-relaxed font-bold">
                                     Oh no! Your Gold Pot is cracked and leaking coins! You must fix it or you will lose a coin every day.
-                                  </p>
+                                  </Typography>
                                   <Button
                                     variant="danger"
                                     fullWidth
@@ -2735,9 +2773,9 @@ export default function ChildDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'tasks', label: 'Tasks', icon: CheckCircle },
-              { id: 'rewards', label: 'Prizes', icon: Gift },
-              { id: 'companion', label: 'Pet', icon: FaCat },
+              { id: 'companion', label: 'Pets', icon: FaPaw },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'pots', label: 'Pots', icon: FaJar }
             ]}
             activeTab={activeChildTab}

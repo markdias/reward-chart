@@ -6,6 +6,7 @@ import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../dat
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
 import { Tooltip } from '../ui/Tooltip';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { ChildAvatar } from '../ChildAvatar';
 
 interface StepChildrenSetupProps {
@@ -76,13 +77,13 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
       <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-2">
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Setup Children</h2>
+          <Typography variant="h2" className={styles.titleColor}>Setup Children</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Add the children who will be earning rewards.</p>
         </div>
 
         {children.length > 0 && (
           <div className="space-y-3">
-            <h3 className={`text-xs font-bold font-mono tracking-widest uppercase ${styles.textMuted}`}>Added So Far</h3>
+            <Typography variant="label" className={styles.textMuted}>Added So Far</Typography>
             <div className="space-y-2">
               {children.map(child => (
                 <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200`}>
@@ -119,26 +120,24 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
           <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-4`}>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Child's First Name</label>
-                <input
+                <Input
+                  label="Child's First Name"
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Leo"
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
                   required
                 />
               </div>
               <div className="col-span-1">
-                <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-1`}>Age</label>
-                <input
+                <Input
+                  label="Age"
                   type="number"
                   value={age}
                   onChange={e => setAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                   placeholder="e.g. 7"
                   min={1}
                   max={18}
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
                 />
               </div>
             </div>

@@ -26,7 +26,7 @@ export default function StepHandover({ theme, onNext, onBack }: StepHandoverProp
           <User className="w-10 h-10 text-info" />
         </div>
         
-        <h2 className={`text-2xl font-display font-black ${styles.titleColor}`}>Great job!</h2>
+        <Typography variant="h2" className={styles.titleColor}>Great job!</Typography>
         
         <p className={`text-base ${styles.textColor} font-bold`}>
           You've picked your companion! Now it's time to get your quests set up.

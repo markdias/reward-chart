@@ -7,6 +7,8 @@ export interface ModalProps {
   children: React.ReactNode;
   className?: string;
   isDashboardCard?: boolean;
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
 export function Modal({ 
@@ -14,9 +16,20 @@ export function Modal({
   onClose, 
   children, 
   className = '', 
-  isDashboardCard = false 
+  isDashboardCard = false,
+  maxWidth = 'md',
+  padding = 'md'
 }: ModalProps) {
   
+  const maxWidthClass = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl'
+  }[maxWidth];
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -33,10 +46,10 @@ export function Modal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="w-full max-w-sm md:max-w-md w-full animate-in fade-in zoom-in-95 duration-200 touch-target"
+        className={`w-full ${maxWidthClass} w-full animate-in fade-in zoom-in-95 duration-200 touch-target`}
         onClick={(e) => e.stopPropagation()}
       >
-        <Card isDashboardCard={isDashboardCard} className={`shadow-xl ${className}`}>
+        <Card padding={padding} isDashboardCard={isDashboardCard} className={`shadow-xl ${className}`}>
           {children}
         </Card>
       </div>

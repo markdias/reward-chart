@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Coins, Medal, ArrowLeft, Lock, Gift } from 'lucide-react';
 import { Child, Reward } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
+import { Modal } from './ui/Modal';
+import { Button } from './ui/Button';
+import { Typography } from './ui/Typography';
 
 const ICON_MAP: Record<string, React.FC<any>> = {
   Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Medal
@@ -59,12 +62,14 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
         exit={{ opacity: 0, y: -10 }}
         className="flex-1 flex flex-col p-6 items-center justify-center relative bg-white"
       >
-        <button 
+        <Button 
+          variant="none"
+          size="none"
           onClick={() => { setSelectedBadge(null); setClaiming(false); }}
           className="absolute top-6 left-6 text-stone-400 hover:text-stone-700 flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <ArrowLeft className="w-4 h-4" /> Back to badges
-        </button>
+        </Button>
 
         <div className={`w-32 h-32 rounded-full flex items-center justify-center border-4 mb-6 transition-all ${
           isUnlocked 
@@ -74,9 +79,9 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
           <Icon className="w-16 h-16" strokeWidth={isUnlocked ? 2.5 : 2} />
         </div>
 
-        <h3 className={`text-2xl font-extrabold mb-3 ${isUnlocked ? 'text-stone-800' : 'text-stone-400'}`}>
+        <Typography variant="h3" className={`mb-3 ${isUnlocked ? 'text-stone-800' : 'text-stone-400'}`}>
           {selectedBadge.name}
-        </h3>
+        </Typography>
         
         <p className="text-stone-500 text-center max-w-sm mb-8">
           {selectedBadge.description}
@@ -111,21 +116,25 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                       ))}
                     </div>
                   )}
-                  <button 
+                  <Button 
+                    variant="none"
+                    size="none"
                     onClick={() => setClaiming(false)}
                     className="w-full py-2 text-xs text-stone-500 hover:text-stone-700 font-medium transition-colors"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="dark"
+                  fullWidth
+                  className="py-4 rounded-2xl"
                   onClick={() => setClaiming(true)}
-                  className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl text-sm font-bold tracking-wide shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                  leftIcon={<Gift className="w-5 h-5" />}
                 >
-                  <Gift className="w-5 h-5" />
                   CLAIM FREE PRIZE
-                </button>
+                </Button>
               )
             )}
           </div>
@@ -179,47 +188,46 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
-      
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative bg-white w-full max-w-3xl h-[85vh] sm:h-[80vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
-      >
-        {/* Header */}
-        <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-md z-10">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-stone-800 tracking-tight">Badges</h2>
-          <button 
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-700 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      maxWidth="3xl"
+      padding="none"
+      className="h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden bg-white"
+    >
+      {/* Header */}
+      <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-md z-10">
+        <Typography variant="h2">Badges</Typography>
+        <Button 
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="rounded-full bg-stone-100 hover:bg-stone-200"
+        >
+          <X className="w-5 h-5" />
+        </Button>
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
-          {loading ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent" />
-            </div>
-          ) : (
-            <AnimatePresence mode="wait">
-              {selectedBadge ? (
-                <React.Fragment key="detail">
-                  {renderBadgeDetail()}
-                </React.Fragment>
-              ) : (
-                <React.Fragment key="grid">
-                  {renderGrid()}
-                </React.Fragment>
-              )}
-            </AnimatePresence>
-          )}
-        </div>
-      </motion.div>
-    </div>
+      {/* Content */}
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent" />
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            {selectedBadge ? (
+              <React.Fragment key="detail">
+                {renderBadgeDetail()}
+              </React.Fragment>
+            ) : (
+              <React.Fragment key="grid">
+                {renderGrid()}
+              </React.Fragment>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
+    </Modal>
   );
 };
