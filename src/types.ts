@@ -82,6 +82,7 @@ export interface Child {
   gold_pot_unbroken_days?: number;
   manual_deductions?: number;
   child_share_token?: string | null;
+  linked_email?: string | null;
   created_at: string;
 }
 

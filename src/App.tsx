@@ -38,6 +38,7 @@ export default function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
     localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
   );
+  const [onboardingInitialStep, setOnboardingInitialStep] = useState<'welcome' | 'role' | undefined>(undefined);
 
   const [showCreateAccount, setShowCreateAccount] = useState(false);
 
@@ -231,6 +232,7 @@ export default function App() {
       const fetchSupabaseData = async () => {
         try {
           let currentFamilyId = parentEmail;
+          let loadedParentProfile: ParentProfile | null = null;
 
           // Fetch parent profile first
           const { data: sessionData } = await supabase.auth.getSession();
@@ -248,6 +250,7 @@ export default function App() {
                 await supabase.from('parent_profiles').update({ share_token: profile.share_token }).eq('user_id', profile.user_id);
               }
               setParentProfile(profile);
+              loadedParentProfile = profile;
               currentFamilyId = profile.family_id;
             } else {
               // Check if it's an existing child profile
@@ -269,17 +272,29 @@ export default function App() {
                 const childShareToken = urlParams.get('child_share');
                 
                 if (childShareToken) {
-                  // Link new child account
-                  const { data: targetChild } = await supabase.from('children').select('id, parent_id').eq('child_share_token', childShareToken).maybeSingle();
+                  // Link new child account using local storage to bypass RLS trap for new users
+                  const pendingStr = localStorage.getItem('RCH_PENDING_CHILD_LINK');
+                  let targetChild = pendingStr ? JSON.parse(pendingStr) : null;
+                  
+                  if (!targetChild) {
+                    const { data } = await supabase.from('children').select('id, parent_id').eq('child_share_token', childShareToken).maybeSingle();
+                    targetChild = data;
+                  }
+
                   if (targetChild) {
                     await supabase.from('child_profiles').insert({ user_id: sessionData.session.user.id, child_id: targetChild.id });
+                    
+                    // Mark token as linked in DB so parent dashboard knows
+                    await supabase.from('children').update({ child_share_token: `LINKED_${targetChild.id}`, linked_email: sessionData.session.user.email }).eq('id', targetChild.id);
+                    
                     setIsChildAuth(true);
                     setAuthedChildId(targetChild.id);
                     localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
                     localStorage.setItem('RCH_AUTHED_CHILD_ID', targetChild.id);
                     currentFamilyId = targetChild.parent_id;
+                    localStorage.removeItem('RCH_PENDING_CHILD_LINK');
                   } else {
-                    console.error("Invalid child share token");
+                    console.error("Invalid child share token or RLS prevented reading target child");
                     return;
                   }
                 } else {
@@ -288,14 +303,21 @@ export default function App() {
                   let inheritedFamilyName = null;
                   const shareToken = urlParams.get('share');
                   if (shareToken) {
-                    const { data: inviter } = await supabase
-                      .from('parent_profiles')
-                      .select('*')
-                      .eq('share_token', shareToken)
-                      .maybeSingle();
+                    const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
+                    let inviter = pendingStr ? JSON.parse(pendingStr) : null;
+                    if (!inviter) {
+                      const { data } = await supabase
+                        .from('parent_profiles')
+                        .select('*')
+                        .eq('share_token', shareToken)
+                        .maybeSingle();
+                      inviter = data;
+                    }
+
                     if (inviter) {
                       familyId = inviter.family_id;
                       inheritedFamilyName = inviter.family_name;
+                      localStorage.removeItem('RCH_PENDING_PARENT_LINK');
                     }
                   }
 
@@ -369,6 +391,7 @@ export default function App() {
                   }
                   
                   setParentProfile(newProfile as ParentProfile);
+                  loadedParentProfile = newProfile as ParentProfile;
                   currentFamilyId = familyId;
                 }
               }
@@ -380,8 +403,12 @@ export default function App() {
             .from('parent_profiles')
             .select('*')
             .eq('family_id', currentFamilyId);
-          if (linkedProfiles) {
+          if (linkedProfiles && linkedProfiles.length > 0) {
             setLinkedParents(linkedProfiles);
+            if (!loadedParentProfile) {
+              loadedParentProfile = linkedProfiles[0];
+              setParentProfile(loadedParentProfile);
+            }
           }
 
 
@@ -409,21 +436,21 @@ export default function App() {
               let updates: Partial<Child> = {};
               
               // 4. Retroactive Unlock Sync
-              const savingsLvl = parentProfile?.savings_pot_unlock_level ?? 2;
+              const savingsLvl = loadedParentProfile?.savings_pot_unlock_level ?? 2;
               if (!updated.savings_unlocked && updated.level >= savingsLvl) {
                 updates.savings_unlocked = true;
                 updates.savings_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
               
-              const foodLvl = parentProfile?.food_pot_unlock_level ?? 4;
+              const foodLvl = loadedParentProfile?.food_pot_unlock_level ?? 4;
               if (!updated.food_pot_unlocked && updated.level >= foodLvl) {
                 updates.food_pot_unlocked = true;
                 updates.food_pot_unlock_seen = false;
                 updated = { ...updated, ...updates };
               }
               
-              const giftingLvl = parentProfile?.gifting_pot_unlock_level ?? 6;
+              const giftingLvl = loadedParentProfile?.gifting_pot_unlock_level ?? 6;
               if (!updated.gifting_unlocked && updated.level >= giftingLvl) {
                 updates.gifting_unlocked = true;
                 updates.gifting_unlock_seen = false;
@@ -511,7 +538,8 @@ export default function App() {
           }
 
           // Clean up URL to remove token now that everything is loaded
-          if (new URLSearchParams(window.location.search).has('share')) {
+          const urlParamsAfterLoad = new URLSearchParams(window.location.search);
+          if (urlParamsAfterLoad.has('share') || urlParamsAfterLoad.has('child_share')) {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
           
@@ -790,12 +818,17 @@ export default function App() {
     setPostSignUpData({ email, parentName: name, familyName });
     
     const isShared = new URLSearchParams(window.location.search).has('share');
+    const isChildShared = new URLSearchParams(window.location.search).has('child_share');
 
-    if (isShared) {
-      // Joining existing family - skip wizard
+    if (isShared || isChildShared) {
+      // Joining existing family or linking child - skip wizard
       setHasCompletedOnboarding(true);
       localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
-      setIsParentMode(true); // Drop them into parent view
+      if (isShared) {
+        setIsParentMode(true); // Drop them into parent view
+      } else {
+        setIsParentMode(false); // Child stays in child view
+      }
     } else {
       // New family - run onboarding wizard
       setHasCompletedOnboarding(false);
@@ -1007,6 +1040,19 @@ export default function App() {
       }
     }
   };
+
+  const handleUnlinkChild = async (id: string) => {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await supabase.rpc('delete_child_account', { p_child_id: id });
+      if (error) {
+        console.warn('Failed to securely unlink child account from Supabase:', error.message);
+      }
+    }
+    // Update local and remote state to remove the link token
+    handleEditChild(id, { child_share_token: null });
+  };
+
   const processLifetimePoints = (child: Child, addedPoints: number): Child => {
     let newLevel = child.level || 1;
     let newLifetimePoints = (child.lifetime_points || 0) + addedPoints;
@@ -1976,7 +2022,12 @@ export default function App() {
                 setHasCompletedOnboarding(true);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
               }}
-              initialStep={postSignUpData ? 'children' : 'welcome'}
+              onJoinCodeInstead={() => {
+                window.history.replaceState({}, document.title, '?mode=joinCode');
+                setHasCompletedOnboarding(true);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
+              }}
+              initialStep={postSignUpData ? 'children' : (onboardingInitialStep || 'welcome')}
               initialData={postSignUpData ? {
                 parentName: postSignUpData.parentName,
                 familyName: postSignUpData.familyName,
@@ -1997,6 +2048,7 @@ export default function App() {
               onLoginReal={handleLoginReal}
               onSignUpReal={handleSignUpReal}
               onBackToLanding={() => {
+                setOnboardingInitialStep('welcome');
                 setHasCompletedOnboarding(false);
                 localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
                 if (new URLSearchParams(window.location.search).has('share') || new URLSearchParams(window.location.search).has('child_share')) {
@@ -2004,6 +2056,11 @@ export default function App() {
                   // Force a re-render to evaluate URL params correctly
                   setShowLogin(false);
                 }
+              }}
+              onCreateNewAccount={() => {
+                setOnboardingInitialStep('role');
+                setHasCompletedOnboarding(false);
+                localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
               }}
               theme={activeTheme}
             />
@@ -2028,6 +2085,7 @@ export default function App() {
               onAddChild={handleAddChild}
               onEditChild={handleEditChild}
               onDeleteChild={handleDeleteChild}
+              onUnlinkChild={handleUnlinkChild}
               onUpdateChildStats={handleUpdateChildStats}
               onDeductCoins={handleDeductCoins}
               onAddTask={handleAddTask}

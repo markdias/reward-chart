@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
-import { Target, Save } from 'lucide-react';
+import { Target, Save, Database } from 'lucide-react';
 import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -122,7 +122,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`p-6 sm:p-8 rounded-[2rem] border-2 shadow-xl ${c.card}`}
+        className="w-full px-4 sm:px-8"
       >
         <div className="flex items-center gap-4 mb-8">
           <div className="p-4 bg-indigo-50 text-indigo-500 rounded-[1.25rem] shadow-sm border border-indigo-100 shrink-0">
@@ -188,7 +188,15 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
           </div>
           
           <div className="pt-8 border-t border-stone-100 mt-8">
-            <h3 className={`text-lg sm:text-xl font-black font-display tracking-tight text-stone-800 mb-6`}>Levels & Pots Configuration</h3>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="p-4 bg-emerald-50 text-emerald-500 rounded-[1.25rem] shadow-sm border border-emerald-100 shrink-0">
+                <Database className="w-6 h-6 sm:w-8 sm:h-8" />
+              </div>
+              <div>
+                <h3 className={`text-xl sm:text-2xl font-black font-display tracking-tight text-stone-800`}>Levels & Pots Configuration</h3>
+                <p className={`text-xs sm:text-sm font-semibold text-stone-500 mt-0.5`}>Set unlock levels for different features.</p>
+              </div>
+            </div>
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

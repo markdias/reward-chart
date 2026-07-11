@@ -681,12 +681,12 @@ export default function ParentDashboard({
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
+                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
                       {tab.badge}
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${isSelected ? 'text-stone-400' : 'text-stone-400'} font-bold`}>
+                    <span className={`text-[10px] font-sans ${isSelected ? 'text-stone-400' : 'text-stone-400'} font-bold`}>
                       ({tab.count})
                     </span>
                   )}
@@ -890,18 +890,18 @@ export default function ParentDashboard({
                     <form onSubmit={handleChildSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
                           <input
                             type="text"
                             value={newChildName}
                             onChange={(e) => setNewChildName(e.target.value)}
                             placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
                           <input
                             type="number"
                             value={newChildAge}
@@ -909,15 +909,15 @@ export default function ParentDashboard({
                             placeholder="Age"
                             min={1}
                             max={18}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           />
                         </div>
                         <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
                           <select
                             value={newChildChar}
                             onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             {CHARACTER_PACKS.map(char => (
                               <option key={char.id} value={char.id}>
@@ -929,7 +929,7 @@ export default function ParentDashboard({
                       </div>
 
                       <div>
-                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                        <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
                         <div className="grid grid-cols-6 gap-2">
                           {PRECANNED_AVATARS.map(url => (
                             <Button variant="none" size="none"
@@ -1069,13 +1069,11 @@ export default function ParentDashboard({
                                        {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
                                      </span>
                                    </div>
-                                   <div className="h-2 bg-stone-200/60 rounded-full overflow-hidden shadow-inner">
-                                      <motion.div 
-                                        className="h-full bg-blue-500 rounded-full"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}%` }}
-                                      />
-                                   </div>
+                                   <LinearProgressBar 
+                                     progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                                     heightClass="h-2"
+                                     className="!bg-stone-200/60 border-none shadow-inner"
+                                   />
                                </div>
                            </div>
 
@@ -1096,7 +1094,7 @@ export default function ParentDashboard({
                                     </>
                                  ) : child.child_share_token ? (
                                     <div className="flex items-center gap-1.5">
-                                      <span className="text-[15px] font-mono tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
+                                      <span className="text-[15px] font-sans tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
                                       <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
                                       <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
                                         playSound.click();
@@ -1254,35 +1252,35 @@ export default function ParentDashboard({
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
                           <input
                             type="text"
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
                             placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div className="flex gap-4">
                           <div className="flex-1">
-                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
+                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
                             <input
                               type="number"
                               min="0"
                               value={taskPoints}
                               onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
                           <select
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
@@ -1292,13 +1290,13 @@ export default function ParentDashboard({
                         </div>
                         {taskRecurrence === 'repeatable' && (
                           <div>
-                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
+                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
                             <input
                               type="number"
                               min="1"
                               value={taskCooldownMinutes || ''}
                               onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                               required
                             />
                           </div>
@@ -1455,7 +1453,7 @@ export default function ParentDashboard({
                                 exit={{ height: 0, opacity: 0 }}
                                 className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100"
                               >
-                                <Typography variant="body" className="text-[10px] font-mono font-bold text-stone-500 uppercase">
+                                <Typography variant="body" className="text-[10px] font-sans font-bold text-stone-500 uppercase">
                                   Select children to assign this quest:
                                 </Typography>
                                 <div className="flex flex-wrap gap-2">
@@ -1472,7 +1470,7 @@ export default function ParentDashboard({
                                             : [...currentAssignedIds, child.id];
                                           onAssignTask(task, newAssignedIds);
                                         }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-sans font-extrabold transition-all cursor-pointer ${
                                           isAssigned
                                             ? ('bg-warning border-neutral-border text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)]')
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
@@ -1594,23 +1592,23 @@ export default function ParentDashboard({
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
                           <input
                             type="text"
                             value={rewardTitle}
                             onChange={(e) => setRewardTitle(e.target.value)}
                             placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
                           <input
                             type="number"
                             value={rewardCost}
                             onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             min="10"
                             max="500"
                             required
@@ -1618,11 +1616,11 @@ export default function ParentDashboard({
                         </div>
 
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
                           <select
                             value={rewardIcon}
                             onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="Gamepad2">🎮 Game Time</option>
                             <option value="Pizza">🍕 Favorite Meal</option>
@@ -1632,11 +1630,11 @@ export default function ParentDashboard({
                           </select>
                         </div>
                         <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
                           <select
                             value={rewardLimit}
                             onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="unlimited">♾️ Unlimited</option>
                             <option value="daily">📅 1x Daily</option>
@@ -1652,7 +1650,7 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardBadgeEligible(e.target.checked)}
                             className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
                           />
-                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-mono text-stone-600`}>
+                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
                             Eligible as a free badge reward (Small Reward)
                           </label>
                         </div>
@@ -1908,7 +1906,7 @@ export default function ParentDashboard({
 
                 {/* History Log */}
                 <div className="pt-8 border-t border-stone-800">
-                  <Typography variant="h3" className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
+                  <Typography variant="h3" className={`font-bold font-sans text-sm text-stone-900 uppercase pb-4`}>
                     <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
                   </Typography>
                   <div className="space-y-3">
@@ -1927,7 +1925,7 @@ export default function ParentDashboard({
                             <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 border-stone-200 ${styles.textColor}`}>
                               <div>
                                 <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900'}>{reward?.title}</strong>
-                                <Typography variant="body" className={`text-[10px] font-mono mt-1 ${styles.textMuted}`}>
+                                <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
                                   {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                 </Typography>
                               </div>
@@ -2018,7 +2016,7 @@ export default function ParentDashboard({
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
+                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
                   <div className="relative">
                     <input
                       type="number"
@@ -2032,7 +2030,7 @@ export default function ParentDashboard({
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
+                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
                   <select
                     value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
                     onChange={(e) => {
@@ -2114,7 +2112,7 @@ export default function ParentDashboard({
                 <Typography variant="h3" className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
                   Reset {resetConfirmation.type}?
                 </Typography>
-                <Typography variant="body" className={`text-center text-sm font-mono mb-6 text-stone-600`}>
+                <Typography variant="body" className={`text-center text-sm font-sans mb-6 text-stone-600`}>
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
@@ -2166,10 +2164,10 @@ export default function ParentDashboard({
                 <Typography variant="h3" className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
                   Delete {deleteChildConfirmation.childName}?
                 </Typography>
-                <Typography variant="body" className="text-center text-sm font-mono mb-2 text-stone-600">
+                <Typography variant="body" className="text-center text-sm font-sans mb-2 text-stone-600">
                   This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
                 </Typography>
-                <Typography variant="body" className="text-center text-xs font-mono mb-6 text-rose-500 font-bold">
+                <Typography variant="body" className="text-center text-xs font-sans mb-6 text-rose-500 font-bold">
                   ⚠️ This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">

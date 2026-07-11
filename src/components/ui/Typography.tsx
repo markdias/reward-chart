@@ -51,11 +51,11 @@ export function Typography({
       if (!as) Component = 'p';
       break;
     case 'label':
-      baseClasses = 'text-2xs font-mono uppercase tracking-widest text-stone-400 font-bold';
+      baseClasses = 'text-2xs font-sans uppercase tracking-widest text-stone-400 font-bold';
       if (!as) Component = 'span';
       break;
     case 'helper':
-      baseClasses = 'text-xs font-mono text-stone-500';
+      baseClasses = 'text-xs font-sans text-stone-500 font-semibold tracking-wide';
       if (!as) Component = 'p';
       break;
     case 'caption':
@@ -63,11 +63,11 @@ export function Typography({
       if (!as) Component = 'span';
       break;
     case 'badge':
-      baseClasses = 'text-[10px] md:text-xs font-mono uppercase font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full';
+      baseClasses = 'text-[10px] md:text-xs font-sans uppercase font-bold tracking-wider text-stone-700 bg-stone-100 px-2 py-0.5 rounded-full';
       if (!as) Component = 'span';
       break;
     case 'number':
-      baseClasses = 'text-lg font-mono font-black tabular-nums text-stone-900';
+      baseClasses = 'text-lg font-sans font-black tabular-nums text-stone-900 tracking-tight';
       if (!as) Component = 'span';
       break;
   }

@@ -104,7 +104,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         break;
     }
 
-    const widthClass = fullWidth ? 'w-full flex justify-center' : 'inline-flex justify-center';
+    const widthClass = fullWidth 
+      ? `w-full flex ${variant !== 'none' ? 'justify-center' : ''}`
+      : (variant !== 'none' ? 'inline-flex justify-center' : '');
     const disabledClass = disabled || isLoading ? 'opacity-70 cursor-not-allowed pointer-events-none' : '';
 
     const combinedClasses = [
@@ -114,7 +116,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       widthClass,
       disabledClass,
       baseClasses,
-      'items-center gap-2 uppercase tracking-wider',
+      variant !== 'none' ? 'items-center gap-2 uppercase tracking-wider' : 'items-center',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-500',
       className
     ].filter(Boolean).join(' ');

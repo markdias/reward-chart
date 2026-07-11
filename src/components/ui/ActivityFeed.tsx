@@ -14,7 +14,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   if (activities.length === 0) {
     return (
-      <div className="col-span-full p-8 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-3xl">
+      <div className="col-span-full p-8 text-center text-stone-400 bg-white border-2 border-dashed border-stone-200 rounded-3xl">
         {emptyMessage}
       </div>
     );

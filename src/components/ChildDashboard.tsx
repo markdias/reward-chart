@@ -657,7 +657,7 @@ export default function ChildDashboard({
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
               
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
@@ -799,7 +799,7 @@ export default function ChildDashboard({
               </div>
 
               <div>
-                <Typography variant="body" className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
+                <Typography variant="body" className="text-[10px] text-cyan-400 font-sans tracking-widest uppercase">
                   {isHatching && hatchPhase !== 'reveal' ? 'HATCHING IN PROGRESS...' : 'UPGRADED FORM SPEC'}
                 </Typography>
                 <Typography variant="h3" className="text-2xl font-black text-white mt-1">
@@ -852,7 +852,7 @@ export default function ChildDashboard({
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
+                  <span className="text-[10px] font-sans tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
                   <Typography variant="h3" className="uppercase tracking-wide leading-none">
                     How it Works
                   </Typography>
@@ -928,7 +928,7 @@ export default function ChildDashboard({
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1004,7 +1004,7 @@ export default function ChildDashboard({
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1080,7 +1080,7 @@ export default function ChildDashboard({
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1156,7 +1156,7 @@ export default function ChildDashboard({
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW RESPONSIBILITY
               </div>
@@ -1382,7 +1382,7 @@ export default function ChildDashboard({
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-white mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1396,7 +1396,7 @@ export default function ChildDashboard({
               id="profile-picker"
             >
               <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-sans uppercase tracking-widest`}>
                   <Plane className="w-3.5 h-3.5" /> BOARDING NOW
                 </div>
                 <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
@@ -1495,7 +1495,7 @@ export default function ChildDashboard({
 
                       <div className="flex justify-between w-full items-start mt-1">
                         <div className="text-left">
-                          <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
+                          <span className={`text-[8px] font-sans tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
                           <Typography variant="h3" className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</Typography>
                         </div>
                       </div>
@@ -1538,19 +1538,18 @@ export default function ChildDashboard({
                         </motion.div>
                       </div>
                       {/* Level and evolution progression */}
-                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
-                        <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                          <span>GOLD BAR</span>
-                          <span className={`text-cyan-500 font-extrabold tabular-nums`}>LEVEL {activeChild.level}</span>
+                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider}`}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[14px] font-bold text-black tracking-tight">Level {activeChild.level}</span>
+                          <span className="text-[12px] font-semibold text-stone-500">
+                            {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
+                          </span>
                         </div>
                         <LinearProgressBar 
                           progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                          heightClass="h-3"
-                          className={`${styles.cardBg} ${styles.borderStyle} mb-1 relative`}
+                          heightClass="h-2"
+                          className="!bg-stone-200/60 border-none shadow-inner"
                         />
-                        <div className="flex justify-between items-center w-full px-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold tabular-nums`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
-                        </div>
                       </div>
 
                       {isFoodPotUnlocked && (
@@ -1560,7 +1559,7 @@ export default function ChildDashboard({
                             size="none"
                             onClick={handleFeedCompanion}
                             disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                            className={`w-full py-3 rounded-2xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
                               activeChild.pet_fed_today
                                 ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
                                 : (activeChild.pet_food || 0) > 0
@@ -1576,7 +1575,7 @@ export default function ChildDashboard({
                               <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
                             )}
                           </Button>
-                          <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
+                          <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
                             <span>FOOD INVENTORY:</span>
                             <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                           </div>
@@ -1615,7 +1614,7 @@ export default function ChildDashboard({
                           >
                             <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
                             <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
                           </Button>
 
                           {/* Weekly Widget */}
@@ -1630,7 +1629,7 @@ export default function ChildDashboard({
                             </div>
                             <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
                           </Button>
 
                           {/* Monthly Widget */}
@@ -1645,7 +1644,7 @@ export default function ChildDashboard({
                             </div>
                             <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
                           </Button>
                         </div>
                         
@@ -1676,7 +1675,7 @@ export default function ChildDashboard({
                                       <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Daily Streak</Typography>
                                     </div>
                                     <Typography variant="body" className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
-                                      You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
+                                      You've locked in a <span className="text-orange-500 font-sans font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
                                     </Typography>
                                   </>
                                 )}
@@ -1686,20 +1685,22 @@ export default function ChildDashboard({
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
                                         <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Weekly Target</Typography>
-                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
+                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
                                         {parentProfile?.weekly_reward_points || 200} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={weeklyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} PTS</span>
-                                      <span>{weeklyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black tracking-tight">{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500">{weeklyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={weeklyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
@@ -1709,20 +1710,22 @@ export default function ChildDashboard({
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
                                         <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Monthly Target</Typography>
-                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
+                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
                                         {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={monthlyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} PTS</span>
-                                      <span>{monthlyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black tracking-tight">{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500">{monthlyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={monthlyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
@@ -1761,8 +1764,8 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-stone-200 border flex items-center justify-between mb-3 sm:mb-4`}>
                             <div>
-                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Daily Quests</Typography>
-                              <Typography variant="body" className={`text-[10px] sm:text-xs font-mono text-stone-400`}>Complete tasks to earn more gold coins!</Typography>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Daily Quests</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans text-stone-400`}>Complete tasks to earn more gold coins!</Typography>
                             </div>
                           </div>
                           
@@ -1917,8 +1920,8 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
                             <div>
-                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Reward Shop</Typography>
-                              <Typography variant="body" className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</Typography>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Shop</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</Typography>
                             </div>
                           </div>
 
@@ -2040,8 +2043,8 @@ export default function ChildDashboard({
                           className="space-y-4"
                         >
                           <div className="bg-white border border-stone-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Pots</Typography>
-                            <Typography variant="body" className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</Typography>
+                            <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Pots</Typography>
+                            <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500">Manage your savings, food and gifting pots!</Typography>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
@@ -2058,7 +2061,7 @@ export default function ChildDashboard({
                             </div>
                             <div>
                               <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
-                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Gold Pot</Typography>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Gold Pot</Typography>
                               <div className="flex gap-2 mt-3 flex-wrap">
                                 <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                   <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
@@ -2107,7 +2110,7 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Savings</Typography>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Savings</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
                                   <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
@@ -2142,7 +2145,7 @@ export default function ChildDashboard({
                                     <span className="text-xs font-bold text-emerald-850">
                                       Goal: {activeChild.savings_goal_name}
                                     </span>
-                                    <span className="text-[10px] font-mono font-bold text-emerald-700">
+                                    <span className="text-[10px] font-sans font-bold text-emerald-700">
                                       {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount}
                                     </span>
                                   </div>
@@ -2293,7 +2296,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2319,7 +2322,7 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Food</Typography>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Food</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
                                   <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
@@ -2349,7 +2352,7 @@ export default function ChildDashboard({
                                   <span className="text-xs font-bold text-orange-850">
                                     Weekly Contribution
                                   </span>
-                                  <span className="text-[10px] font-mono font-bold text-orange-700">
+                                  <span className="text-[10px] font-sans font-bold text-orange-700">
                                     {activeChild.food_pot_weekly_contribution || 0} / 7 coins
                                   </span>
                                 </div>
@@ -2358,7 +2361,7 @@ export default function ChildDashboard({
                                   heightClass="h-2.5"
                                   className="bg-white border-orange-200"
                                 />
-                                <span className={`text-[9px] font-mono ${styles.textMuted} mt-1.5 block`}>
+                                <span className={`text-[9px] font-sans ${styles.textMuted} mt-1.5 block`}>
                                   {activeChild.food_pot_weekly_contribution >= 7 
                                     ? <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Weekly contribution requirement met! Great job.</span> 
                                     : <span><FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more gold coins in the pot this week.</span>
@@ -2408,7 +2411,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.food_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2432,7 +2435,7 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Gifting</Typography>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Gifting</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
                                   <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
@@ -2644,7 +2647,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2669,7 +2672,7 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Maintenance</Typography>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Maintenance</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
                                   <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
@@ -2761,7 +2764,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gold_pot_maintenance_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2791,8 +2794,8 @@ export default function ChildDashboard({
             tabs={[
               { id: 'home', label: 'Home', icon: Home },
               { id: 'companion', label: 'Pets', icon: FaPaw },
-              { id: 'rewards', label: 'Rewards', icon: Gift },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
               { id: 'pots', label: 'Pots', icon: FaJar }
             ]}
             activeTab={activeChildTab}

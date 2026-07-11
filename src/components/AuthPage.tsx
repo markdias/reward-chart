@@ -15,19 +15,26 @@ interface AuthPageProps {
   onLoginReal: (email: string) => void;
   onSignUpReal?: (email: string, name: string, familyName: string) => void;
   onBackToLanding: () => void;
+  onCreateNewAccount: () => void;
   theme: ThemeId;
 }
 
-export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, theme }: AuthPageProps) {
+export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, onCreateNewAccount, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const searchParams = new URLSearchParams(window.location.search);
-  const [hasShareToken, setHasShareToken] = useState(searchParams.has('share'));
-  const [hasChildShareToken, setHasChildShareToken] = useState(searchParams.has('child_share'));
+  
+  const hasShareToken = searchParams.has('share');
+  const hasChildShareToken = searchParams.has('child_share');
+  const initialMode = hasShareToken ? 'parentSignup' 
+                    : hasChildShareToken ? 'childSignup' 
+                    : (searchParams.get('mode') as 'login' | 'joinCode' | 'parentSignup' | 'childSignup') || 'login';
 
-  const [isSignUp, setIsSignUp] = useState(hasShareToken || hasChildShareToken);
+  const [authMode, setAuthMode] = useState<'login' | 'joinCode' | 'parentSignup' | 'childSignup'>(initialMode);
+  const isSignUp = authMode === 'parentSignup' || authMode === 'childSignup';
+
   const [realAuthError, setRealAuthError] = useState('');
   const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string, isChild?: boolean } | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
@@ -41,11 +48,12 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           const shareToken = new URLSearchParams(window.location.search).get('share');
           const { data } = await supabase
             .from('parent_profiles')
-            .select('name, family_name')
+            .select('name, family_name, family_id')
             .eq('share_token', shareToken)
             .maybeSingle();
           if (data) {
             setInviterInfo({ name: data.name || 'A Parent', familyName: data.family_name || 'Their Family' });
+            localStorage.setItem('RCH_PENDING_PARENT_LINK', JSON.stringify({ family_id: data.family_id, family_name: data.family_name }));
           }
         }
       };
@@ -57,11 +65,12 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           const shareToken = new URLSearchParams(window.location.search).get('child_share');
           const { data } = await supabase
             .from('children')
-            .select('name')
+            .select('id, name, parent_id')
             .eq('child_share_token', shareToken)
             .maybeSingle();
           if (data) {
             setInviterInfo({ name: data.name, familyName: 'Your Family', isChild: true });
+            localStorage.setItem('RCH_PENDING_CHILD_LINK', JSON.stringify({ id: data.id, parent_id: data.parent_id }));
           }
         }
       };
@@ -82,25 +91,25 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
       // Check parent profiles
       const { data: parentData } = await supabase.from('parent_profiles').select('*').eq('share_token', code).maybeSingle();
       if (parentData) {
+        localStorage.setItem('RCH_PENDING_PARENT_LINK', JSON.stringify({ family_id: parentData.family_id, family_name: parentData.family_name }));
         const url = new URL(window.location.href);
         url.searchParams.set('share', code);
         url.searchParams.delete('child_share');
+        url.searchParams.delete('mode');
         window.history.replaceState({}, document.title, url.toString());
-        setHasShareToken(true);
-        setHasChildShareToken(false);
-        setIsSignUp(true);
+        setAuthMode('parentSignup');
         playSound.success();
       } else {
         // Check children
         const { data: childData } = await supabase.from('children').select('*').eq('child_share_token', code).maybeSingle();
         if (childData) {
+          localStorage.setItem('RCH_PENDING_CHILD_LINK', JSON.stringify({ id: childData.id, parent_id: childData.parent_id }));
           const url = new URL(window.location.href);
           url.searchParams.set('child_share', code);
           url.searchParams.delete('share');
+          url.searchParams.delete('mode');
           window.history.replaceState({}, document.title, url.toString());
-          setHasChildShareToken(true);
-          setHasShareToken(false);
-          setIsSignUp(true);
+          setAuthMode('childSignup');
           playSound.success();
         } else {
           setRealAuthError("Invalid join code. Please check and try again.");
@@ -278,7 +287,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
             }
 
             setRealAuthError('Sign up processed! If you still cannot log in, please try signing up with a NEW email (your first attempt might have gotten stuck in Supabase).');
-            setIsSignUp(false);
+            setAuthMode('login');
             playSound.success();
             return;
           }
@@ -341,7 +350,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-sans tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
             </div>
           </div>
         </div>
@@ -358,55 +367,63 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
-                {hasChildShareToken ? (isSignUp ? 'SET UP CHILD ACCOUNT' : 'CHILD LOGIN') : (isSignUp ? (hasShareToken ? 'JOIN FAMILY' : 'CREATE PARENT ACCOUNT') : 'SECURE PARENT LOGIN')}
+                {authMode === 'login' ? 'Welcome Back' : 
+                 authMode === 'joinCode' ? 'Enter Your Invite Code' :
+                 authMode === 'childSignup' ? 'Set Up Child Account' :
+                 hasShareToken ? 'Join Family' : 'Set Up Your Account'}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
-                {hasChildShareToken && inviterInfo
-                  ? (isSignUp ? `Hi ${inviterInfo.name}! Let's create your account.` : `Welcome back, ${inviterInfo.name}!`)
-                  : (hasShareToken && isSignUp && inviterInfo 
-                  ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}`
-                  : isSignUp ? 'Set up your family account to get started' : 'Sign in to manage quests and rewards')
+                {authMode === 'login' ? 'Sign in to manage quests and rewards' :
+                 authMode === 'joinCode' ? 'Paste the 6-character code given to you' :
+                 authMode === 'childSignup' ? (inviterInfo ? `Hi ${inviterInfo.name}! Let's create your account.` : 'Create your secure account.') :
+                 (inviterInfo ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}` : 'Create your family account to get started')
                 }
               </p>
             </div>
 
-            {!hasShareToken && !hasChildShareToken && isSignUp && (
-              <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-2 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Have a join code?"
-                  value={joinCodeInput}
-                  onChange={(e) => setJoinCodeInput(e.target.value)}
-                  className="flex-1 bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-400 uppercase"
-                  maxLength={6}
-                />
-                <Button variant="dark" size="sm" onClick={handleApplyJoinCode} disabled={isApplyingCode}>
-                  {isApplyingCode ? '...' : 'APPLY'}
-                </Button>
-              </div>
-            )}
-
-            <form onSubmit={handleRealAuthSubmit} className="space-y-3">
-              {realAuthError && (
-                <div className="space-y-2">
+            {authMode === 'joinCode' ? (
+              <div className="space-y-3">
+                {realAuthError && (
                   <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{realAuthError}</span>
                   </div>
+                )}
+                <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-2 flex flex-col gap-3">
+                  <input
+                    type="text"
+                    placeholder="Enter 6-character code"
+                    value={joinCodeInput}
+                    onChange={(e) => setJoinCodeInput(e.target.value)}
+                    className="w-full bg-white border border-stone-200 rounded-lg px-4 py-3 text-center text-xl tracking-[0.2em] font-sans focus:outline-none focus:border-cyan-400 uppercase"
+                    maxLength={6}
+                  />
+                  <Button variant="dark" size="lg" fullWidth onClick={handleApplyJoinCode} disabled={isApplyingCode}>
+                    {isApplyingCode ? 'VERIFYING...' : 'APPLY CODE'}
+                  </Button>
                 </div>
-              )}
+              </div>
+            ) : (
+              <form onSubmit={handleRealAuthSubmit} className="space-y-3">
+                {realAuthError && (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{realAuthError}</span>
+                    </div>
+                  </div>
+                )}
 
-              <Input
-                label={hasChildShareToken ? "Child Email Address" : "Parent Email Address"}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={hasChildShareToken ? "child@example.com" : "parent@example.com"}
-              />
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                />
 
-              {isSignUp && (
-                <>
-                  {!hasChildShareToken && (
+                {authMode === 'parentSignup' && (
+                  <>
                     <Input
                       label="Your Name"
                       type="text"
@@ -415,42 +432,42 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                       placeholder="E.g. Mum, Dad, etc."
                       required
                     />
-                  )}
 
-                  {!hasShareToken && (
-                    <Input
-                      label="Family Name"
-                      type="text"
-                      value={familyName}
-                      onChange={(e) => setFamilyName(e.target.value)}
-                      placeholder="E.g. The Smiths"
-                      required
-                    />
-                  )}
-                </>
-              )}
+                    {!hasShareToken && (
+                      <Input
+                        label="Family Name"
+                        type="text"
+                        value={familyName}
+                        onChange={(e) => setFamilyName(e.target.value)}
+                        placeholder="E.g. The Smiths"
+                        required
+                      />
+                    )}
+                  </>
+                )}
 
-              <div>
-                <label className={`block text-[9px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                  Password
-                </label>
-                <PasswordInput
-                  value={password}
-                  onChange={setPassword}
-                  showPolicy={isSignUp}
-                />
-              </div>
+                <div>
+                  <label className={`block text-[9px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                    Password
+                  </label>
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    showPolicy={isSignUp}
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                variant="dark"
-                fullWidth
-                className="mt-4"
-                id="real-login-submit"
-              >
-                {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN TO PORTAL'}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant="dark"
+                  fullWidth
+                  className="mt-4"
+                  id="real-login-submit"
+                >
+                  {isSignUp ? 'CREATE MY ACCOUNT' : 'SIGN IN'}
+                </Button>
+              </form>
+            )}
 
             <div className="text-center pt-2">
               <Button
@@ -459,11 +476,15 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
                 fullWidth
                 onClick={() => {
                   playSound.click();
-                  setIsSignUp(!isSignUp);
+                  if (authMode === 'login') {
+                    onCreateNewAccount();
+                  } else {
+                    setAuthMode('login');
+                  }
                 }}
                 id="toggle-sign-up"
               >
-                {isSignUp ? '← USE EXISTING ACCOUNT' : 'CREATE A NEW ACCOUNT'}
+                {authMode === 'login' ? 'CREATE A NEW ACCOUNT' : '← USE EXISTING ACCOUNT'}
               </Button>
             </div>
           </motion.div>
@@ -476,7 +497,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
+              <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
               <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
@@ -485,7 +506,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               <Heart className="w-4 h-4" />
             </div>
             <div>
-              <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>PRIVACY SAFE</span>
+              <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>PRIVACY SAFE</span>
               <span className={`text-[11px] font-bold ${styles.textColor}`}>Safe & Family Friendly</span>
             </div>
           </div>
@@ -497,7 +518,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
         <div>
           © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
-        <div className="flex gap-4 font-mono text-[10px]">
+        <div className="flex gap-4 font-sans text-[10px]">
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
           <span className="text-stone-600">|</span>

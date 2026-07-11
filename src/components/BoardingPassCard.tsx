@@ -17,6 +17,7 @@ export interface BoardingPassCardProps {
   child: ChildData;
   onClick?: () => void;
   isLoading?: boolean;
+  key?: string;
 }
 
 export function BoardingPassCard({ child, onClick, isLoading = false }: BoardingPassCardProps) {
@@ -48,7 +49,7 @@ export function BoardingPassCard({ child, onClick, isLoading = false }: Boarding
           <div className="flex items-center gap-2 text-white font-bold tracking-widest text-xs uppercase">
             <Plane className="w-4 h-4" /> <span>Reward Airways</span>
           </div>
-          <div className="text-blue-200 font-mono text-[10px] tracking-widest uppercase">
+          <div className="text-blue-200 font-sans text-[10px] tracking-widest uppercase">
             First Class
           </div>
         </div>
@@ -72,15 +73,15 @@ export function BoardingPassCard({ child, onClick, isLoading = false }: Boarding
               <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
                 <div className="flex flex-col">
                   <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Flight</span>
-                  <span className="font-mono font-bold text-stone-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
+                  <span className="font-sans font-bold text-stone-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Gate</span>
-                  <span className="font-mono font-bold text-stone-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
+                  <span className="font-sans font-bold text-stone-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[9px] text-stone-500 font-bold uppercase tracking-wider">Seat</span>
-                  <span className="font-mono font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
+                  <span className="font-sans font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
                 </div>
               </div>
             </div>
@@ -102,7 +103,7 @@ export function BoardingPassCard({ child, onClick, isLoading = false }: Boarding
               <div className="w-0.5 sm:w-1 h-full bg-stone-800" />
               <div className="w-px sm:w-0.5 h-full bg-stone-800" />
             </div>
-            <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-stone-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
+            <span className="font-sans text-[7px] sm:text-[9px] mt-1 text-stone-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
           </div>
           
         </div>
@@ -129,7 +130,7 @@ export function BoardingPassCard({ child, onClick, isLoading = false }: Boarding
 
           <div className="w-full text-center mb-2 sm:mb-4 relative z-10">
             <span className="text-[8px] sm:text-[9px] text-stone-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
-            <span className="font-mono font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
+            <span className="font-sans font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
           </div>
 
           <div className="w-full flex justify-between relative z-10">

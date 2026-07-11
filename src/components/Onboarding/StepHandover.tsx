@@ -33,7 +33,7 @@ export default function StepHandover({ theme, onNext, onBack }: StepHandoverProp
         </p>
         
         <div className="p-4 bg-info/10 border border-info/30 rounded-xl my-6">
-          <p className="text-sm font-bold text-dark uppercase tracking-widest font-mono">
+          <p className="text-sm font-bold text-dark uppercase tracking-widest font-sans">
             Hand the device to a grown-up!
           </p>
         </div>

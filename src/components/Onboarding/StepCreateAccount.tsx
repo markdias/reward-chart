@@ -139,7 +139,7 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
 
 
           <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
+            <label className={`block text-[10px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
             <PasswordInput
               value={password}
               onChange={setPassword}

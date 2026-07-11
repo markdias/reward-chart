@@ -153,7 +153,7 @@ export default function LockScreen({
             <motion.p 
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-600 font-mono font-bold text-[10px] mb-6 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-red-50 px-3 py-2 rounded-xl border border-red-100 w-full max-w-sm"
+              className="text-red-600 font-sans font-bold text-[10px] mb-6 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-red-50 px-3 py-2 rounded-xl border border-red-100 w-full max-w-sm"
             >
               <ShieldAlert className="w-4 h-4" /> Incorrect Password
             </motion.p>

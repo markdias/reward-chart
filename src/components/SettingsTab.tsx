@@ -307,11 +307,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         
         <div className="space-y-4 max-w-md">
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Account Email</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Account Email</label>
             <input type="text" value={parentProfile?.email || ''} disabled className={`w-full px-4 py-3 rounded-xl border ${c.input} opacity-50 cursor-not-allowed`} />
           </div>
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Your Name</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Your Name</label>
             <input 
               type="text" 
               value={name}
@@ -321,7 +321,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             />
           </div>
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Family Name</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Family Name</label>
             <input 
               type="text" 
               value={familyName}
@@ -333,7 +333,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
 
           <div className="bg-white p-4 rounded-xl border border-stone-200">
             <h4 className={`text-sm font-bold border-b pb-2 mb-4 border-stone-100 text-indigo-600`}>Appearance</h4>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Child Dashboard Style</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Child Dashboard Style</label>
             <select
               value={dashboardStyle}
               onChange={(e) => setDashboardStyle(e.target.value)}
@@ -430,7 +430,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
         <div className="max-w-md space-y-4">
           <h4 className={`text-sm font-bold border-b pb-2 border-stone-200 text-indigo-600`}>Account Password</h4>
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Current Password</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Current Password</label>
             <input 
               type="password" 
               value={currentPassword}
@@ -439,7 +439,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             />
           </div>
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>New Password</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>New Password</label>
             <PasswordInput
                 value={newPassword}
                 onChange={setNewPassword}
@@ -449,7 +449,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               />
           </div>
           <div>
-            <label className={`block text-xs font-bold font-mono mb-2 uppercase tracking-wider ${c.textMuted}`}>Confirm New Password</label>
+            <label className={`block text-xs font-bold font-sans mb-2 uppercase tracking-wider ${c.textMuted}`}>Confirm New Password</label>
             <PasswordInput
                 value={confirmPassword}
                 onChange={setConfirmPassword}
@@ -516,7 +516,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               type="text" 
               readOnly 
               value={shareLink}
-              className={`flex-1 px-4 py-3 rounded-xl border font-mono text-xs ${c.input}`} 
+              className={`flex-1 px-4 py-3 rounded-xl border font-sans text-xs ${c.input}`} 
             />
             <Button 
               variant="warning"
@@ -532,7 +532,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           {/* Linked Accounts List */}
           {linkedParents.length > 1 && (
             <div className="mt-6 space-y-3">
-              <h4 className={`text-xs font-bold font-mono uppercase tracking-wider ${c.textMuted}`}>Linked Accounts</h4>
+              <h4 className={`text-xs font-bold font-sans uppercase tracking-wider ${c.textMuted}`}>Linked Accounts</h4>
               {linkedParents.map(parent => {
                 const isMe = parent.user_id === parentProfile?.user_id;
                 return (
@@ -544,7 +544,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                       <div>
                         <div className={`font-bold text-sm ${c.text}`}>
                           {parent.name || 'Unnamed Parent'}
-                          {isMe && <span className="ml-2 text-[10px] font-mono bg-indigo-500/20 text-indigo-500 px-2 py-0.5 rounded-full">YOU</span>}
+                          {isMe && <span className="ml-2 text-[10px] font-sans bg-indigo-500/20 text-indigo-500 px-2 py-0.5 rounded-full">YOU</span>}
                         </div>
                         <div className={`text-xs ${c.textMuted}`}>{parent.email}</div>
                       </div>
@@ -660,7 +660,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
               Are you sure?
             </h3>
-            <p className={`text-center text-sm font-mono mb-6 ${c.textMuted}`}>
+            <p className={`text-center text-sm font-sans mb-6 ${c.textMuted}`}>
               This will reset all children's progress to 0 and delete all history.
             </p>
             <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
@@ -711,7 +711,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
               Delete Account
             </h3>
-            <p className={`text-center text-sm font-mono mb-6 text-rose-600`}>
+            <p className={`text-center text-sm font-sans mb-6 text-rose-600`}>
               This is permanent. All your family data, children, and progress will be erased forever. You cannot undo this.
             </p>
             <div className="flex flex-col gap-3">
