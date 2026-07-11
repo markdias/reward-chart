@@ -81,7 +81,14 @@ export interface Child {
   gold_pot_fixes?: number;
   gold_pot_unbroken_days?: number;
   manual_deductions?: number;
+  child_share_token?: string | null;
   created_at: string;
+}
+
+export interface ChildProfile {
+  user_id: string;
+  child_id: string;
+  created_at?: string;
 }
 
 export interface Task {

@@ -24,18 +24,21 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
   const [name, setName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const searchParams = new URLSearchParams(window.location.search);
-  const hasShareToken = searchParams.has('share');
+  const [hasShareToken, setHasShareToken] = useState(searchParams.has('share'));
+  const [hasChildShareToken, setHasChildShareToken] = useState(searchParams.has('child_share'));
 
-  const [isSignUp, setIsSignUp] = useState(hasShareToken);
+  const [isSignUp, setIsSignUp] = useState(hasShareToken || hasChildShareToken);
   const [realAuthError, setRealAuthError] = useState('');
-  const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string } | null>(null);
+  const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string, isChild?: boolean } | null>(null);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [isApplyingCode, setIsApplyingCode] = useState(false);
 
   useEffect(() => {
     if (hasShareToken && isSupabaseConfigured()) {
       const fetchInviter = async () => {
         const supabase = getSupabaseClient();
         if (supabase) {
-          const shareToken = searchParams.get('share');
+          const shareToken = new URLSearchParams(window.location.search).get('share');
           const { data } = await supabase
             .from('parent_profiles')
             .select('name, family_name')
@@ -47,8 +50,69 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
         }
       };
       fetchInviter();
+    } else if (hasChildShareToken && isSupabaseConfigured()) {
+      const fetchChildInviter = async () => {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const shareToken = new URLSearchParams(window.location.search).get('child_share');
+          const { data } = await supabase
+            .from('children')
+            .select('name')
+            .eq('child_share_token', shareToken)
+            .maybeSingle();
+          if (data) {
+            setInviterInfo({ name: data.name, familyName: 'Your Family', isChild: true });
+          }
+        }
+      };
+      fetchChildInviter();
     }
-  }, [hasShareToken]);
+  }, [hasShareToken, hasChildShareToken]);
+
+  const handleApplyJoinCode = async () => {
+    if (!joinCodeInput.trim()) return;
+    setIsApplyingCode(true);
+    setRealAuthError('');
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error("Backend not connected");
+      
+      const code = joinCodeInput.trim();
+      
+      // Check parent profiles
+      const { data: parentData } = await supabase.from('parent_profiles').select('*').eq('share_token', code).maybeSingle();
+      if (parentData) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('share', code);
+        url.searchParams.delete('child_share');
+        window.history.replaceState({}, document.title, url.toString());
+        setHasShareToken(true);
+        setHasChildShareToken(false);
+        setIsSignUp(true);
+        playSound.success();
+      } else {
+        // Check children
+        const { data: childData } = await supabase.from('children').select('*').eq('child_share_token', code).maybeSingle();
+        if (childData) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('child_share', code);
+          url.searchParams.delete('share');
+          window.history.replaceState({}, document.title, url.toString());
+          setHasChildShareToken(true);
+          setHasShareToken(false);
+          setIsSignUp(true);
+          playSound.success();
+        } else {
+          setRealAuthError("Invalid join code. Please check and try again.");
+          playSound.pinError();
+        }
+      }
+    } catch (e: any) {
+      setRealAuthError(e.message);
+    } finally {
+      setIsApplyingCode(false);
+    }
+  };
 
   const getErrorMessage = (err: any): string => {
     if (!err) return 'Unknown connection or authentication error';
@@ -294,15 +358,33 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
           >
             <div className="text-center">
               <h3 className={`text-lg font-bold font-display ${styles.titleColor}`}>
-                {isSignUp ? (hasShareToken ? 'JOIN FAMILY' : 'CREATE PARENT ACCOUNT') : 'SECURE PARENT LOGIN'}
+                {hasChildShareToken ? (isSignUp ? 'SET UP CHILD ACCOUNT' : 'CHILD LOGIN') : (isSignUp ? (hasShareToken ? 'JOIN FAMILY' : 'CREATE PARENT ACCOUNT') : 'SECURE PARENT LOGIN')}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
-                {hasShareToken && isSignUp && inviterInfo 
+                {hasChildShareToken && inviterInfo
+                  ? (isSignUp ? `Hi ${inviterInfo.name}! Let's create your account.` : `Welcome back, ${inviterInfo.name}!`)
+                  : (hasShareToken && isSignUp && inviterInfo 
                   ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}`
-                  : isSignUp ? 'Set up your family account to get started' : 'Sign in to manage quests and rewards'
+                  : isSignUp ? 'Set up your family account to get started' : 'Sign in to manage quests and rewards')
                 }
               </p>
             </div>
+
+            {!hasShareToken && !hasChildShareToken && isSignUp && (
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-2 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Have a join code?"
+                  value={joinCodeInput}
+                  onChange={(e) => setJoinCodeInput(e.target.value)}
+                  className="flex-1 bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-400 uppercase"
+                  maxLength={6}
+                />
+                <Button variant="dark" size="sm" onClick={handleApplyJoinCode} disabled={isApplyingCode}>
+                  {isApplyingCode ? '...' : 'APPLY'}
+                </Button>
+              </div>
+            )}
 
             <form onSubmit={handleRealAuthSubmit} className="space-y-3">
               {realAuthError && (
@@ -315,23 +397,25 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, t
               )}
 
               <Input
-                label="Parent Email Address"
+                label={hasChildShareToken ? "Child Email Address" : "Parent Email Address"}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="parent@example.com"
+                placeholder={hasChildShareToken ? "child@example.com" : "parent@example.com"}
               />
 
               {isSignUp && (
                 <>
-                  <Input
-                    label="Your Name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="E.g. Mum, Dad, etc."
-                    required
-                  />
+                  {!hasChildShareToken && (
+                    <Input
+                      label="Your Name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="E.g. Mum, Dad, etc."
+                      required
+                    />
+                  )}
 
                   {!hasShareToken && (
                     <Input

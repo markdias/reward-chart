@@ -70,6 +70,8 @@ interface ChildDashboardProps {
   onLockChild?: (childId: string | null) => void;
   theme: ThemeId;
   isLoading?: boolean;
+  isChildAuth?: boolean;
+  onLogout?: () => void;
 }
 
 export default function ChildDashboard({
@@ -101,7 +103,9 @@ export default function ChildDashboard({
   lockedChildId,
   onLockChild,
   theme,
-  isLoading = false
+  isLoading = false,
+  isChildAuth = false,
+  onLogout
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const isPlayfulPop = parentProfile?.dashboard_style === 'playful_pop';
@@ -555,16 +559,29 @@ export default function ChildDashboard({
                   </div>
                 </Tooltip>
                 
-                <Tooltip content="Parent Dashboard" position="bottom">
-                  <Button 
-                    variant="none"
-                    size="none"
-                    onClick={() => { playSound.click(); onEnterParentMode(); }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
-                  >
-                    <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </Button>
-                </Tooltip>
+                {isChildAuth && onLogout ? (
+                  <Tooltip content="Log Out" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onLogout(); }}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                ) : (
+                  <Tooltip content="Parent Dashboard" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onEnterParentMode(); }}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
 
                 {!lockedChildId && onLockChild && activeChild && (
                   <Tooltip content="Lock Device to Child" position="bottom">

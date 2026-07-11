@@ -22,6 +22,7 @@ import { EXTENDED_TASKS, EXTENDED_REWARDS } from '../data/extendedTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
+import { generateShortCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
@@ -945,7 +946,8 @@ export default function ParentDashboard({
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+
+                      <div className="flex gap-2 mt-4">
                         <Button
                           type="submit"
                           variant="warning"
@@ -1026,21 +1028,7 @@ export default function ParentDashboard({
                         key={child.id}
                         className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6"
                       >
-                        {onDeleteChild && (
-                          <div className="absolute top-4 right-4 z-20">
-                            <Tooltip content="Delete Child" position="top">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                                className="text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-full h-8 w-8 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                          </div>
-                        )}
-                        
+
                         <div className="relative">
                           <div className="flex justify-between items-start mb-4">
                             <div className="relative">
@@ -1095,6 +1083,52 @@ export default function ParentDashboard({
                             </div>
                             <LinearProgressBar progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100} heightClass="h-4" />
                           </div>
+
+                          <div className="bg-stone-50/50 border border-stone-200/60 rounded-2xl p-4 space-y-2 mt-5">
+                            <div>
+                                <label className={`block text-[9px] font-bold font-mono text-stone-500 uppercase tracking-widest mb-1`}>
+                                  Child App Login
+                                </label>
+                                <p className="text-[10px] text-stone-500 leading-tight">
+                                  Code for child to log in to their own device.
+                                </p>
+                            </div>
+                            <div className="flex gap-2 items-center pt-1">
+                              {(() => {
+                                if (child.child_share_token) {
+                                  return (
+                                    <>
+                                      <div className="font-mono text-lg font-bold text-stone-800 tracking-widest bg-white px-3 py-1 border border-stone-200/60 rounded-lg shadow-sm">
+                                        {child.child_share_token}
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        type="button"
+                                        size="sm"
+                                        onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}
+                                      >
+                                        Copy Code
+                                      </Button>
+                                    </>
+                                  );
+                                } else {
+                                  return (
+                                    <Button
+                                      variant="dark"
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => {
+                                        const code = generateShortCode();
+                                        onEditChild(child.id, { child_share_token: code });
+                                      }}
+                                    >
+                                      Generate Login Code
+                                    </Button>
+                                  );
+                                }
+                              })()}
+                            </div>
+                          </div>
                           
                           <div className="mt-4 flex gap-2">
                             {onUpdateChildStats && (
@@ -1133,6 +1167,18 @@ export default function ParentDashboard({
                                 <ScrollText className="w-4 h-4" />
                               </Button>
                             </Tooltip>
+                            {onDeleteChild && (
+                              <Tooltip content="Delete Child" position="top">
+                                <Button
+                                  variant="none"
+                                  size="none"
+                                  onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
+                                  className="ml-auto px-4 py-2.5 rounded-xl bg-stone-100/50 border border-stone-200/50 text-stone-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                            )}
                           </div>
 
                           {onUpdateChildStats && (

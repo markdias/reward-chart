@@ -10,9 +10,10 @@
 | 2 | Extend UI Component Library | ⬜ Not Started |
 | 3 | Delete Showcase Files | ⬜ Not Started |
 | 4 | Fix Animation Imports | ⬜ Not Started |
-| 5 | Migrate Core Components | ⬜ Not Started |
-| 6 | Migrate Secondary Components | ⬜ Not Started |
-| 7 | Clean Up Theme System | ⬜ Not Started |
+| 5 | Migrate Core Components | ✅ Completed |
+| 6 | Migrate Secondary Components | ✅ Completed |
+| 7 | Clean Up Theme System | ✅ Completed |
+| 8 | Standardise Activity Feeds | ✅ Completed |
 
 ---
 
@@ -74,7 +75,7 @@
 ---
 
 ## Phase 5: Migrate Core Components
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - **ChildDashboard:**
@@ -95,7 +96,7 @@
 ---
 
 ## Phase 6: Migrate Secondary Components
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - Standardise colour palette and adopt UI components across: AuthPage, LandingPage, LockScreen, ChildHomeTab, BadgesModal, LegalModal, all Onboarding steps
@@ -106,7 +107,7 @@
 ---
 
 ## Phase 7: Clean Up Theme System
-**Status:** ⬜ Not Started
+**Status:** ✅ Completed
 
 **Scope:**
 - Simplify `THEME_PRESETS` class strings where values now come from CSS tokens
@@ -116,14 +117,34 @@
 
 ---
 
+## Phase 8: Standardise Activity Feeds
+**Status:** ✅ Completed
+
+**Scope:**
+- Create unified `ActivityCard` and `ActivityFeed` components
+- Adopt a Horizontal List paradigm for dense, scannable activity feeds
+- Implement a combined "completed" style (green checkmark + subtle strike-through text)
+- Implement a standardized dashed-box UI for empty states
+- Replace scattered lists and grids in `ChildHomeTab.tsx` and `ParentDashboard.tsx` with `<ActivityFeed>`
+
+**Files:** `ActivityCard.tsx` (new), `ActivityFeed.tsx` (new), `ChildHomeTab.tsx`, `ParentDashboard.tsx`
+
+---
+
 ## Completion Log
 
+- **Phase 5 (Part 1)**: Extracted boarding pass into `<BoardingPassCard>`, extracted `<BottomTabBar>`, added desktop sidebar grid for ChildDashboard, removed ParentDashboard borders, and migrated all `slate` and `gray` to `stone` in core components.
+- **Phase 6**: Standardised colours and adopted `<Typography>`, `<Input>`, `<Modal>`, and `<Button>` components across AuthPage, LandingPage, LockScreen, Modals, and all Onboarding components.
+- **Phase 7**: Migrated all remaining `slate`, `gray`, `zinc` colours to `stone` in `theme.ts` and `Tooltip.tsx`.
+- **Phase 5**: Completed the full migration of `ChildDashboard.tsx` and `ParentDashboard.tsx` by replacing all raw buttons with `<Button>` and standardising typography with the `<Typography>` component.
 _Entries will be added below as each phase is completed._
 
 - **Phase 1: Foundation — Design Tokens & Utilities**: Completed. Updated `index.css` with mobile utilities (`.touch-target`, `.safe-area-bottom`, `.modal-overlay`), standardised neutral colors to the `stone` palette, consolidated card classes to `card-panel`, and added input-field variants.
 - **Phase 2: Extend UI Component Library**: Completed. Added variants to `Typography` and `Button`. Created new `Card`, `Modal`, `Input`, `BottomTabBar`, and `BoardingPassCard` components.
 - **Phase 3: Delete Showcase Files**: Completed. Deleted 10 showcase files and removed all showcase imports/routes from `App.tsx`. Net -2162 lines.
 - **Phase 4: Fix Animation Imports**: Completed. Migrated 5 files from `framer-motion` to `motion/react`: `BadgesModal.tsx`, `ChildHomeTab.tsx`, `SettingsTab.tsx`, `TargetsTab.tsx`, `Tooltip.tsx`.
+
+- **Phase 8: Standardise Activity Feeds**: Completed. Unified the task/list views in `ChildHomeTab.tsx` and `ParentDashboard.tsx` using a new `ActivityFeed` and `ActivityCard` component architecture. Replaced the scattered grid layouts with a dense, horizontal list layout, incorporating a dashed-box empty state and a combined style for completed tasks (green checkmark + strike-through).
 
 # Standardise App Design System
 
