@@ -10,9 +10,10 @@ import { getCharacterStage } from '../data/characters';
 import pkg from '../../package.json';
 
 interface LandingPageProps {
-  onEnterArcade: (role: 'parent' | 'child') => void;
+  onEnterArcade: () => void;
   theme: ThemeId;
   onSignIn?: () => void;
+  onJoinCode?: () => void;
 }
 
 const CAROUSEL_CHARACTERS = [
@@ -78,7 +79,7 @@ const CAROUSEL_CHARACTERS = [
   },
 ];
 
-export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingPageProps) {
+export default function LandingPage({ onEnterArcade, theme, onSignIn, onJoinCode }: LandingPageProps) {
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   
   const charactersWithImages = CAROUSEL_CHARACTERS.map(char => {
@@ -97,17 +98,17 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
     playSound.click();
   };
 
-  const handleEnterClick = (role: 'parent' | 'child') => {
-    playSound.levelUp();
-    onEnterArcade(role);
+  const handleEnterClick = () => {
+    playSound.click();
+    onEnterArcade();
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="landing-page-root">
+    <div className="min-h-screen bg-white text-stone-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="landing-page-root">
       
       {/* Clean White Header */}
       <header 
-        className="w-full bg-white border-b border-gray-100 relative z-40"
+        className="w-full bg-white border-b border-stone-100 relative z-40"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
@@ -119,31 +120,34 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-slate-600 font-mono tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-sans tracking-widest font-extrabold uppercase mt-0.5">MAKE HABITS FUN</span>
             </div>
           </div>
 
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => {
-              playSound.click();
-              if (onSignIn) {
-                onSignIn();
-              } else {
-                handleEnterClick('parent');
-              }
-            }}
-            id="landing-signin-btn"
-          >
-            Sign In
-          </Button>
+          <div className="flex items-center gap-2">
+
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={() => {
+                playSound.click();
+                if (onSignIn) {
+                  onSignIn();
+                } else {
+                  handleEnterClick();
+                }
+              }}
+              id="landing-signin-btn"
+            >
+              Sign In
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Main Section */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-20 mt-6 sm:mt-10">
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-200 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-stone-200 p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-center">
           {/* Left Column: Marketing Info and CTA */}
           <div className="lg:col-span-6 flex flex-col space-y-8">
             <div className="space-y-4">
@@ -165,39 +169,31 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 size="lg"
                 className="w-full sm:w-auto shadow-lg"
                 rightIcon={<ArrowRight className="w-5 h-5" />}
-                onClick={() => handleEnterClick('parent')}
+                onClick={handleEnterClick}
               >
-                Parents: Get Started
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                className="w-full sm:w-auto"
-                onClick={() => handleEnterClick('child')}
-              >
-                Kids: Enter Arcade
+                Get Started
               </Button>
             </div>
           </div>
 
           {/* Value Badges */}
           <div className="grid grid-cols-2 gap-3 max-w-lg">
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
+                <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
                 <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center gap-3">
+            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
               <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
                 <PiggyBank className="w-4 h-4" />
               </div>
               <div>
-                <span className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
+                <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
                 <span className={`text-[11px] font-bold ${styles.textColor}`}>Savings & Earning</span>
               </div>
             </div>
@@ -206,7 +202,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
         {/* Right Column: Evolved Companion Showcase */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-gray-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row gap-6 items-center">
+          <div className="p-4 sm:p-6 rounded-3xl bg-white border border-stone-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row gap-6 items-center">
             {/* Ambient Scanlines */}
             <div className={`absolute inset-0 ${styles.overlayCrt} pointer-events-none`} />
             
@@ -239,7 +235,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 {/* Floating energy star */}
                 <div className="absolute top-2 right-2 text-yellow-300 animate-pulse text-lg">⭐</div>
               </motion.div>
-              <span className={`mt-3 text-xs font-bold font-mono tracking-widest uppercase px-3 py-1 rounded-full ${styles.tagCategory}`}>
+              <span className={`mt-3 text-xs font-bold font-sans tracking-widest uppercase px-3 py-1 rounded-full ${styles.tagCategory}`}>
                 CLASS: {activeChar.type}
               </span>
             </div>
@@ -250,7 +246,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
                 <h3 className={`text-xl font-black font-display tracking-wide ${styles.titleColor}`}>
                   {activeChar.name}
                 </h3>
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl relative">
+                <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl relative">
                   <div className="absolute left-4 -top-2 w-3 h-3 bg-[#F5F2EA] border-t border-l border-stone-200 rotate-45" />
                   <p className="text-xs italic text-stone-700">
                     "{activeChar.greeting}"
@@ -259,10 +255,10 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
               </div>
 
               {/* Progression Preview */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-3 mt-2">
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3 mt-2">
                 <div className="flex justify-between items-end">
                   <div>
-                    <span className={`block text-[10px] font-mono font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
+                    <span className={`block text-[10px] font-sans font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
                       LEVEL UP TO EVOLVE
                     </span>
                     <span className={`text-sm font-bold font-display ${styles.textColor}`}>
@@ -296,7 +292,7 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
           {/* Quick Select Character Carousel Grid */}
           <div className="space-y-2">
-            <span className={`text-[10px] font-mono font-bold ${styles.textMuted} tracking-wider uppercase block`}>
+            <span className={`text-[10px] font-sans font-bold ${styles.textMuted} tracking-wider uppercase block`}>
               TAP TO PREVIEW COMPANIONS
             </span>
             <div className="grid grid-cols-6 gap-2" id="character-carousel-list">
@@ -337,14 +333,14 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
 
       {/* Financial Literacy Journey Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-12 relative z-20">
-        <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border border-gray-200 shadow-sm relative overflow-hidden">
+        <div className="p-8 sm:p-12 rounded-[2.5rem] bg-white border border-stone-200 shadow-sm relative overflow-hidden">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-sky-400/10 rounded-full blur-3xl" />
 
           <div className="relative flex flex-col items-center gap-10 md:gap-12">
             <div className="w-full space-y-4 text-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-200 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <PiggyBank className="w-4 h-4 text-amber-500" />
                 LEARN REAL MONEY SKILLS
               </div>
@@ -416,10 +412,10 @@ export default function LandingPage({ onEnterArcade, theme, onSignIn }: LandingP
         <div>
           © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
-        <div className="flex gap-4 font-mono text-[10px]">
+        <div className="flex gap-4 font-sans text-[10px]">
           <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
           <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
-          <span className="text-slate-600">|</span>
+          <span className="text-stone-600">|</span>
           <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>

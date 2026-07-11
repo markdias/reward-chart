@@ -7,6 +7,7 @@ import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
 import { PasswordInput } from '../PasswordInput';
 import { evaluatePassword } from '../../utils/security';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface StepCreateAccountProps {
   theme: ThemeId;
@@ -109,12 +110,12 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto shadow-sm">
             <Cloud className="w-8 h-8 text-cyan-500" />
           </div>
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Save & Sync</h2>
+          <Typography variant="h2" className={styles.titleColor}>Save & Sync</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Create a free account to back up your family's data and share the dashboard with another parent's device.</p>
         </div>
 
@@ -126,22 +127,19 @@ export default function StepCreateAccount({ theme, name = '', familyName = '', o
             </div>
           )}
 
-          <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Parent Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="parent@example.com"
-              required
-              className={`w-full px-4 py-2.5 rounded-xl text-sm border ${styles.inputBg}`}
-            />
-          </div>
+          <Input
+            label="Parent Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="parent@example.com"
+            required
+          />
 
 
 
           <div>
-            <label className={`block text-[10px] font-mono font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
+            <label className={`block text-[10px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>Password</label>
             <PasswordInput
               value={password}
               onChange={setPassword}

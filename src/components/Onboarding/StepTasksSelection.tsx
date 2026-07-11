@@ -33,12 +33,14 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl space-y-6 flex flex-col h-full max-h-[85vh] relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-xl space-y-6 flex flex-col h-full max-h-[85vh] relative z-10`}>
         <div className="text-center space-y-2 shrink-0">
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Tasks</h2>
+          <Typography variant="h2" className={styles.titleColor}>Pick Starting Tasks</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Select some common tasks to add to your children's dashboard right away. You can add more later!</p>
           <div className="flex justify-end pt-1">
-            <button
+            <Button
+              variant="none"
+              size="none"
               onClick={() => {
                 if (selectedIds.length === PREMADE_TASKS.length) {
                   setSelectedIds([]);
@@ -49,7 +51,7 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
               className={`text-xs font-bold transition-colors underline ${selectedIds.length === PREMADE_TASKS.length ? 'text-stone-500 hover:text-stone-700' : 'text-amber-600 hover:text-amber-700'}`}
             >
               {selectedIds.length === PREMADE_TASKS.length ? 'Deselect All' : 'Select All'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -57,7 +59,9 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
           {PREMADE_TASKS.map(task => {
             const isSelected = selectedIds.includes(task.id);
             return (
-              <button
+              <Button
+                variant="none"
+                size="none"
                 key={task.id}
                 onClick={() => toggleTask(task.id)}
                 className={`w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between gap-3 ${
@@ -77,7 +81,7 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
                 }`}>
                   {isSelected && <Check className="w-4 h-4 text-white" />}
                 </div>
-              </button>
+              </Button>
             )
           })}
         </div>

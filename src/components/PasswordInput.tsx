@@ -52,7 +52,7 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
 
       {showPolicy && (
         <div className="space-y-2 bg-stone-50 p-3 rounded-xl border border-stone-100">
-          <div className="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-widest text-stone-500 mb-2">
+          <div className="flex items-center justify-between text-xs font-sans font-bold uppercase tracking-widest text-stone-500 mb-2">
             <span>Password Strength:</span>
             <span className={strength === 5 ? 'text-emerald-600' : (strength >= 3 ? 'text-amber-600' : 'text-rose-600')}>
               {getStrengthLabel()}
@@ -67,7 +67,7 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
             <div className={`flex-1 rounded-full ${strength === 5 ? getStrengthColor() : 'bg-stone-200'}`} />
           </div>
 
-          <div className="grid grid-cols-1 gap-1 text-[10px] font-mono font-medium text-stone-500">
+          <div className="grid grid-cols-1 gap-1 text-[10px] font-sans font-medium text-stone-500">
             <div className={`flex items-center gap-2 ${policy.minLength ? 'text-emerald-600' : ''}`}>
               {policy.minLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
               At least 8 characters

@@ -11,7 +11,7 @@ import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, ChevronRight, Lock, Star,
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
+  ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
@@ -27,6 +27,8 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { BottomTabBar } from './ui/BottomTabBar';
+import { BoardingPassCard } from './BoardingPassCard';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
@@ -68,6 +70,8 @@ interface ChildDashboardProps {
   onLockChild?: (childId: string | null) => void;
   theme: ThemeId;
   isLoading?: boolean;
+  isChildAuth?: boolean;
+  onLogout?: () => void;
 }
 
 export default function ChildDashboard({
@@ -99,7 +103,9 @@ export default function ChildDashboard({
   lockedChildId,
   onLockChild,
   theme,
-  isLoading = false
+  isLoading = false,
+  isChildAuth = false,
+  onLogout
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const isPlayfulPop = parentProfile?.dashboard_style === 'playful_pop';
@@ -331,7 +337,7 @@ export default function ChildDashboard({
           updates.points = points;
           updates.gold_pot_last_leak_date = todayStr;
           updates.gold_pot_total_leaked = (activeChild.gold_pot_total_leaked || 0) + 1;
-          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the Pots tab and fix it before it leaks all your gold.`);
           setTimeout(() => playSound.pinError(), 800);
         }
       } else {
@@ -341,7 +347,7 @@ export default function ChildDashboard({
             breakCount += 1;
             updates.gold_pot_broken = true;
             updates.gold_pot_break_count_this_week = breakCount;
-            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the Pots tab and fix it before it leaks all your gold.`);
             setTimeout(() => playSound.pinError(), 800);
           }
         }
@@ -513,54 +519,80 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+64px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+72px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
+    <div className={`min-h-screen bg-stone-50 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
       
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
         <header 
-          className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4 sm:px-8 pb-3 sm:pb-4"
+          className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex items-center flex-1 gap-3 sm:gap-4">
-            {!lockedChildId && (
-              <Tooltip content="Go Back to Selection" position="bottom">
-                <button
-                  onClick={() => setSelectedChildId(null)}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-100 hover:text-slate-800 transition-all active:scale-95"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              </Tooltip>
-            )}
-            <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
-              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
-                {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                {activeChild?.age && <span className="text-sm sm:text-xl text-slate-500 font-normal">({activeChild.age})</span>}
-              </h1>
-              <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 sm:gap-4">
+              {!lockedChildId && (
+                <Tooltip content="Go Back to Selection" position="bottom">
+                  <Button
+                    variant="none"
+                    size="none"
+                    onClick={() => setSelectedChildId(null)}
+                    className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                </Tooltip>
+              )}
+              <div className="flex flex-col justify-center">
+                <Typography variant="h1" as="h1" className="text-2xl sm:text-4xl font-black text-stone-900 leading-none tracking-tight font-display">
+                  {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
+                </Typography>
+                <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 font-semibold mt-1.5">
+                  {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
                 <Tooltip content="Current Gold Coins" position="bottom">
                   <div className="cursor-help">
                     <CoinBadge points={activeChild?.points || 0} />
                   </div>
                 </Tooltip>
                 
-                <Tooltip content="Parent Dashboard" position="bottom">
-                  <button 
-                    onClick={() => { playSound.click(); onEnterParentMode(); }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
-                  >
-                    <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </Tooltip>
+                {isChildAuth && onLogout ? (
+                  <Tooltip content="Log Out" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onLogout(); }}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                ) : (
+                  <Tooltip content="Parent Dashboard" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onEnterParentMode(); }}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
 
                 {!lockedChildId && onLockChild && activeChild && (
                   <Tooltip content="Lock Device to Child" position="bottom">
-                    <button 
+                    <Button 
+                      variant="none"
+                      size="none"
                       onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                     >
                       <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+                    </Button>
                   </Tooltip>
                 )}
               </div>
@@ -583,19 +615,20 @@ export default function ChildDashboard({
                 <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 text-sm sm:text-base">You have a message!</h3>
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
+                <Typography variant="h3" className="font-bold text-stone-900 text-sm sm:text-base">You have a message!</Typography>
+                <Typography variant="body" className="text-xs sm:text-sm text-stone-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</Typography>
               </div>
             </div>
-            <button
+            <Button
+              variant="purple"
               onClick={() => {
                 playSound.click();
                 onEditChild(activeChild.id, { has_pending_nudge: false });
               }}
-              className="px-6 py-3 rounded-full bg-indigo-500 text-white font-bold text-xs sm:text-sm tracking-widest uppercase hover:bg-indigo-600 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-indigo-500/20 whitespace-nowrap w-full sm:w-auto"
+              className="px-6 py-3 rounded-full text-xs sm:text-sm whitespace-nowrap w-full sm:w-auto"
             >
               I'm on it!
-            </button>
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -624,22 +657,22 @@ export default function ChildDashboard({
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
               
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
 
-              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
+              <Typography variant="h2" className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
                 {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
-              </h2>
+              </Typography>
 
-              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <Typography variant="body" className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
                 {isHatching && hatchPhase !== 'reveal' ? (
                   <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
                 ) : (
                   <>Spectacular progress! Companion <strong className="text-white">{evolvingStage.charName}</strong> is transmuting into a more powerful form!</>
                 )}
-              </p>
+              </Typography>
 
               {/* Evolution / Hatching Pedestal */}
               <div className="my-8 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
@@ -766,15 +799,15 @@ export default function ChildDashboard({
               </div>
 
               <div>
-                <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
+                <Typography variant="body" className="text-[10px] text-cyan-400 font-sans tracking-widest uppercase">
                   {isHatching && hatchPhase !== 'reveal' ? 'HATCHING IN PROGRESS...' : 'UPGRADED FORM SPEC'}
-                </p>
-                <h3 className="text-2xl font-black text-white mt-1 uppercase tracking-wide">
+                </Typography>
+                <Typography variant="h3" className="text-2xl font-black text-white mt-1">
                   {isHatching && hatchPhase !== 'reveal'
                     ? ['🥚 Wobbling...', '💥 Cracking!', '✨ Splitting open!'][['wobble', 'crack', 'split'].indexOf(hatchPhase)] || evolvingStage.toStage
                     : evolvingStage.toStage
                   }
-                </h3>
+                </Typography>
               </div>
 
               <Button
@@ -819,15 +852,15 @@ export default function ChildDashboard({
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
-                  <h3 className="font-black font-display text-2xl text-slate-800 uppercase tracking-wide leading-none">
+                  <span className="text-[10px] font-sans tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
+                  <Typography variant="h3" className="uppercase tracking-wide leading-none">
                     How it Works
-                  </h3>
+                  </Typography>
                 </div>
 
-                <p className="text-sm font-bold text-slate-600 leading-relaxed px-4">
+                <Typography variant="body" className="text-sm font-bold text-stone-600 leading-relaxed px-4">
                   Watch this quick video to learn how to earn gold coins and unlock awesome prizes!
-                </p>
+                </Typography>
 
                 {/* Video Player */}
                 <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
@@ -845,7 +878,9 @@ export default function ChildDashboard({
                     Your browser does not support the video tag.
                   </video>
                   {!isVideoPlaying && (
-                    <button
+                    <Button
+                      variant="none"
+                      size="none"
                       onClick={() => {
                         videoRef.current?.play();
                       }}
@@ -854,7 +889,7 @@ export default function ChildDashboard({
                       <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                         <Play className="w-6 h-6 text-amber-600 ml-1" />
                       </div>
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -888,12 +923,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -964,12 +999,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1040,12 +1075,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1116,12 +1151,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW RESPONSIBILITY
               </div>
@@ -1191,15 +1226,15 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-rose-100 border border-rose-300 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="w-10 h-10 text-rose-600 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-rose-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-rose-600">
                 <FaHeartCrack className="inline-block mr-2 text-red-500" /> PET IS UNHAPPY!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {penaltyMessage}
@@ -1232,15 +1267,15 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-amber-100 border border-amber-300 rounded-2xl flex items-center justify-center">
                 <FaTriangleExclamation className="w-10 h-10 text-amber-600 animate-pulse" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-amber-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-amber-600">
                 GOLD POT BROKEN!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {goldPotPenaltyMessage}
@@ -1256,7 +1291,7 @@ export default function ChildDashboard({
                 }}
                 id="gold-pot-penalty-dismiss-btn"
               >
-                GO TO POTS <FaCoins className="inline-block ml-2 text-yellow-100" />
+                GO TO Pots <FaCoins className="inline-block ml-2 text-yellow-100" />
               </Button>
             </motion.div>
           </motion.div>
@@ -1277,15 +1312,15 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white border-4 border-stone-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-orange-100 border border-orange-300 rounded-2xl flex items-center justify-center">
                 <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-orange-500">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-orange-500">
                 TIME TO FEED!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 Don't forget to feed <strong className="text-stone-900">{activeChildPack?.name.split(' the ')[0] || 'your pet'}</strong> today! A happy pet is a good companion.
@@ -1339,7 +1374,7 @@ export default function ChildDashboard({
             variant="outline"
             size="sm"
             onClick={() => { playSound.click(); onEnterParentMode(); }}
-            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400`} />}
+            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400`} />}
           >
             PARENT MODE
           </Button>
@@ -1347,7 +1382,7 @@ export default function ChildDashboard({
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-white mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1361,219 +1396,32 @@ export default function ChildDashboard({
               id="profile-picker"
             >
               <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-sans uppercase tracking-widest`}>
                   <Plane className="w-3.5 h-3.5" /> BOARDING NOW
                 </div>
-                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-slate-800`}>
+                <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
                   Grab your ticket!
-                </h1>
-                <p className={`text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed`}>
+                </Typography>
+                <Typography variant="body" className={`text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed`}>
                   Select your boarding pass to start your adventure and claim your rewards!
-                </p>
+                </Typography>
               </div>
 
               <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (
-                      <div key={`skel-${i}`} className="w-full flex shadow-lg rounded-2xl overflow-hidden relative animate-pulse">
-                        {/* Main Pass Body */}
-                        <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
-                          {/* Header */}
-                          <div className="h-8 sm:h-10 bg-slate-200 flex items-center justify-between px-3 sm:px-6 border-b border-slate-300">
-                            <div className="flex items-center gap-2 text-transparent font-bold tracking-widest text-xs uppercase">
-                              <Plane className="w-4 h-4 text-transparent" /> <span>Reward Airways</span>
-                            </div>
-                            <div className="text-transparent font-mono text-[10px] tracking-widest uppercase">
-                              First Class
-                            </div>
-                          </div>
-                          
-                          <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
-                            
-                            <div className="flex items-center gap-2 sm:gap-6">
-                              <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-200 border-2 border-white shadow-md overflow-hidden" />
-                              
-                              <div className="flex flex-col justify-center py-1 sm:py-2">
-                                <div>
-                                  <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block w-fit">Name of Passenger</span>
-                                  <h3 className="text-xl sm:text-3xl font-black font-display text-transparent bg-slate-200 rounded uppercase tracking-tight leading-none w-fit">
-                                    LOADING...
-                                  </h3>
-                                </div>
-                                
-                                <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Flight</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">RW-000</span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Gate</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">TBD</span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Seat</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">00A</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
-                              <div className="w-16 sm:w-32 h-8 sm:h-16 bg-slate-200 rounded opacity-60" />
-                              <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-transparent bg-slate-200 rounded tracking-widest uppercase w-fit inline-block">TKT-12345678</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Divider with Notches */}
-                        <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
-                          <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
-                        </div>
-                        
-                        {/* Tear-off Stub */}
-                        <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
-                          <div className="h-10 bg-slate-200 w-full border-b border-slate-300" />
-                          <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
-                            <div className="w-full text-center mb-2 sm:mb-4 relative z-10 flex flex-col items-center">
-                              <span className="text-[8px] sm:text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider block mb-0.5 sm:mb-1 w-fit">Boarding Time</span>
-                              <span className="font-mono font-black text-transparent bg-slate-200 rounded text-lg sm:text-xl inline-block w-fit">NOW</span>
-                            </div>
-
-                            <div className="w-full flex justify-between relative z-10">
-                              <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Zone</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">1</span>
-                              </div>
-                              <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Class</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">F</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <BoardingPassCard key={`skel-${i}`} child={{id:'',name:'',avatar_url:'',level:0,streak_days:0,points:0}} isLoading />
                     ))}
                   </>
                 ) : children.map((child) => {
                   const stage = getCharacterStage(child.character_id, child.level);
                   return (
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                    <BoardingPassCard
                       key={child.id}
-                      onClick={() => {
-                        handleSelectChild(child.id);
-                      }}
-                      className="w-full cursor-pointer group flex shadow-lg hover:shadow-xl transition-shadow rounded-2xl overflow-hidden relative"
-                    >
-                      {/* Main Pass Body */}
-                      <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
-                        {/* Header */}
-                        <div className="h-8 sm:h-10 bg-[#0033A0] flex items-center justify-between px-3 sm:px-6 border-b border-[#002277]">
-                          <div className="flex items-center gap-2 text-white font-bold tracking-widest text-xs uppercase">
-                            <Plane className="w-4 h-4" /> <span>Reward Airways</span>
-                          </div>
-                          <div className="text-blue-200 font-mono text-[10px] tracking-widest uppercase">
-                            First Class
-                          </div>
-                        </div>
-                        
-                        <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
-                          
-                          <div className="flex items-center gap-2 sm:gap-6">
-                            <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
-                              <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
-                            </div>
-                            
-                            <div className="flex flex-col justify-center py-1 sm:py-2">
-                              <div>
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
-                                <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
-                                  {child.name}
-                                  {child.age && <span className="text-sm sm:text-xl text-slate-500 font-normal ml-2">({child.age})</span>}
-                                </h3>
-                              </div>
-                              
-                              <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Flight</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Gate</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Seat</span>
-                                <span className="font-mono font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
-                          <div className="w-16 sm:w-32 h-8 sm:h-16 flex justify-between items-end opacity-60">
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1.5 sm:w-3 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-1.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                          </div>
-                          <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-slate-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
-                        </div>
-                        
-                      </div>
-                    </div>
-                    
-                    {/* Divider with Notches */}
-                    <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
-                      {/* Top Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
-                      
-                      {/* Perforation Line */}
-                      <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
-                      
-                      {/* Bottom Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
-                    </div>
-                    
-                    {/* Tear-off Stub */}
-                    <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
-                        <div className="h-10 bg-[#0033A0] w-full border-b border-[#002277]" />
-                        <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
-                          
-                          <Plane className="absolute -right-8 -bottom-8 w-24 h-24 sm:w-32 sm:h-32 text-slate-200 opacity-40 -rotate-45 pointer-events-none z-0" />
-
-                          <div className="w-full text-center mb-2 sm:mb-4 relative z-10">
-                            <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
-                            <span className="font-mono font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
-                          </div>
-
-                          <div className="w-full flex justify-between relative z-10">
-                            <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Zone</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">1</span>
-                            </div>
-                            <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Class</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">F</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                    </motion.div>
+                      child={child}
+                      onClick={() => handleSelectChild(child.id)}
+                    />
                   );
                 })}
               </div>
@@ -1593,10 +1441,53 @@ export default function ChildDashboard({
                   id="kid-dashboard-grid"
                 >
                 
-                {/* Left Column: Star-Pet Feeding Station (Hidden on mobile unless 'companion' tab is active) */}
-                {activeChild && activeChildStage && activeChildPack && (
-                  <div className={`lg:col-span-4 space-y-4 sm:space-y-6 ${activeChildTab !== 'companion' ? 'hidden lg:block' : ''}`}>
-                    
+                {/* Left Sidebar (Desktop Only) */}
+                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                  <nav className="flex flex-col gap-2">
+                    {[
+                      { id: 'home', label: 'Home', icon: Home },
+                      { id: 'companion', label: 'Pets', icon: FaPaw },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
+                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'pots', label: 'Pots', icon: FaJar }
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = activeChildTab === tab.id;
+                      return (
+                        <Button
+                          variant="none"
+                          size="none"
+                          key={tab.id}
+                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
+                            isSelected 
+                              ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                              : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                            {tab.label}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </nav>
+                </aside>
+
+                <main className="lg:col-span-9 space-y-6">
+                  {/* Active Screen Frame */}
+                  <AnimatePresence mode="wait">
+                  
+                    {/* Pet / Companion Tab */}
+                    {activeChildTab === 'companion' && activeChild && activeChildStage && activeChildPack && (
+                      <motion.div
+                        key="companion-tab"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        className="space-y-4 sm:space-y-6"
+                      >
                     {/* Holo Pedestal */}
                     <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
                       
@@ -1604,8 +1495,8 @@ export default function ChildDashboard({
 
                       <div className="flex justify-between w-full items-start mt-1">
                         <div className="text-left">
-                          <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
-                          <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
+                          <span className={`text-[8px] font-sans tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
+                          <Typography variant="h3" className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</Typography>
                         </div>
                       </div>
 
@@ -1647,27 +1538,28 @@ export default function ChildDashboard({
                         </motion.div>
                       </div>
                       {/* Level and evolution progression */}
-                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
-                        <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                          <span>GOLD BAR</span>
-                          <span className={`text-cyan-500 font-extrabold tabular-nums`}>LEVEL {activeChild.level}</span>
+                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider}`}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[14px] font-bold text-black tracking-tight">Level {activeChild.level}</span>
+                          <span className="text-[12px] font-semibold text-stone-500">
+                            {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
+                          </span>
                         </div>
                         <LinearProgressBar 
                           progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                          heightClass="h-3"
-                          className={`${styles.cardBg} ${styles.borderStyle} mb-1 relative`}
+                          heightClass="h-2"
+                          className="!bg-stone-200/60 border-none shadow-inner"
                         />
-                        <div className="flex justify-between items-center w-full px-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold tabular-nums`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
-                        </div>
                       </div>
 
                       {isFoodPotUnlocked && (
                         <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 flex flex-col gap-2">
-                          <button
+                          <Button
+                            variant="none"
+                            size="none"
                             onClick={handleFeedCompanion}
                             disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                            className={`w-full py-3 rounded-2xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
                               activeChild.pet_fed_today
                                 ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
                                 : (activeChild.pet_food || 0) > 0
@@ -1682,8 +1574,8 @@ export default function ChildDashboard({
                             ) : (
                               <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
                             )}
-                          </button>
-                          <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
+                          </Button>
+                          <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
                             <span>FOOD INVENTORY:</span>
                             <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                           </div>
@@ -1714,17 +1606,21 @@ export default function ChildDashboard({
                         <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
                           {/* Streak Widget */}
-                          <button 
+                          <Button
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
                             <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
                             <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
-                          </button>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
+                          </Button>
 
                           {/* Weekly Widget */}
-                          <button 
+                          <Button 
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
@@ -1733,11 +1629,13 @@ export default function ChildDashboard({
                             </div>
                             <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
-                          </button>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
+                          </Button>
 
                           {/* Monthly Widget */}
-                          <button 
+                          <Button 
+                            variant="none"
+                            size="none"
                             onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
                             className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
                           >
@@ -1746,8 +1644,8 @@ export default function ChildDashboard({
                             </div>
                             <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
                             <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
-                          </button>
+                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
+                          </Button>
                         </div>
                         
                         <AnimatePresence>
@@ -1759,12 +1657,14 @@ export default function ChildDashboard({
                               className="mt-4 overflow-hidden"
                             >
                               <div className={`p-5 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl relative`}>
-                                <button 
+                                <Button 
+                                  variant="ghost"
+                                  size="icon-sm"
                                   onClick={() => setExpandedGoal(null)}
-                                  className={`absolute top-4 right-4 p-1.5 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200`}
+                                  className="absolute top-4 right-4 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200"
                                 >
                                   <ChevronRight className="w-4 h-4 rotate-90" />
-                                </button>
+                                </Button>
                                 
                                 {expandedGoal === 'streak' && (
                                   <>
@@ -1772,11 +1672,11 @@ export default function ChildDashboard({
                                       <div className="h-10 w-10 rounded-xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center">
                                         <Flame className="w-5 h-5 text-orange-500 flame-active" />
                                       </div>
-                                      <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Daily Streak</h4>
+                                      <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Daily Streak</Typography>
                                     </div>
-                                    <p className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
-                                      You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
-                                    </p>
+                                    <Typography variant="body" className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
+                                      You've locked in a <span className="text-orange-500 font-sans font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
+                                    </Typography>
                                   </>
                                 )}
                                 
@@ -1784,21 +1684,23 @@ export default function ChildDashboard({
                                   <>
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Weekly Target</h4>
-                                        {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Weekly Target</Typography>
+                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
                                         {parentProfile?.weekly_reward_points || 200} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={weeklyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} PTS</span>
-                                      <span>{weeklyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black tracking-tight">{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500">{weeklyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={weeklyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
@@ -1807,21 +1709,23 @@ export default function ChildDashboard({
                                   <>
                                     <div className="flex justify-between items-center pr-8">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Monthly Target</h4>
-                                        {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Monthly Target</Typography>
+                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
                                         {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={monthlyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} PTS</span>
-                                      <span>{monthlyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black tracking-tight">{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500">{monthlyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={monthlyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
@@ -1832,61 +1736,11 @@ export default function ChildDashboard({
                         </>
                       );
                     })()}
+                      </motion.div>
+                    )}
 
-                  </div>
-                )}
-
-                {/* Right Column: Chores / Prize Cabinet (Hidden on mobile if 'companion' tab is active) */}
-                {activeChild && (
-                  <div className={`lg:col-span-8 space-y-2 sm:space-y-3 ${activeChildTab === 'companion' ? 'hidden lg:block' : ''}`}>
-                    
-                    {/* Desktop style switcher tabs (Hidden on mobile) */}
-                    <div className={`hidden lg:flex gap-2 p-1 bg-gray-50 border border-gray-100 rounded-2xl`} id="kid-dashboard-tabs">
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('home'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'home' || activeChildTab === 'companion'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" /> <span className="hidden sm:inline">HOME</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'tasks'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" /> <span className="hidden sm:inline">TASKS</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'rewards'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" /> <span className="hidden sm:inline">PRIZES</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'pots'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <FaJar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> <span className="hidden sm:inline">POTS</span>
-                      </button>
-                    </div>
-
-                    {/* Active Screen Frame */}
-                    <AnimatePresence mode="wait">
-                      {activeChildTab === 'home' || activeChildTab === 'companion' ? (
+                    {/* Home Tab */}
+                    {activeChildTab === 'home' && activeChild && (
                         <ChildHomeTab
                           activeChild={activeChild}
                           tasks={tasks}
@@ -1898,7 +1752,9 @@ export default function ChildDashboard({
                           onOpenBadges={() => setShowBadgesModal(true)}
                           parentProfile={parentProfile}
                         />
-                      ) : activeChildTab === 'tasks' ? (
+                    )}
+                    {/* Tasks Tab */}
+                    {activeChildTab === 'tasks' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -1906,10 +1762,10 @@ export default function ChildDashboard({
                           key="child-tasks-tab"
                           className="flex flex-col"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-gray-200 border flex items-center justify-between mb-3 sm:mb-4`}>
+                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-stone-200 border flex items-center justify-between mb-3 sm:mb-4`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900`}>Daily Quests</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono text-gray-400`}>Complete tasks to earn more gold coins!</p>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Daily Quests</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans text-stone-400`}>Complete tasks to earn more gold coins!</Typography>
                             </div>
                           </div>
                           
@@ -1921,12 +1777,12 @@ export default function ChildDashboard({
                             }
                             return true;
                           }).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-3`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
-                              <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
-                              </p>
+                              </Typography>
                             </div>
                           ) : (
                             tasks.filter(t => {
@@ -1985,7 +1841,7 @@ export default function ChildDashboard({
                               const cardContent = (
                                 <>
                                   <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-gray-200 text-gray-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-stone-200 text-stone-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
                                       <catMeta.Icon className="w-4 h-4" />
                                     </div>
                                   </div>
@@ -1993,9 +1849,9 @@ export default function ChildDashboard({
                                     <CoinBadge points={task.points} disabled={isApproved} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className={`font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                    <Typography variant="h4" className={`font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
                                       {task.title}
-                                    </h4>
+                                    </Typography>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
                                       {isApproved ? (
                                         <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full">
@@ -2022,20 +1878,22 @@ export default function ChildDashboard({
                               const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
 
                               return isCompletable ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
                                   className={`${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] task-card`}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
                                 <div
                                   key={task.id}
                                   className={`${baseCardClasses} ${
                                     isApproved
-                                      ? `bg-gray-50 border-gray-100`
+                                      ? `bg-stone-50 border-stone-100`
                                       : isPending
                                         ? 'bg-indigo-50 border-indigo-100'
                                         : 'bg-amber-50 border-amber-100 opacity-75'
@@ -2047,8 +1905,10 @@ export default function ChildDashboard({
                             })
                           )}
                           </div>
-                        </motion.div>
-                      ) : activeChildTab === 'rewards' ? (
+                          </motion.div>
+                    )}
+                    {/* Rewards Tab */}
+                    {activeChildTab === 'rewards' && activeChild && (
                         
                         /* PRIZE CABINET CONTENT */
                         <motion.div
@@ -2060,17 +1920,17 @@ export default function ChildDashboard({
                         >
                           <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
                             <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Shop</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</p>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Shop</Typography>
+                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</Typography>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
-                              <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                             </div>
                           ) : (
                             rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
@@ -2099,7 +1959,9 @@ export default function ChildDashboard({
                                   );
                                 } else {
                                   statusBadge = (
-                                    <button
+                                    <Button
+                                      variant="none"
+                                      size="none"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onSavingsGoal(activeChild.id, rew.id);
@@ -2108,7 +1970,7 @@ export default function ChildDashboard({
                                       className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
                                     >
                                       Set Goal
-                                    </button>
+                                    </Button>
                                   );
                                 }
                               }
@@ -2139,7 +2001,7 @@ export default function ChildDashboard({
                                     <CoinBadge points={rew.cost_points} />
                                   </div>
                                   <div className="w-full">
-                                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight">{rew.title}</h4>
+                                    <Typography variant="h4" className="font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight">{rew.title}</Typography>
                                     <div className="mt-2 min-h-[24px] flex items-center justify-center">
                                       {statusBadge}
                                     </div>
@@ -2148,7 +2010,9 @@ export default function ChildDashboard({
                               );
 
                               return canDispense ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={rew.id}
                                   onClick={() => isSavingFor
                                     ? handleClaimReward(rew.id, rew.cost_points, 'savings')
@@ -2158,7 +2022,7 @@ export default function ChildDashboard({
                                   className={wrapperClasses}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
                                 <div key={rew.id} className={wrapperClasses}>
                                   {cardContent}
@@ -2168,7 +2032,9 @@ export default function ChildDashboard({
                           )}
                           </div>
                         </motion.div>
-                      ) : activeChildTab === 'pots' ? (
+                    )}
+                    {/* Pots Tab */}
+                    {activeChildTab === 'pots' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -2176,16 +2042,16 @@ export default function ChildDashboard({
                           key="child-pots-tab"
                           className="space-y-4"
                         >
-                          <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">POTS</h2>
-                            <p className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</p>
+                          <div className="bg-white border border-stone-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
+                            <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Pots</Typography>
+                            <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500">Manage your savings, food and gifting pots!</Typography>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
                           {/* === MAIN GOLD POT SECTION === */}
                           <div 
                             onClick={() => setExpandedPot(expandedPot === 'gold' ? null : 'gold')}
-                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
                           >
                             <div className="flex justify-between items-start mb-4">
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
@@ -2195,17 +2061,19 @@ export default function ChildDashboard({
                             </div>
                             <div>
                               <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
-                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Gold Pot</h3>
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Gold Pot</Typography>
                               <div className="flex gap-2 mt-3 flex-wrap">
-                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                   <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
-                                </button>
-                                <button 
+                                </Button>
+                                <Button 
+                                  variant="none"
+                                  size="none"
                                   onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
                                   className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
                                 >
                                   <Play className="w-3 h-3" fill="currentColor" /> Video
-                                </button>
+                                </Button>
                               </div>
                             </div>
                             
@@ -2215,12 +2083,12 @@ export default function ChildDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                                  <Typography variant="body" className="text-[10px] text-stone-500 leading-relaxed">
                                     This is your main pocket where all the gold coins you earn are kept. You can use these coins to buy rewards, save them in your Savings Pot, or spend them on your pets!
-                                  </p>
+                                  </Typography>
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -2232,7 +2100,7 @@ export default function ChildDashboard({
                           {isSavingsUnlocked && activeChild.savings_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'savings' ? null : 'savings')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-slate-200 hover:border-emerald-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-stone-200 hover:border-emerald-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
@@ -2242,17 +2110,19 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Savings</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Savings</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button 
+                                    variant="none"
+                                    size="none"
                                     onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2262,12 +2132,12 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
+                                    <Typography variant="body" className="text-[10px] text-stone-500 leading-relaxed mb-3">
                                       Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
-                                    </p>
+                                    </Typography>
 
                               {activeChild.savings_goal_name && (
                                 <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
@@ -2275,7 +2145,7 @@ export default function ChildDashboard({
                                     <span className="text-xs font-bold text-emerald-850">
                                       Goal: {activeChild.savings_goal_name}
                                     </span>
-                                    <span className="text-[10px] font-mono font-bold text-emerald-700">
+                                    <span className="text-[10px] font-sans font-bold text-emerald-700">
                                       {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount}
                                     </span>
                                   </div>
@@ -2299,20 +2169,20 @@ export default function ChildDashboard({
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-2 relative mt-auto">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
                                         disabled={activeChild.points <= 0}
                                         className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2.5 rounded-xl font-bold text-xs border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaCoins /> Deposit
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
                                         disabled={(activeChild.savings_pot || 0) <= 0}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Withdraw All
-                                      </button>
+                                      </Button>
                                     </div>
 
                               {/* Deposit Modal */}
@@ -2326,25 +2196,25 @@ export default function ChildDashboard({
                                   >
                                     <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Deposit how many coins?</label>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
                                         disabled={depositAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                 
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{depositAmount}</Typography>
                                       </div>
                                 
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
                                         disabled={depositAmount >= activeChild.points}
                                         className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2382,7 +2252,7 @@ export default function ChildDashboard({
                                     exit={{ opacity: 0, y: 10 }}
                                     className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2 relative z-20"
                                   >
-                                    <p className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</p>
+                                    <Typography variant="body" className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</Typography>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
                                         variant="danger"
@@ -2426,7 +2296,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2439,7 +2309,7 @@ export default function ChildDashboard({
                           {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'food' ? null : 'food')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-slate-200 hover:border-orange-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-stone-200 hover:border-orange-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
@@ -2452,17 +2322,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Food</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Food</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-orange-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2472,7 +2342,7 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
 
@@ -2482,7 +2352,7 @@ export default function ChildDashboard({
                                   <span className="text-xs font-bold text-orange-850">
                                     Weekly Contribution
                                   </span>
-                                  <span className="text-[10px] font-mono font-bold text-orange-700">
+                                  <span className="text-[10px] font-sans font-bold text-orange-700">
                                     {activeChild.food_pot_weekly_contribution || 0} / 7 coins
                                   </span>
                                 </div>
@@ -2491,7 +2361,7 @@ export default function ChildDashboard({
                                   heightClass="h-2.5"
                                   className="bg-white border-orange-200"
                                 />
-                                <span className={`text-[9px] font-mono ${styles.textMuted} mt-1.5 block`}>
+                                <span className={`text-[9px] font-sans ${styles.textMuted} mt-1.5 block`}>
                                   {activeChild.food_pot_weekly_contribution >= 7 
                                     ? <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Weekly contribution requirement met! Great job.</span> 
                                     : <span><FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more gold coins in the pot this week.</span>
@@ -2499,26 +2369,26 @@ export default function ChildDashboard({
                                 </span>
                               </div>
 
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                              <Typography variant="body" className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                                 Add gold coins to your Food Pot to fund your pet's food. Once in the pot, use them to buy food pieces!
-                              </p>
+                              </Typography>
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-2 mt-auto relative">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
                                         disabled={(activeChild.points || 0) < 1}
                                         className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2.5 rounded-xl font-bold text-xs border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaBone /> Buy (1g)
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
                                         disabled={(activeChild.pet_food || 0) < 1}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex-1 bg-stone-50 text-stone-600 py-2.5 rounded-xl font-bold text-xs hover:bg-stone-100 transition-colors border border-stone-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         Sell (+1g)
-                                      </button>
+                                      </Button>
                                     </div>
 
                                   </motion.div>
@@ -2541,7 +2411,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.food_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2556,7 +2426,7 @@ export default function ChildDashboard({
                           {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'gifting' ? null : 'gifting')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-slate-200 hover:border-purple-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-stone-200 hover:border-purple-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
@@ -2565,17 +2435,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Gifting</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Gifting</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
                                     className="flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-rose-200 transition-colors"
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2585,13 +2455,13 @@ export default function ChildDashboard({
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
+                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-stone-100 flex-1 flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                   >
 
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
+                              <Typography variant="body" className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
                                 Donate to charity or gift to a sibling directly from your Main Gold Pot. It feels good to give!
-                              </p>
+                              </Typography>
 
                               {/* Gifting Reminder */}
                               {(() => {
@@ -2601,9 +2471,9 @@ export default function ChildDashboard({
                                   return (
                                     <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
                                       <span className="text-rose-500"><FaHeart /></span>
-                                      <p className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
+                                      <Typography variant="body" className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
                                         It's been a while since your last gift! Giving makes everyone happy.
-                                      </p>
+                                      </Typography>
                                     </div>
                                   );
                                 }
@@ -2612,20 +2482,20 @@ export default function ChildDashboard({
 
                                     {/* Action Buttons */}
                                     <div className="flex flex-col gap-2 mt-auto relative">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
                                         disabled={activeChild.points <= 0}
                                         className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-2.5 rounded-xl font-bold text-xs border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaGlobe /> Charity
-                                      </button>
-                                      <button
+                                      </Button>
+                                      <Button variant="none" size="none"
                                         onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
                                         disabled={activeChild.points <= 0 || children.length <= 1}
                                         className="flex-1 flex items-center justify-center gap-2 bg-pink-50 text-pink-700 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-100 transition-colors border border-pink-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         <FaGift /> Sibling
-                                      </button>
+                                      </Button>
                                     </div>
 
                               {/* Charity Modal */}
@@ -2648,23 +2518,23 @@ export default function ChildDashboard({
                                       <option value="CH-CHILDREN"><FaBook className="inline-block mr-2" /> Kids Education Charity</option>
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
                                         disabled={charityAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{charityAmount}</Typography>
                                       </div>
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
                                         disabled={charityAmount >= (activeChild.points || 0)}
                                         className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2713,23 +2583,23 @@ export default function ChildDashboard({
                                       ))}
                                     </select>
                                     <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
                                         disabled={siblingAmount <= 1}
                                         className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Minus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
                                         <Typography variant="number">{siblingAmount}</Typography>
                                       </div>
-                                      <button
+                                      <Button variant="none" size="none"
                                         onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
                                         disabled={siblingAmount >= (activeChild.points || 0)}
                                         className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
                                       >
                                         <Plus className="w-4 h-4" />
-                                      </button>
+                                      </Button>
                                     </div>
                                     <div className="flex flex-col gap-2 mt-2">
                                       <Button
@@ -2777,7 +2647,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2790,7 +2660,7 @@ export default function ChildDashboard({
                           {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'maintenance' ? null : 'maintenance')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
+                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
                             >
                               <div className="flex justify-between items-start mb-4">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
@@ -2802,17 +2672,17 @@ export default function ChildDashboard({
                               </div>
                               <div>
                                 <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Maintenance</h3>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Maintenance</Typography>
                                 <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                  <Button variant="none" size="none" className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-stone-200 text-stone-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>
                                     <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
+                                  </Button>
+                                  <Button variant="none" size="none" 
                                     onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
                                     className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
                                   >
                                     <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
 
@@ -2824,22 +2694,22 @@ export default function ChildDashboard({
                                     exit={{ height: 0, opacity: 0 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="mt-4 pt-4 border-t-2 border-slate-100">
-                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-slate-500'}`}>
+                                    <div className="mt-4 pt-4 border-t-2 border-stone-100">
+                                      <Typography variant="body" className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-stone-500'}`}>
                                         Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
-                                      </p>
+                                      </Typography>
 
                                       {/* Status Info */}
-                                      <div className={`grid grid-cols-2 gap-2 bg-slate-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
+                                      <div className={`grid grid-cols-2 gap-2 bg-stone-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200'}`}>
                                         <div className="text-center">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
                                             {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
                                           </div>
                                         </div>
-                                        <div className="text-center border-l border-slate-200">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
+                                        <div className="text-center border-l border-stone-200">
+                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
+                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700'}`}>
                                             {activeChild.gold_pot_total_leaked || 0} Coins
                                           </div>
                                         </div>
@@ -2847,9 +2717,9 @@ export default function ChildDashboard({
 
                               {activeChild.gold_pot_broken && (
                                 <>
-                                  <p className="text-[10px] text-red-700 mb-3 leading-relaxed font-bold">
+                                  <Typography variant="body" className="text-[10px] text-red-700 mb-3 leading-relaxed font-bold">
                                     Oh no! Your Gold Pot is cracked and leaking coins! You must fix it or you will lose a coin every day.
-                                  </p>
+                                  </Typography>
                                   <Button
                                     variant="danger"
                                     fullWidth
@@ -2894,7 +2764,7 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gold_pot_maintenance_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
@@ -2905,10 +2775,9 @@ export default function ChildDashboard({
 
                         </div>
                         </motion.div>
-                      ) : null}
+                        )}
                     </AnimatePresence>
-                  </div>
-                )}
+                  </main>
 
               </motion.div>
             )}
@@ -2921,39 +2790,18 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
-            {[
+          <BottomTabBar
+            tabs={[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'tasks', label: 'Tasks', icon: CheckCircle },
-              { id: 'rewards', label: 'Prizes', icon: Gift },
-              { id: 'companion', label: 'Pet', icon: FaCat },
+              { id: 'companion', label: 'Pets', icon: FaPaw },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
               { id: 'pots', label: 'Pots', icon: FaJar }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeChildTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                    isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  {isSelected && (
-                    <motion.div
-                      layoutId="child-nav-pill"
-                      className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  {Icon && <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
-                  <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+            ]}
+            activeTab={activeChildTab}
+            onTabChange={(id) => { playSound.click(); setActiveChildTab(id as any); }}
+            layoutId="child-nav-pill"
+          />
         )}
 
       {/* Badges Modal */}

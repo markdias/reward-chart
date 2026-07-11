@@ -3,6 +3,7 @@ import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Modal } from './ui/Modal';
 import { playSound } from '../utils/sound';
 
 export function LegalModal() {
@@ -36,20 +37,13 @@ export function LegalModal() {
   return (
     <AnimatePresence>
       {modalType && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={close}
+        <Modal
+          isOpen={true}
+          onClose={close}
+          maxWidth="2xl"
+          padding="lg"
+          className="max-h-[85vh] overflow-y-auto border-4 border-stone-200"
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[2rem] p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border-4 border-stone-200"
-          >
             <div className="flex justify-between items-center mb-6 border-b-2 border-stone-100 pb-4">
               <Typography variant="h2">
                 {modalType === 'privacy' ? 'Privacy Policy' : 'Terms of Service'}
@@ -102,8 +96,7 @@ export function LegalModal() {
                 I UNDERSTAND
               </Button>
             </div>
-          </motion.div>
-        </motion.div>
+        </Modal>
       )}
     </AnimatePresence>
   );

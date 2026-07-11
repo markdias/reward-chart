@@ -11,8 +11,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home
 } from 'lucide-react';
+import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
@@ -21,6 +22,7 @@ import { EXTENDED_TASKS, EXTENDED_REWARDS } from '../data/extendedTemplates';
 import { ThemeId, THEME_PRESETS } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
+import { generateShortCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
@@ -29,6 +31,7 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { BottomTabBar } from './ui/BottomTabBar';
 
 interface ParentDashboardProps {
   children: Child[];
@@ -39,6 +42,7 @@ interface ParentDashboardProps {
   onAddChild: (name: string, characterId: string, avatarUrl: string, age?: number) => void;
   onEditChild: (id: string, updates: Partial<Child>) => void;
   onDeleteChild?: (id: string) => void;
+  onUnlinkChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onDeductCoins?: (childId: string, amount: number, reason: string) => void;
   onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
@@ -69,7 +73,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
-  initialTab?: 'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
+  initialTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
   isLoading?: boolean;
 }
 
@@ -82,6 +86,7 @@ export default function ParentDashboard({
   onAddChild,
   onEditChild,
   onDeleteChild,
+  onUnlinkChild,
   onUpdateChildStats,
   onDeductCoins,
   onAddTask,
@@ -112,10 +117,10 @@ export default function ParentDashboard({
   onRejectGiftingRequest,
   onLogout,
   onUpdateParentProfile,
-  initialTab = 'approvals',
+  initialTab = 'home',
   isLoading = false
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'approvals' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
   
   useEffect(() => {
     setActiveTab(initialTab);
@@ -587,69 +592,60 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
-      {/* Ambient Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cyan-400/15 rounded-full blur-[120px]"></div>
-        <div className="absolute top-[40%] right-[-5%] w-80 h-80 bg-purple-400/10 rounded-full blur-[100px]"></div>
-      </div>
+    <div className={`min-h-screen bg-stone-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+
 
       <header 
-        className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 pb-2 sm:pb-3"
+        className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 sm:gap-4">
             <Tooltip content="Settings" position="bottom">
-              <button
+              <Button variant="none" size="none"
                 onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-slate-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 text-slate-600"
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
               >
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
+              </Button>
             </Tooltip>
             <div className="flex flex-col justify-center">
-              <h1 className="text-2xl sm:text-4xl font-black text-slate-900 leading-none tracking-tight font-display">
-                Parent Center
-              </h1>
-              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-slate-500 font-semibold mt-1.5">
-                {parentProfile?.name && <span>{parentProfile.name}</span>}
-                {parentProfile?.name && parentProfile?.family_name && <span className="opacity-50">•</span>}
-                {parentProfile?.family_name && <span>{parentProfile.family_name}</span>}
-                {(parentProfile?.name || parentProfile?.family_name) && <span className="opacity-50">•</span>}
-                <span className="truncate">{parentEmail}</span>
+              <Typography variant="h1" className="text-2xl sm:text-4xl font-black text-stone-900 leading-none tracking-tight font-display">
+                {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
+              </Typography>
+              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 font-semibold mt-1.5">
+                {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+            <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
               {onLogout && (
                 <Tooltip content="Sign Out" position="bottom">
-                  <button
+                  <Button variant="none" size="none"
                     onClick={() => {
                       playSound.click();
                       onLogout();
                     }}
-                    className="px-4 h-10 sm:h-11 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs sm:text-sm tracking-widest hover:text-slate-800 hover:bg-slate-200 transition-colors shrink-0"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
                     id="global-logout-btn"
                   >
-                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    <span className="hidden sm:inline">SIGN OUT</span>
-                  </button>
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </Button>
                 </Tooltip>
               )}
-              <Tooltip content="Switch to Kid View" position="bottom">
-                <button
+              <Tooltip content="Exit Parent Mode" position="bottom">
+                <Button variant="none" size="none"
                   onClick={() => {
                     playSound.click();
                     onExitParentMode();
                   }}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
                   id="exit-to-child-view-btn"
                 >
                   <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
+                </Button>
               </Tooltip>
             </div>
           </div>
@@ -661,83 +657,67 @@ export default function ParentDashboard({
         <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
-              { id: 'approvals', label: 'INBOX & APPROVALS', icon: CheckSquare, badge: totalPending },
-              { id: 'children', label: 'CHILDREN', icon: Users, count: children.length },
-              { id: 'tasks', label: 'QUESTS', icon: CheckSquare, count: tasks.filter(t => t.is_template).length },
-              { id: 'rewards', label: 'PRIZES', icon: Trophy, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
-              { id: 'targets', label: 'TARGETS & POTS', icon: Target },
-              { id: 'settings', label: 'SETTINGS / ADMIN', icon: Settings }
+              { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              { id: 'children', label: 'Children', icon: Users, count: children.length },
+              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
+              { id: 'targets', label: 'Targets', icon: Target },
+              { id: 'settings', label: 'Settings', icon: Settings }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
               return (
-                <button
+                <Button variant="none" size="none"
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
                     isSelected 
-                      ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10 scale-[1.02]'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-slate-900 hover:scale-[1.01]'
+                      ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                      : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
-                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-mono px-2 py-0.5 rounded-full font-bold shadow-sm`}>
+                    <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
                       {tab.badge}
                     </span>
                   )}
                   {tab.count !== undefined && (
-                    <span className={`text-[10px] font-mono ${isSelected ? 'text-slate-400' : 'text-gray-400'} font-bold`}>
+                    <span className={`text-[10px] font-sans ${isSelected ? 'text-stone-400' : 'text-stone-400'} font-bold`}>
                       ({tab.count})
                     </span>
                   )}
-                </button>
+                </Button>
               );
             })}
           </nav>
         </aside>
 
-        <main className="lg:col-span-9 card-panel min-h-[600px] z-10">
+        <main className="lg:col-span-9 min-h-[600px] z-10">
           
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
-            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{approvedCompletionsCount}</span>
-              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">COMPLETED</span>
-            </div>
-            
-            <div className="bg-gray-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-2xl sm:text-4xl font-black text-slate-900 leading-none mb-1 sm:mb-2">{children.length}</span>
-              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">ACTIVE</span>
-            </div>
-            
-            <div className="bg-rose-50 rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-              <span className="text-2xl sm:text-4xl font-black text-rose-500 leading-none mb-1 sm:mb-2">{totalPending}</span>
-              <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-rose-500 uppercase">PENDING</span>
-            </div>
-          </div>
 
           <AnimatePresence mode="wait">
             
-            {activeTab === 'approvals' && (
+            {activeTab === 'home' && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                key="approvals-tab"
+                key="home-tab"
                 className="space-y-6 sm:space-y-8"
-                id="approvals-view"
+                id="home-view"
               >
                 
                 {/* Smart Reminders */}
                 {childrenToNudge.length > 0 && (
                   <div className="space-y-3">
-                    <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                    <Typography variant="h2" className="text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-indigo-500" />
                       Smart Reminders
-                    </h2>
+                    </Typography>
                     <div className="space-y-3">
                       {childrenToNudge.map(child => {
                         const isNudged = child.has_pending_nudge || nudgedChildIds.includes(child.id);
@@ -746,8 +726,8 @@ export default function ParentDashboard({
                             <div className="flex items-center gap-3">
                               <ChildAvatar iconName={child.avatar_url} className="w-10 h-10" />
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{child.name} hasn't logged any activity today.</h3>
-                                <p className="text-gray-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</p>
+                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{child.name} hasn't logged any activity today.</Typography>
+                                <Typography variant="body" className="text-stone-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</Typography>
                               </div>
                             </div>
                             <Button 
@@ -775,126 +755,103 @@ export default function ParentDashboard({
 
                 {/* Needs Approval */}
                 <div className="space-y-3">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                     Needs Approval
-                  </h2>
+                  </Typography>
                   
-                  {totalPending === 0 ? (
-                    <div className="bg-gray-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-3 text-amber-400">✨</div>
-                      <h3 className="font-black text-slate-900 text-sm mb-1">All Caught Up!</h3>
-                      <p className="text-gray-400 text-xs">No pending tasks to approve.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {pendingApprovals.map((appr) => {
+                  <ActivityFeed 
+                    activities={[
+                      ...pendingApprovals.map(appr => {
                         const child = children.find(c => c.id === appr.child_id);
                         const task = tasks.find(t => t.id === appr.task_id);
-                        return (
-                          <div key={appr.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
-                            <div className="flex gap-4">
-                              <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-12 h-12 !rounded-xl bg-gray-50" />
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} finished {task?.title}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{new Date(appr.completed_at).toLocaleString()}</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
+                        return {
+                          id: appr.id,
+                          title: `${child?.name} finished ${task?.title}`,
+                          date: new Date(appr.completed_at),
+                          points: task?.points || 0,
+                          type: 'task' as const,
+                          status: 'pending' as const,
+                          iconOverride: <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-10 h-10 !rounded-xl bg-stone-50" />,
+                          actions: (
+                            <>
                               <Button variant="secondary" size="sm" onClick={() => handleReject(appr.id)}>Deny</Button>
                               <Button variant="primary" size="sm" onClick={() => handleApprove(appr.id)}>Approve</Button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      
-                      {pendingRedemptions.map((req) => {
+                            </>
+                          )
+                        };
+                      }),
+                      ...pendingRedemptions.map(req => {
                         const child = children.find(c => c.id === req.child_id);
                         const reward = rewards.find(r => r.id === req.reward_id);
-                        return (
-                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
-                            <div className="flex gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} claimed {reward?.title}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{new Date(req.redeemed_at).toLocaleString()}</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
+                        return {
+                          id: req.id,
+                          title: `${child?.name} claimed ${reward?.title}`,
+                          date: new Date(req.redeemed_at),
+                          points: reward?.cost_points || 0,
+                          type: 'reward' as const,
+                          status: 'pending' as const,
+                          iconOverride: <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>,
+                          actions: (
+                            <>
                               <Button variant="secondary" size="sm" onClick={() => onRejectReward(req.id)}>Deny</Button>
                               <Button variant="primary" size="sm" onClick={() => onDeliverReward(req.id)}>Approve</Button>
-                            </div>
-                          </div>
-                        )
-                      })}
-
-                      {pendingGiftingRequests.map((req) => {
+                            </>
+                          )
+                        };
+                      }),
+                      ...pendingGiftingRequests.map(req => {
                         const child = children.find(c => c.id === req.child_id);
                         const typeIcon = req.type === 'charity' ? '🌍' : '💝';
                         const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
-                        return (
-                          <div key={req.id} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between gap-4">
-                            <div className="flex gap-4">
-                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>
-                                {typeIcon}
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm">{child?.name} wants to give!</p>
-                                <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">{title} (<CoinBadge points={req.amount} size="sm" />)</p>
-                                <p className="text-[10px] text-gray-300 mt-0.5">{new Date(req.created_at).toLocaleString()}</p>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
+                        return {
+                          id: req.id,
+                          title: `${child?.name} wants to give!`,
+                          subtitle: title,
+                          date: new Date(req.created_at),
+                          points: req.amount,
+                          type: req.type as any,
+                          status: 'pending' as const,
+                          iconOverride: <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>{typeIcon}</div>,
+                          actions: (
+                            <>
                               <Button variant="secondary" size="sm" onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)}>Deny</Button>
                               <Button variant="primary" size="sm" onClick={() => onApproveGiftingRequest && onApproveGiftingRequest(req.id)}>Approve</Button>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
+                            </>
+                          )
+                        };
+                      })
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime())}
+                    emptyMessage="All Caught Up! No pending tasks to approve."
+                  />
                 </div>
 
                 {/* Recent Activity */}
                 <div className="space-y-3">
-                  <h2 className="text-base sm:text-lg font-black text-slate-900">
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                     Recent Activity
-                  </h2>
-                  <div className="space-y-2">
-                    {[
+                  </Typography>
+                  <ActivityFeed 
+                    activities={[
                       ...completions.filter(c => c.status === 'approved').map(c => ({
                         id: c.id,
-                        type: 'task',
+                        type: 'task' as const,
+                        status: 'completed' as const,
                         title: tasks.find(t => t.id === c.task_id)?.title || 'Unknown Task',
                         points: tasks.find(t => t.id === c.task_id)?.points || 0,
                         date: new Date(c.completed_at),
                       })),
                       ...redemptions.filter(r => r.status === 'delivered').map(r => ({
                         id: r.id,
-                        type: 'reward',
+                        type: 'reward' as const,
+                        status: 'delivered' as const,
                         title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
                         points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
                         date: new Date(r.redeemed_at),
+                        iconOverride: <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-stone-50 text-stone-500">🍦</div>
                       }))
-                    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10).map((activity, i) => (
-                      <div key={`${activity.id}-${i}`} className="bg-white border dashboard-card border-gray-100 rounded-2xl p-3 sm:p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3 sm:gap-4">
-                          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'task' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-50 text-gray-500'}`}>
-                            {activity.type === 'task' ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : '🍦'}
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-900 text-xs sm:text-sm">{activity.title}</p>
-                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{activity.date.toLocaleString([], { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-                        </div>
-                        <div className={`font-black text-xs sm:text-sm shrink-0 flex items-center justify-center`}>
-                          <CoinBadge points={activity.points} size="sm" disabled={activity.type !== 'task'} />
-                        </div>
-                      </div>
-                    ))}
-                    {[...completions.filter(c => c.status === 'approved'), ...redemptions.filter(r => r.status === 'delivered')].length === 0 && (
-                      <div className="text-center p-8 text-gray-400 text-xs">No recent activity yet.</div>
-                    )}
-                  </div>
+                    ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10)}
+                    emptyMessage="No recent activity yet."
+                  />
                 </div>
 
               </motion.div>
@@ -924,27 +881,27 @@ export default function ParentDashboard({
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-gray-200 shadow-2xl space-y-4`}
+                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4`}
                     id="add-child-box"
                   >
-                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                       {editingChildId ? <span><FaPen className="inline-block mr-2"/> Edit Child</span> : <span><FaBaby className="inline-block mr-2"/> Register Family Child</span>}
-                    </h3>
+                    </Typography>
                     <form onSubmit={handleChildSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
                           <input
                             type="text"
                             value={newChildName}
                             onChange={(e) => setNewChildName(e.target.value)}
                             placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
                           <input
                             type="number"
                             value={newChildAge}
@@ -952,15 +909,15 @@ export default function ParentDashboard({
                             placeholder="Age"
                             min={1}
                             max={18}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           />
                         </div>
                         <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
                           <select
                             value={newChildChar}
                             onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             {CHARACTER_PACKS.map(char => (
                               <option key={char.id} value={char.id}>
@@ -972,22 +929,23 @@ export default function ParentDashboard({
                       </div>
 
                       <div>
-                        <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                        <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
                         <div className="grid grid-cols-6 gap-2">
                           {PRECANNED_AVATARS.map(url => (
-                            <button
+                            <Button variant="none" size="none"
                               key={url}
                               type="button"
                               onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-slate-500 hover:border-slate-500/50 hover:bg-slate-50'}`}
+                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
                             >
                               <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
-                            </button>
+                            </Button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+
+                      <div className="flex gap-2 mt-4">
                         <Button
                           type="submit"
                           variant="warning"
@@ -1066,166 +1024,194 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={child.id}
-                        className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6"
+                        className="mb-8 font-sans"
+                        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
-                        {onDeleteChild && (
-                          <div className="absolute top-4 right-4 z-20">
-                            <Tooltip content="Delete Child" position="top">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }}
-                                className="text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-full h-8 w-8 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                          </div>
-                        )}
-                        
-                        <div className="relative">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="relative">
-                              <ChildAvatar 
-                                iconName={child.avatar_url} 
-                                className="w-20 h-20 !rounded-[1.25rem] bg-stone-50 relative z-10" 
-                              />
-                            </div>
-                            
-                            <div className="flex items-start gap-4">
-                              <div className="flex items-center gap-3">
-                                <div className="flex flex-col items-center">
-                                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] border-amber-300 bg-amber-50 text-amber-600 flex items-center justify-center font-black text-lg sm:text-xl shadow-sm">
-                                     {child.points}
-                                  </div>
-                                  <span className="text-[10px] font-bold text-stone-400 mt-1.5 uppercase tracking-widest">Gold</span>
-                                </div>
-                                {child.savings_unlocked && (
-                                   <div className="flex flex-col items-center">
-                                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-[3px] border-emerald-300 bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-lg sm:text-xl shadow-sm">
-                                         {child.savings_pot}
-                                      </div>
-                                      <span className="text-[10px] font-bold text-stone-400 mt-1.5 uppercase tracking-widest">Saved</span>
-                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div>
-                            <h3 className="font-black text-2xl text-stone-900 font-display leading-tight">
-                              {child.name} {child.age ? <span className="text-lg text-stone-500 font-normal ml-2">({child.age})</span> : ''}
-                            </h3>
-                          </div>
-
-                          <div className="mt-5 p-3 rounded-2xl bg-stone-50/50 border border-stone-100 flex items-center gap-3">
-                             {stage.image_url ? (
-                                <img src={stage.image_url} alt={stage.name} className="w-10 h-10 drop-shadow-sm" />
-                             ) : (
-                                <span className="text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">{stage.emoji}</span>
-                             )}
-                             <div className="flex-1">
-                               <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-0.5">Companion</p>
-                               <p className="text-sm font-bold text-stone-700 leading-none">{pack?.name.split(' the ')[0] || 'Unknown'} <span className="opacity-50 font-normal">Stage {stage.stage_number}</span></p>
-                             </div>
-                          </div>
-                          
-                          <div className="mt-5">
-                            <div className="flex justify-between items-center mb-2 px-1 font-mono">
-                              <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider whitespace-nowrap">Level {child.level}</span>
-                              <span className="text-xs font-extrabold text-stone-900 whitespace-nowrap">{(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} Gold</span>
-                            </div>
-                            <LinearProgressBar progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100} heightClass="h-4" />
-                          </div>
-                          
-                          <div className="mt-4 flex gap-2">
-                            {onUpdateChildStats && (
-                              <Tooltip content="Quick Adjustments" position="top">
-                                <button 
-                                  onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))}
-                                  className={`px-4 py-2.5 rounded-xl ${expandedAdjustments[child.id] ? 'bg-stone-200 text-stone-700' : 'bg-stone-100/50 text-stone-500'} border border-stone-200/50 text-xs font-bold flex items-center justify-center gap-2 hover:bg-stone-100 hover:text-stone-700 transition-colors`}
-                                >
-                                  <Settings className="w-4 h-4" />
-                                </button>
-                              </Tooltip>
-                            )}
-                            {onDeductCoins && (
-                              <Tooltip content="Take Coins" position="top">
-                                <button 
-                                  onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }}
-                                  className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center justify-center hover:bg-rose-100 transition-colors"
-                                >
-                                  <MinusCircle className="w-4 h-4" />
-                                </button>
-                              </Tooltip>
-                            )}
-                            <Tooltip content="Edit Child" position="top">
-                              <button 
-                                onClick={() => openEditChild(child)}
-                                className="px-4 py-2.5 rounded-xl bg-stone-100/50 border border-stone-200/50 text-stone-500 text-xs font-bold flex items-center justify-center hover:bg-stone-100 hover:text-stone-700 transition-colors"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            </Tooltip>
-                            <Tooltip content="History" position="top">
-                              <button 
-                                onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }}
-                                className="px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center hover:bg-indigo-100 transition-colors"
-                              >
-                                <ScrollText className="w-4 h-4" />
-                              </button>
-                            </Tooltip>
-                          </div>
-
-                          {onUpdateChildStats && (
-                            <AnimatePresence>
-                              {expandedAdjustments[child.id] && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  className="mt-4 overflow-hidden"
-                                >
-                                  <div className="p-3 bg-stone-50 rounded-2xl border border-stone-100 space-y-3">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Gold</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
-                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Lifetime Gold</span>
-                                      <div className="flex gap-1.5 justify-end">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
-                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-mono text-stone-500 font-bold uppercase tracking-widest`}>Level</span>
-                                      <div className="flex gap-1">
-                                        <button onClick={() => { 
-                                          playSound.click(); 
-                                          setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
-                                        }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></button>
-                                        <button onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          )}
+                        {/* Section Header */}
+                        <div className="px-4 mb-2">
+                           <span className="text-[13px] text-stone-500 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
                         </div>
+
+                        {/* Merged Child Card */}
+                        <div className="bg-white rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden border border-stone-200/60 font-sans">
+                           
+                           {/* 1. Header: Avatar & Info */}
+                           <div className="flex items-center p-4 gap-4">
+                               <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 shrink-0" />
+                               <div className="flex flex-col flex-1">
+                                 <span className="text-[18px] font-bold text-black tracking-tight">{child.name}</span>
+                                 <span className="text-[14px] text-stone-500 font-medium mt-0.5">Gold Coins: {child.points}</span>
+                               </div>
+                           </div>
+
+                           <div className="h-[1px] bg-stone-100"></div>
+                           
+                           {/* 2. Companion & Progress (Side-by-side on sm screens) */}
+                           <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50/30">
+                               <div className="flex-1 p-4 flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 shadow-inner">
+                                    {stage.image_url ? (
+                                        <img src={stage.image_url} alt={stage.name} className="w-7 h-7 drop-shadow-md" />
+                                     ) : (
+                                        <span className="text-lg drop-shadow-md">{stage.emoji}</span>
+                                     )}
+                                  </div>
+                                  <div className="flex flex-col flex-1">
+                                    <span className="text-[14px] font-bold text-black tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
+                                    <span className="text-[12px] text-stone-500 font-medium mt-0.5">Level {stage.stage_number} Active</span>
+                                  </div>
+                               </div>
+                               
+                               <div className="flex-1 p-4 flex flex-col justify-center">
+                                   <div className="flex justify-between items-center mb-1.5">
+                                     <span className="text-[14px] font-bold text-black tracking-tight">Level {child.level}</span>
+                                     <span className="text-[12px] font-semibold text-stone-500">
+                                       {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
+                                     </span>
+                                   </div>
+                                   <LinearProgressBar 
+                                     progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                                     heightClass="h-2"
+                                     className="!bg-stone-200/60 border-none shadow-inner"
+                                   />
+                               </div>
+                           </div>
+
+                           <div className="h-[1px] bg-stone-100"></div>
+
+                           {/* 3. Child App Login */}
+                           <div className="flex items-center justify-between p-4 bg-white">
+                               <div className="flex flex-col">
+                                 <span className="text-[14px] font-bold text-black tracking-tight">Child App Login</span>
+                                 <span className="text-[12px] text-stone-500 font-medium mt-0.5">Code for their device</span>
+                               </div>
+                               <div className="flex items-center gap-2">
+                                 {child.child_share_token?.startsWith('LINKED_') ? (
+                                    <>
+                                      <span className="text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                                        <CheckCircle2 className="w-3.5 h-3.5" /> {child.linked_email ? `Linked: ${child.linked_email}` : 'Linked'}
+                                      </span>
+                                    </>
+                                 ) : child.child_share_token ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[15px] font-sans tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
+                                      <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
+                                      <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
+                                        playSound.click();
+                                        onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
+                                      }} title="Manually mark as linked">Link</Button>
+                                      {onUnlinkChild && (
+                                        <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 transition-colors" onClick={() => {
+                                          playSound.click();
+                                          onUnlinkChild(child.id);
+                                        }}>Reset</Button>
+                                      )}
+                                    </div>
+                                 ) : (
+                                    <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-0 hover:text-blue-600 transition-colors" onClick={() => {
+                                        const code = generateShortCode();
+                                        onEditChild(child.id, { child_share_token: code });
+                                    }}>Generate</Button>
+                                 )}
+                               </div>
+                           </div>
+
+                           <div className="h-[1px] bg-stone-100"></div>
+
+                           {/* 4. Actions Group */}
+                           <div className="bg-stone-50/20">
+                              {onUpdateChildStats && (
+                                <>
+                                  <button onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                    <div className="w-7 h-7 rounded bg-stone-100 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600" /></div>
+                                    <span className="text-[15px] text-black tracking-tight flex-1">Quick Adjustments</span>
+                                    <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
+                                  </button>
+                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                                </>
+                              )}
+                              {onDeductCoins && (
+                                <>
+                                  <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                    <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><MinusCircle className="w-4 h-4 text-rose-500" /></div>
+                                    <span className="text-[15px] text-black tracking-tight flex-1">Take Coins</span>
+                                  </button>
+                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                                </>
+                              )}
+                              <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mr-3"><Edit2 className="w-4 h-4 text-blue-500" /></div>
+                                <span className="text-[15px] text-black tracking-tight flex-1">Edit Profile</span>
+                              </button>
+                              <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                              
+                              <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                <div className="w-7 h-7 rounded bg-indigo-100 flex items-center justify-center mr-3"><ScrollText className="w-4 h-4 text-indigo-500" /></div>
+                                <span className="text-[15px] text-black tracking-tight flex-1">History</span>
+                              </button>
+                              
+                              {onDeleteChild && (
+                                <>
+                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                                  <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                    <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><Trash2 className="w-4 h-4 text-rose-500" /></div>
+                                    <span className="text-[15px] text-rose-500 tracking-tight flex-1">Delete Child</span>
+                                  </button>
+                                </>
+                              )}
+                           </div>
+                        </div>
+
+                        {onUpdateChildStats && (
+                          <AnimatePresence>
+                            {expandedAdjustments[child.id] && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden mt-4"
+                              >
+                                <div className="bg-white rounded-[20px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-stone-200/60 p-4 space-y-4">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[15px] font-semibold text-black tracking-tight">Gold</span>
+                                    <div className="flex gap-1">
+                                      <Button variant="none" size="none" onClick={() => { 
+                                        playSound.click(); 
+                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
+                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
+                                    </div>
+                                  </div>
+                                  <div className="h-[0.5px] bg-stone-200"></div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold</span>
+                                    <div className="flex gap-1.5 justify-end">
+                                      <Button variant="none" size="none" onClick={() => { 
+                                        playSound.click(); 
+                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
+                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
+                                    </div>
+                                  </div>
+                                  <div className="h-[0.5px] bg-stone-200"></div>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[15px] font-semibold text-black tracking-tight">Level</span>
+                                    <div className="flex gap-1">
+                                      <Button variant="none" size="none" onClick={() => { 
+                                        playSound.click(); 
+                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
+                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></Button>
+                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        )}
                       </div>
                     );
                   })}
@@ -1260,41 +1246,41 @@ export default function ParentDashboard({
                     id="add-task-box"
                   >
 
-                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                       {editingTaskId ? <span><Edit2 className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><Sparkles className="inline-block mr-2"/> Create Quest Blueprint</span>}
-                    </h3>
+                    </Typography>
                     <form onSubmit={handleTaskSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
                           <input
                             type="text"
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
                             placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div className="flex gap-4">
                           <div className="flex-1">
-                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
+                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
                             <input
                               type="number"
                               min="0"
                               value={taskPoints}
                               onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
                           <select
                             value={taskRecurrence}
                             onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="daily">Daily Habit</option>
                             <option value="weekly">Weekly Chore</option>
@@ -1304,13 +1290,13 @@ export default function ParentDashboard({
                         </div>
                         {taskRecurrence === 'repeatable' && (
                           <div>
-                            <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
+                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
                             <input
                               type="number"
                               min="1"
                               value={taskCooldownMinutes || ''}
                               onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                               required
                             />
                           </div>
@@ -1345,10 +1331,10 @@ export default function ParentDashboard({
                 )}
                 </AnimatePresence>
 
-                {/* SUB-TABS AND ACTION BUTTONS FOR TASKS */}
+                {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
                   <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
-                    <button
+                    <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'directory'
@@ -1357,8 +1343,8 @@ export default function ParentDashboard({
                       }`}
                     >
                       BLUEPRINTS
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         taskSubTab === 'active'
@@ -1367,7 +1353,7 @@ export default function ParentDashboard({
                       }`}
                     >
                       ASSIGNED
-                    </button>
+                    </Button>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
@@ -1406,26 +1392,26 @@ export default function ParentDashboard({
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
                 <div className="mt-2 sm:mt-4">
-                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>QUEST DIRECTORY (BLUEPRINTS)</h3>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Quest Directory (Blueprints)</Typography>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {tasks.filter(t => t.is_template).map((task) => {
                       const instances = tasks.filter(t => t.template_id === task.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       
                       return (
-                        <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
                                 <FaStar />
                               </div>
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
+                                <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
                                   <span className="mx-2">•</span>
-                                  Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
-                                </p>
+                                  Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                </Typography>
                               </div>
                             </div>
 
@@ -1434,16 +1420,16 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
-                            <button
+                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
+                            <Button variant="none" size="none"
                               onClick={() => {
                                 playSound.click();
                                 setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
                               }}
-                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
                               Assign to Child
-                            </button>
+                            </Button>
 
                             <div className="flex gap-2">
                               <Tooltip content="Edit Blueprint" position="top">
@@ -1452,7 +1438,7 @@ export default function ParentDashboard({
                                 </Button>
                               </Tooltip>
                               <Tooltip content="Delete Blueprint" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
@@ -1465,16 +1451,16 @@ export default function ParentDashboard({
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-gray-100"
+                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100"
                               >
-                                <p className="text-[10px] font-mono font-bold text-gray-500 uppercase">
+                                <Typography variant="body" className="text-[10px] font-sans font-bold text-stone-500 uppercase">
                                   Select children to assign this quest:
-                                </p>
+                                </Typography>
                                 <div className="flex flex-wrap gap-2">
                                   {children.map(child => {
                                     const isAssigned = instances.some(i => i.child_id === child.id);
                                     return (
-                                      <button
+                                      <Button variant="none" size="none"
                                         key={child.id}
                                         onClick={() => {
                                           playSound.success();
@@ -1484,16 +1470,16 @@ export default function ParentDashboard({
                                             : [...currentAssignedIds, child.id];
                                           onAssignTask(task, newAssignedIds);
                                         }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-mono font-extrabold transition-all cursor-pointer ${
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-sans font-extrabold transition-all cursor-pointer ${
                                           isAssigned
                                             ? ('bg-warning border-neutral-border text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)]')
                                             : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
-                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-slate-700/50" />
+                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-700/50" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
-                                      </button>
+                                      </Button>
                                     );
                                   })}
                                 </div>
@@ -1515,19 +1501,19 @@ export default function ParentDashboard({
                   {tasks.filter(t => !t.is_template).map((task) => {
                     const assignedName = children.find(c => c.id === task.child_id)?.name;
                     return (
-                      <div key={task.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
                               <FaStar />
                             </div>
                             <div>
-                              <h3 className="font-bold text-slate-900 text-sm">{task.title}</h3>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Assigned: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                              <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
+                              <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
+                                Assigned: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
                                 <span className="mx-2">•</span>
-                                Category: <span className="font-bold text-slate-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
-                              </p>
+                                Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                              </Typography>
                             </div>
                           </div>
 
@@ -1536,7 +1522,7 @@ export default function ParentDashboard({
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
+                        <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
                           <Button
                             variant="primary"
                             size="sm"
@@ -1551,14 +1537,14 @@ export default function ParentDashboard({
 
                           <div className="flex gap-2">
                             <Tooltip content="Edit Assigned Quest" position="top">
-                              <button onClick={() => openEditTask(task)} className="p-2 rounded-xl text-gray-400 hover:text-slate-900 hover:bg-gray-50">
+                              <Button variant="none" size="none" onClick={() => openEditTask(task)} className="p-2 rounded-xl text-stone-400 hover:text-stone-900 hover:bg-stone-50">
                                 <Edit2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </Tooltip>
                             <Tooltip content="Delete Assigned Quest" position="top">
-                              <button onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
+                              <Button variant="none" size="none" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-stone-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
                                 <Trash2 className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </Tooltip>
                           </div>
                         </div>
@@ -1600,29 +1586,29 @@ export default function ParentDashboard({
                     id="add-reward-box"
                   >
 
-                    <h3 className={`font-bold text-lg text-stone-900 font-display uppercase tracking-wide`}>
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                       {editingRewardId ? <span><Edit2 className="inline-block mr-2"/> Edit Reward Token</span> : <span><Gift className="inline-block mr-2"/> Define Reward Token</span>}
-                    </h3>
+                    </Typography>
                     <form onSubmit={handleRewardSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
                           <input
                             type="text"
                             value={rewardTitle}
                             onChange={(e) => setRewardTitle(e.target.value)}
                             placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             required
                           />
                         </div>
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
                           <input
                             type="number"
                             value={rewardCost}
                             onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                             min="10"
                             max="500"
                             required
@@ -1630,11 +1616,11 @@ export default function ParentDashboard({
                         </div>
 
                         <div>
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
                           <select
                             value={rewardIcon}
                             onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="Gamepad2">🎮 Game Time</option>
                             <option value="Pizza">🍕 Favorite Meal</option>
@@ -1644,11 +1630,11 @@ export default function ParentDashboard({
                           </select>
                         </div>
                         <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-mono ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
+                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
                           <select
                             value={rewardLimit}
                             onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-mono`}
+                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                           >
                             <option value="unlimited">♾️ Unlimited</option>
                             <option value="daily">📅 1x Daily</option>
@@ -1664,7 +1650,7 @@ export default function ParentDashboard({
                             onChange={(e) => setRewardBadgeEligible(e.target.checked)}
                             className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
                           />
-                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-mono text-stone-600`}>
+                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
                             Eligible as a free badge reward (Small Reward)
                           </label>
                         </div>
@@ -1697,10 +1683,10 @@ export default function ParentDashboard({
                 )}
                 </AnimatePresence>
 
-                {/* SUB-TABS AND ACTION BUTTONS FOR REWARDS */}
+                {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
                   <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
-                    <button
+                    <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'directory'
@@ -1709,8 +1695,8 @@ export default function ParentDashboard({
                       }`}
                     >
                       BLUEPRINTS
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
                         rewardSubTab === 'active'
@@ -1719,7 +1705,7 @@ export default function ParentDashboard({
                       }`}
                     >
                       ASSIGNED
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
@@ -1758,25 +1744,25 @@ export default function ParentDashboard({
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
                 <div className="mt-2 sm:mt-4">
-                  <h3 className={`text-base sm:text-xl font-black font-display ${styles.titleColor} mb-3 sm:mb-4 hidden sm:block`}>REWARD DIRECTORY (BLUEPRINTS)</h3>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Directory (Blueprints)</Typography>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {rewards.filter(r => r.is_template).map((reward) => {
                       const instances = rewards.filter(r => r.template_id === reward.id);
                       const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                       return (
-                        <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                        <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                           <div className="flex justify-between items-start gap-4">
                             <div className="flex gap-4 items-center">
                               <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
                                 <FaGift />
                               </div>
                               <div>
-                                <h3 className="font-bold text-slate-900 text-sm">{reward.title}</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-slate-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{reward.title}</Typography>
+                                <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
+                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
                                   <span className="mx-2">•</span>
-                                  Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
-                                </p>
+                                  Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                </Typography>
                               </div>
                             </div>
 
@@ -1785,16 +1771,16 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-center border-t border-gray-50 pt-3 mt-1">
-                            <button
+                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
+                            <Button variant="none" size="none"
                               onClick={() => {
                                 playSound.click();
                                 setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
                               }}
-                              className="text-xs font-bold text-slate-900 hover:text-slate-700"
+                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
                               Assign to Child
-                            </button>
+                            </Button>
 
                             <div className="flex gap-2">
                               <Tooltip content="Edit Token" position="top">
@@ -1803,7 +1789,7 @@ export default function ParentDashboard({
                                 </Button>
                               </Tooltip>
                               <Tooltip content="Delete Token" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
@@ -1818,14 +1804,14 @@ export default function ParentDashboard({
                                 exit={{ height: 0, opacity: 0 }}
                                 className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
                               >
-                                <p className={`text-[10px] font-bold text-gray-500 uppercase`}>
+                                <Typography variant="body" className={`text-[10px] font-bold text-stone-500 uppercase`}>
                                   Select children to assign this reward:
-                                </p>
+                                </Typography>
                                 <div className="flex flex-wrap gap-2">
                                   {children.map(child => {
                                     const isAssigned = instances.some(i => i.child_id === child.id);
                                     return (
-                                      <button
+                                      <Button variant="none" size="none"
                                         key={child.id}
                                         onClick={() => {
                                           playSound.success();
@@ -1837,14 +1823,14 @@ export default function ParentDashboard({
                                         }}
                                         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                                           isAssigned
-                                            ? ('bg-slate-900 border-slate-900 text-white')
-                                            : ('bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100')
+                                            ? ('bg-stone-900 border-stone-900 text-white')
+                                            : ('bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100')
                                         }`}
                                       >
                                         <ChildAvatar iconName={child.avatar_url} className="w-5 h-5" />
                                         <span>{child.name}</span>
                                         {isAssigned && <Check className="w-3 h-3" />}
-                                      </button>
+                                      </Button>
                                     );
                                   })}
                                 </div>
@@ -1860,33 +1846,33 @@ export default function ParentDashboard({
 
                 )}
 
-                {/* ACTIVE REWARDS */}
+                {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
                 <div className="mt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {rewards.filter(r => !r.is_template).map((reward) => {
                     const assignedName = children.find(c => c.id === reward.child_id)?.name;
                     return (
-                      <div key={reward.id} className="bg-white border dashboard-card border-gray-100 p-4 rounded-2xl flex flex-col gap-3">
+                      <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 items-center">
                             <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
                               <FaGift />
                             </div>
                             <div>
-                              <h3 className="font-bold text-slate-900 text-sm">
+                              <Typography variant="h3" className="font-bold text-stone-900 text-sm">
                                 {reward.title}
                                 {!reward.is_available && reward.limit_type === 'one_time' && (
                                   <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
                                     CLAIMED
                                   </span>
                                 )}
-                              </h3>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Available for: <span className="font-bold text-slate-700">{assignedName || 'None'}</span>
+                              </Typography>
+                              <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
+                                Available for: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
                                 <span className="mx-2">•</span>
-                                Limit: <span className="font-bold text-slate-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
-                              </p>
+                                Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                              </Typography>
                             </div>
                           </div>
 
@@ -1897,7 +1883,7 @@ export default function ParentDashboard({
                           </div>
                         </div>
 
-                        <div className="flex justify-end items-center border-t border-gray-50 pt-3 mt-1">
+                        <div className="flex justify-end items-center border-t border-stone-50 pt-3 mt-1">
                           <div className="flex gap-2">
                             <Tooltip content="Edit Assigned Token" position="top">
                               <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
@@ -1905,7 +1891,7 @@ export default function ParentDashboard({
                               </Button>
                             </Tooltip>
                             <Tooltip content="Delete Assigned Token" position="top">
-                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-gray-400 hover:text-rose-500 hover:bg-rose-50">
+                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </Tooltip>
@@ -1919,13 +1905,13 @@ export default function ParentDashboard({
                 )}
 
                 {/* History Log */}
-                <div className="pt-8 border-t border-slate-800">
-                  <h3 className={`font-bold font-mono text-sm text-stone-900 uppercase pb-4`}>
+                <div className="pt-8 border-t border-stone-800">
+                  <Typography variant="h3" className={`font-bold font-sans text-sm text-stone-900 uppercase pb-4`}>
                     <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
-                  </h3>
+                  </Typography>
                   <div className="space-y-3">
                     {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
-                      <p className={`text-xs ${styles.textMuted}`}>No rewards have been dispensed yet.</p>
+                      <Typography variant="body" className={`text-xs ${styles.textMuted}`}>No rewards have been dispensed yet.</Typography>
                     ) : (
                       redemptions
                         .filter(r => r.status === 'delivered')
@@ -1939,9 +1925,9 @@ export default function ParentDashboard({
                             <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 border-stone-200 ${styles.textColor}`}>
                               <div>
                                 <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900'}>{reward?.title}</strong>
-                                <p className={`text-[10px] font-mono mt-1 ${styles.textMuted}`}>
+                                <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
                                   {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                                </p>
+                                </Typography>
                               </div>
                               {isOneTimeUsed && (
                                 <Button
@@ -2021,16 +2007,16 @@ export default function ParentDashboard({
               <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-50 shadow-sm">
                 <MinusCircle className="w-8 h-8" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-2 font-display uppercase tracking-wide">
+              <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-2 font-display uppercase tracking-wide">
                 Take Coins
-              </h2>
-              <p className="text-center text-sm text-stone-500 mb-6">
+              </Typography>
+              <Typography variant="body" className="text-center text-sm text-stone-500 mb-6">
                 Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
-              </p>
+              </Typography>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
+                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
                   <div className="relative">
                     <input
                       type="number"
@@ -2044,7 +2030,7 @@ export default function ParentDashboard({
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold font-mono text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
+                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
                   <select
                     value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
                     onChange={(e) => {
@@ -2123,12 +2109,12 @@ export default function ParentDashboard({
                     <RotateCcw className="w-8 h-8" />
                   </div>
                 </div>
-                <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
+                <Typography variant="h3" className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
                   Reset {resetConfirmation.type}?
-                </h3>
-                <p className={`text-center text-sm font-mono mb-6 text-stone-600`}>
+                </Typography>
+                <Typography variant="body" className={`text-center text-sm font-sans mb-6 text-stone-600`}>
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
-                </p>
+                </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
@@ -2175,15 +2161,15 @@ export default function ParentDashboard({
                     <Trash2 className="w-8 h-8" />
                   </div>
                 </div>
-                <h3 className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
+                <Typography variant="h3" className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
                   Delete {deleteChildConfirmation.childName}?
-                </h3>
-                <p className="text-center text-sm font-mono mb-2 text-stone-600">
+                </Typography>
+                <Typography variant="body" className="text-center text-sm font-sans mb-2 text-stone-600">
                   This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
-                </p>
-                <p className="text-center text-xs font-mono mb-6 text-rose-500 font-bold">
+                </Typography>
+                <Typography variant="body" className="text-center text-xs font-sans mb-6 text-rose-500 font-bold">
                   ⚠️ This action cannot be undone.
-                </p>
+                </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
@@ -2210,42 +2196,18 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
-          {[
-            { id: 'approvals', label: 'Approvals', icon: CheckSquare, badge: totalPending },
+        <BottomTabBar
+          tabs={[
+            { id: 'home', label: 'Home', icon: Home, badge: totalPending },
             { id: 'children', label: 'Children', icon: Users },
-            { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-            { id: 'rewards', label: 'Rewards', icon: Trophy },
+            { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+            { id: 'rewards', label: 'Rewards', icon: Gift },
             { id: 'targets', label: 'Targets', icon: Target }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isSelected = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                  isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                {isSelected && (
-                  <motion.div
-                    layoutId="parent-nav-pill"
-                    className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />
-                <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>{tab.label}</span>
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="absolute top-1 right-1 bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-20">
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
+          layoutId="parent-nav-pill"
+        />
       </div>
       {/* Generate Quests Modal */}
       <AnimatePresence>
@@ -2256,33 +2218,33 @@ export default function ParentDashboard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGenerateTasksModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   {generatedTasksToPreview ? "Select Quests to Keep" : "Generate Quests"}
-                </h2>
+                </Typography>
                 
                 {!generatedTasksToPreview ? (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</p>
+                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</Typography>
                     
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
                         <select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2291,16 +2253,16 @@ export default function ParentDashboard({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
-                            <button
+                            <Button variant="none" size="none"
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                             >
                               {num}
-                            </button>
+                            </Button>
                           ))}
                         </div>
                       </div>
@@ -2317,24 +2279,24 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</p>
+                    <Typography variant="body" className="text-stone-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</Typography>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedTasksToPreview.map(task => {
                         const isEditing = editingPreviewId === task.id;
                         return (
-                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <input 
                                   type="text" 
-                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
                                   value={previewEditTitle} 
                                   onChange={(e) => setPreviewEditTitle(e.target.value)} 
                                 />
                                 <div className="flex gap-2">
                                   <input 
                                     type="number" 
-                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-indigo-500" 
+                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
                                     value={previewEditPoints} 
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
                                   />
@@ -2350,7 +2312,7 @@ export default function ParentDashboard({
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
                                   <input 
                                     type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-stone-300 focus:ring-indigo-500"
                                     checked={selectedTaskIdsForImport.includes(task.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2361,13 +2323,13 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <p className="font-bold text-slate-900 text-sm">{task.title}</p>
-                                    <p className="text-xs text-slate-500">{task.points} pts • {task.recurrence}</p>
+                                    <Typography variant="body" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500">{task.points} pts • {task.recurrence}</Typography>
                                   </div>
                                 </label>
-                                <button 
+                                <Button variant="none" size="none" 
                                   type="button"
-                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(task.title);
@@ -2376,7 +2338,7 @@ export default function ParentDashboard({
                                   }}
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -2408,33 +2370,33 @@ export default function ParentDashboard({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGenerateRewardsModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
                   <Gift className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   {generatedRewardsToPreview ? "Select Prizes to Keep" : "Generate Prizes"}
-                </h2>
+                </Typography>
                 
                 {!generatedRewardsToPreview ? (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</p>
+                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</Typography>
                     
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
                         <select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2443,16 +2405,16 @@ export default function ParentDashboard({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
-                            <button
+                            <Button variant="none" size="none"
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                             >
                               {num}
-                            </button>
+                            </Button>
                           ))}
                         </div>
                       </div>
@@ -2469,24 +2431,24 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <p className="text-slate-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</p>
+                    <Typography variant="body" className="text-stone-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</Typography>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedRewardsToPreview.map(reward => {
                         const isEditing = editingPreviewId === reward.id;
                         return (
-                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-slate-200 bg-slate-50'} transition-colors`}>
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <input 
                                   type="text" 
-                                  className="w-full p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
                                   value={previewEditTitle} 
                                   onChange={(e) => setPreviewEditTitle(e.target.value)} 
                                 />
                                 <div className="flex gap-2">
                                   <input 
                                     type="number" 
-                                    className="w-24 p-2 text-sm border border-slate-300 rounded focus:outline-none focus:border-amber-500" 
+                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
                                     value={previewEditPoints} 
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
                                   />
@@ -2502,7 +2464,7 @@ export default function ParentDashboard({
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
                                   <input 
                                     type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-gray-300 focus:ring-amber-500"
+                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-stone-300 focus:ring-amber-500"
                                     checked={selectedRewardIdsForImport.includes(reward.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2513,13 +2475,13 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <p className="font-bold text-slate-900 text-sm">{reward.title}</p>
-                                    <p className="text-xs text-slate-500">{reward.cost_points} pts • {reward.limit_type}</p>
+                                    <Typography variant="body" className="font-bold text-stone-900 text-sm">{reward.title}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500">{reward.cost_points} pts • {reward.limit_type}</Typography>
                                   </div>
                                 </label>
-                                <button 
+                                <Button variant="none" size="none" 
                                   type="button"
-                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(reward.title);
@@ -2528,7 +2490,7 @@ export default function ParentDashboard({
                                   }}
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -2565,7 +2527,7 @@ export default function ParentDashboard({
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               className={`bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
             >
-              <button 
+              <Button variant="none" size="none" 
                 onClick={() => {
                   if (historyDetailView) setHistoryDetailView(null);
                   else setShowHistoryForChild(null);
@@ -2573,7 +2535,7 @@ export default function ParentDashboard({
                 className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 p-2 rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
               
               {(() => {
                 const child = children.find(c => c.id === showHistoryForChild);
@@ -2590,24 +2552,24 @@ export default function ParentDashboard({
                   return (
                     <div className="flex flex-col h-full max-h-[80vh]">
                       <div className="flex items-center gap-3 mb-6">
-                        <button onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 transition-colors">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 transition-colors">
                           <RotateCcw className="w-5 h-5" />
-                        </button>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-display uppercase tracking-wide">
+                        </Button>
+                        <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 font-display uppercase tracking-wide">
                           {historyDetailView === 'tasks' ? 'Tasks Completed' : historyDetailView === 'deductions' ? 'Deductions' : 'Rewards Claimed'}
-                        </h2>
+                        </Typography>
                       </div>
                       
                       <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
                         {historyDetailView === 'tasks' && (
-                          approvedTasks.length === 0 ? <p className="text-stone-500 text-center py-8">No tasks completed yet.</p> :
+                          approvedTasks.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No tasks completed yet.</Typography> :
                           [...approvedTasks].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
                             const task = tasks.find(t => t.id === c.task_id);
                             return (
                               <div key={c.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
                                 <div>
-                                  <p className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</p>
-                                  <p className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</p>
+                                  <Typography variant="body" className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
                                 </div>
                                 <span className="text-emerald-600 font-bold">+{c.points_awarded}</span>
                               </div>
@@ -2619,8 +2581,8 @@ export default function ParentDashboard({
                             {[...penaltyCompletionsList].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => (
                               <div key={c.id} className="p-3 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
                                 <div>
-                                  <p className="font-bold text-rose-800">{c.notes || 'Penalty'}</p>
-                                  <p className="text-xs text-rose-500">{new Date(c.completed_at).toLocaleDateString()}</p>
+                                  <Typography variant="body" className="font-bold text-rose-800">{c.notes || 'Penalty'}</Typography>
+                                  <Typography variant="body" className="text-xs text-rose-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
                                 </div>
                                 <span className="text-rose-600 font-bold">{c.points_awarded}</span>
                               </div>
@@ -2628,7 +2590,7 @@ export default function ParentDashboard({
                             {(child.manual_deductions || 0) > 0 && (
                               <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
                                 <div>
-                                  <p className="font-bold text-stone-800">Quick Adjustments (Manual)</p>
+                                  <Typography variant="body" className="font-bold text-stone-800">Quick Adjustments (Manual)</Typography>
                                 </div>
                                 <span className="text-stone-600 font-bold">{child.manual_deductions} times</span>
                               </div>
@@ -2636,23 +2598,23 @@ export default function ParentDashboard({
                             {(child.gold_pot_total_leaked || 0) > 0 && (
                               <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
                                 <div>
-                                  <p className="font-bold text-stone-800">Gold Pot Leaks</p>
+                                  <Typography variant="body" className="font-bold text-stone-800">Gold Pot Leaks</Typography>
                                 </div>
                                 <span className="text-stone-600 font-bold">{child.gold_pot_total_leaked} coins</span>
                               </div>
                             )}
-                            {coinsTakenOff === 0 && <p className="text-stone-500 text-center py-8">No deductions recorded.</p>}
+                            {coinsTakenOff === 0 && <Typography variant="body" className="text-stone-500 text-center py-8">No deductions recorded.</Typography>}
                           </>
                         )}
                         {historyDetailView === 'rewards' && (
-                          claimedRewardsList.length === 0 ? <p className="text-stone-500 text-center py-8">No rewards claimed yet.</p> :
+                          claimedRewardsList.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No rewards claimed yet.</Typography> :
                           [...claimedRewardsList].sort((a,b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
                             const reward = rewards.find(rw => rw.id === r.reward_id);
                             return (
                               <div key={r.id} className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex justify-between items-center">
                                 <div>
-                                  <p className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</p>
-                                  <p className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</p>
+                                  <Typography variant="body" className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</Typography>
+                                  <Typography variant="body" className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</Typography>
                                 </div>
                                 <span className="text-indigo-600 font-bold">-{r.payment_source === 'badge_freebie' ? 0 : (reward?.cost_points || 0)}</span>
                               </div>
@@ -2666,10 +2628,10 @@ export default function ParentDashboard({
 
                 return (
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-black text-center text-slate-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
+                    <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
                       <ScrollText className="w-6 h-6 text-indigo-500" />
                       {child.name}'s History
-                    </h2>
+                    </Typography>
                     
                     <div className="space-y-4">
                       <div className="flex justify-between items-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
@@ -2689,21 +2651,21 @@ export default function ParentDashboard({
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
-                        <button onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center hover:bg-emerald-100 transition-colors cursor-pointer w-full">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center hover:bg-emerald-100 transition-colors cursor-pointer w-full">
                           <CheckSquare className="w-5 h-5 text-emerald-500 mb-2" />
                           <span className="text-lg font-black text-emerald-700">{tasksDone}</span>
                           <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1 leading-tight">Tasks<br/>Done</span>
-                        </button>
-                        <button onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center hover:bg-indigo-100 transition-colors cursor-pointer w-full">
+                        </Button>
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center hover:bg-indigo-100 transition-colors cursor-pointer w-full">
                           <Gift className="w-5 h-5 text-indigo-500 mb-2" />
                           <span className="text-lg font-black text-indigo-700">{rewardsClaimed}</span>
                           <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-1 leading-tight">Rewards<br/>Claimed</span>
-                        </button>
-                        <button onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center justify-center text-center hover:bg-rose-100 transition-colors cursor-pointer w-full">
+                        </Button>
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center justify-center text-center hover:bg-rose-100 transition-colors cursor-pointer w-full">
                           <MinusCircle className="w-5 h-5 text-rose-500 mb-2" />
                           <span className="text-lg font-black text-rose-700">{coinsTakenOff}</span>
                           <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest mt-1 leading-tight">Times<br/>Deducted</span>
-                        </button>
+                        </Button>
                       </div>
 
                       <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 space-y-2">

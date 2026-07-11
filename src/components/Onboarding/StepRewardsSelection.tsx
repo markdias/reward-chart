@@ -34,12 +34,14 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl space-y-4 flex flex-col h-[85vh] overflow-hidden relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-xl space-y-4 flex flex-col h-[85vh] overflow-hidden relative z-10`}>
         <div className="text-center space-y-2 shrink-0">
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Rewards</h2>
+          <Typography variant="h2" className={styles.titleColor}>Pick Starting Rewards</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Select some common rewards to add to your children's dashboard right away. You can add more later!</p>
           <div className="flex justify-end pt-1">
-            <button
+            <Button
+              variant="none"
+              size="none"
               onClick={() => {
                 if (selectedIds.length === PREMADE_REWARDS.length) {
                   setSelectedIds([]);
@@ -50,7 +52,7 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
               className={`text-xs font-bold transition-colors underline ${selectedIds.length === PREMADE_REWARDS.length ? 'text-stone-500 hover:text-stone-700' : 'text-amber-600 hover:text-amber-700'}`}
             >
               {selectedIds.length === PREMADE_REWARDS.length ? 'Deselect All' : 'Select All'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -60,7 +62,9 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
             const Icon = (Icons as any)[reward.icon_name] || Icons.Star;
             
             return (
-              <button
+              <Button
+                variant="none"
+                size="none"
                 key={reward.id}
                 onClick={() => toggleReward(reward.id as string)}
                 className={`w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between gap-3 ${
@@ -85,7 +89,7 @@ export default function StepRewardsSelection({ theme, initialSelectedRewardIds, 
                 }`}>
                   {isSelected && <Check className="w-4 h-4 text-white" />}
                 </div>
-              </button>
+              </Button>
             )
           })}
         </div>

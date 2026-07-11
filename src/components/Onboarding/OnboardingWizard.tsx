@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ThemeId, THEME_PRESETS } from '../../utils/theme';
 
 import LandingPage from '../LandingPage'; // Using this as the welcome step
+import StepRoleSelection from './StepRoleSelection';
 import StepChildrenSetup from './StepChildrenSetup';
 import StepTasksSelection from './StepTasksSelection';
 import StepRewardsSelection from './StepRewardsSelection';
@@ -17,6 +18,7 @@ interface OnboardingWizardProps {
   theme: ThemeId;
   onComplete: (data: OnboardingData) => void;
   onLoginInstead: () => void;
+  onJoinCodeInstead?: () => void;
   initialStep?: WizardStep;
   initialData?: Partial<OnboardingData>;
   skipAccountStep?: boolean;
@@ -32,9 +34,17 @@ export interface OnboardingData {
   email?: string;
 }
 
-type WizardStep = 'welcome' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'account';
+export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'account';
 
-export default function OnboardingWizard({ theme, onComplete, onLoginInstead, initialStep, initialData, skipAccountStep }: OnboardingWizardProps) {
+export default function OnboardingWizard({ 
+  theme, 
+  onComplete, 
+  onLoginInstead, 
+  onJoinCodeInstead,
+  initialStep = 'welcome', 
+  initialData, 
+  skipAccountStep = false 
+}: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(initialStep || 'welcome');
   const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(initialStep === 'children' ? 'parent' : null);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -47,7 +57,11 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
     ...initialData
   });
 
-  const handleWelcomeComplete = (role: 'parent' | 'child') => {
+  const handleWelcomeComplete = () => {
+    setStep('role');
+  };
+
+  const handleRoleSelectionComplete = (role: 'parent' | 'child') => {
     setStartedBy(role);
     setStep('children');
   };
@@ -106,6 +120,16 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
             onEnterArcade={handleWelcomeComplete} 
             theme={theme} 
             onSignIn={onLoginInstead}
+            onJoinCode={onJoinCodeInstead}
+          />
+        );
+      case 'role':
+        return (
+          <StepRoleSelection
+            theme={theme}
+            onSelectRole={handleRoleSelectionComplete}
+            onJoinCode={onJoinCodeInstead}
+            onBack={() => setStep('welcome')}
           />
         );
       case 'children':
@@ -178,7 +202,7 @@ export default function OnboardingWizard({ theme, onComplete, onLoginInstead, in
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
-        className="w-full h-full min-h-screen bg-white text-slate-900"
+        className="w-full h-full min-h-screen bg-white text-stone-900"
       >
         {renderStep()}
       </motion.div>

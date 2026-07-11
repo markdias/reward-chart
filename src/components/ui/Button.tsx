@@ -13,7 +13,7 @@ export type ButtonVariant =
   | 'outline'
   | 'none';
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'none';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'none';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -85,23 +85,28 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     let sizeClasses = '';
     switch (size) {
       case 'sm':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-xs px-4 py-2 rounded-xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-xs px-4 py-2 rounded-xl';
         break;
       case 'md':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-sm px-6 py-3 rounded-2xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-sm px-6 py-3 rounded-2xl';
         break;
       case 'lg':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-lg px-8 py-4 rounded-3xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-lg px-8 py-4 rounded-3xl';
         break;
       case 'icon':
-        sizeClasses = 'p-2 rounded-xl';
+        sizeClasses = 'p-3 rounded-xl touch-target';
+        break;
+      case 'icon-sm':
+        sizeClasses = 'p-2 rounded-lg touch-target';
         break;
       case 'none':
         sizeClasses = '';
         break;
     }
 
-    const widthClass = fullWidth ? 'w-full flex justify-center' : 'inline-flex justify-center';
+    const widthClass = fullWidth 
+      ? `w-full flex ${variant !== 'none' ? 'justify-center' : ''}`
+      : (variant !== 'none' ? 'inline-flex justify-center' : '');
     const disabledClass = disabled || isLoading ? 'opacity-70 cursor-not-allowed pointer-events-none' : '';
 
     const combinedClasses = [
@@ -111,7 +116,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       widthClass,
       disabledClass,
       baseClasses,
-      'items-center gap-2 uppercase tracking-wider',
+      variant !== 'none' ? 'items-center gap-2 uppercase tracking-wider' : 'items-center',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-500',
       className
     ].filter(Boolean).join(' ');
