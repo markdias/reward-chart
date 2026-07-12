@@ -7,6 +7,8 @@ import { ThemeId } from '../utils/theme';
 import { getSupabaseClient } from '../utils/supabase';
 import { hashPassword } from '../utils/security';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface LockScreenProps {
   parentEmail: string | null;
@@ -91,7 +93,7 @@ export default function LockScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 p-4 backdrop-blur-sm"
       id="lock-screen-container"
     >
 
@@ -124,7 +126,7 @@ export default function LockScreen({
         {/* Password Entry Form */}
         <form onSubmit={handleVerify} className="p-8 flex flex-col items-center w-full">
           <div className="w-full max-w-sm mb-6 relative">
-            <input
+            <Input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {
@@ -132,7 +134,6 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="Enter Password"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-stone-200 bg-stone-50 text-stone-900 text-center text-sm shadow-sm focus:ring-2 focus:ring-stone-900/20 outline-none transition-all placeholder:text-stone-400"
               autoFocus
             />
             <Button
@@ -171,7 +172,7 @@ export default function LockScreen({
               Cancel
             </Button>
             <Button
-              variant="primary"
+              variant="dark"
               fullWidth
               className="flex-1"
               type="submit"

@@ -7,6 +7,7 @@ import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
 import { Button } from './ui/Button';
+import { SettingsBlock, SettingsRow } from './ui/SettingsList';
 
 interface TargetsTabProps {
   theme: ThemeId;
@@ -118,167 +119,107 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
   };
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 ${c.text}`}>
+    <div className={`max-w-4xl mx-auto space-y-6 pb-20`}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full px-4 sm:px-8"
       >
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-4 bg-indigo-50 text-indigo-500 rounded-[1.25rem] shadow-sm border border-indigo-100 shrink-0">
-            <Target className="w-6 h-6 sm:w-8 sm:h-8" />
-          </div>
-          <div>
-            <h3 className={`text-xl sm:text-2xl font-black font-display tracking-tight text-stone-800`}>Global Rewards & Targets</h3>
-            <p className={`text-xs sm:text-sm font-semibold text-stone-500 mt-0.5`}>Set global milestones for the family.</p>
-          </div>
-        </div>
-        
-        <div className="space-y-6 max-w-md">
-          <div className="space-y-5">
-            <div>
-              <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Daily Target (Gold)</label>
-              <input 
-                type="number" 
-                value={dailyPointsTarget}
-                onChange={(e) => setDailyPointsTarget(Number(e.target.value))}
-                className={`w-full ${c.input}`} 
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Weekly Target (Gold)</label>
-                <input 
-                  type="number" 
-                  value={weeklyPointsTarget}
-                  onChange={(e) => setWeeklyPointsTarget(Number(e.target.value))}
-                  className={`w-full ${c.input}`} 
-                />
-              </div>
-              <div>
-                <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Weekly Gold Bonus</label>
-                <input 
-                  type="number" 
-                  value={weeklyRewardPoints}
-                  onChange={(e) => setWeeklyRewardPoints(Number(e.target.value))}
-                  className={`w-full ${c.input}`} 
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Monthly Target (Gold)</label>
-                <input 
-                  type="number" 
-                  value={monthlyPointsTarget}
-                  onChange={(e) => setMonthlyPointsTarget(Number(e.target.value))}
-                  className={`w-full ${c.input}`} 
-                />
-              </div>
-              <div>
-                <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Monthly Gold Bonus</label>
-                <input 
-                  type="number" 
-                  value={monthlyRewardPoints}
-                  onChange={(e) => setMonthlyRewardPoints(Number(e.target.value))}
-                  className={`w-full ${c.input}`} 
-                />
-              </div>
-            </div>
-          </div>
+        <div className="bg-stone-100 p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 shadow-sm relative overflow-hidden">
           
-          <div className="pt-8 border-t border-stone-100 mt-8">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="p-4 bg-emerald-50 text-emerald-500 rounded-[1.25rem] shadow-sm border border-emerald-100 shrink-0">
-                <Database className="w-6 h-6 sm:w-8 sm:h-8" />
-              </div>
-              <div>
-                <h3 className={`text-xl sm:text-2xl font-black font-display tracking-tight text-stone-800`}>Levels & Pots Configuration</h3>
-                <p className={`text-xs sm:text-sm font-semibold text-stone-500 mt-0.5`}>Set unlock levels for different features.</p>
-              </div>
-            </div>
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 ${c.textMuted}`}>Gold Required to Level Up</label>
-                  <input 
-                    type="number" 
-                    value={pointsToLevelUp}
-                    onChange={(e) => setPointsToLevelUp(Number(e.target.value))}
-                    className={`w-full ${c.input}`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-indigo-500`}>Level Up Gold Reward</label>
-                  <input 
-                    type="number" 
-                    value={levelUpGoldReward}
-                    onChange={(e) => setLevelUpGoldReward(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-indigo-200 text-stone-700 bg-indigo-50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-emerald-500`}>Savings Pot Lvl</label>
-                  <input 
-                    type="number" 
-                    value={savingsPotUnlockLevel}
-                    onChange={(e) => setSavingsPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-emerald-200 text-stone-700 bg-emerald-50 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-orange-500`}>Food Pot Lvl</label>
-                  <input 
-                    type="number" 
-                    value={foodPotUnlockLevel}
-                    onChange={(e) => setFoodPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-orange-200 text-stone-700 bg-orange-50 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-rose-500`}>Gifting Pot Lvl</label>
-                  <input 
-                    type="number" 
-                    value={giftingPotUnlockLevel}
-                    onChange={(e) => setGiftingPotUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-rose-200 text-stone-700 bg-rose-50 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-amber-500`}>Gold Maintenance Lvl</label>
-                  <input 
-                    type="number" 
-                    value={goldPotMaintenanceUnlockLevel}
-                    onChange={(e) => setGoldPotMaintenanceUnlockLevel(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-stone-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
-                <div>
-                  <label className={`block text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 text-amber-500`}>Gold Maintenance Cost</label>
-                  <input 
-                    type="number" 
-                    value={goldPotMaintenanceCost}
-                    onChange={(e) => setGoldPotMaintenanceCost(Number(e.target.value))}
-                    className={`w-full px-4 py-3 rounded-2xl border-2 border-amber-200 text-stone-700 bg-amber-50 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 font-bold outline-none transition-all`} 
-                  />
-                </div>
+          <SettingsBlock title="Global Rewards & Targets">
+            <SettingsRow 
+              label="Daily Target (Gold)" 
+              value={dailyPointsTarget} 
+              type="number" 
+              onChange={(v: string) => setDailyPointsTarget(Number(v))} 
+            />
+            <SettingsRow 
+              label="Weekly Target (Gold)" 
+              value={weeklyPointsTarget} 
+              type="number" 
+              onChange={(v: string) => setWeeklyPointsTarget(Number(v))} 
+            />
+            <SettingsRow 
+              label="Weekly Gold Bonus" 
+              value={weeklyRewardPoints} 
+              type="number" 
+              onChange={(v: string) => setWeeklyRewardPoints(Number(v))} 
+            />
+            <SettingsRow 
+              label="Monthly Target (Gold)" 
+              value={monthlyPointsTarget} 
+              type="number" 
+              onChange={(v: string) => setMonthlyPointsTarget(Number(v))} 
+            />
+            <SettingsRow 
+              label="Monthly Gold Bonus" 
+              value={monthlyRewardPoints} 
+              type="number" 
+              isLast 
+              onChange={(v: string) => setMonthlyRewardPoints(Number(v))} 
+            />
+          </SettingsBlock>
 
-              </div>
-            </div>
+          <SettingsBlock title="Levels & Pots">
+            <SettingsRow 
+              label="Gold Required to Level Up" 
+              value={pointsToLevelUp} 
+              type="number" 
+              onChange={(v: string) => setPointsToLevelUp(Number(v))} 
+            />
+            <SettingsRow 
+              label="Level Up Gold Reward" 
+              value={levelUpGoldReward} 
+              type="number" 
+              onChange={(v: string) => setLevelUpGoldReward(Number(v))} 
+            />
+            <SettingsRow 
+              label="Savings Pot Level" 
+              value={savingsPotUnlockLevel} 
+              type="number" 
+              onChange={(v: string) => setSavingsPotUnlockLevel(Number(v))} 
+            />
+            <SettingsRow 
+              label="Food Pot Level" 
+              value={foodPotUnlockLevel} 
+              type="number" 
+              onChange={(v: string) => setFoodPotUnlockLevel(Number(v))} 
+            />
+            <SettingsRow 
+              label="Gifting Pot Level" 
+              value={giftingPotUnlockLevel} 
+              type="number" 
+              onChange={(v: string) => setGiftingPotUnlockLevel(Number(v))} 
+            />
+            <SettingsRow 
+              label="Gold Maintenance Level" 
+              value={goldPotMaintenanceUnlockLevel} 
+              type="number" 
+              onChange={(v: string) => setGoldPotMaintenanceUnlockLevel(Number(v))} 
+            />
+            <SettingsRow 
+              label="Maintenance Cost" 
+              value={goldPotMaintenanceCost} 
+              type="number" 
+              isLast 
+              onChange={(v: string) => setGoldPotMaintenanceCost(Number(v))} 
+            />
+          </SettingsBlock>
+
+          <div className="max-w-md mx-auto mt-8">
+            <Button 
+              variant="primary"
+              fullWidth
+              onClick={handleSave}
+              isLoading={isSaving}
+              leftIcon={<Save className="w-5 h-5" />}
+              className="py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
+            >
+              SAVE SETTINGS
+            </Button>
+            {msg && <p className={`text-sm font-bold mt-4 text-center ${msg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{msg}</p>}
           </div>
-          <Button 
-            variant="primary"
-            fullWidth
-            onClick={handleSave}
-            isLoading={isSaving}
-            leftIcon={<Save className="w-5 h-5" />}
-            className="mt-8 py-4 sm:py-6 text-sm sm:text-base font-black tracking-widest rounded-2xl shadow-xl shadow-blue-500/20"
-          >
-            SAVE SETTINGS
-          </Button>
-          {msg && <p className={`text-sm font-bold mt-4 text-center ${msg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{msg}</p>}
+
         </div>
       </motion.div>
     </div>

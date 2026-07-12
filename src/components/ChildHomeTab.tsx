@@ -2,13 +2,15 @@ import React from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
-import { getLogicalDateString } from '../utils/date';
+import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
+import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
+import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -112,37 +114,45 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {/* Top Cards: Daily Goal and Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Daily Goal Card */}
-        <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-cyan-300">
-          <div className="w-16 h-16 shrink-0 flex items-center justify-center">
-            <div className="transform scale-[1.35]">
-              <CoinBadge points={pointsEarnedToday} />
+        <div 
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden hover:-translate-y-1"
+          style={{ background: 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' }}
+        >
+          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+              <div className="transform scale-[1.25] sm:scale-[1.35]">
+                <CoinBadge points={pointsEarnedToday} />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <Typography variant="h2">Daily Goal</Typography>
-            <p className="text-xs text-stone-500 mt-0.5">
-              {pointsRemaining > 0 
-                ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
-                : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
-              }
-            </p>
+            
+            <div>
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Daily Goal</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+                {pointsRemaining > 0 
+                  ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
+                  : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
+                }
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Check Badges Card */}
         <button 
           onClick={onOpenBadges}
-          className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-amber-300 cursor-pointer text-left group"
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full"
+          style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
         >
-          <div className="w-16 h-16 shrink-0 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Trophy className="w-8 h-8 text-amber-500" fill="currentColor" />
-          </div>
-          <div>
-            <Typography variant="h2">Check Badges</Typography>
-            <p className="text-xs text-stone-500 mt-0.5">
-              View your achievements and claim your free rewards!
-            </p>
+          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
+            </div>
+            <div>
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Check Badges</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+                View your achievements and claim your free rewards!
+              </p>
+            </div>
           </div>
         </button>
       </div>
@@ -164,6 +174,146 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Routine Section */}
+      {(() => {
+        if (!activeChild.routines) return null;
+
+        const dayOfWeek = new Date().getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
+        
+        if (activeChild.holiday_mode && !isWeekend) {
+          activeRoutineId = 'holiday';
+        }
+
+        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
+        
+        // Fallback for unmigrated data
+        if (!activeRoutine && activeChild.active_routine_id) {
+          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
+        }
+
+        if (!activeRoutine) return null;
+
+        let globalTaskIndex = 1;
+
+        const renderPeriod = (title: string, taskIds: string[]) => {
+          const routineTasks = taskIds
+            .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
+            .filter((t): t is Task => t !== undefined);
+
+          if (routineTasks.length === 0) return null;
+
+          return (
+            <div className="mb-6 space-y-2">
+              <Typography variant="h4" className="text-sm font-bold text-stone-600 px-1 uppercase tracking-widest">{title}</Typography>
+              <div className="space-y-2">
+                {routineTasks.map((task) => {
+                  const currentTaskIndex = globalTaskIndex++;
+                  const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
+                  let compl = null;
+                  if (task.recurrence === 'daily') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
+                  } else if (task.recurrence === 'weekly') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                  } else if (task.recurrence === 'one_time') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                  }
+
+                  const isPending = compl && compl.status === 'pending';
+                  const isApproved = compl && compl.status === 'approved';
+
+                  let isOnCooldown = false;
+                  let cooldownTimeLeftStr = '';
+                  if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                    const taskComps = completions
+                      .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                      .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+                    
+                    if (taskComps.length > 0) {
+                      const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                      const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                      if (msSince < cooldownMs) {
+                        isOnCooldown = true;
+                        const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                        cooldownTimeLeftStr = `${minsLeft}m`;
+                      }
+                    }
+                  }
+
+                  const isCompletable = !isApproved && !isPending && !isOnCooldown;
+                  let statusStr: ActivityStatus = 'pending';
+                  if (isApproved) statusStr = 'approved';
+                  else if (isPending) statusStr = 'pending';
+
+                  const cardContent = (
+                    <ActivityCard
+                      title={task.title}
+                      subtitle={isOnCooldown ? `Cooldown: ${cooldownTimeLeftStr}` : undefined}
+                      points={task.points}
+                      type="task"
+                      status={isApproved ? 'completed' : 'pending'}
+                      category={task.category}
+                      numberBadge={currentTaskIndex}
+                      actions={
+                        isCompletable ? (
+                          <div className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200">
+                            <span className="sr-only">Complete</span>
+                          </div>
+                        ) : isApproved ? (
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500 border-2 border-emerald-200">
+                            <FaCircleCheck className="w-4 h-4" />
+                          </div>
+                        ) : null
+                      }
+                    />
+                  );
+
+                  return isCompletable ? (
+                    <button
+                      key={task.id}
+                      onClick={() => handleTaskCheck(task.id, task.title)}
+                      className="w-full text-left group"
+                    >
+                      {cardContent}
+                    </button>
+                  ) : (
+                    <div key={task.id} className="opacity-60 grayscale pointer-events-none">
+                      {cardContent}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        };
+
+        const hasAnyTasks = activeRoutine.morningTaskIds?.length > 0 || activeRoutine.afternoonTaskIds?.length > 0 || activeRoutine.eveningTaskIds?.length > 0;
+        if (!hasAnyTasks) return null;
+
+        return (
+          <div className="space-y-4 pt-2">
+            <div 
+              className="relative p-[3px] rounded-2xl sm:rounded-3xl shadow-sm"
+              style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+            >
+              <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Complete your routine tasks to earn gold coins!</Typography>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Combined Activity Section */}
       <div className="space-y-4 pt-2">

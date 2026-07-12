@@ -1,4 +1,4 @@
-import { 
+import {
   FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
   FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
   FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
@@ -8,10 +8,26 @@ import {
 import React, { useState, useEffect } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus, 
-  Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus, 
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableTaskItem } from './ui/SortableTaskItem';
+import {
+  Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
+  Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -31,6 +47,8 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 import { BottomTabBar } from './ui/BottomTabBar';
 
 interface ParentDashboardProps {
@@ -68,7 +86,7 @@ interface ParentDashboardProps {
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onRequireAccount?: () => void;
-  onResetData?: (keepBlueprints: boolean) => void;
+  onResetData?: (keepTemplates: boolean) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onLogout?: () => void;
@@ -121,7 +139,7 @@ export default function ParentDashboard({
   isLoading = false
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
-  
+
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
@@ -131,26 +149,68 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
+  const [routineChildId, setRoutineChildId] = useState<string | null>(children[0]?.id || null);
+
+  useEffect(() => {
+    if (!routineChildId && children.length > 0) {
+      setRoutineChildId(children[0].id);
+    }
+  }, [children, routineChildId]);
+  const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
+  const [newRoutineName, setNewRoutineName] = useState('');
+
+
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
-  const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
-
+  const [expandedTaskTemplateId, setExpandedTaskTemplateId] = useState<string | null>(null);
+  const [expandedRewardTemplateId, setExpandedRewardTemplateId] = useState<string | null>(null);
+  const [expandedActiveTaskId, setExpandedActiveTaskId] = useState<string | null>(null);
+  const [expandedActiveRewardId, setExpandedActiveRewardId] = useState<string | null>(null);
 
 
   // Sort children alphabetically so they don't jump around
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
-  
+
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak'} | null>(null);
-  const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{childId: string, childName: string} | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' } | null>(null);
+  const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
+  const [adjustmentsModalChildId, setAdjustmentsModalChildId] = useState<string | null>(null);
+  
+  // Routine Edit State
+  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, childId: string, routineId: string, periodKey: 'morningTaskIds' | 'afternoonTaskIds' | 'eveningTaskIds') => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const child = children.find(c => c.id === childId);
+      if (!child) return;
+      const routines = [...(child.routines || [])];
+      const rIdx = routines.findIndex(r => r.id === routineId);
+      if (rIdx === -1) return;
+      
+      const periodTasks = routines[rIdx][periodKey] || [];
+      const oldIndex = periodTasks.indexOf(active.id as string);
+      const newIndex = periodTasks.indexOf(over.id as string);
+      
+      routines[rIdx][periodKey] = arrayMove(periodTasks, oldIndex, newIndex);
+      onEditChild(child.id, { routines });
+    }
+  };
   // Penalty Modal State
   const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
   const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
   const [penaltyReason, setPenaltyReason] = useState<string>('');
-  
+
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
   const [editingChildId, setEditingChildId] = useState<string | null>(null);
@@ -185,7 +245,7 @@ export default function ParentDashboard({
   const [editingPreviewId, setEditingPreviewId] = useState<string | null>(null);
   const [previewEditTitle, setPreviewEditTitle] = useState('');
   const [previewEditPoints, setPreviewEditPoints] = useState(0);
-  
+
   const [generatedTasksToPreview, setGeneratedTasksToPreview] = useState<any[] | null>(null);
   const [selectedTaskIdsForImport, setSelectedTaskIdsForImport] = useState<string[]>([]);
   const [generatedRewardsToPreview, setGeneratedRewardsToPreview] = useState<any[] | null>(null);
@@ -204,7 +264,7 @@ export default function ParentDashboard({
   const totalPending = pendingApprovals.length + pendingRedemptions.length + pendingGiftingRequests.length;
 
 
-  
+
   const approvedCompletionsCount = completions.filter(c => c.status === 'approved').length;
   const styles = THEME_PRESETS[theme];
 
@@ -233,24 +293,24 @@ export default function ParentDashboard({
     const t1 = title1.toLowerCase().replace(/[^a-z0-9 ]/g, '');
     const t2 = title2.toLowerCase().replace(/[^a-z0-9 ]/g, '');
     if (t1 === t2) return true;
-    
+
     // Check substring for longer titles
     if ((t1.includes(t2) && t2.length > 8) || (t2.includes(t1) && t1.length > 8)) return true;
-    
+
     const stopWords = new Set(['a', 'an', 'the', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'with', 'do', 'make', 'your', 'my', 'some', 'any', 'get', 'put', 'help']);
     const words1 = t1.split(' ').filter(w => w.length > 2 && !stopWords.has(w));
     const words2 = t2.split(' ').filter(w => w.length > 2 && !stopWords.has(w));
-    
+
     if (words1.length === 0 || words2.length === 0) return false;
 
     const matchCount = words1.filter(w => words2.includes(w)).length;
     if (matchCount === 0) return false;
-    
+
     const minLen = Math.min(words1.length, words2.length);
-    if (minLen === 1 && matchCount === 1) return true; 
-    
+    if (minLen === 1 && matchCount === 1) return true;
+
     if (minLen > 1 && matchCount / minLen > 0.5) return true;
-    
+
     return false;
   };
 
@@ -269,7 +329,7 @@ export default function ParentDashboard({
     if (generateAgeRange !== 'all') {
       pool = pool.filter(t => t.age_range === generateAgeRange || t.age_range === 'all');
     }
-    
+
     const available = pool.filter(template => {
       return !tasks.some(existing => isTitleSimilar(template.title, existing.title));
     });
@@ -286,14 +346,14 @@ export default function ParentDashboard({
 
     const tasksToPreview = picked.map(t => {
       const { age_range, ...rest } = t;
-      return { 
-        ...rest, 
+      return {
+        ...rest,
         id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         created_at: new Date().toISOString(),
         parent_id: parentProfile?.family_id || ''
       };
     });
-    
+
     setGeneratedTasksToPreview(tasksToPreview);
     setSelectedTaskIdsForImport(tasksToPreview.map(t => t.id));
   };
@@ -302,12 +362,12 @@ export default function ParentDashboard({
     if (!parentProfile?.family_id || !generatedTasksToPreview) return;
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    
+
     const tasksToInsert = generatedTasksToPreview.filter(t => selectedTaskIdsForImport.includes(t.id));
     if (tasksToInsert.length === 0) {
-        setGeneratedTasksToPreview(null);
-        setShowGenerateTasksModal(false);
-        return;
+      setGeneratedTasksToPreview(null);
+      setShowGenerateTasksModal(false);
+      return;
     }
 
     const { error } = await supabase.from('tasks').insert(tasksToInsert);
@@ -326,7 +386,7 @@ export default function ParentDashboard({
     if (generateAgeRange !== 'all') {
       pool = pool.filter(r => r.age_range === generateAgeRange || r.age_range === 'all');
     }
-    
+
     const available = pool.filter(template => {
       return !rewards.some(existing => isTitleSimilar(template.title, existing.title));
     });
@@ -343,14 +403,14 @@ export default function ParentDashboard({
 
     const rewardsToPreview = picked.map(r => {
       const { age_range, ...rest } = r;
-      return { 
-        ...rest, 
+      return {
+        ...rest,
         id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         created_at: new Date().toISOString(),
         parent_id: parentProfile?.family_id || ''
       };
     });
-    
+
     setGeneratedRewardsToPreview(rewardsToPreview);
     setSelectedRewardIdsForImport(rewardsToPreview.map(r => r.id));
   };
@@ -359,12 +419,12 @@ export default function ParentDashboard({
     if (!parentProfile?.family_id || !generatedRewardsToPreview) return;
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    
+
     const rewardsToInsert = generatedRewardsToPreview.filter(r => selectedRewardIdsForImport.includes(r.id));
     if (rewardsToInsert.length === 0) {
-        setGeneratedRewardsToPreview(null);
-        setShowGenerateRewardsModal(false);
-        return;
+      setGeneratedRewardsToPreview(null);
+      setShowGenerateRewardsModal(false);
+      return;
     }
 
     const { error } = await supabase.from('rewards').insert(rewardsToInsert);
@@ -382,7 +442,7 @@ export default function ParentDashboard({
     if (!parentProfile?.family_id) return;
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    
+
     const existingTitles = new Set(tasks.map(t => t.title.trim().toLowerCase()));
     const newPremadeTasks = PREMADE_TASKS.filter(t => !existingTitles.has(t.title.trim().toLowerCase()));
 
@@ -391,11 +451,11 @@ export default function ParentDashboard({
       return;
     }
 
-    const tasksToInsert = newPremadeTasks.map(t => ({ 
-      ...t, 
+    const tasksToInsert = newPremadeTasks.map(t => ({
+      ...t,
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
-      parent_id: parentProfile.family_id 
+      parent_id: parentProfile.family_id
     }));
     const { error } = await supabase.from('tasks').insert(tasksToInsert);
     if (error) {
@@ -410,7 +470,7 @@ export default function ParentDashboard({
     if (!parentProfile?.family_id) return;
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    
+
     const existingTitles = new Set(rewards.map(r => r.title.trim().toLowerCase()));
     const newPremadeRewards = PREMADE_REWARDS.filter(r => !existingTitles.has(r.title.trim().toLowerCase()));
 
@@ -419,11 +479,11 @@ export default function ParentDashboard({
       return;
     }
 
-    const rewardsToInsert = newPremadeRewards.map(r => ({ 
-      ...r, 
+    const rewardsToInsert = newPremadeRewards.map(r => ({
+      ...r,
       id: `reward_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString(),
-      parent_id: parentProfile.family_id 
+      parent_id: parentProfile.family_id
     }));
     const { error } = await supabase.from('rewards').insert(rewardsToInsert);
     if (error) {
@@ -438,12 +498,12 @@ export default function ParentDashboard({
     if (!parentProfile?.family_id) return;
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    
-    // Find duplicate task blueprints
+
+    // Find duplicate task templates
     const templateTasks = tasks.filter(t => t.is_template);
     const seenTaskTitles = new Set<string>();
     const duplicateTaskIds: string[] = [];
-    
+
     for (const t of templateTasks) {
       const titleLower = t.title.trim().toLowerCase();
       if (seenTaskTitles.has(titleLower)) {
@@ -453,11 +513,11 @@ export default function ParentDashboard({
       }
     }
 
-    // Find duplicate reward blueprints
+    // Find duplicate reward templates
     const templateRewards = rewards.filter(r => r.is_template !== false && r.child_id === 'directory');
     const seenRewardTitles = new Set<string>();
     const duplicateRewardIds: string[] = [];
-    
+
     for (const r of templateRewards) {
       const titleLower = r.title.trim().toLowerCase();
       if (seenRewardTitles.has(titleLower)) {
@@ -488,7 +548,7 @@ export default function ParentDashboard({
 
     if (deletedCount > 0) {
       playSound.success();
-      alert(`Successfully removed ${deletedCount} duplicate blueprints!`);
+      alert(`Successfully removed ${deletedCount} duplicate templates!`);
     }
   };
 
@@ -558,7 +618,7 @@ export default function ParentDashboard({
     setRewardTitle('');
     setRewardCost(50);
   };
-  
+
   // Edit Handlers
   const openEditChild = (child: Child) => {
     setEditingChildId(child.id);
@@ -595,7 +655,7 @@ export default function ParentDashboard({
     <div className={`min-h-screen bg-stone-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
 
 
-      <header 
+      <header
         className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
@@ -604,7 +664,7 @@ export default function ParentDashboard({
             <Tooltip content="Settings" position="bottom">
               <Button variant="none" size="none"
                 onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
               >
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
@@ -653,7 +713,7 @@ export default function ParentDashboard({
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-2 sm:mt-4 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
-        
+
         <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
@@ -670,14 +730,13 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
-                    isSelected 
-                      ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
-                      : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                    ? 'bg-stone-900 text-white shadow-md shadow-md scale-[1.02]'
+                    : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
+                    }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
                     {tab.label}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
@@ -697,10 +756,10 @@ export default function ParentDashboard({
         </aside>
 
         <main className="lg:col-span-9 min-h-[600px] z-10">
-          
+
 
           <AnimatePresence mode="wait">
-            
+
             {activeTab === 'home' && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -710,7 +769,7 @@ export default function ParentDashboard({
                 className="space-y-6 sm:space-y-8"
                 id="home-view"
               >
-                
+
                 {/* Smart Reminders */}
                 {childrenToNudge.length > 0 && (
                   <div className="space-y-3">
@@ -730,17 +789,17 @@ export default function ParentDashboard({
                                 <Typography variant="body" className="text-stone-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</Typography>
                               </div>
                             </div>
-                            <Button 
-                              variant={isNudged ? "secondary" : "primary"} 
-                              size="sm" 
+                            <Button
+                              variant={isNudged ? "secondary" : "primary"}
+                              size="sm"
                               className="shrink-0"
                               disabled={isNudged}
                               onClick={() => {
                                 setNudgedChildIds(prev => [...prev, child.id]);
                                 playSound.success();
-                                onEditChild(child.id, { 
-                                  has_pending_nudge: true, 
-                                  last_nudge_time: new Date().toISOString() 
+                                onEditChild(child.id, {
+                                  has_pending_nudge: true,
+                                  last_nudge_time: new Date().toISOString()
                                 });
                               }}
                             >
@@ -758,8 +817,8 @@ export default function ParentDashboard({
                   <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                     Needs Approval
                   </Typography>
-                  
-                  <ActivityFeed 
+
+                  <ActivityFeed
                     activities={[
                       ...pendingApprovals.map(appr => {
                         const child = children.find(c => c.id === appr.child_id);
@@ -830,7 +889,7 @@ export default function ParentDashboard({
                   <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
                     Recent Activity
                   </Typography>
-                  <ActivityFeed 
+                  <ActivityFeed
                     activities={[
                       ...completions.filter(c => c.status === 'approved').map(c => ({
                         id: c.id,
@@ -868,7 +927,7 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-end items-center">
                   <Button
-                    variant="dark"
+                    variant="primary"
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
                     id="add-child-btn-top"
                     leftIcon={<UserPlus className="w-4 h-4" />}
@@ -877,107 +936,14 @@ export default function ParentDashboard({
                   </Button>
                 </div>
 
-                {showAddChild && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4`}
-                    id="add-child-box"
-                  >
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
-                      {editingChildId ? <span><FaPen className="inline-block mr-2"/> Edit Child</span> : <span><FaBaby className="inline-block mr-2"/> Register Family Child</span>}
-                    </Typography>
-                    <form onSubmit={handleChildSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
-                          <input
-                            type="text"
-                            value={newChildName}
-                            onChange={(e) => setNewChildName(e.target.value)}
-                            placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
-                          <input
-                            type="number"
-                            value={newChildAge}
-                            onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                            placeholder="Age"
-                            min={1}
-                            max={18}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
-                          <select
-                            value={newChildChar}
-                            onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          >
-                            {CHARACTER_PACKS.map(char => (
-                              <option key={char.id} value={char.id}>
-                                {char.name} ({char.pack_name})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
-                        <div className="grid grid-cols-6 gap-2">
-                          {PRECANNED_AVATARS.map(url => (
-                            <Button variant="none" size="none"
-                              key={url}
-                              type="button"
-                              onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
-                            >
-                              <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          type="submit"
-                          variant="warning"
-                          className="flex-1"
-                        >
-                          {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowAddChild(false);
-                            setEditingChildId(null);
-                            setNewChildName('');
-                            setNewChildAge('');
-                            setNewChildChar('unicorn');
-                            setNewChildAvatar('Rocket');
-                          }}
-                        >
-                          CANCEL
-                        </Button>
-                      </div>
-                    </form>
-                  </motion.div>
-                )}
+                {/* showAddChild moved to a modal */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {isLoading ? (
                     <>
                       <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
                         <div className="flex justify-between items-start mb-4">
-                          <div className="w-20 h-20 rounded-[1.25rem] bg-stone-200"></div>
+                          <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
@@ -990,15 +956,15 @@ export default function ParentDashboard({
                         </div>
                         <div className="w-full h-4 bg-stone-200 rounded-full mb-4"></div>
                         <div className="flex gap-2">
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
                         </div>
                       </div>
                       <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse hidden md:block">
                         <div className="flex justify-between items-start mb-4">
-                          <div className="w-20 h-20 rounded-[1.25rem] bg-stone-200"></div>
+                          <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
@@ -1011,10 +977,10 @@ export default function ParentDashboard({
                         </div>
                         <div className="w-full h-4 bg-stone-200 rounded-full mb-4"></div>
                         <div className="flex gap-2">
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
-                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
+                          <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
                         </div>
                       </div>
                     </>
@@ -1029,189 +995,140 @@ export default function ParentDashboard({
                       >
                         {/* Section Header */}
                         <div className="px-4 mb-2">
-                           <span className="text-[13px] text-stone-500 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
+                          <span className="text-[13px] text-stone-500 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
                         </div>
 
                         {/* Merged Child Card */}
-                        <div className="bg-white rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden border border-stone-200/60 font-sans">
-                           
-                           {/* 1. Header: Avatar & Info */}
-                           <div className="flex items-center p-4 gap-4">
-                               <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 shrink-0" />
-                               <div className="flex flex-col flex-1">
-                                 <span className="text-[18px] font-bold text-black tracking-tight">{child.name}</span>
-                                 <span className="text-[14px] text-stone-500 font-medium mt-0.5">Gold Coins: {child.points}</span>
-                               </div>
-                           </div>
+                        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200 font-sans">
 
-                           <div className="h-[1px] bg-stone-100"></div>
-                           
-                           {/* 2. Companion & Progress (Side-by-side on sm screens) */}
-                           <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50/30">
-                               <div className="flex-1 p-4 flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 shadow-inner">
-                                    {stage.image_url ? (
-                                        <img src={stage.image_url} alt={stage.name} className="w-7 h-7 drop-shadow-md" />
-                                     ) : (
-                                        <span className="text-lg drop-shadow-md">{stage.emoji}</span>
-                                     )}
-                                  </div>
-                                  <div className="flex flex-col flex-1">
-                                    <span className="text-[14px] font-bold text-black tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
-                                    <span className="text-[12px] text-stone-500 font-medium mt-0.5">Level {stage.stage_number} Active</span>
-                                  </div>
-                               </div>
-                               
-                               <div className="flex-1 p-4 flex flex-col justify-center">
-                                   <div className="flex justify-between items-center mb-1.5">
-                                     <span className="text-[14px] font-bold text-black tracking-tight">Level {child.level}</span>
-                                     <span className="text-[12px] font-semibold text-stone-500">
-                                       {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
-                                     </span>
-                                   </div>
-                                   <LinearProgressBar 
-                                     progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                                     heightClass="h-2"
-                                     className="!bg-stone-200/60 border-none shadow-inner"
-                                   />
-                               </div>
-                           </div>
+                          {/* 1. Header: Avatar & Info */}
+                          <div className="flex items-center p-4 gap-4">
+                            <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 shrink-0" />
+                            <div className="flex flex-col flex-1">
+                              <span className="text-[18px] font-bold text-black tracking-tight">{child.name}</span>
+                              <span className="text-[14px] text-stone-500 font-medium mt-0.5">Gold Coins: {child.points}</span>
+                            </div>
+                          </div>
 
-                           <div className="h-[1px] bg-stone-100"></div>
+                          <div className="h-[1px] bg-stone-100"></div>
 
-                           {/* 3. Child App Login */}
-                           <div className="flex items-center justify-between p-4 bg-white">
-                               <div className="flex flex-col">
-                                 <span className="text-[14px] font-bold text-black tracking-tight">Child App Login</span>
-                                 <span className="text-[12px] text-stone-500 font-medium mt-0.5">Code for their device</span>
-                               </div>
-                               <div className="flex items-center gap-2">
-                                 {child.child_share_token?.startsWith('LINKED_') ? (
-                                    <>
-                                      <span className="text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                                        <CheckCircle2 className="w-3.5 h-3.5" /> {child.linked_email ? `Linked: ${child.linked_email}` : 'Linked'}
-                                      </span>
-                                    </>
-                                 ) : child.child_share_token ? (
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-[15px] font-sans tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
-                                      <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
-                                      <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
-                                        playSound.click();
-                                        onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
-                                      }} title="Manually mark as linked">Link</Button>
-                                      {onUnlinkChild && (
-                                        <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 transition-colors" onClick={() => {
-                                          playSound.click();
-                                          onUnlinkChild(child.id);
-                                        }}>Reset</Button>
-                                      )}
-                                    </div>
-                                 ) : (
-                                    <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-0 hover:text-blue-600 transition-colors" onClick={() => {
-                                        const code = generateShortCode();
-                                        onEditChild(child.id, { child_share_token: code });
-                                    }}>Generate</Button>
-                                 )}
-                               </div>
-                           </div>
+                          {/* 2. Companion & Progress (Side-by-side on sm screens) */}
+                          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50/30">
+                            <div className="flex-1 p-4 flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 shadow-inner">
+                                {stage.image_url ? (
+                                  <img src={stage.image_url} alt={stage.name} className="w-7 h-7 drop-shadow-md" />
+                                ) : (
+                                  <span className="text-lg drop-shadow-md">{stage.emoji}</span>
+                                )}
+                              </div>
+                              <div className="flex flex-col flex-1">
+                                <span className="text-[14px] font-bold text-black tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
+                                <span className="text-[12px] text-stone-500 font-medium mt-0.5">Level {stage.stage_number} Active</span>
+                              </div>
+                            </div>
 
-                           <div className="h-[1px] bg-stone-100"></div>
+                            <div className="flex-1 p-4 flex flex-col justify-center">
+                              <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-[14px] font-bold text-black tracking-tight">Level {child.level}</span>
+                                <span className="text-[12px] font-semibold text-stone-500">
+                                  {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
+                                </span>
+                              </div>
+                              <LinearProgressBar
+                                progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                                heightClass="h-2"
+                                className="!bg-stone-200/60 border-none shadow-inner"
+                              />
+                            </div>
+                          </div>
 
-                           {/* 4. Actions Group */}
-                           <div className="bg-stone-50/20">
-                              {onUpdateChildStats && (
+                          <div className="h-[1px] bg-stone-100"></div>
+
+                          {/* 3. Child App Login */}
+                          <div className="flex items-center justify-between p-4 bg-white">
+                            <div className="flex flex-col">
+                              <span className="text-[14px] font-bold text-black tracking-tight">Child App Login</span>
+                              <span className="text-[12px] text-stone-500 font-medium mt-0.5">Code for their device</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {child.child_share_token?.startsWith('LINKED_') ? (
                                 <>
-                                  <button onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                    <div className="w-7 h-7 rounded bg-stone-100 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600" /></div>
-                                    <span className="text-[15px] text-black tracking-tight flex-1">Quick Adjustments</span>
-                                    <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
-                                  </button>
-                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                                  <span className="text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> {child.linked_email ? `Linked: ${child.linked_email}` : 'Linked'}
+                                  </span>
                                 </>
+                              ) : child.child_share_token ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[15px] font-sans tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
+                                  <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
+                                  <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
+                                    playSound.click();
+                                    onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
+                                  }} title="Manually mark as linked">Link</Button>
+                                  {onUnlinkChild && (
+                                    <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 transition-colors" onClick={() => {
+                                      playSound.click();
+                                      onUnlinkChild(child.id);
+                                    }}>Reset</Button>
+                                  )}
+                                </div>
+                              ) : (
+                                <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-0 hover:text-blue-600 transition-colors" onClick={() => {
+                                  const code = generateShortCode();
+                                  onEditChild(child.id, { child_share_token: code });
+                                }}>Generate</Button>
                               )}
-                              {onDeductCoins && (
-                                <>
-                                  <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                    <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><MinusCircle className="w-4 h-4 text-rose-500" /></div>
-                                    <span className="text-[15px] text-black tracking-tight flex-1">Take Coins</span>
-                                  </button>
-                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                                </>
-                              )}
-                              <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mr-3"><Edit2 className="w-4 h-4 text-blue-500" /></div>
-                                <span className="text-[15px] text-black tracking-tight flex-1">Edit Profile</span>
-                              </button>
-                              <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                              
-                              <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                <div className="w-7 h-7 rounded bg-indigo-100 flex items-center justify-center mr-3"><ScrollText className="w-4 h-4 text-indigo-500" /></div>
-                                <span className="text-[15px] text-black tracking-tight flex-1">History</span>
-                              </button>
-                              
-                              {onDeleteChild && (
-                                <>
-                                  <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                                  <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                    <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><Trash2 className="w-4 h-4 text-rose-500" /></div>
-                                    <span className="text-[15px] text-rose-500 tracking-tight flex-1">Delete Child</span>
-                                  </button>
-                                </>
-                              )}
-                           </div>
+                            </div>
+                          </div>
+
+                          <div className="h-[1px] bg-stone-100"></div>
+
+                          {/* 4. Actions Group */}
+                          <div className="bg-stone-50/20">
+                            {onUpdateChildStats && (
+                              <>
+                                <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                  <div className="w-7 h-7 rounded bg-stone-100 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600" /></div>
+                                  <span className="text-[15px] text-black tracking-tight flex-1">Quick Adjustments</span>
+                                  <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform -rotate-90`} />
+                                </button>
+                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                              </>
+                            )}
+                            {onDeductCoins && (
+                              <>
+                                <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                  <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><MinusCircle className="w-4 h-4 text-rose-500" /></div>
+                                  <span className="text-[15px] text-black tracking-tight flex-1">Take Coins</span>
+                                </button>
+                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                              </>
+                            )}
+                            <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                              <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mr-3"><Edit2 className="w-4 h-4 text-blue-500" /></div>
+                              <span className="text-[15px] text-black tracking-tight flex-1">Edit Profile</span>
+                            </button>
+                            <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+
+                            <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                              <div className="w-7 h-7 rounded bg-indigo-100 flex items-center justify-center mr-3"><ScrollText className="w-4 h-4 text-indigo-500" /></div>
+                              <span className="text-[15px] text-black tracking-tight flex-1">History</span>
+                            </button>
+
+                            {onDeleteChild && (
+                              <>
+                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
+                                <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                  <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><Trash2 className="w-4 h-4 text-rose-500" /></div>
+                                  <span className="text-[15px] text-rose-500 tracking-tight flex-1">Delete Child</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
 
-                        {onUpdateChildStats && (
-                          <AnimatePresence>
-                            {expandedAdjustments[child.id] && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden mt-4"
-                              >
-                                <div className="bg-white rounded-[20px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-stone-200/60 p-4 space-y-4">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Gold</span>
-                                    <div className="flex gap-1">
-                                      <Button variant="none" size="none" onClick={() => { 
-                                        playSound.click(); 
-                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Gold'});
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                  <div className="h-[0.5px] bg-stone-200"></div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold</span>
-                                    <div className="flex gap-1.5 justify-end">
-                                      <Button variant="none" size="none" onClick={() => { 
-                                        playSound.click(); 
-                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Lifetime Gold'});
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                  <div className="h-[0.5px] bg-stone-200"></div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Level</span>
-                                    <div className="flex gap-1">
-                                      <Button variant="none" size="none" onClick={() => { 
-                                        playSound.click(); 
-                                        setResetConfirmation({childId: child.id, childName: child.name, type: 'Level'});
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        )}
+                        {/* Quick adjustments moved to a modal */}
                       </div>
                     );
                   })}
@@ -1231,328 +1148,510 @@ export default function ParentDashboard({
                 {/* Top action row merged with tabs below */}
 
                 <AnimatePresence>
-                {showAddTask && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
-                  >
+                  {showAddTask && (
                     <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
-                    id="add-task-box"
-                  >
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        id="add-task-box"
+                      >
 
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
-                      {editingTaskId ? <span><Edit2 className="inline-block mr-2"/> Edit Quest Blueprint</span> : <span><Sparkles className="inline-block mr-2"/> Create Quest Blueprint</span>}
-                    </Typography>
-                    <form onSubmit={handleTaskSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
-                          <input
-                            type="text"
-                            value={taskTitle}
-                            onChange={(e) => setTaskTitle(e.target.value)}
-                            placeholder="Clean your room, finish maths workbook, brush teeth..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-4">
-                          <div className="flex-1">
-                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={taskPoints}
-                              onChange={e => setTaskPoints(Number(e.target.value))}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            />
+                        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                          {editingTaskId ? <span><Edit2 className="inline-block mr-2" /> Edit Quest Template</span> : <span><Sparkles className="inline-block mr-2" /> Create Quest Template</span>}
+                        </Typography>
+                        <form onSubmit={handleTaskSubmit} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
+                              <Input type="text" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Clean your room, finish maths workbook, brush teeth..." required />
+                            </div>
+                            <div className="flex gap-4">
+                              <div className="flex-1">
+                                <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
+                                <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(Number(e.target.value))} />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
+                              <Select value={taskRecurrence} onChange={(e) => setTaskRecurrence(e.target.value as any)}>
+                                <option value="daily">Daily Habit</option>
+                                <option value="weekly">Weekly Chore</option>
+                                <option value="one_time">One-off Mission</option>
+                                <option value="repeatable">Repeatable (Cooldown)</option>
+                              </Select>
+                            </div>
+                            {taskRecurrence === 'repeatable' && (
+                              <div>
+                                <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
+                                <Input type="number" min="1" value={taskCooldownMinutes || ''} onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)} required />
+                              </div>
+                            )}
                           </div>
-                        </div>
 
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
-                          <select
-                            value={taskRecurrence}
-                            onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          >
-                            <option value="daily">Daily Habit</option>
-                            <option value="weekly">Weekly Chore</option>
-                            <option value="one_time">One-off Mission</option>
-                            <option value="repeatable">Repeatable (Cooldown)</option>
-                          </select>
-                        </div>
-                        {taskRecurrence === 'repeatable' && (
-                          <div>
-                            <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={taskCooldownMinutes || ''}
-                              onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                              className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                              required
-                            />
+                          <div className="flex gap-2">
+                            <Button
+                              type="submit"
+                              variant="warning"
+                              className="flex-1"
+                            >
+                              {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE TEMPLATE'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => {
+                                setShowAddTask(false);
+                                setEditingTaskId(null);
+                                setTaskTitle('');
+                                setTaskPoints(15);
+                                setTaskCooldownMinutes(undefined);
+                              }}
+                            >
+                              CANCEL
+                            </Button>
                           </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          variant="warning"
-                          className="flex-1"
-                        >
-                          {editingTaskId ? 'SAVE CHANGES' : 'ACTIVATE BLUEPRINT'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowAddTask(false);
-                            setEditingTaskId(null);
-                            setTaskTitle('');
-                            setTaskPoints(15);
-                            setTaskCooldownMinutes(undefined);
-                          }}
-                        >
-                          CANCEL
-                        </Button>
-                      </div>
-                    </form>
-                  </motion.div>
-                  </motion.div>
-                )}
+                        </form>
+                      </motion.div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
-                        taskSubTab === 'directory'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
-                      }`}
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        }`}
                     >
-                      BLUEPRINTS
+                      TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('active')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
-                        taskSubTab === 'active'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
-                      }`}
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        }`}
                     >
                       ASSIGNED
                     </Button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { 
-                        playSound.click(); 
-                        setGenerateAgeRange(getRecommendedAgeRange());
-                        setShowGenerateTasksModal(true); 
-                      }}
-                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                    <Button variant="none" size="none"
+                      onClick={() => setTaskSubTab('routines')}
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        }`}
                     >
-                      GENERATE <span className="hidden sm:inline">IDEAS</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={handleImportDefaultTasks}
-                      leftIcon={<Plus className="w-3.5 h-3.5" />}
-                    >
-                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </Button>
-                    <Button
-                      variant="dark"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      id="add-chore-btn-top"
-                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                    >
-                      CREATE <span className="hidden sm:inline">TEMPLATE</span>
+                      ROUTINES
                     </Button>
                   </div>
+
+                  {taskSubTab === 'directory' && (
+                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                      <Button
+                        variant="purple"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
+                        onClick={() => {
+                          playSound.click();
+                          setGenerateAgeRange(getRecommendedAgeRange());
+                          setShowGenerateTasksModal(true);
+                        }}
+                        leftIcon={<Sparkles className="w-4 h-4" />}
+                      >
+                        GENERATE <span className="hidden sm:inline">IDEAS</span>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
+                        onClick={handleImportDefaultTasks}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
+                      >
+                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
+                        onClick={() => { playSound.click(); setShowAddTask(true); }}
+                        id="add-chore-btn-top"
+                        leftIcon={<Plus className="w-4 h-4" />}
+                      >
+                        CREATE <span className="hidden sm:inline">TEMPLATE</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
-                <div className="mt-2 sm:mt-4">
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Quest Directory (Blueprints)</Typography>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {tasks.filter(t => t.is_template).map((task) => {
-                      const instances = tasks.filter(t => t.template_id === task.id);
-                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
-                      
-                      return (
-                        <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-4 items-center">
-                              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
-                                <FaStar />
-                              </div>
-                              <div>
-                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
-                                <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
-                                  <span className="mx-2">•</span>
-                                  Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
-                                </Typography>
-                              </div>
-                            </div>
+                  <div className="mt-2 sm:mt-4">
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Tasks Directory</Typography>
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {tasks.filter(t => t.is_template || t.child_id === 'directory').map((task, index, arr) => {
+                        const instances = tasks.filter(t => t.template_id === task.id);
+                        const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                        const isExpanded = expandedTaskTemplateId === task.id;
 
-                            <div className="flex flex-col items-end gap-2 shrink-0">
-                              <CoinBadge points={task.points} size="lg" />
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                            <Button variant="none" size="none"
+                        return (
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
                               onClick={() => {
                                 playSound.click();
-                                setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
+                                setExpandedTaskTemplateId(isExpanded ? null : task.id);
                               }}
-                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
-                              Assign to Child
-                            </Button>
-
-                            <div className="flex gap-2">
-                              <Tooltip content="Edit Blueprint" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip content="Delete Blueprint" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                            </div>
-                          </div>
-
-                          <AnimatePresence>
-                            {selectingChildForTaskId === task.id && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100"
-                              >
-                                <Typography variant="body" className="text-[10px] font-sans font-bold text-stone-500 uppercase">
-                                  Select children to assign this quest:
-                                </Typography>
-                                <div className="flex flex-wrap gap-2">
-                                  {children.map(child => {
-                                    const isAssigned = instances.some(i => i.child_id === child.id);
-                                    return (
-                                      <Button variant="none" size="none"
-                                        key={child.id}
-                                        onClick={() => {
-                                          playSound.success();
-                                          const currentAssignedIds = instances.map(i => i.child_id);
-                                          const newAssignedIds = isAssigned 
-                                            ? currentAssignedIds.filter(id => id !== child.id)
-                                            : [...currentAssignedIds, child.id];
-                                          onAssignTask(task, newAssignedIds);
-                                        }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-sans font-extrabold transition-all cursor-pointer ${
-                                          isAssigned
-                                            ? ('bg-warning border-neutral-border text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)]')
-                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
-                                        }`}
-                                      >
-                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-700/50" />
-                                        <span>{child.name}</span>
-                                        {isAssigned && <Check className="w-3 h-3" />}
-                                      </Button>
-                                    );
-                                  })}
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
+                                  <FaStar />
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="mx-2">•</span>
+                                    <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
+                                      {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
+                                    </span>
+                                  </Typography>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={task.points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
+                            </div>
 
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                    <div className="flex flex-col gap-2">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                        Assign to:
+                                      </Typography>
+                                      <div className="flex flex-col gap-2">
+                                        {children.map(child => {
+                                          const isAssigned = instances.some(i => i.child_id === child.id);
+                                          return (
+                                            <div
+                                              key={child.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                playSound.success();
+                                                const currentAssignedIds = instances.map(i => i.child_id);
+                                                const newAssignedIds = isAssigned
+                                                  ? currentAssignedIds.filter(id => id !== child.id)
+                                                  : [...currentAssignedIds, child.id];
+                                                onAssignTask(task, newAssignedIds);
+                                              }}
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
+                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                              </div>
+                                              
+                                              <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                        <Edit2 className="w-4 h-4" /> Edit
+                                      </Button>
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteTask(task.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                        <Trash2 className="w-4 h-4" /> Delete
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
 
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tasks.filter(t => !t.is_template).map((task) => {
-                    const assignedName = children.find(c => c.id === task.child_id)?.name;
-                    return (
-                      <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="flex gap-4 items-center">
-                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
-                              <FaStar />
+                  <div className="mt-4">
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {tasks.filter(t => (!t.is_template && t.child_id !== 'directory') && children.some(c => c.id === t.child_id)).map((task, index, arr) => {
+                        const assignedName = children.find(c => c.id === task.child_id)?.name;
+                        const isExpanded = expandedActiveTaskId === task.id;
+
+                        return (
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedActiveTaskId(isExpanded ? null : task.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
+                                  <FaStar />
+                                </div>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="mx-2">•</span>
+                                    <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
+                                  </Typography>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={task.points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
                             </div>
-                            <div>
-                              <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
-                              <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                Assigned: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
-                                <span className="mx-2">•</span>
-                                Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
-                              </Typography>
-                            </div>
-                          </div>
 
-                          <div className="flex flex-col items-end gap-2 shrink-0">
-                              <CoinBadge points={task.points} size="lg" />
-                          </div>
-                        </div>
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 flex flex-wrap justify-end items-center gap-2">
+                                    <Button
+                                      variant="none" size="none"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        playSound.success();
+                                        onParentCompleteTask(task.id, task.child_id);
+                                      }}
+                                      id={`parent-complete-${task.id}`}
+                                      className="flex-1 sm:flex-none px-4 py-2 rounded-2xl font-bold text-sm text-white bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.25)] transition-all flex items-center justify-center gap-2"
+                                    >
+                                      <Check className="w-4 h-4" /> Mark Complete
+                                    </Button>
 
-                        <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => {
-                              playSound.success();
-                              onParentCompleteTask(task.id, task.child_id);
-                            }}
-                            id={`parent-complete-${task.id}`}
-                          >
-                            Mark Complete
-                          </Button>
-
-                          <div className="flex gap-2">
-                            <Tooltip content="Edit Assigned Quest" position="top">
-                              <Button variant="none" size="none" onClick={() => openEditTask(task)} className="p-2 rounded-xl text-stone-400 hover:text-stone-900 hover:bg-stone-50">
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Delete Assigned Quest" position="top">
-                              <Button variant="none" size="none" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-stone-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
+                                    <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteTask(task.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                      <MinusCircle className="w-4 h-4" /> Unassign
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {taskSubTab === 'routines' && (
+                  <div className="mt-4 space-y-6" id="routines-view">
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
+
+                    {/* Select Child */}
+                    <div className="flex w-fit max-w-full gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm overflow-x-auto custom-scrollbar">
+                      {children.map(child => (
+                        <button
+                          key={child.id}
+                          onClick={() => setRoutineChildId(child.id)}
+                          className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest whitespace-nowrap transition-all duration-300 ${routineChildId === child.id
+                            ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                            : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                            }`}
+                        >
+                          {child.name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {routineChildId && (
+                      <div className="space-y-6">
+                        {(() => {
+                          const child = children.find(c => c.id === routineChildId);
+                          if (!child) return null;
+                          
+                          const DEFAULT_ROUTINES = [
+                            { id: 'weekday', name: 'Weekday Routine' },
+                            { id: 'weekend', name: 'Weekend Routine' },
+                            { id: 'holiday', name: 'Holiday Routine' }
+                          ];
+                          
+                          const currentRoutines = child.routines || [];
+                          const processedRoutines = DEFAULT_ROUTINES.map(def => {
+                            let existing = currentRoutines.find(r => r.id === def.id);
+                            if (!existing) {
+                              existing = currentRoutines.find(r => r.name.toLowerCase().includes(def.id));
+                              if (existing) existing = { ...existing, id: def.id, name: def.name };
+                            }
+                            if (!existing && def.id === 'weekday' && currentRoutines.length > 0) {
+                              const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => d.id === r.id || r.name.toLowerCase().includes(d.id)));
+                              if (unassigned) existing = { ...unassigned, id: def.id, name: def.name };
+                            }
+                            return existing || { ...def, morningTaskIds: [], afternoonTaskIds: [], eveningTaskIds: [] };
+                          });
+
+                          return (
+                            <div className="space-y-6">
+                              {/* Holiday Mode Toggle */}
+                              <div className="bg-white border dashboard-card border-stone-100 rounded-2xl p-4 flex items-center justify-between">
+                                <div>
+                                  <Typography variant="h3" className="font-bold text-stone-900">Holiday Mode</Typography>
+                                  <Typography variant="body" className="text-sm text-stone-500">When active, the Holiday routine will override the Weekday routine.</Typography>
+                                </div>
+                                <label className="flex items-center cursor-pointer relative">
+                                  <Input 
+                                    type="checkbox" 
+                                     
+                                    checked={child.holiday_mode || false}
+                                    onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked })}
+                                  />
+                                  <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${child.holiday_mode ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md absolute top-0.5 transition-transform duration-300 ease-in-out ${child.holiday_mode ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                                  </div>
+                                </label>
+                              </div>
+
+                              {processedRoutines.map((routine, rIdx) => {
+                                const isExpanded = expandedRoutineId === routine.id;
+                                const totalTasks = (routine.morningTaskIds?.length || 0) + (routine.afternoonTaskIds?.length || 0) + (routine.eveningTaskIds?.length || 0);
+                                
+                                return (
+                                <div key={routine.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl flex flex-col transition-all duration-300 overflow-hidden">
+                                  {/* Routine Summary Header */}
+                                  <div 
+                                    className={`flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'border-b border-stone-100 bg-stone-50/50' : ''}`}
+                                    onClick={() => setExpandedRoutineId(isExpanded ? null : routine.id)}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                      <div>
+                                        <div className="flex items-center gap-2">
+                                          <Typography variant="h3" className="font-bold text-stone-900">{routine.name}</Typography>
+                                        </div>
+                                        <Typography variant="body" className="text-xs text-stone-400 mt-0.5">{totalTasks} tasks assigned</Typography>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Expandable Content */}
+                                  <AnimatePresence>
+                                    {isExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="p-4 space-y-6">
+                                          {([
+                                            { key: 'morningTaskIds', label: 'Morning' },
+                                            { key: 'afternoonTaskIds', label: 'Afternoon' },
+                                            { key: 'eveningTaskIds', label: 'Evening' },
+                                          ] as const).map(period => {
+                                            const periodTasks = routine[period.key] || [];
+                                            return (
+                                            <div key={period.key} className="space-y-3">
+                                              <Typography variant="body" className="font-bold text-xs uppercase tracking-widest text-stone-400 pl-1">{period.label}</Typography>
+                                              
+                                              <DndContext
+                                                sensors={sensors}
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={(e) => handleDragEnd(e, child.id, routine.id, period.key)}
+                                              >
+                                                <SortableContext
+                                                  items={periodTasks}
+                                                  strategy={verticalListSortingStrategy}
+                                                >
+                                                  <div className="space-y-2">
+                                                    {periodTasks.map(taskId => {
+                                                      const t = tasks.find(x => x.id === taskId);
+                                                      if (!t) return null;
+                                                      return (
+                                                        <SortableTaskItem
+                                                          key={taskId}
+                                                          id={taskId}
+                                                          task={t}
+                                                          onRemove={(id) => {
+                                                            const newRoutines = [...processedRoutines];
+                                                            newRoutines[rIdx][period.key] = (newRoutines[rIdx][period.key] || []).filter(x => x !== id);
+                                                            onEditChild(child.id, { routines: newRoutines });
+                                                          }}
+                                                        />
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </SortableContext>
+                                              </DndContext>
+
+                                              {periodTasks.length === 0 && (
+                                                <div className="text-xs text-stone-400 italic py-3 text-center border-2 border-dashed border-stone-200 rounded-xl">No tasks assigned for {period.label}.</div>
+                                              )}
+
+                                              <div className="mt-2 relative">
+                                                <Select
+                                                  
+                                                  value=""
+                                                  onChange={(e) => {
+                                                    if (!e.target.value) return;
+                                                    const newRoutines = [...processedRoutines];
+                                                    if (!newRoutines[rIdx][period.key]) {
+                                                      newRoutines[rIdx][period.key] = [];
+                                                    }
+                                                    if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
+                                                      newRoutines[rIdx][period.key].push(e.target.value);
+                                                      onEditChild(child.id, { routines: newRoutines });
+                                                    }
+                                                  }}
+                                                >
+                                                  <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
+                                                  {tasks.filter(t => t.child_id === child.id && !t.is_template && !periodTasks.includes(t.id)).map(t => (
+                                                    <option key={t.id} value={t.id} className="text-stone-700">{t.title}</option>
+                                                  ))}
+                                                </Select>
+                                                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                                  <Plus className="w-5 h-5 text-stone-400" />
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                          })}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 )}
               </motion.div>
             )}
@@ -1571,337 +1670,344 @@ export default function ParentDashboard({
 
                 {/* Add Custom Reward Overlay */}
                 <AnimatePresence>
-                {showAddReward && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
-                  >
+                  {showAddReward && (
                     <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
-                    id="add-reward-box"
-                  >
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        id="add-reward-box"
+                      >
 
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
-                      {editingRewardId ? <span><Edit2 className="inline-block mr-2"/> Edit Reward Token</span> : <span><Gift className="inline-block mr-2"/> Define Reward Token</span>}
-                    </Typography>
-                    <form onSubmit={handleRewardSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
-                          <input
-                            type="text"
-                            value={rewardTitle}
-                            onChange={(e) => setRewardTitle(e.target.value)}
-                            placeholder="iPad time, ice cream, toy..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
-                          <input
-                            type="number"
-                            value={rewardCost}
-                            onChange={(e) => setRewardCost(Number(e.target.value))}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            min="10"
-                            max="500"
-                            required
-                          />
-                        </div>
+                        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                          {editingRewardId ? <span><Edit2 className="inline-block mr-2" /> Edit Reward Token</span> : <span><Gift className="inline-block mr-2" /> Define Reward Token</span>}
+                        </Typography>
+                        <form onSubmit={handleRewardSubmit} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
+                              <Input
+                                type="text"
+                                value={rewardTitle}
+                                onChange={(e) => setRewardTitle(e.target.value)}
+                                placeholder="iPad time, ice cream, toy..."
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
+                              <Input
+                                type="number"
+                                value={rewardCost}
+                                onChange={(e) => setRewardCost(Number(e.target.value))}
+                                min="10"
+                                max="500"
+                                required
+                              />
+                            </div>
 
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
-                          <select
-                            value={rewardIcon}
-                            onChange={(e) => setRewardIcon(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          >
-                            <option value="Gamepad2">🎮 Game Time</option>
-                            <option value="Pizza">🍕 Favorite Meal</option>
-                            <option value="Palette">🎨 Creative / Art</option>
-                            <option value="BookOpen">📖 Storybooks</option>
-                            <option value="Sparkles">✨ Special Trip</option>
-                          </select>
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
-                          <select
-                            value={rewardLimit}
-                            onChange={(e) => setRewardLimit(e.target.value as any)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          >
-                            <option value="unlimited">♾️ Unlimited</option>
-                            <option value="daily">📅 1x Daily</option>
-                            <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
-                            <option value="one_time">🎯 One-Time (Disappears after use)</option>
-                          </select>
-                        </div>
-                        <div className="md:col-span-2 flex items-center gap-2 mt-2">
-                          <input
-                            type="checkbox"
-                            id="rewardBadgeEligible"
-                            checked={rewardBadgeEligible}
-                            onChange={(e) => setRewardBadgeEligible(e.target.checked)}
-                            className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
-                          />
-                          <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
-                            Eligible as a free badge reward (Small Reward)
-                          </label>
-                        </div>
-                      </div>
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
+                              <Select
+                                value={rewardIcon}
+                                onChange={(e) => setRewardIcon(e.target.value)}
+                              >
+                                <option value="Gamepad2">🎮 Game Time</option>
+                                <option value="Pizza">🍕 Favorite Meal</option>
+                                <option value="Palette">🎨 Creative / Art</option>
+                                <option value="BookOpen">📖 Storybooks</option>
+                                <option value="Sparkles">✨ Special Trip</option>
+                              </Select>
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
+                              <Select
+                                value={rewardLimit}
+                                onChange={(e) => setRewardLimit(e.target.value as any)}
+                              >
+                                <option value="unlimited">♾️ Unlimited</option>
+                                <option value="daily">📅 1x Daily</option>
+                                <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
+                                <option value="one_time">🎯 One-Time (Disappears after use)</option>
+                              </Select>
+                            </div>
+                            <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                              <Input
+                                type="checkbox"
+                                id="rewardBadgeEligible"
+                                checked={rewardBadgeEligible}
+                                onChange={(e) => setRewardBadgeEligible(e.target.checked)}
+                              />
+                              <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
+                                Eligible as a free badge reward (Small Reward)
+                              </label>
+                            </div>
+                          </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          variant="warning"
-                          className="flex-1"
-                        >
-                          {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowAddReward(false);
-                            setEditingRewardId(null);
-                            setRewardTitle('');
-                            setRewardCost(50);
-                          }}
-                        >
-                          CANCEL
-                        </Button>
-                      </div>
-                    </form>
-                  </motion.div>
-                  </motion.div>
-                )}
+                          <div className="flex gap-2">
+                            <Button
+                              type="submit"
+                              variant="warning"
+                              className="flex-1"
+                            >
+                              {editingRewardId ? 'SAVE CHANGES' : 'DEPLOY PRIZE SLOT'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => {
+                                setShowAddReward(false);
+                                setEditingRewardId(null);
+                                setRewardTitle('');
+                                setRewardCost(50);
+                              }}
+                            >
+                              CANCEL
+                            </Button>
+                          </div>
+                        </form>
+                      </motion.div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
-                        rewardSubTab === 'directory'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
-                      }`}
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        }`}
                     >
-                      BLUEPRINTS
+                      TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('active')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
-                        rewardSubTab === 'active'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
-                      }`}
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        }`}
                     >
                       ASSIGNED
                     </Button>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { 
-                        playSound.click(); 
-                        setGenerateAgeRange(getRecommendedAgeRange());
-                        setShowGenerateRewardsModal(true); 
-                      }}
-                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
-                    >
-                      GENERATE <span className="hidden sm:inline">IDEAS</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={handleImportDefaultRewards}
-                      leftIcon={<Plus className="w-3.5 h-3.5" />}
-                    >
-                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </Button>
-                    <Button
-                      variant="dark"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      id="add-reward-btn-top"
-                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                    >
-                      ADD <span className="hidden sm:inline">REWARD</span>
-                    </Button>
-                  </div>
+                  {rewardSubTab === 'directory' && (
+                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                      <Button
+                        variant="warning"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
+                        onClick={() => {
+                          playSound.click();
+                          setGenerateAgeRange(getRecommendedAgeRange());
+                          setShowGenerateRewardsModal(true);
+                        }}
+                        leftIcon={<Sparkles className="w-4 h-4" />}
+                      >
+                        GENERATE <span className="hidden sm:inline">IDEAS</span>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
+                        onClick={handleImportDefaultRewards}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
+                      >
+                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
+                        onClick={() => { playSound.click(); setShowAddReward(true); }}
+                        id="add-reward-btn-top"
+                        leftIcon={<Plus className="w-4 h-4" />}
+                      >
+                        ADD <span className="hidden sm:inline">REWARD</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
-                <div className="mt-2 sm:mt-4">
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Directory (Blueprints)</Typography>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {rewards.filter(r => r.is_template).map((reward) => {
-                      const instances = rewards.filter(r => r.template_id === reward.id);
-                      const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
-                      return (
-                        <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-4 items-center">
-                              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
-                                <FaGift />
-                              </div>
-                              <div>
-                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{reward.title}</Typography>
-                                <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                  Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
-                                  <span className="mx-2">•</span>
-                                  Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
-                                </Typography>
-                              </div>
-                            </div>
+                  <div className="mt-2 sm:mt-4">
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Rewards Directory</Typography>
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {rewards.filter(r => r.is_template || r.child_id === 'directory').map((reward, index, arr) => {
+                        const instances = rewards.filter(r => r.template_id === reward.id);
+                        const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                        const isExpanded = expandedRewardTemplateId === reward.id;
 
-                            <div className="flex flex-col items-end gap-2 shrink-0">
-                              <CoinBadge points={reward.cost_points} size="lg" />
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                            <Button variant="none" size="none"
+                        return (
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
                               onClick={() => {
                                 playSound.click();
-                                setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
+                                setExpandedRewardTemplateId(isExpanded ? null : reward.id);
                               }}
-                              className="text-xs font-bold text-stone-900 hover:text-stone-700"
                             >
-                              Assign to Child
-                            </Button>
-
-                            <div className="flex gap-2">
-                              <Tooltip content="Edit Token" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip content="Delete Token" position="top">
-                                <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                            </div>
-                          </div>
-
-                          <AnimatePresence>
-                            {selectingChildForTaskId === reward.id && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
-                              >
-                                <Typography variant="body" className={`text-[10px] font-bold text-stone-500 uppercase`}>
-                                  Select children to assign this reward:
-                                </Typography>
-                                <div className="flex flex-wrap gap-2">
-                                  {children.map(child => {
-                                    const isAssigned = instances.some(i => i.child_id === child.id);
-                                    return (
-                                      <Button variant="none" size="none"
-                                        key={child.id}
-                                        onClick={() => {
-                                          playSound.success();
-                                          const currentAssignedIds = instances.map(i => i.child_id);
-                                          const newAssignedIds = isAssigned 
-                                            ? currentAssignedIds.filter(id => id !== child.id)
-                                            : [...currentAssignedIds, child.id];
-                                          onAssignReward(reward, newAssignedIds);
-                                        }}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                                          isAssigned
-                                            ? ('bg-stone-900 border-stone-900 text-white')
-                                            : ('bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100')
-                                        }`}
-                                      >
-                                        <ChildAvatar iconName={child.avatar_url} className="w-5 h-5" />
-                                        <span>{child.name}</span>
-                                        {isAssigned && <Check className="w-3 h-3" />}
-                                      </Button>
-                                    );
-                                  })}
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-purple-100/50">
+                                  <FaGift />
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{reward.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className="mx-2">•</span>
+                                    <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
+                                      {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
+                                    </span>
+                                  </Typography>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={reward.cost_points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
+                            </div>
+
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                    <div className="flex flex-col gap-2">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                        Assign to:
+                                      </Typography>
+                                      <div className="flex flex-col gap-2">
+                                        {children.map(child => {
+                                          const isAssigned = instances.some(i => i.child_id === child.id);
+                                          return (
+                                            <div
+                                              key={child.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                playSound.success();
+                                                const currentAssignedIds = instances.map(i => i.child_id);
+                                                const newAssignedIds = isAssigned
+                                                  ? currentAssignedIds.filter(id => id !== child.id)
+                                                  : [...currentAssignedIds, child.id];
+                                                onAssignReward(reward, newAssignedIds);
+                                              }}
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
+                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                              </div>
+                                              
+                                              <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditReward(reward); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                        <Edit2 className="w-4 h-4" /> Edit
+                                      </Button>
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                        <Trash2 className="w-4 h-4" /> Delete
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
 
 
                 )}
 
                 {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rewards.filter(r => !r.is_template).map((reward) => {
-                    const assignedName = children.find(c => c.id === reward.child_id)?.name;
-                    return (
-                      <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="flex gap-4 items-center">
-                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
-                              <FaGift />
-                            </div>
-                            <div>
-                              <Typography variant="h3" className="font-bold text-stone-900 text-sm">
-                                {reward.title}
-                                {!reward.is_available && reward.limit_type === 'one_time' && (
-                                  <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
-                                    CLAIMED
-                                  </span>
-                                )}
-                              </Typography>
-                              <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                Available for: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
-                                <span className="mx-2">•</span>
-                                Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
-                              </Typography>
-                            </div>
-                          </div>
+                  <div className="mt-4">
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {rewards.filter(r => (!r.is_template && r.child_id !== 'directory') && children.some(c => c.id === r.child_id)).map((reward, index, arr) => {
+                        const assignedName = children.find(c => c.id === reward.child_id)?.name;
+                        const isExpanded = expandedActiveRewardId === reward.id;
 
-                          <div className="flex flex-col items-end gap-2 shrink-0">
-                            <span className="w-12 h-12 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
-                              {reward.cost_points}
-                            </span>
-                          </div>
-                        </div>
+                        return (
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedActiveRewardId(isExpanded ? null : reward.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-purple-100/50">
+                                  <FaGift />
+                                </div>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">
+                                    {reward.title}
+                                    {!reward.is_available && reward.limit_type === 'one_time' && (
+                                      <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
+                                        CLAIMED
+                                      </span>
+                                    )}
+                                  </Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className="mx-2">•</span>
+                                    <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
+                                  </Typography>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
+                                  {reward.cost_points}
+                                </span>
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
+                            </div>
 
-                        <div className="flex justify-end items-center border-t border-stone-50 pt-3 mt-1">
-                          <div className="flex gap-2">
-                            <Tooltip content="Edit Assigned Token" position="top">
-                              <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Delete Assigned Token" position="top">
-                              <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 flex justify-end gap-2">
+                                    <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                      <MinusCircle className="w-4 h-4" /> Unassign
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
                 )}
 
                 {/* History Log */}
@@ -1920,7 +2026,7 @@ export default function ParentDashboard({
                           const child = children.find(c => c.id === delivery.child_id);
                           const reward = rewards.find(r => r.id === delivery.reward_id);
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
-                          
+
                           return (
                             <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 border-stone-200 ${styles.textColor}`}>
                               <div>
@@ -1990,138 +2096,320 @@ export default function ParentDashboard({
           </AnimatePresence>
         </main>
 
-      <AnimatePresence>
-        {penaltyModalChildId && onDeductCoins && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative"
-            >
-              <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-50 shadow-sm">
-                <MinusCircle className="w-8 h-8" />
-              </div>
-              <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-2 font-display uppercase tracking-wide">
-                Take Coins
-              </Typography>
-              <Typography variant="body" className="text-center text-sm text-stone-500 mb-6">
-                Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
-              </Typography>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="1"
-                      value={penaltyAmount}
-                      onChange={(e) => setPenaltyAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-black rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 text-lg"
-                    />
-                    <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
-                  <select
-                    value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
-                    onChange={(e) => {
-                      if (e.target.value === 'Custom') setPenaltyReason('');
-                      else setPenaltyReason(e.target.value);
-                    }}
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 mb-2"
-                  >
-                    <option value="" disabled>Select a reason...</option>
-                    <option value="Not listening">Not listening</option>
-                    <option value="Hitting">Hitting</option>
-                    <option value="Refusing chores">Refusing to do chores</option>
-                    <option value="Bad language">Bad language</option>
-                    <option value="Lying">Lying</option>
-                    <option value="Custom">Type my own...</option>
-                  </select>
-                  
-                  {(!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) || penaltyReason === '') && (
-                    <input
-                      type="text"
-                      placeholder="Type custom reason..."
-                      value={penaltyReason}
-                      onChange={(e) => setPenaltyReason(e.target.value)}
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-8">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => { playSound.click(); setPenaltyModalChildId(null); setPenaltyReason(''); setPenaltyAmount(5); }} 
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="danger" 
-                  onClick={() => {
-                    playSound.click();
-                    onDeductCoins(penaltyModalChildId, penaltyAmount, penaltyReason || 'Penalty applied');
-                    setPenaltyModalChildId(null);
-                    setPenaltyReason('');
-                    setPenaltyAmount(5);
-                  }} 
-                  className="flex-1"
-                  disabled={!penaltyReason.trim() || penaltyAmount <= 0}
-                >
-                  Deduct Coins
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {resetConfirmation && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-            >
+        <AnimatePresence>
+          {showAddChild && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${
-                  'bg-white border-rose-200 shadow-rose-900/10'
-                }`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setShowAddChild(false);
+                  setEditingChildId(null);
+                  setNewChildName('');
+                  setNewChildAge('');
+                  setNewChildChar('unicorn');
+                  setNewChildAvatar('Rocket');
+                }}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="w-full max-w-lg p-6 bg-white rounded-3xl border border-stone-100 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
               >
-                <div className="flex justify-center mb-4">
-                  <div className={`p-3 rounded-full bg-rose-100 text-rose-600`}>
-                    <RotateCcw className="w-8 h-8" />
+                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                  {editingChildId ? <span><Edit2 className="inline-block mr-2" /> Edit Child</span> : <span><UserPlus className="inline-block mr-2" /> Register Family Child</span>}
+                </Typography>
+                <form onSubmit={handleChildSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
+                      <Input
+                        type="text"
+                        value={newChildName}
+                        onChange={(e) => setNewChildName(e.target.value)}
+                        placeholder="Leo, Lily, Emma..."
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
+                      <Input
+                        type="number"
+                        value={newChildAge}
+                        onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        placeholder="Age"
+                        min={1}
+                        max={18}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
+                      <Select
+                        value={newChildChar}
+                        onChange={(e) => setNewChildChar(e.target.value)}
+                      >
+                        {CHARACTER_PACKS.map(char => (
+                          <option key={char.id} value={char.id}>
+                            {char.name} ({char.pack_name})
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {PRECANNED_AVATARS.map(url => (
+                        <Button variant="none" size="none"
+                          key={url}
+                          type="button"
+                          onClick={() => setNewChildAvatar(url)}
+                          className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
+                        >
+                          <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowAddChild(false);
+                        setEditingChildId(null);
+                        setNewChildName('');
+                        setNewChildAge('');
+                        setNewChildChar('unicorn');
+                        setNewChildAvatar('Rocket');
+                      }}
+                      className="flex-1"
+                    >
+                      CANCEL
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="flex-1"
+                    >
+                      {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH'}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {adjustmentsModalChildId && onUpdateChildStats && (() => {
+            const child = children.find(c => c.id === adjustmentsModalChildId);
+            if (!child) return null;
+            return (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setAdjustmentsModalChildId(null)}
+                  className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                >
+                  <div className="w-12 h-12 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center mb-4">
+                    <Settings className="w-6 h-6" />
+                  </div>
+                  <Typography variant="h2" className="text-xl font-black text-stone-900 mb-6">
+                    Quick Adjustments
+                  </Typography>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Gold ({child.points})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Gold' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold ({child.lifetime_points || 0})</span>
+                      <div className="flex gap-1.5 justify-end">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Lifetime Gold' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Lifetime Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Level ({child.level})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Level' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Level to 1"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Level Down"><ArrowDownCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8">
+                    <Button variant="primary" fullWidth onClick={() => { playSound.click(); setAdjustmentsModalChildId(null); }}>
+                      Done
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {penaltyModalChildId && onDeductCoins && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setPenaltyModalChildId(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+              >
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
+                  <MinusCircle className="w-6 h-6" />
+                </div>
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                  Take Coins
+                </Typography>
+                <Typography variant="body" className="text-sm text-stone-500 mb-6">
+                  Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
+                </Typography>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={penaltyAmount}
+                        onChange={(e) => setPenaltyAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                      />
+                      <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
+                    <Select
+                      value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
+                      onChange={(e) => {
+                        if (e.target.value === 'Custom') setPenaltyReason('');
+                        else setPenaltyReason(e.target.value);
+                      }}
+                    >
+                      <option value="" disabled>Select a reason...</option>
+                      <option value="Not listening">Not listening</option>
+                      <option value="Hitting">Hitting</option>
+                      <option value="Refusing chores">Refusing to do chores</option>
+                      <option value="Bad language">Bad language</option>
+                      <option value="Lying">Lying</option>
+                      <option value="Custom">Type my own...</option>
+                    </Select>
+
+                    {(!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) || penaltyReason === '') && (
+                      <Input
+                        type="text"
+                        placeholder="Type custom reason..."
+                        value={penaltyReason}
+                        onChange={(e) => setPenaltyReason(e.target.value)}
+                      />
+                    )}
                   </div>
                 </div>
-                <Typography variant="h3" className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
+
+                <div className="flex gap-3 mt-8">
+                  <Button
+                    variant="ghost"
+                    onClick={() => { playSound.click(); setPenaltyModalChildId(null); setPenaltyReason(''); setPenaltyAmount(5); }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      playSound.click();
+                      onDeductCoins(penaltyModalChildId, penaltyAmount, penaltyReason || 'Penalty applied');
+                      setPenaltyModalChildId(null);
+                      setPenaltyReason('');
+                      setPenaltyAmount(5);
+                    }}
+                    className="flex-1"
+                    disabled={!penaltyReason.trim() || penaltyAmount <= 0}
+                  >
+                    Deduct Coins
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {resetConfirmation && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setResetConfirmation(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+              >
+                <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
+                  <RotateCcw className="w-6 h-6" />
+                </div>
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   Reset {resetConfirmation.type}?
                 </Typography>
-                <Typography variant="body" className={`text-center text-sm font-sans mb-6 text-stone-600`}>
+                <Typography variant="body" className="text-sm text-stone-500 mb-6">
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
                     onClick={() => { playSound.click(); setResetConfirmation(null); }}
-                    className="flex-1 bg-stone-100"
+                    className="flex-1"
                   >
-                    CANCEL
+                    Cancel
                   </Button>
                   <Button
                     variant="danger"
@@ -2131,52 +2419,52 @@ export default function ParentDashboard({
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-500"
+                    className="flex-1"
                   >
-                    RESET NOW
+                    Reset Now
                   </Button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
         {/* Delete Child Confirmation Modal */}
         <AnimatePresence>
           {deleteChildConfirmation && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-            >
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200 shadow-rose-900/10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteChildConfirmation(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
               >
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-full bg-rose-100 text-rose-600">
-                    <Trash2 className="w-8 h-8" />
-                  </div>
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6" />
                 </div>
-                <Typography variant="h3" className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   Delete {deleteChildConfirmation.childName}?
                 </Typography>
-                <Typography variant="body" className="text-center text-sm font-sans mb-2 text-stone-600">
+                <Typography variant="body" className="text-sm text-stone-500 mb-2">
                   This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
                 </Typography>
-                <Typography variant="body" className="text-center text-xs font-sans mb-6 text-rose-500 font-bold">
+                <Typography variant="body" className="text-xs font-bold text-rose-500 mb-6">
                   ⚠️ This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
                     onClick={() => { playSound.click(); setDeleteChildConfirmation(null); }}
-                    className="flex-1 bg-stone-100"
+                    className="flex-1"
                   >
-                    CANCEL
+                    Cancel
                   </Button>
                   <Button
                     variant="danger"
@@ -2185,13 +2473,13 @@ export default function ParentDashboard({
                       if (onDeleteChild) onDeleteChild(deleteChildConfirmation.childId);
                       setDeleteChildConfirmation(null);
                     }}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-600"
+                    className="flex-1"
                   >
-                    DELETE
+                    Delete
                   </Button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
@@ -2233,24 +2521,23 @@ export default function ParentDashboard({
                 <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   {generatedTasksToPreview ? "Select Quests to Keep" : "Generate Quests"}
                 </Typography>
-                
+
                 {!generatedTasksToPreview ? (
                   <>
-                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random quests you want to add to your blueprint directory.</Typography>
-                    
+                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random quests you want to add to your template directory.</Typography>
+
                     <div className="space-y-4 mb-8">
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
-                        <select
+                        <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
                           <option value="6-8">6 - 8 years</option>
                           <option value="9-12">9 - 12 years</option>
-                        </select>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
@@ -2287,18 +2574,18 @@ export default function ParentDashboard({
                           <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
-                                <input 
-                                  type="text" 
-                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
-                                  value={previewEditTitle} 
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)} 
+                                <Input
+                                  type="text"
+                                  
+                                  value={previewEditTitle}
+                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
                                 />
                                 <div className="flex gap-2">
-                                  <input 
-                                    type="number" 
-                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500" 
-                                    value={previewEditPoints} 
-                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
+                                  <Input
+                                    type="number"
+                                    
+                                    value={previewEditPoints}
+                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
                                   />
                                   <Button size="sm" variant="primary" onClick={() => {
                                     setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: previewEditPoints } : t));
@@ -2310,9 +2597,9 @@ export default function ParentDashboard({
                             ) : (
                               <div className="flex items-start justify-between gap-3 group">
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <input 
-                                    type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-stone-300 focus:ring-indigo-500"
+                                  <Input
+                                    type="checkbox"
+                                    
                                     checked={selectedTaskIdsForImport.includes(task.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2327,7 +2614,7 @@ export default function ParentDashboard({
                                     <Typography variant="body" className="text-xs text-stone-500">{task.points} pts • {task.recurrence}</Typography>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none" 
+                                <Button variant="none" size="none"
                                   type="button"
                                   className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
@@ -2385,24 +2672,23 @@ export default function ParentDashboard({
                 <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   {generatedRewardsToPreview ? "Select Prizes to Keep" : "Generate Prizes"}
                 </Typography>
-                
+
                 {!generatedRewardsToPreview ? (
                   <>
                     <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</Typography>
-                    
+
                     <div className="space-y-4 mb-8">
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
-                        <select
+                        <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
                           <option value="6-8">6 - 8 years</option>
                           <option value="9-12">9 - 12 years</option>
-                        </select>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
@@ -2439,18 +2725,18 @@ export default function ParentDashboard({
                           <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
-                                <input 
-                                  type="text" 
-                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
-                                  value={previewEditTitle} 
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)} 
+                                <Input
+                                  type="text"
+                                  
+                                  value={previewEditTitle}
+                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
                                 />
                                 <div className="flex gap-2">
-                                  <input 
-                                    type="number" 
-                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500" 
-                                    value={previewEditPoints} 
-                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)} 
+                                  <Input
+                                    type="number"
+                                    
+                                    value={previewEditPoints}
+                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
                                   />
                                   <Button size="sm" variant="warning" onClick={() => {
                                     setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: previewEditPoints } : r));
@@ -2462,9 +2748,9 @@ export default function ParentDashboard({
                             ) : (
                               <div className="flex items-start justify-between gap-3 group">
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <input 
-                                    type="checkbox" 
-                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-stone-300 focus:ring-amber-500"
+                                  <Input
+                                    type="checkbox"
+                                    
                                     checked={selectedRewardIdsForImport.includes(reward.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2479,7 +2765,7 @@ export default function ParentDashboard({
                                     <Typography variant="body" className="text-xs text-stone-500">{reward.cost_points} pts • {reward.limit_type}</Typography>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none" 
+                                <Button variant="none" size="none"
                                   type="button"
                                   className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
                                   onClick={(e) => {
@@ -2515,19 +2801,24 @@ export default function ParentDashboard({
 
       <AnimatePresence>
         {showHistoryForChild && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4"
-          >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className={`bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (historyDetailView) setHistoryDetailView(null);
+                else setShowHistoryForChild(null);
+              }}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={`relative w-full max-w-md ${styles.cardBg} rounded-3xl shadow-2xl border border-stone-200 p-6 flex flex-col overflow-hidden max-h-[90vh]`}
             >
-              <Button variant="none" size="none" 
+              <Button variant="none" size="none"
                 onClick={() => {
                   if (historyDetailView) setHistoryDetailView(null);
                   else setShowHistoryForChild(null);
@@ -2536,7 +2827,7 @@ export default function ParentDashboard({
               >
                 <X className="w-5 h-5" />
               </Button>
-              
+
               {(() => {
                 const child = children.find(c => c.id === showHistoryForChild);
                 if (!child) return null;
@@ -2559,27 +2850,27 @@ export default function ParentDashboard({
                           {historyDetailView === 'tasks' ? 'Tasks Completed' : historyDetailView === 'deductions' ? 'Deductions' : 'Rewards Claimed'}
                         </Typography>
                       </div>
-                      
+
                       <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
                         {historyDetailView === 'tasks' && (
                           approvedTasks.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No tasks completed yet.</Typography> :
-                          [...approvedTasks].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
-                            const task = tasks.find(t => t.id === c.task_id);
-                            return (
-                              <div key={c.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
-                                <div>
-                                  <Typography variant="body" className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</Typography>
-                                  <Typography variant="body" className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
+                            [...approvedTasks].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
+                              const task = tasks.find(t => t.id === c.task_id);
+                              return (
+                                <div key={c.id} className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
+                                  <div>
+                                    <Typography variant="body" className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
+                                  </div>
+                                  <span className="text-emerald-600 font-bold">+{c.points_awarded}</span>
                                 </div>
-                                <span className="text-emerald-600 font-bold">+{c.points_awarded}</span>
-                              </div>
-                            );
-                          })
+                              );
+                            })
                         )}
                         {historyDetailView === 'deductions' && (
                           <>
-                            {[...penaltyCompletionsList].sort((a,b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => (
-                              <div key={c.id} className="p-3 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
+                            {[...penaltyCompletionsList].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => (
+                              <div key={c.id} className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-rose-800">{c.notes || 'Penalty'}</Typography>
                                   <Typography variant="body" className="text-xs text-rose-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
@@ -2588,7 +2879,7 @@ export default function ParentDashboard({
                               </div>
                             ))}
                             {(child.manual_deductions || 0) > 0 && (
-                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-stone-800">Quick Adjustments (Manual)</Typography>
                                 </div>
@@ -2596,7 +2887,7 @@ export default function ParentDashboard({
                               </div>
                             )}
                             {(child.gold_pot_total_leaked || 0) > 0 && (
-                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-stone-800">Gold Pot Leaks</Typography>
                                 </div>
@@ -2608,18 +2899,18 @@ export default function ParentDashboard({
                         )}
                         {historyDetailView === 'rewards' && (
                           claimedRewardsList.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No rewards claimed yet.</Typography> :
-                          [...claimedRewardsList].sort((a,b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
-                            const reward = rewards.find(rw => rw.id === r.reward_id);
-                            return (
-                              <div key={r.id} className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex justify-between items-center">
-                                <div>
-                                  <Typography variant="body" className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</Typography>
-                                  <Typography variant="body" className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</Typography>
+                            [...claimedRewardsList].sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
+                              const reward = rewards.find(rw => rw.id === r.reward_id);
+                              return (
+                                <div key={r.id} className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 backdrop-blur-md flex justify-between items-center">
+                                  <div>
+                                    <Typography variant="body" className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</Typography>
+                                    <Typography variant="body" className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</Typography>
+                                  </div>
+                                  <span className="text-indigo-600 font-bold">-{r.payment_source === 'badge_freebie' ? 0 : (reward?.cost_points || 0)}</span>
                                 </div>
-                                <span className="text-indigo-600 font-bold">-{r.payment_source === 'badge_freebie' ? 0 : (reward?.cost_points || 0)}</span>
-                              </div>
-                            );
-                          })
+                              );
+                            })
                         )}
                       </div>
                     </div>
@@ -2632,67 +2923,131 @@ export default function ParentDashboard({
                       <ScrollText className="w-6 h-6 text-indigo-500" />
                       {child.name}'s History
                     </Typography>
-                    
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                        <span className="font-bold text-amber-900">Total Lifetime Earned</span>
-                        <CoinBadge points={child.lifetime_points || 0} size="md" />
-                      </div>
+
+                    <div className="space-y-6">
                       
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
-                          <span className="text-2xl font-black text-stone-800">{child.weekly_points || 0}</span>
-                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Weekly Coins</span>
+                      {/* Coins Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-xl">
+                              <Coins className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Lifetime Earned</span>
+                          </div>
+                          <span className="font-black text-amber-600 flex items-center gap-1">{child.lifetime_points || 0}</span>
                         </div>
-                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
-                          <span className="text-2xl font-black text-stone-800">{child.monthly_points || 0}</span>
-                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Monthly Coins</span>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-stone-500/10 rounded-xl">
+                              <Calendar className="w-5 h-5 text-stone-500" />
+                            </div>
+                            <span className="font-bold text-stone-700">Weekly Coins</span>
+                          </div>
+                          <span className="font-black text-stone-800">{child.weekly_points || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-stone-500/10 rounded-xl">
+                              <Calendar className="w-5 h-5 text-stone-500" />
+                            </div>
+                            <span className="font-bold text-stone-700">Monthly Coins</span>
+                          </div>
+                          <span className="font-black text-stone-800">{child.monthly_points || 0}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3">
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center hover:bg-emerald-100 transition-colors cursor-pointer w-full">
-                          <CheckSquare className="w-5 h-5 text-emerald-500 mb-2" />
-                          <span className="text-lg font-black text-emerald-700">{tasksDone}</span>
-                          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1 leading-tight">Tasks<br/>Done</span>
-                        </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center hover:bg-indigo-100 transition-colors cursor-pointer w-full">
-                          <Gift className="w-5 h-5 text-indigo-500 mb-2" />
-                          <span className="text-lg font-black text-indigo-700">{rewardsClaimed}</span>
-                          <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-1 leading-tight">Rewards<br/>Claimed</span>
-                        </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center justify-center text-center hover:bg-rose-100 transition-colors cursor-pointer w-full">
-                          <MinusCircle className="w-5 h-5 text-rose-500 mb-2" />
-                          <span className="text-lg font-black text-rose-700">{coinsTakenOff}</span>
-                          <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest mt-1 leading-tight">Times<br/>Deducted</span>
-                        </Button>
+                      {/* Interactive Logs Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <button onClick={() => setHistoryDetailView('tasks')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/10 rounded-xl">
+                              <CheckSquare className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Tasks Completed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{tasksDone}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('rewards')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500/10 rounded-xl">
+                              <Gift className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Rewards Claimed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{rewardsClaimed}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('deductions')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-rose-500/10 rounded-xl">
+                              <MinusCircle className="w-5 h-5 text-rose-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Deductions</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{coinsTakenOff}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
                       </div>
 
-                      <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-stone-600">Current Level</span>
-                          <span className="font-black text-stone-800">Lvl {child.level}</span>
+                      {/* Progression Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-cyan-500/10 rounded-xl">
+                              <Star className="w-5 h-5 text-cyan-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Current Level</span>
+                          </div>
+                          <span className="font-black text-stone-800">Level {child.level}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-stone-600">Current Streak</span>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-orange-500/10 rounded-xl">
+                              <Flame className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Current Streak</span>
+                          </div>
                           <span className="font-black text-stone-800">{child.streak_days} Days</span>
                         </div>
                         {child.savings_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Savings Total</span>
-                            <span className="font-black text-emerald-600 flex items-center gap-1"><Coins className="w-3.5 h-3.5" />{child.savings_pot || 0}</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                <PiggyBank className="w-5 h-5 text-emerald-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Savings Account</span>
+                            </div>
+                            <span className="font-black text-emerald-600 flex items-center gap-1">{child.savings_pot || 0}</span>
                           </div>
                         )}
                         {child.food_pot_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Pet Fed Total</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-500/10 rounded-xl">
+                                <Utensils className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Pet Fed Total</span>
+                            </div>
                             <span className="font-black text-stone-800">{child.pet_fed_total || 0} times</span>
                           </div>
                         )}
                         {child.gifting_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Gifts Made</span>
-                            <span className="font-black text-stone-800">{child.gifts_made || 0}</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-pink-500/10 rounded-xl">
+                                <Heart className="w-5 h-5 text-pink-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Gifts Sent</span>
+                            </div>
+                            <span className="font-black text-stone-800">{child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>
@@ -2701,7 +3056,7 @@ export default function ParentDashboard({
                 );
               })()}
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

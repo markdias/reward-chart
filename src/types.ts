@@ -1,3 +1,11 @@
+export interface Routine {
+  id: string;
+  name: string;
+  morningTaskIds: string[];
+  afternoonTaskIds: string[];
+  eveningTaskIds: string[];
+}
+
 export interface ParentProfile {
   user_id: string;
   email: string;
@@ -83,6 +91,9 @@ export interface Child {
   manual_deductions?: number;
   child_share_token?: string | null;
   linked_email?: string | null;
+  routines?: Routine[];
+  active_routine_id?: string | null;
+  holiday_mode?: boolean;
   created_at: string;
 }
 

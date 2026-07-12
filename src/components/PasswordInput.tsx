@@ -3,6 +3,8 @@ import { Typography } from './ui/Typography';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { evaluatePassword } from '../utils/security';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface PasswordInputProps {
   value: string;
@@ -31,12 +33,11 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
   return (
     <div className="space-y-2">
       <div className="relative">
-        <input
+        <Input
           type={showPassword ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 rounded-xl pr-10 ${className}`}
         />
         <Button
           variant="none"
