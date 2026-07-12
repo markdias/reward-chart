@@ -748,7 +748,7 @@ export default function App() {
     const initialTasks: Task[] = [];
     data.selectedTasks.forEach((t, index) => {
       const templateId = `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
-      // Add as a blueprint
+      // Add as a template
       initialTasks.push({
         ...t,
         id: templateId,
@@ -775,7 +775,7 @@ export default function App() {
     const initialRewards: Reward[] = [];
     data.selectedRewards.forEach((r, index) => {
       const templateId = `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
-      // Add as a blueprint
+      // Add as a template
       initialRewards.push({
         ...r,
         id: templateId,
@@ -881,13 +881,13 @@ export default function App() {
   };
 
 
-  const handleResetData = async (keepBlueprints: boolean) => {
+  const handleResetData = async (keepTemplates: boolean) => {
     const familyId = parentProfile?.family_id || parentEmail;
     if (!familyId) return;
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      if (keepBlueprints) {
+      if (keepTemplates) {
         await supabase.from('tasks').delete().eq('parent_id', familyId).eq('is_template', false);
         await supabase.from('rewards').delete().eq('parent_id', familyId).eq('is_template', false);
       } else {
@@ -930,7 +930,7 @@ export default function App() {
         await supabase.from('children').update(child).eq('id', child.id);
       }
 
-      if (keepBlueprints) {
+      if (keepTemplates) {
         syncTasks(tasks.filter(t => t.is_template));
         syncRewards(rewards.filter(r => r.is_template));
       } else {

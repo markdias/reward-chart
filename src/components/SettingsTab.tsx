@@ -16,7 +16,7 @@ interface SettingsTabProps {
   theme: ThemeId;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
-  onResetData?: (keepBlueprints: boolean) => void;
+  onResetData?: (keepTemplates: boolean) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
@@ -57,7 +57,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [securityMsg, setSecurityMsg] = useState('');
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [keepBlueprints, setKeepBlueprints] = useState(true);
+  const [keepTemplates, setKeepTemplates] = useState(true);
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -621,7 +621,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border-rose-100`}>
             <div>
               <h4 className={`font-bold ${c.text}`}>Clean Up Duplicates</h4>
-              <p className={`text-xs mt-1 ${c.textMuted}`}>Removes any duplicate blueprint templates from multiple imports.</p>
+              <p className={`text-xs mt-1 ${c.textMuted}`}>Removes any duplicate templates from multiple imports.</p>
             </div>
             <Button 
               variant="outline"
@@ -666,13 +666,13 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
               <input 
                 type="checkbox" 
-                id="keep-blueprints"
-                checked={keepBlueprints}
-                onChange={(e) => setKeepBlueprints(e.target.checked)}
+                id="keep-templates"
+                checked={keepTemplates}
+                onChange={(e) => setKeepTemplates(e.target.checked)}
                 className="w-4 h-4 accent-indigo-500 rounded"
               />
-              <label htmlFor="keep-blueprints" className={`text-sm font-semibold cursor-pointer select-none ${c.text}`}>
-                Keep Quest/Reward Blueprints
+              <label htmlFor="keep-templates" className={`text-sm font-semibold cursor-pointer select-none ${c.text}`}>
+                Keep Quest/Reward Templates
               </label>
             </div>
             <div className="flex gap-3">
@@ -688,7 +688,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                 className="flex-1"
                 onClick={() => {
                   playSound.pinError();
-                  if (onResetData) onResetData(keepBlueprints);
+                  if (onResetData) onResetData(keepTemplates);
                   setShowResetConfirm(false);
                 }}
               >
