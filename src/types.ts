@@ -93,6 +93,7 @@ export interface Child {
   linked_email?: string | null;
   routines?: Routine[];
   active_routine_id?: string | null;
+  holiday_mode?: boolean;
   created_at: string;
 }
 

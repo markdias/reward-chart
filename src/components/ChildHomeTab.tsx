@@ -177,8 +177,23 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
       {/* Routine Section */}
       {(() => {
-        if (!activeChild.active_routine_id || !activeChild.routines) return null;
-        const activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
+        if (!activeChild.routines) return null;
+
+        const dayOfWeek = new Date().getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
+        
+        if (activeChild.holiday_mode && !isWeekend) {
+          activeRoutineId = 'holiday';
+        }
+
+        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
+        
+        // Fallback for unmigrated data
+        if (!activeRoutine && activeChild.active_routine_id) {
+          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
+        }
+
         if (!activeRoutine) return null;
 
         let globalTaskIndex = 1;
