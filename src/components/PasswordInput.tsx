@@ -38,7 +38,6 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 rounded-xl pr-10 ${className}`}
         />
         <Button
           variant="none"

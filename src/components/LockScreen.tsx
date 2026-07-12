@@ -134,7 +134,6 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="Enter Password"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-stone-200 bg-stone-50 text-stone-900 text-center text-sm shadow-sm focus:ring-2 focus:ring-stone-900/20 outline-none transition-all placeholder:text-stone-400"
               autoFocus
             />
             <Button

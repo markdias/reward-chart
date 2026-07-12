@@ -400,7 +400,6 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                 type="password" 
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-stone-200 focus:border-cyan-400 outline-none transition-colors"
               />
             </div>
             <div className="p-4 border-b border-stone-100 bg-white">
@@ -572,7 +571,6 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
                 id="keep-templates"
                 checked={keepTemplates}
                 onChange={(e) => setKeepTemplates(e.target.checked)}
-                className="w-4 h-4 accent-indigo-500 rounded"
               />
               <label htmlFor="keep-templates" className={`text-sm font-semibold cursor-pointer select-none ${c.text}`}>
                 Keep Quest/Reward Templates

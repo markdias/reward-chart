@@ -2576,7 +2576,6 @@ export default function ChildDashboard({
                                     <Select
                                       value={selectedCharityId}
                                       onChange={(e) => setSelectedCharityId(e.target.value)}
-                                      className="w-full bg-white border border-emerald-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                                     >
                                       <option value="CH-WILDLIFE"><FaCat className="inline-block mr-2" /> Global Wildlife Fund</option>
                                       <option value="CH-OCEAN"><FaWater className="inline-block mr-2" /> Save the Oceans</option>
@@ -2641,7 +2640,6 @@ export default function ChildDashboard({
                                     <Select
                                       value={selectedSiblingId}
                                       onChange={(e) => setSelectedSiblingId(e.target.value)}
-                                      className="w-full bg-white border border-pink-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                                     >
                                       {children.filter(c => c.id !== activeChild.id).map(c => (
                                         <option key={c.id} value={c.id}><FaChildDress className="inline-block mr-1" /><FaChild className="inline-block mr-2" /> {c.name}</option>

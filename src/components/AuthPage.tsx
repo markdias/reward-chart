@@ -395,7 +395,6 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                     placeholder="Enter 6-character code"
                     value={joinCodeInput}
                     onChange={(e) => setJoinCodeInput(e.target.value)}
-                    className="w-full bg-white border border-stone-200 rounded-lg px-4 py-3 text-center text-xl tracking-[0.2em] font-sans focus:outline-none focus:border-cyan-400 uppercase"
                     maxLength={6}
                   />
                   <Button variant="dark" size="lg" fullWidth onClick={handleApplyJoinCode} disabled={isApplyingCode}>

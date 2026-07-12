@@ -1697,7 +1697,6 @@ export default function ParentDashboard({
                                 value={rewardTitle}
                                 onChange={(e) => setRewardTitle(e.target.value)}
                                 placeholder="iPad time, ice cream, toy..."
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                                 required
                               />
                             </div>
@@ -1707,7 +1706,6 @@ export default function ParentDashboard({
                                 type="number"
                                 value={rewardCost}
                                 onChange={(e) => setRewardCost(Number(e.target.value))}
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                                 min="10"
                                 max="500"
                                 required
@@ -1719,7 +1717,6 @@ export default function ParentDashboard({
                               <Select
                                 value={rewardIcon}
                                 onChange={(e) => setRewardIcon(e.target.value)}
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                               >
                                 <option value="Gamepad2">🎮 Game Time</option>
                                 <option value="Pizza">🍕 Favorite Meal</option>
@@ -1733,7 +1730,6 @@ export default function ParentDashboard({
                               <Select
                                 value={rewardLimit}
                                 onChange={(e) => setRewardLimit(e.target.value as any)}
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
                               >
                                 <option value="unlimited">♾️ Unlimited</option>
                                 <option value="daily">📅 1x Daily</option>
@@ -1747,7 +1743,6 @@ export default function ParentDashboard({
                                 id="rewardBadgeEligible"
                                 checked={rewardBadgeEligible}
                                 onChange={(e) => setRewardBadgeEligible(e.target.checked)}
-                                className="w-4 h-4 rounded border-stone-300 text-cyan-500 focus:ring-cyan-400"
                               />
                               <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
                                 Eligible as a free badge reward (Small Reward)
@@ -2136,7 +2131,6 @@ export default function ParentDashboard({
                         value={newChildName}
                         onChange={(e) => setNewChildName(e.target.value)}
                         placeholder="Leo, Lily, Emma..."
-                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
                         required
                       />
                     </div>
@@ -2149,7 +2143,6 @@ export default function ParentDashboard({
                         placeholder="Age"
                         min={1}
                         max={18}
-                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -2157,7 +2150,6 @@ export default function ParentDashboard({
                       <Select
                         value={newChildChar}
                         onChange={(e) => setNewChildChar(e.target.value)}
-                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
                       >
                         {CHARACTER_PACKS.map(char => (
                           <option key={char.id} value={char.id}>
@@ -2324,7 +2316,6 @@ export default function ParentDashboard({
                         min="1"
                         value={penaltyAmount}
                         onChange={(e) => setPenaltyAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-black rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 text-lg"
                       />
                       <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
                     </div>
@@ -2338,7 +2329,6 @@ export default function ParentDashboard({
                         if (e.target.value === 'Custom') setPenaltyReason('');
                         else setPenaltyReason(e.target.value);
                       }}
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 mb-2"
                     >
                       <option value="" disabled>Select a reason...</option>
                       <option value="Not listening">Not listening</option>
@@ -2355,7 +2345,6 @@ export default function ParentDashboard({
                         placeholder="Type custom reason..."
                         value={penaltyReason}
                         onChange={(e) => setPenaltyReason(e.target.value)}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-900 font-bold text-sm rounded-xl focus:outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20"
                       />
                     )}
                   </div>
@@ -2543,7 +2532,6 @@ export default function ParentDashboard({
                         <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2695,7 +2683,6 @@ export default function ParentDashboard({
                         <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
-                          className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
                         >
                           <option value="all">All Ages</option>
                           <option value="3-5">3 - 5 years</option>
@@ -2829,7 +2816,7 @@ export default function ParentDashboard({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 flex flex-col overflow-hidden max-h-[90vh]"
+              className={`relative w-full max-w-md ${styles.cardBg} rounded-3xl shadow-2xl border border-stone-200 p-6 flex flex-col overflow-hidden max-h-[90vh]`}
             >
               <Button variant="none" size="none"
                 onClick={() => {
@@ -2870,7 +2857,7 @@ export default function ParentDashboard({
                             [...approvedTasks].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
                               const task = tasks.find(t => t.id === c.task_id);
                               return (
-                                <div key={c.id} className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                                <div key={c.id} className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
                                   <div>
                                     <Typography variant="body" className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</Typography>
                                     <Typography variant="body" className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
@@ -2883,7 +2870,7 @@ export default function ParentDashboard({
                         {historyDetailView === 'deductions' && (
                           <>
                             {[...penaltyCompletionsList].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => (
-                              <div key={c.id} className="p-3 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
+                              <div key={c.id} className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-rose-800">{c.notes || 'Penalty'}</Typography>
                                   <Typography variant="body" className="text-xs text-rose-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
@@ -2892,7 +2879,7 @@ export default function ParentDashboard({
                               </div>
                             ))}
                             {(child.manual_deductions || 0) > 0 && (
-                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-stone-800">Quick Adjustments (Manual)</Typography>
                                 </div>
@@ -2900,7 +2887,7 @@ export default function ParentDashboard({
                               </div>
                             )}
                             {(child.gold_pot_total_leaked || 0) > 0 && (
-                              <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 flex justify-between items-center">
+                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
                                   <Typography variant="body" className="font-bold text-stone-800">Gold Pot Leaks</Typography>
                                 </div>
@@ -2915,7 +2902,7 @@ export default function ParentDashboard({
                             [...claimedRewardsList].sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
                               const reward = rewards.find(rw => rw.id === r.reward_id);
                               return (
-                                <div key={r.id} className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex justify-between items-center">
+                                <div key={r.id} className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 backdrop-blur-md flex justify-between items-center">
                                   <div>
                                     <Typography variant="body" className="font-bold text-indigo-800">{reward?.title || 'Unknown Reward'}</Typography>
                                     <Typography variant="body" className="text-xs text-indigo-500">{new Date(r.redeemed_at).toLocaleDateString()}</Typography>
@@ -2938,41 +2925,41 @@ export default function ParentDashboard({
                     </Typography>
 
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                      <div className="flex justify-between items-center p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 backdrop-blur-md">
                         <span className="font-bold text-amber-900">Total Lifetime Earned</span>
                         <CoinBadge points={child.lifetime_points || 0} size="md" />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
+                        <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md flex flex-col items-center justify-center text-center">
                           <span className="text-2xl font-black text-stone-800">{child.weekly_points || 0}</span>
                           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Weekly Coins</span>
                         </div>
-                        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center text-center">
+                        <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md flex flex-col items-center justify-center text-center">
                           <span className="text-2xl font-black text-stone-800">{child.monthly_points || 0}</span>
                           <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Monthly Coins</span>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center hover:bg-emerald-100 transition-colors cursor-pointer w-full">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-emerald-500/20 transition-colors cursor-pointer w-full">
                           <CheckSquare className="w-5 h-5 text-emerald-500 mb-2" />
                           <span className="text-lg font-black text-emerald-700">{tasksDone}</span>
                           <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1 leading-tight">Tasks<br />Done</span>
                         </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center hover:bg-indigo-100 transition-colors cursor-pointer w-full">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-indigo-500/20 transition-colors cursor-pointer w-full">
                           <Gift className="w-5 h-5 text-indigo-500 mb-2" />
                           <span className="text-lg font-black text-indigo-700">{rewardsClaimed}</span>
                           <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-1 leading-tight">Rewards<br />Claimed</span>
                         </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col items-center justify-center text-center hover:bg-rose-100 transition-colors cursor-pointer w-full">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-rose-500/20 transition-colors cursor-pointer w-full">
                           <MinusCircle className="w-5 h-5 text-rose-500 mb-2" />
                           <span className="text-lg font-black text-rose-700">{coinsTakenOff}</span>
                           <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest mt-1 leading-tight">Times<br />Deducted</span>
                         </Button>
                       </div>
 
-                      <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 space-y-2">
+                      <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-bold text-stone-600">Current Level</span>
                           <span className="font-black text-stone-800">Level {child.level}</span>
