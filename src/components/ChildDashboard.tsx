@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, Flame, Play, ChevronRight, Lock, Star,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -28,7 +28,7 @@ import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BottomTabBar } from './ui/BottomTabBar';
-import { BoardingPassCard } from './BoardingPassCard';
+import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
@@ -1413,14 +1413,14 @@ export default function ChildDashboard({
               id="profile-picker"
             >
               <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-sans uppercase tracking-widest`}>
-                  <Plane className="w-3.5 h-3.5" /> BOARDING NOW
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold font-sans uppercase tracking-widest`}>
+                  <Gamepad2 className="w-3.5 h-3.5" /> PLAYER SELECT
                 </div>
                 <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800`}>
-                  Grab your ticket!
+                  Grab your pass!
                 </Typography>
                 <Typography variant="body" className={`text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed`}>
-                  Select your boarding pass to start your adventure and claim your rewards!
+                  Select your arcade access ticket to start your adventure and claim your rewards!
                 </Typography>
               </div>
 
@@ -1428,13 +1428,13 @@ export default function ChildDashboard({
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (
-                      <BoardingPassCard key={`skel-${i}`} child={{id:'',name:'',avatar_url:'',level:0,streak_days:0,points:0}} isLoading />
+                      <ArcadeTicketCard key={`skel-${i}`} child={{id:'',name:'',avatar_url:'',level:0,streak_days:0,points:0}} isLoading />
                     ))}
                   </>
                 ) : children.map((child) => {
                   const stage = getCharacterStage(child.character_id, child.level);
                   return (
-                    <BoardingPassCard
+                    <ArcadeTicketCard
                       key={child.id}
                       child={child}
                       onClick={() => handleSelectChild(child.id)}

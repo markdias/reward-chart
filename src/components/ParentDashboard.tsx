@@ -1508,11 +1508,11 @@ export default function ParentDashboard({
                                       <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
                                         Assign to:
                                       </Typography>
-                                      <div className="flex flex-wrap gap-2">
+                                      <div className="flex flex-col gap-2">
                                         {children.map(child => {
                                           const isAssigned = instances.some(i => i.child_id === child.id);
                                           return (
-                                            <Button variant="none" size="none"
+                                            <div
                                               key={child.id}
                                               onClick={(e) => {
                                                 e.stopPropagation();
@@ -1523,15 +1523,17 @@ export default function ParentDashboard({
                                                   : [...currentAssignedIds, child.id];
                                                 onAssignTask(task, newAssignedIds);
                                               }}
-                                              className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${isAssigned
-                                                ? 'bg-white text-cyan-600 shadow-md border-cyan-100/50 scale-[1.02]'
-                                                : 'bg-white/60 text-stone-500 border-transparent hover:bg-white hover:text-stone-800 shadow-sm'
-                                                }`}
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
                                             >
-                                              <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-200" />
-                                              <span>{child.name}</span>
-                                              {isAssigned && <Check className="w-3 h-3" />}
-                                            </Button>
+                                              <div className="flex items-center gap-3">
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
+                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                              </div>
+                                              
+                                              <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                              </div>
+                                            </div>
                                           );
                                         })}
                                       </div>
@@ -2070,11 +2072,11 @@ export default function ParentDashboard({
                                       <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
                                         Assign to:
                                       </Typography>
-                                      <div className="flex flex-wrap gap-2">
+                                      <div className="flex flex-col gap-2">
                                         {children.map(child => {
                                           const isAssigned = instances.some(i => i.child_id === child.id);
                                           return (
-                                            <Button variant="none" size="none"
+                                            <div
                                               key={child.id}
                                               onClick={(e) => {
                                                 e.stopPropagation();
@@ -2085,15 +2087,17 @@ export default function ParentDashboard({
                                                   : [...currentAssignedIds, child.id];
                                                 onAssignReward(reward, newAssignedIds);
                                               }}
-                                              className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${isAssigned
-                                                ? 'bg-white text-cyan-600 shadow-md border-cyan-100/50 scale-[1.02]'
-                                                : 'bg-white/60 text-stone-500 border-transparent hover:bg-white hover:text-stone-800 shadow-sm'
-                                                }`}
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
                                             >
-                                              <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-200" />
-                                              <span>{child.name}</span>
-                                              {isAssigned && <Check className="w-3 h-3" />}
-                                            </Button>
+                                              <div className="flex items-center gap-3">
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
+                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                              </div>
+                                              
+                                              <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                              </div>
+                                            </div>
                                           );
                                         })}
                                       </div>

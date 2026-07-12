@@ -5,6 +5,8 @@ import { FaBone } from 'react-icons/fa6';
 import { Coins, PiggyBank, Utensils, Gift } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CoinBadge } from './CoinBadge';
+import { ChildAvatar } from './ChildAvatar';
+import { Plane, Star, Zap, Shield, Crown, Play, Trophy, Flame } from 'lucide-react';
 
 export default function Showcase() {
   const mockPet = { name: 'Astro', emoji: '👽', level: 5 };
@@ -119,6 +121,152 @@ export default function Showcase() {
   return (
     <div className="min-h-screen bg-stone-100 p-8 font-sans pb-32">
       <div className="max-w-4xl mx-auto space-y-16">
+
+        {/* =========================================
+            TICKET SHOWCASE IDEAS
+            ========================================= */}
+        <section className="space-y-6 pt-6">
+          <Typography variant="h2" className="text-2xl font-black border-b-4 border-stone-200 pb-2 text-stone-800 uppercase tracking-widest">Character Ticket Ideas</Typography>
+          <p className="text-stone-500 font-bold mb-4">Different designs to replace the Airline Boarding Pass using the Rainbow borders.</p>
+          
+          <div className="flex flex-col gap-10 w-full max-w-2xl mx-auto">
+            
+            {/* Idea 1: Classic Carnival Pass with Pot Edge */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Idea 1: Carnival Pass (Pot Edge Style)</span>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="w-full relative shadow-xl cursor-pointer"
+              >
+                {/* Rainbow Striped Outer Ticket */}
+                <div 
+                  className="w-full rounded-2xl p-2 relative overflow-hidden flex"
+                  style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
+                >
+                  
+                  {/* Left Notch (Hole punch effect) */}
+                  <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-8 h-8 bg-stone-100 rounded-full z-20 border-[3px] border-stone-800" />
+                  
+                  {/* Right Notch */}
+                  <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-8 h-8 bg-stone-100 rounded-full z-20 border-[3px] border-stone-800" />
+
+                  {/* Inner White Body with thick dark border */}
+                  <div className="flex-1 bg-white rounded-xl flex relative border-[3px] border-stone-800">
+                    
+                    {/* Main Content Area */}
+                    <div className="flex-1 p-4 flex items-center gap-6 z-10 pl-8">
+                      {/* Avatar */}
+                      <div className="w-16 h-16 shrink-0 rounded-xl bg-stone-100 border-2 border-stone-800 shadow-sm flex items-center justify-center">
+                        <ChildAvatar iconName="Rocket" className="w-12 h-12 !border-none text-stone-700" />
+                      </div>
+                      
+                      {/* Name & Barcode */}
+                      <div className="flex-1 flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-800 mb-1">ADMIT ONE</span>
+                        
+                        {/* Fake Barcode */}
+                        <div className="flex gap-[2px] h-10 w-full max-w-[120px] mx-auto items-end mb-1">
+                          {[...Array(24)].map((_, i) => (
+                            <div key={i} className="bg-stone-800 rounded-sm" style={{ 
+                              width: Math.random() > 0.5 ? '4px' : '2px', 
+                              height: Math.random() > 0.2 ? '100%' : '80%' 
+                            }} />
+                          ))}
+                        </div>
+
+                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-800">ADMIT ONE</span>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="flex flex-col items-center gap-2 pr-6">
+                        <h3 className="text-3xl font-black font-display tracking-tight text-stone-800 uppercase leading-none">
+                          ALEX
+                        </h3>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-stone-800 bg-stone-100 px-2 py-0.5 rounded-md border-2 border-stone-800">LVL 4</span>
+                          <CoinBadge points={250} size="sm" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sideways Serial Number */}
+                    <div className="w-12 shrink-0 border-l-[3px] border-stone-800 flex items-center justify-center bg-stone-50 z-10 pr-4">
+                      <span className="text-red-500 font-mono font-black tracking-widest rotate-90 whitespace-nowrap text-lg">
+                        83740104
+                      </span>
+                    </div>
+
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Idea 2: Clean Carnival Pass */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-400">Idea 2: Carnival Pass (Clean Layout)</span>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="w-full relative shadow-lg cursor-pointer"
+              >
+                {/* Rainbow Outer Ticket */}
+                <div className="w-full bg-gradient-to-r from-red-500 via-yellow-400 via-green-400 via-blue-500 to-purple-500 rounded-xl p-3 relative overflow-hidden flex">
+                  
+                  {/* Left Notch */}
+                  <div className="absolute left-[-20px] top-1/2 -translate-y-1/2 w-10 h-10 bg-stone-100 rounded-full z-20 shadow-[inset_-3px_0_5px_rgba(0,0,0,0.1)]" />
+                  
+                  {/* Right Notch */}
+                  <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 w-10 h-10 bg-stone-100 rounded-full z-20 shadow-[inset_3px_0_5px_rgba(0,0,0,0.1)]" />
+
+                  {/* Inner White Body */}
+                  <div className="flex-1 bg-white rounded-lg flex relative overflow-hidden border border-black/5">
+                    
+                    {/* Main Content Area */}
+                    <div className="flex-1 p-5 flex items-center gap-5 z-10 pl-8">
+                      {/* Avatar */}
+                      <div className="w-16 h-16 shrink-0 rounded-full bg-stone-100 border-2 border-stone-200 shadow-inner flex items-center justify-center overflow-hidden">
+                        <ChildAvatar iconName="Sparkles" className="w-12 h-12 !border-none text-purple-600 !bg-transparent" />
+                      </div>
+                      
+                      {/* Name & Info */}
+                      <div className="flex-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5 block">Player Select</span>
+                        <h3 className="text-3xl font-black font-display tracking-tight text-stone-800 uppercase leading-none mb-2">
+                          ALEX
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200">LEVEL 4</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center gap-2 pr-6">
+                        <CoinBadge points={250} size="sm" />
+                      </div>
+                    </div>
+
+                    {/* Right Stub with Barcode */}
+                    <div className="w-24 shrink-0 border-l border-dashed border-stone-300 flex flex-col items-center justify-center bg-stone-50 z-10 pr-6 pl-2 py-2">
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-stone-400 mb-1">TICKET</span>
+                      {/* Vertical Fake Barcode */}
+                      <div className="flex gap-[2px] w-full h-16 items-end justify-center mb-1">
+                        {[...Array(12)].map((_, i) => (
+                          <div key={i} className="bg-stone-800 rounded-sm" style={{ 
+                            width: Math.random() > 0.5 ? '4px' : '2px', 
+                            height: Math.random() > 0.2 ? '100%' : '80%' 
+                          }} />
+                        ))}
+                      </div>
+                      <span className="text-stone-400 font-mono text-[8px] tracking-widest">
+                        00134
+                      </span>
+                    </div>
+
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+          </div>
+        </section>
         
         {/* =========================================
             POTS THEME SHOWCASE
