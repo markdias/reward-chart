@@ -112,37 +112,45 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {/* Top Cards: Daily Goal and Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Daily Goal Card */}
-        <div className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-cyan-300">
-          <div className="w-16 h-16 shrink-0 flex items-center justify-center">
-            <div className="transform scale-[1.35]">
-              <CoinBadge points={pointsEarnedToday} />
+        <div 
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden hover:-translate-y-1"
+          style={{ background: 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' }}
+        >
+          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+              <div className="transform scale-[1.25] sm:scale-[1.35]">
+                <CoinBadge points={pointsEarnedToday} />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <Typography variant="h2">Daily Goal</Typography>
-            <p className="text-xs text-stone-500 mt-0.5">
-              {pointsRemaining > 0 
-                ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
-                : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
-              }
-            </p>
+            
+            <div>
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Daily Goal</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+                {pointsRemaining > 0 
+                  ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
+                  : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
+                }
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Check Badges Card */}
         <button 
           onClick={onOpenBadges}
-          className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm flex items-center gap-5 transition-all hover:border-amber-300 cursor-pointer text-left group"
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full"
+          style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
         >
-          <div className="w-16 h-16 shrink-0 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Trophy className="w-8 h-8 text-amber-500" fill="currentColor" />
-          </div>
-          <div>
-            <Typography variant="h2">Check Badges</Typography>
-            <p className="text-xs text-stone-500 mt-0.5">
-              View your achievements and claim your free rewards!
-            </p>
+          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
+            </div>
+            <div>
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Check Badges</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+                View your achievements and claim your free rewards!
+              </p>
+            </div>
           </div>
         </button>
       </div>

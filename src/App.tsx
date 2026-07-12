@@ -8,6 +8,7 @@ import ParentDashboard from './components/ParentDashboard';
 import ChildDashboard from './components/ChildDashboard';
 import LockScreen from './components/LockScreen';
 import Confetti from './components/Confetti';
+import Showcase from './components/Showcase';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
@@ -44,6 +45,10 @@ export default function App() {
 
   const [showLogin, setShowLogin] = useState<boolean>(
     new URLSearchParams(window.location.search).has('share') || new URLSearchParams(window.location.search).has('child_share')
+  );
+
+  const [showShowcase] = useState<boolean>(
+    new URLSearchParams(window.location.search).has('showcase')
   );
 
   const [isChildAuth, setIsChildAuth] = useState<boolean>(
@@ -2007,7 +2012,17 @@ export default function App() {
 
       {/* Screen Routing */}
       <AnimatePresence mode="wait">
-        {(!hasCompletedOnboarding && !isChildAuth && !new URLSearchParams(window.location.search).has('share') && !new URLSearchParams(window.location.search).has('child_share')) ? (
+        {showShowcase ? (
+          <motion.div
+            key="showcase"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full"
+          >
+            <Showcase />
+          </motion.div>
+        ) : (!hasCompletedOnboarding && !isChildAuth && !new URLSearchParams(window.location.search).has('share') && !new URLSearchParams(window.location.search).has('child_share')) ? (
           <motion.div
             key="onboarding"
             initial={{ opacity: 0 }}

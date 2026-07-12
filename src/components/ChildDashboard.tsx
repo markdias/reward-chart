@@ -40,6 +40,18 @@ const RECURRENCE_LABEL: Record<string, string> = {
   repeatable: 'Repeatable',
 };
 
+const getPetStripeBackground = (characterId: string) => {
+  switch (characterId) {
+    case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
+    case 'robot': return 'repeating-linear-gradient(-45deg, #0ea5e9, #0ea5e9 15px, #3b82f6 15px, #3b82f6 30px, #8b5cf6 30px, #8b5cf6 45px)';
+    case 'dino': return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #84cc16 15px, #84cc16 30px, #14b8a6 30px, #14b8a6 45px)';
+    case 'dragon': return 'repeating-linear-gradient(-45deg, #ef4444, #ef4444 15px, #f97316 15px, #f97316 30px, #eab308 30px, #eab308 45px)';
+    case 'cat': return 'repeating-linear-gradient(45deg, #6366f1, #6366f1 15px, #8b5cf6 15px, #8b5cf6 30px, #d946ef 30px, #d946ef 45px)';
+    case 'bunny': return 'repeating-linear-gradient(-45deg, #d946ef, #d946ef 15px, #8b5cf6 15px, #8b5cf6 30px, #ec4899 30px, #ec4899 45px)';
+    default: return 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 15px, #a855f7 15px, #a855f7 30px, #38bdf8 30px, #38bdf8 45px)';
+  }
+};
+
 interface ChildDashboardProps {
   parentProfile?: ParentProfile | null;
   children: Child[];
@@ -552,7 +564,11 @@ export default function ChildDashboard({
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+              <div 
+                className="flex items-center p-1 rounded-full shadow-md shrink-0"
+                style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
+              >
+                <div className="flex items-center bg-white border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <Tooltip content="Current Gold Coins" position="bottom">
                   <div className="cursor-help">
                     <CoinBadge points={activeChild?.points || 0} />
@@ -595,6 +611,7 @@ export default function ChildDashboard({
                     </Button>
                   </Tooltip>
                 )}
+                </div>
               </div>
             </div>
           </div>
@@ -1489,9 +1506,14 @@ export default function ChildDashboard({
                         className="space-y-4 sm:space-y-6"
                       >
                     {/* Holo Pedestal */}
-                    <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
+                    <div 
+                      className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center text-center shadow-2xl overflow-hidden"
+                      style={{ background: getPetStripeBackground(activeChild.character_id || 'unicorn') }}
+                    >
+                      {/* Inner Cutout */}
+                      <div className="relative z-10 w-full h-full bg-white rounded-[1.25rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
                       
-                      <div className="absolute inset-0  opacity-15 pointer-events-none" />
+                      <div className="absolute inset-0 opacity-15 pointer-events-none" />
 
                       <div className="flex justify-between w-full items-start mt-1">
                         <div className="text-left">
@@ -1587,6 +1609,7 @@ export default function ChildDashboard({
                         </div>
                       )}
 
+                      </div>
                     </div>
 
                     {/* Streak & Goals Grid */}
@@ -1606,46 +1629,49 @@ export default function ChildDashboard({
                         <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
                           {/* Streak Widget */}
-                          <Button
-                            variant="none"
-                            size="none"
+                          <button
                             onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                           >
-                            <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
-                            <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
-                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
-                          </Button>
+                            <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+                              <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
+                              <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
+                            </div>
+                          </button>
 
                           {/* Weekly Widget */}
-                          <Button 
-                            variant="none"
-                            size="none"
+                          <button 
                             onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
                           >
-                            <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
-                              <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
+                            <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
                             </div>
-                            <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
-                            <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
-                          </Button>
+                          </button>
 
                           {/* Monthly Widget */}
-                          <Button 
-                            variant="none"
-                            size="none"
+                          <button 
                             onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
                           >
-                            <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
-                              <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
+                            <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
                             </div>
-                            <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
-                            <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
-                          </Button>
+                          </button>
                         </div>
                         
                         <AnimatePresence>
@@ -1654,17 +1680,25 @@ export default function ChildDashboard({
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 overflow-hidden"
+                              className="mt-4 px-4 -mx-4 pb-6 -mb-6 pt-2 -mt-2 overflow-hidden"
                             >
-                              <div className={`p-5 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl relative`}>
-                                <Button 
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => setExpandedGoal(null)}
-                                  className="absolute top-4 right-4 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200"
+                                <div 
+                                  className="relative p-2 rounded-[2rem] shadow-xl overflow-hidden mt-2"
+                                  style={{ 
+                                    background: expandedGoal === 'streak' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
+                                                expandedGoal === 'weekly' ? 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' :
+                                                'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px, #9333ea 20px, #9333ea 30px)' 
+                                  }}
                                 >
-                                  <ChevronRight className="w-4 h-4 rotate-90" />
-                                </Button>
+                                  <div className="relative z-10 w-full h-full bg-white rounded-[1.6rem] p-5 flex flex-col gap-3 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+                                    <Button 
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={() => setExpandedGoal(null)}
+                                      className="absolute top-4 right-4 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 z-20"
+                                    >
+                                      <ChevronRight className="w-4 h-4 rotate-90" />
+                                    </Button>
                                 
                                 {expandedGoal === 'streak' && (
                                   <>
@@ -1682,7 +1716,7 @@ export default function ChildDashboard({
                                 
                                 {expandedGoal === 'weekly' && (
                                   <>
-                                    <div className="flex justify-between items-center pr-8">
+                                    <div className="flex justify-between items-center pr-14">
                                       <div>
                                         <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Weekly Target</Typography>
                                         {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
@@ -1707,7 +1741,7 @@ export default function ChildDashboard({
                                 
                                 {expandedGoal === 'monthly' && (
                                   <>
-                                    <div className="flex justify-between items-center pr-8">
+                                    <div className="flex justify-between items-center pr-14">
                                       <div>
                                         <Typography variant="h4" className="font-extrabold text-lg text-stone-900">Monthly Target</Typography>
                                         {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
@@ -1729,7 +1763,8 @@ export default function ChildDashboard({
                                     </div>
                                   </>
                                 )}
-                              </div>
+                                  </div>
+                                </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1762,10 +1797,15 @@ export default function ChildDashboard({
                           key="child-tasks-tab"
                           className="flex flex-col"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-stone-200 border flex items-center justify-between mb-3 sm:mb-4`}>
-                            <div>
-                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Daily Quests</Typography>
-                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans text-stone-400`}>Complete tasks to earn more gold coins!</Typography>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+                          >
+                            <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <div>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Daily Quests</Typography>
+                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Complete tasks to earn more gold coins!</Typography>
+                              </div>
                             </div>
                           </div>
                           
@@ -1838,44 +1878,47 @@ export default function ChildDashboard({
                               const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
                               const subtitleParts = [catMeta.label, recLabel, ...(completedTodayCount > 0 ? [`Done ${completedTodayCount}×`] : [])];
 
+                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                              const taskBgStyle = {
+                                background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)',
+                              };
+
+                              const innerContentClasses = "relative z-10 w-full h-full bg-white rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
+
                               const cardContent = (
-                                <>
-                                  <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-stone-200 text-stone-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
-                                      <catMeta.Icon className="w-4 h-4" />
-                                    </div>
+                                <div className={innerContentClasses}>
+                                  <div className="absolute top-2 right-2 z-10">
+                                    <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
                                   </div>
-                                  <div className={`mt-2 ${isCompletable ? 'group-hover:scale-110 transition-transform' : 'opacity-50'}`}>
+                                  <div className="mt-2 relative z-10">
                                     <CoinBadge points={task.points} disabled={isApproved} />
                                   </div>
-                                  <div className="w-full">
-                                    <Typography variant="h4" className={`font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                  <div className="w-full relative z-10 mt-1">
+                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800'}`}>
                                       {task.title}
                                     </Typography>
-                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                    <div className="mt-2 flex items-center justify-center">
                                       {isApproved ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full">
-                                          <FaCircleCheck className="w-3 h-3" /> DONE
+                                        <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-200">
+                                          <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
                                         </div>
                                       ) : isPending ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full">
+                                        <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 text-[9px] font-black uppercase tracking-widest rounded-full">
                                           AWAITING
                                         </div>
                                       ) : isOnCooldown ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-amber-200">
+                                        <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200">
                                           {cooldownTimeLeftStr}
                                         </div>
                                       ) : (
-                                        <div className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full group-hover:bg-amber-100 group-hover:text-amber-600 transition-colors">
+                                        <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
                                           {recLabel}
                                         </div>
                                       )}
                                     </div>
                                   </div>
-                                </>
+                                </div>
                               );
-
-                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
 
                               return isCompletable ? (
                                 <Button
@@ -1884,20 +1927,16 @@ export default function ChildDashboard({
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
-                                  className={`${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] task-card`}
+                                  className={`${baseCardClasses} task-card`}
+                                  style={taskBgStyle}
                                 >
                                   {cardContent}
                                 </Button>
                               ) : (
                                 <div
                                   key={task.id}
-                                  className={`${baseCardClasses} ${
-                                    isApproved
-                                      ? `bg-stone-50 border-stone-100`
-                                      : isPending
-                                        ? 'bg-indigo-50 border-indigo-100'
-                                        : 'bg-amber-50 border-amber-100 opacity-75'
-                                  } task-card`}
+                                  className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
+                                  style={taskBgStyle}
                                 >
                                   {cardContent}
                                 </div>
@@ -1918,10 +1957,15 @@ export default function ChildDashboard({
                           key="child-rewards-tab"
                           className="space-y-4"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
-                            <div>
-                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Shop</Typography>
-                              <Typography variant="body" className={`text-[10px] sm:text-xs font-sans ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</Typography>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px)' }}
+                          >
+                            <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <div>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Reward Shop</Typography>
+                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Trade your gold coins for real-world prizes!</Typography>
+                              </div>
                             </div>
                           </div>
 
@@ -1947,14 +1991,14 @@ export default function ChildDashboard({
 
                               let statusBadge = null;
                               if (hasPendingRequest) {
-                                statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Pending</span>;
+                                statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 text-[9px] font-black uppercase tracking-widest rounded-full">PENDING</div>;
                               } else if (!availability.available && !isSavingFor) {
                                 statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
                               } else if (isSavingsUnlocked) {
                                 if (isSavingFor) {
                                   statusBadge = (
                                     <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
-                                      <CheckCircle className="w-3 h-3" /> Saving
+                                      <CheckCircle className="w-3 h-3" /> SAVING
                                     </div>
                                   );
                                 } else {
@@ -1967,46 +2011,38 @@ export default function ChildDashboard({
                                         onSavingsGoal(activeChild.id, rew.id);
                                         playSound.success();
                                       }}
-                                      className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
+                                      className="inline-flex px-3 py-1 bg-stone-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
                                     >
-                                      Set Goal
+                                      SET GOAL
                                     </Button>
                                   );
                                 }
                               }
 
-                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
-                              
-                              let wrapperClasses = "";
-                              let iconBg = "";
-                              if (isSavingFor) {
-                                wrapperClasses = `${baseCardClasses} bg-emerald-50 border-emerald-300 shadow-[0_4px_20px_rgba(52,211,153,0.2)] hover:shadow-[0_8px_25px_rgba(52,211,153,0.3)] group cursor-pointer reward-card-saving`;
-                                iconBg = "bg-emerald-100 text-emerald-600";
-                              } else if (canDispense) {
-                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] reward-card`;
-                                iconBg = "bg-orange-100 text-orange-500";
-                              } else {
-                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 opacity-60 grayscale-[0.3] reward-card-disabled`;
-                                iconBg = "bg-stone-100 text-stone-400";
-                              }
+                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                              const rewardBgStyle = {
+                                background: 'repeating-linear-gradient(-45deg, #f472b6, #f472b6 15px, #34d399 15px, #34d399 30px, #818cf8 30px, #818cf8 45px)',
+                              };
+
+                              const innerContentClasses = "relative z-10 w-full h-full bg-white rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
 
                               const cardContent = (
-                                <>
-                                  <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${iconBg}`}>
-                                      <Gift className="w-4 h-4" />
-                                    </div>
+                                <div className={innerContentClasses}>
+                                  <div className="absolute top-2 right-2 z-10">
+                                    <Gift className={`w-5 h-5 ${(canDispense || isSavingFor) ? 'text-pink-400 drop-shadow-sm group-hover:scale-125 transition-transform' : 'text-stone-300'}`} />
                                   </div>
-                                  <div className={`mt-2 ${canDispense ? 'group-hover:scale-110 transition-transform' : ''}`}>
+                                  <div className="mt-2 relative z-10">
                                     <CoinBadge points={rew.cost_points} />
                                   </div>
-                                  <div className="w-full">
-                                    <Typography variant="h4" className="font-extrabold text-xs sm:text-sm text-stone-800 font-display leading-tight">{rew.title}</Typography>
-                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                  <div className="w-full relative z-10 mt-1">
+                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${(canDispense || isSavingFor) ? 'text-stone-800' : 'text-stone-400'}`}>
+                                      {rew.title}
+                                    </Typography>
+                                    <div className="mt-2 flex items-center justify-center">
                                       {statusBadge}
                                     </div>
                                   </div>
-                                </>
+                                </div>
                               );
 
                               return canDispense ? (
@@ -2019,12 +2055,13 @@ export default function ChildDashboard({
                                     : handleClaimReward(rew.id, rew.cost_points)
                                   }
                                   id={`claim-reward-${rew.id}`}
-                                  className={wrapperClasses}
+                                  className={`${baseCardClasses} reward-card`}
+                                  style={rewardBgStyle}
                                 >
                                   {cardContent}
                                 </Button>
                               ) : (
-                                <div key={rew.id} className={wrapperClasses}>
+                                <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
                                   {cardContent}
                                 </div>
                               );
@@ -2042,17 +2079,24 @@ export default function ChildDashboard({
                           key="child-pots-tab"
                           className="space-y-4"
                         >
-                          <div className="bg-white border border-stone-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Pots</Typography>
-                            <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500">Manage your savings, food and gifting pots!</Typography>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #10b981, #10b981 10px, #059669 10px, #059669 20px)' }}
+                          >
+                            <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Pots</Typography>
+                              <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Manage your savings, food and gifting pots!</Typography>
+                            </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
                           {/* === MAIN GOLD POT SECTION === */}
                           <div 
                             onClick={() => setExpandedPot(expandedPot === 'gold' ? null : 'gold')}
-                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
+                            className={`relative p-2 rounded-[2.5rem] transition-transform duration-200 flex flex-col shadow-xl overflow-hidden cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'scale-[1.02]' : 'hover:-translate-y-1'}`}
+                            style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
                           >
+                            <div className="relative z-10 w-full h-full bg-white rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
                             <div className="flex justify-between items-start mb-4">
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
                                 {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
@@ -2092,6 +2136,7 @@ export default function ChildDashboard({
                                 </motion.div>
                               )}
                             </AnimatePresence>
+                            </div>
                           </div>
 
                           {/* === SAVINGS POT SECTION === */}
@@ -2100,8 +2145,10 @@ export default function ChildDashboard({
                           {isSavingsUnlocked && activeChild.savings_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'savings' ? null : 'savings')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-stone-200 hover:border-emerald-300 hover:shadow-lg'}`}
+                              className={`relative p-2 rounded-[2.5rem] transition-transform duration-200 flex flex-col shadow-xl overflow-hidden cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'scale-[1.02]' : 'hover:-translate-y-1'}`}
+                              style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}
                             >
+                              <div className="relative z-10 w-full h-full bg-white rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                                   <PiggyBank className="w-6 h-6" />
@@ -2279,12 +2326,17 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                              </div>
                             </div>
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
                           {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaPiggyBank className="inline-block mr-2 text-pink-400" /> Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</Typography>
@@ -2302,6 +2354,7 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}                          {/* === FOOD POT SECTION === */}
 
@@ -2309,8 +2362,10 @@ export default function ChildDashboard({
                           {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'food' ? null : 'food')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-stone-200 hover:border-orange-300 hover:shadow-lg'}`}
+                              className={`relative p-2 rounded-[2.5rem] transition-transform duration-200 flex flex-col shadow-xl overflow-hidden cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'scale-[1.02]' : 'hover:-translate-y-1'}`}
+                              style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}
                             >
+                              <div className="relative z-10 w-full h-full bg-white rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
                                   <Utensils className="w-6 h-6" />
@@ -2394,12 +2449,17 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                              </div>
                             </div>
                           )}
 
                           {/* Food Pot Locked Preview */}
                           {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaBowlFood className="inline-block mr-2 text-orange-400" /> Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</Typography>
@@ -2417,6 +2477,7 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 
@@ -2426,8 +2487,10 @@ export default function ChildDashboard({
                           {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'gifting' ? null : 'gifting')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-stone-200 hover:border-purple-300 hover:shadow-lg'}`}
+                              className={`relative p-2 rounded-[2.5rem] transition-transform duration-200 flex flex-col shadow-xl overflow-hidden cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'scale-[1.02]' : 'hover:-translate-y-1'}`}
+                              style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}
                             >
+                              <div className="relative z-10 w-full h-full bg-white rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
                               <div className="flex justify-between items-start mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
                                   <Gift className="w-6 h-6" />
@@ -2630,12 +2693,17 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                              </div>
                             </div>
                           )}
 
                           {/* Gifting Pot Locked Preview */}
                           {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
@@ -2653,6 +2721,7 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 
@@ -2660,8 +2729,10 @@ export default function ChildDashboard({
                           {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
                             <div 
                               onClick={() => setExpandedPot(expandedPot === 'maintenance' ? null : 'maintenance')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-stone-200 hover:border-amber-300 hover:shadow-lg'}`}
+                              className={`relative p-2 rounded-[2.5rem] transition-transform duration-200 flex flex-col shadow-xl overflow-hidden cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'scale-[1.02]' : 'hover:-translate-y-1'}`}
+                              style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}
                             >
+                              <div className="relative z-10 w-full h-full bg-white rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
                               <div className="flex justify-between items-start mb-4">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
                                   <FaWrench className="w-6 h-6" />
@@ -2747,12 +2818,17 @@ export default function ChildDashboard({
                                   </motion.div>
                                 )}
                               </AnimatePresence>
+                              </div>
                             </div>
                           )}
 
                           {/* Gold Pot Maintenance Locked Preview */}
                           {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500">
                               <div className="flex items-center gap-2 text-stone-500">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaWrench className="inline-block mr-2 text-amber-500" /> Maintenance — Unlock at Level {parentProfile?.gold_pot_maintenance_unlock_level ?? 8}!</Typography>
@@ -2770,6 +2846,7 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 

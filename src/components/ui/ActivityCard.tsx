@@ -78,41 +78,55 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   // Adjust points logic if they passed a positive number but it's a spend
   const displayPoints = isNegative && points > 0 ? -points : points;
 
+  let bgStyle = { background: 'repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 10px, #f3f4f6 10px, #f3f4f6 20px)' };
+  if (type === 'task') {
+    bgStyle = { background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #facc15 10px, #facc15 20px, #fb923c 20px, #fb923c 30px)' };
+  } else if (type === 'reward' || type === 'gifting') {
+    bgStyle = { background: 'repeating-linear-gradient(-45deg, #f472b6, #f472b6 10px, #34d399 10px, #34d399 20px, #818cf8 20px, #818cf8 30px)' };
+  } else if (type === 'penalty') {
+    bgStyle = { background: 'repeating-linear-gradient(45deg, #f43f5e, #f43f5e 10px, #fb923c 10px, #fb923c 20px)' };
+  }
+
+  const wrapperClass = "relative p-1.5 rounded-2xl shadow-sm transition-transform duration-200 hover:-translate-y-0.5 overflow-hidden";
+  const innerClass = "relative z-10 w-full h-full bg-white rounded-[0.85rem] p-3 sm:p-4 flex flex-row justify-between items-center gap-3 sm:gap-4 border-2 border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.05)]";
+
   return (
-    <div className="bg-white border dashboard-card border-stone-100 rounded-2xl p-3 sm:p-4 flex flex-row justify-between items-center gap-3 sm:gap-4 transition-all hover:border-stone-200">
-      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrapperClass}`}>
-          {IconElement}
-        </div>
-        <div className="flex-1 min-w-0">
-          <Typography 
-            variant="body" 
-            className={`font-bold text-stone-900 text-sm truncate ${isStrikeThrough ? 'line-through opacity-70' : ''}`}
-          >
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="body" className="text-xs text-stone-500 mt-0.5 truncate">
-              {subtitle}
-            </Typography>
-          )}
-          {date && (
-            <Typography variant="body" className="text-[10px] sm:text-xs text-stone-400 mt-0.5">
-              {date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            </Typography>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-        <div className="font-black text-sm flex items-center justify-center">
-          <CoinBadge points={displayPoints} size="sm" disabled={!isStrikeThrough && type === 'task' && status !== 'completed' && status !== 'approved'} />
-        </div>
-        {actions && (
-          <div className="flex items-center gap-2">
-            {actions}
+    <div className={wrapperClass} style={bgStyle}>
+      <div className={innerClass}>
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrapperClass}`}>
+            {IconElement}
           </div>
-        )}
+          <div className="flex-1 min-w-0">
+            <Typography 
+              variant="body" 
+              className={`font-black uppercase tracking-wider text-stone-800 text-xs sm:text-sm truncate`}
+            >
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography variant="body" className="text-xs text-stone-500 mt-0.5 truncate font-medium">
+                {subtitle}
+              </Typography>
+            )}
+            {date && (
+              <Typography variant="body" className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 font-bold tracking-wider uppercase">
+                {date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </Typography>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="font-black text-sm flex items-center justify-center">
+            <CoinBadge points={displayPoints} size="sm" disabled={!isStrikeThrough && type === 'task' && status !== 'completed' && status !== 'approved'} />
+          </div>
+          {actions && (
+            <div className="flex items-center gap-2">
+              {actions}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
