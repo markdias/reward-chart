@@ -1579,13 +1579,15 @@ export default function ParentDashboard({
                   <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
                   
                   {/* Select Child */}
-                  <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                  <div className="flex w-fit max-w-full gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-x-auto custom-scrollbar">
                     {children.map(child => (
                       <button
                         key={child.id}
                         onClick={() => setRoutineChildId(child.id)}
-                        className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
-                          routineChildId === child.id ? 'bg-stone-900 text-white' : 'bg-white text-stone-600 border border-stone-200'
+                        className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest whitespace-nowrap transition-all duration-300 ${
+                          routineChildId === child.id
+                            ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                            : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                       >
                         {child.name}
