@@ -174,25 +174,25 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
               onChange={(v: string) => setLevelUpGoldReward(Number(v))} 
             />
             <SettingsRow 
-              label="Savings Pot Lvl" 
+              label="Savings Pot Level" 
               value={savingsPotUnlockLevel} 
               type="number" 
               onChange={(v: string) => setSavingsPotUnlockLevel(Number(v))} 
             />
             <SettingsRow 
-              label="Food Pot Lvl" 
+              label="Food Pot Level" 
               value={foodPotUnlockLevel} 
               type="number" 
               onChange={(v: string) => setFoodPotUnlockLevel(Number(v))} 
             />
             <SettingsRow 
-              label="Gifting Pot Lvl" 
+              label="Gifting Pot Level" 
               value={giftingPotUnlockLevel} 
               type="number" 
               onChange={(v: string) => setGiftingPotUnlockLevel(Number(v))} 
             />
             <SettingsRow 
-              label="Gold Maintenance Lvl" 
+              label="Gold Maintenance Level" 
               value={goldPotMaintenanceUnlockLevel} 
               type="number" 
               onChange={(v: string) => setGoldPotMaintenanceUnlockLevel(Number(v))} 

@@ -434,9 +434,9 @@ export default function Showcase() {
               <SettingsBlock title="Levels & Pots">
                 <SettingsRow label="Gold Required to Level Up" value="500" type="number" />
                 <SettingsRow label="Level Up Gold Reward" value="500" type="number" />
-                <SettingsRow label="Savings Pot Lvl" value="2" type="number" />
-                <SettingsRow label="Food Pot Lvl" value="4" type="number" />
-                <SettingsRow label="Gifting Pot Lvl" value="6" type="number" />
+                <SettingsRow label="Savings Pot Level" value="2" type="number" />
+                <SettingsRow label="Food Pot Level" value="4" type="number" />
+                <SettingsRow label="Gifting Pot Level" value="6" type="number" />
                 <SettingsRow label="Maintenance Cost" value="2" type="number" isLast />
               </SettingsBlock>
             </div>

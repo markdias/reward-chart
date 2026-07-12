@@ -2959,7 +2959,7 @@ export default function ParentDashboard({
                       <div className="p-4 bg-stone-50 rounded-2xl border border-stone-100 space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-bold text-stone-600">Current Level</span>
-                          <span className="font-black text-stone-800">Lvl {child.level}</span>
+                          <span className="font-black text-stone-800">Level {child.level}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-bold text-stone-600">Current Streak</span>
