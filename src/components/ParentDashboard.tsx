@@ -1338,33 +1338,33 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${
                         taskSubTab === 'directory'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                          ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                       }`}
                     >
                       BLUEPRINTS
                     </Button>
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('active')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${
                         taskSubTab === 'active'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                          ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                       }`}
                     >
                       ASSIGNED
                     </Button>
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('routines')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${
                         taskSubTab === 'routines'
-                          ? ('bg-stone-900 text-white shadow-sm')
-                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                          ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                       }`}
                     >
                       ROUTINES
