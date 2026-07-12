@@ -924,7 +924,7 @@ export default function ParentDashboard({
               >
                 <div className="flex justify-end items-center">
                   <Button
-                    variant="dark"
+                    variant="primary"
                     onClick={() => { playSound.click(); setShowAddChild(true); }}
                     id="add-child-btn-top"
                     leftIcon={<UserPlus className="w-4 h-4" />}
@@ -1422,7 +1422,7 @@ export default function ParentDashboard({
                   {taskSubTab === 'directory' && (
                     <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                       <Button
-                        variant="dark"
+                        variant="purple"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => {
                           playSound.click();
@@ -1442,7 +1442,7 @@ export default function ParentDashboard({
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
                       <Button
-                        variant="dark"
+                        variant="primary"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => { playSound.click(); setShowAddTask(true); }}
                         id="add-chore-btn-top"
@@ -1971,7 +1971,7 @@ export default function ParentDashboard({
                   {rewardSubTab === 'directory' && (
                     <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                       <Button
-                        variant="dark"
+                        variant="warning"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => {
                           playSound.click();
@@ -1991,7 +1991,7 @@ export default function ParentDashboard({
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
                       <Button
-                        variant="dark"
+                        variant="primary"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => { playSound.click(); setShowAddReward(true); }}
                         id="add-reward-btn-top"

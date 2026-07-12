@@ -288,7 +288,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               <p className="text-xs text-indigo-700">Create a free account to sync your family's data across devices and never lose your progress.</p>
             </div>
             <Button 
-              variant="dark"
+              variant="primary"
               size="sm"
               onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }} 
             >
@@ -372,7 +372,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </SettingsBlock>
 
           <Button 
-            variant="dark"
+            variant="primary"
             fullWidth
             onClick={handleSaveProfile}
             isLoading={isSavingProfile}
@@ -423,7 +423,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </SettingsBlock>
           
           <Button 
-            variant="dark"
+            variant="primary"
             fullWidth
             onClick={handleSaveSecurity}
             isLoading={isSavingSecurity}
@@ -446,7 +446,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-3">
               <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>
               <p className="text-xs text-emerald-800">You must create a free account before you can share your dashboard with another parent. This ensures your data is securely synced.</p>
-              <Button variant="dark" size="sm" onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }}>
+              <Button variant="primary" size="sm" onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }}>
                 CREATE ACCOUNT TO SHARE
               </Button>
             </div>
@@ -471,7 +471,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               className="flex-1 px-4 py-3 rounded-2xl border-2 border-stone-200 font-sans text-xs bg-white text-stone-600 outline-none" 
             />
             <Button 
-              variant="dark"
+              variant="secondary"
               onClick={() => {
                 navigator.clipboard.writeText(shareLink);
                 playSound.success();

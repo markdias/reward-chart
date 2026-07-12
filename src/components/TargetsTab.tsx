@@ -208,7 +208,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
 
           <div className="max-w-md mx-auto mt-8">
             <Button 
-              variant="dark"
+              variant="primary"
               fullWidth
               onClick={handleSave}
               isLoading={isSaving}
