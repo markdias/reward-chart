@@ -181,6 +181,8 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         const activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
         if (!activeRoutine) return null;
 
+        let globalTaskIndex = 1;
+
         const renderPeriod = (title: string, taskIds: string[]) => {
           const routineTasks = taskIds
             .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
@@ -193,6 +195,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
               <Typography variant="h4" className="text-sm font-bold text-stone-600 px-1 uppercase tracking-widest">{title}</Typography>
               <div className="space-y-2">
                 {routineTasks.map((task) => {
+                  const currentTaskIndex = globalTaskIndex++;
                   const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
                   let compl = null;
                   if (task.recurrence === 'daily') {
@@ -237,6 +240,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                       type="task"
                       status={isApproved ? 'completed' : 'pending'}
                       category={task.category}
+                      numberBadge={currentTaskIndex}
                       actions={
                         isCompletable ? (
                           <div className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200">

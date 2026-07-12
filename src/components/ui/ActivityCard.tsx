@@ -17,6 +17,7 @@ export interface ActivityCardProps {
   category?: string;
   actions?: React.ReactNode;
   iconOverride?: React.ReactNode;
+  numberBadge?: number;
 }
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({
@@ -28,7 +29,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   status,
   category,
   actions,
-  iconOverride
+  iconOverride,
+  numberBadge
 }) => {
   let iconWrapperClass = "bg-stone-50 text-stone-500";
   let IconElement: React.ReactNode = <CheckCircle2 className="w-5 h-5" />;
@@ -94,8 +96,13 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     <div className={wrapperClass} style={bgStyle}>
       <div className={innerClass}>
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrapperClass}`}>
+          <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrapperClass}`}>
             {IconElement}
+            {numberBadge !== undefined && (
+              <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-stone-900 text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-white shadow-sm z-10">
+                {numberBadge}
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <Typography 
