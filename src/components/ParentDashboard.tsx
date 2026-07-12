@@ -175,6 +175,7 @@ export default function ParentDashboard({
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
+  const [adjustmentsModalChildId, setAdjustmentsModalChildId] = useState<string | null>(null);
   
   // Routine Edit State
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
@@ -933,100 +934,7 @@ export default function ParentDashboard({
                   </Button>
                 </div>
 
-                {showAddChild && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4`}
-                    id="add-child-box"
-                  >
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
-                      {editingChildId ? <span><FaPen className="inline-block mr-2" /> Edit Child</span> : <span><FaBaby className="inline-block mr-2" /> Register Family Child</span>}
-                    </Typography>
-                    <form onSubmit={handleChildSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
-                          <input
-                            type="text"
-                            value={newChildName}
-                            onChange={(e) => setNewChildName(e.target.value)}
-                            placeholder="Leo, Lily, Emma..."
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
-                          <input
-                            type="number"
-                            value={newChildAge}
-                            onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                            placeholder="Age"
-                            min={1}
-                            max={18}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 placeholder-stone-400 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
-                          <select
-                            value={newChildChar}
-                            onChange={(e) => setNewChildChar(e.target.value)}
-                            className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                          >
-                            {CHARACTER_PACKS.map(char => (
-                              <option key={char.id} value={char.id}>
-                                {char.name} ({char.pack_name})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
-                        <div className="grid grid-cols-6 gap-2">
-                          {PRECANNED_AVATARS.map(url => (
-                            <Button variant="none" size="none"
-                              key={url}
-                              type="button"
-                              onClick={() => setNewChildAvatar(url)}
-                              className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
-                            >
-                              <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-
-                      <div className="flex gap-2 mt-4">
-                        <Button
-                          type="submit"
-                          variant="warning"
-                          className="flex-1"
-                        >
-                          {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH EGG'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => {
-                            setShowAddChild(false);
-                            setEditingChildId(null);
-                            setNewChildName('');
-                            setNewChildAge('');
-                            setNewChildChar('unicorn');
-                            setNewChildAvatar('Rocket');
-                          }}
-                        >
-                          CANCEL
-                        </Button>
-                      </div>
-                    </form>
-                  </motion.div>
-                )}
+                {/* showAddChild moved to a modal */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {isLoading ? (
@@ -1178,10 +1086,10 @@ export default function ParentDashboard({
                           <div className="bg-stone-50/20">
                             {onUpdateChildStats && (
                               <>
-                                <button onClick={() => setExpandedAdjustments(prev => ({ ...prev, [child.id]: !prev[child.id] }))} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
                                   <div className="w-7 h-7 rounded bg-stone-100 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600" /></div>
                                   <span className="text-[15px] text-black tracking-tight flex-1">Quick Adjustments</span>
-                                  <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${expandedAdjustments[child.id] ? 'rotate-180' : ''}`} />
+                                  <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform -rotate-90`} />
                                 </button>
                                 <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
                               </>
@@ -1218,56 +1126,7 @@ export default function ParentDashboard({
                           </div>
                         </div>
 
-                        {onUpdateChildStats && (
-                          <AnimatePresence>
-                            {expandedAdjustments[child.id] && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden mt-4"
-                              >
-                                <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 space-y-4">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Gold</span>
-                                    <div className="flex gap-1">
-                                      <Button variant="none" size="none" onClick={() => {
-                                        playSound.click();
-                                        setResetConfirmation({ childId: child.id, childName: child.name, type: 'Gold' });
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                  <div className="h-[0.5px] bg-stone-200"></div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold</span>
-                                    <div className="flex gap-1.5 justify-end">
-                                      <Button variant="none" size="none" onClick={() => {
-                                        playSound.click();
-                                        setResetConfirmation({ childId: child.id, childName: child.name, type: 'Lifetime Gold' });
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Lifetime Gold to 0"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Remove 10 Gold"><MinusCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Add 10 Gold"><PlusCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                  <div className="h-[0.5px] bg-stone-200"></div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[15px] font-semibold text-black tracking-tight">Level</span>
-                                    <div className="flex gap-1">
-                                      <Button variant="none" size="none" onClick={() => {
-                                        playSound.click();
-                                        setResetConfirmation({ childId: child.id, childName: child.name, type: 'Level' });
-                                      }} className={`p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white`} title="Reset Level to 1"><RotateCcw className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className={`p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white`} title="Level Down"><ArrowDownCircle className="w-3.5 h-3.5" /></Button>
-                                      <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className={`p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white`} title="Level Up"><ArrowUpCircle className="w-3.5 h-3.5" /></Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        )}
+                        {/* Quick adjustments moved to a modal */}
                       </div>
                     );
                   })}
@@ -2265,26 +2124,216 @@ export default function ParentDashboard({
         </main>
 
         <AnimatePresence>
-          {penaltyModalChildId && onDeductCoins && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4"
-            >
+          {showAddChild && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setShowAddChild(false);
+                  setEditingChildId(null);
+                  setNewChildName('');
+                  setNewChildAge('');
+                  setNewChildChar('unicorn');
+                  setNewChildAvatar('Rocket');
+                }}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="w-full max-w-lg p-6 bg-white rounded-3xl border border-stone-100 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
               >
-                <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-50 shadow-sm">
-                  <MinusCircle className="w-8 h-8" />
+                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                  {editingChildId ? <span><Edit2 className="inline-block mr-2" /> Edit Child</span> : <span><UserPlus className="inline-block mr-2" /> Register Family Child</span>}
+                </Typography>
+                <form onSubmit={handleChildSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
+                      <input
+                        type="text"
+                        value={newChildName}
+                        onChange={(e) => setNewChildName(e.target.value)}
+                        placeholder="Leo, Lily, Emma..."
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
+                      <input
+                        type="number"
+                        value={newChildAge}
+                        onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                        placeholder="Age"
+                        min={1}
+                        max={18}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
+                      <select
+                        value={newChildChar}
+                        onChange={(e) => setNewChildChar(e.target.value)}
+                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
+                      >
+                        {CHARACTER_PACKS.map(char => (
+                          <option key={char.id} value={char.id}>
+                            {char.name} ({char.pack_name})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-2`}>Select Avatar</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {PRECANNED_AVATARS.map(url => (
+                        <Button variant="none" size="none"
+                          key={url}
+                          type="button"
+                          onClick={() => setNewChildAvatar(url)}
+                          className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
+                        >
+                          <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowAddChild(false);
+                        setEditingChildId(null);
+                        setNewChildName('');
+                        setNewChildAge('');
+                        setNewChildChar('unicorn');
+                        setNewChildAvatar('Rocket');
+                      }}
+                      className="flex-1"
+                    >
+                      CANCEL
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="flex-1"
+                    >
+                      {editingChildId ? 'SAVE CHANGES' : 'ADD CHILD & HATCH'}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {adjustmentsModalChildId && onUpdateChildStats && (() => {
+            const child = children.find(c => c.id === adjustmentsModalChildId);
+            if (!child) return null;
+            return (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setAdjustmentsModalChildId(null)}
+                  className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                >
+                  <div className="w-12 h-12 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center mb-4">
+                    <Settings className="w-6 h-6" />
+                  </div>
+                  <Typography variant="h2" className="text-xl font-black text-stone-900 mb-6">
+                    Quick Adjustments
+                  </Typography>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Gold ({child.points})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Gold' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold ({child.lifetime_points || 0})</span>
+                      <div className="flex gap-1.5 justify-end">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Lifetime Gold' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Lifetime Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black tracking-tight">Level ({child.level})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Level' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Level to 1"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Level Down"><ArrowDownCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8">
+                    <Button variant="primary" fullWidth onClick={() => { playSound.click(); setAdjustmentsModalChildId(null); }}>
+                      Done
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {penaltyModalChildId && onDeductCoins && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setPenaltyModalChildId(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+              >
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
+                  <MinusCircle className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-2 font-display uppercase tracking-wide">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   Take Coins
                 </Typography>
-                <Typography variant="body" className="text-center text-sm text-stone-500 mb-6">
+                <Typography variant="body" className="text-sm text-stone-500 mb-6">
                   Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
                 </Typography>
 
@@ -2358,43 +2407,42 @@ export default function ParentDashboard({
                   </Button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {resetConfirmation && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-            >
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${'bg-white border-rose-200 shadow-xl'
-                  }`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setResetConfirmation(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
               >
-                <div className="flex justify-center mb-4">
-                  <div className={`p-3 rounded-full bg-rose-100 text-rose-600`}>
-                    <RotateCcw className="w-8 h-8" />
-                  </div>
+                <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
+                  <RotateCcw className="w-6 h-6" />
                 </div>
-                <Typography variant="h3" className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   Reset {resetConfirmation.type}?
                 </Typography>
-                <Typography variant="body" className={`text-center text-sm font-sans mb-6 text-stone-600`}>
+                <Typography variant="body" className="text-sm text-stone-500 mb-6">
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
                     onClick={() => { playSound.click(); setResetConfirmation(null); }}
-                    className="flex-1 bg-stone-100"
+                    className="flex-1"
                   >
-                    CANCEL
+                    Cancel
                   </Button>
                   <Button
                     variant="danger"
@@ -2406,50 +2454,50 @@ export default function ParentDashboard({
                     }}
                     className="flex-1"
                   >
-                    RESET NOW
+                    Reset Now
                   </Button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
         {/* Delete Child Confirmation Modal */}
         <AnimatePresence>
           {deleteChildConfirmation && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-            >
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200 shadow-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteChildConfirmation(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
               >
-                <div className="flex justify-center mb-4">
-                  <div className="p-3 rounded-full bg-rose-100 text-rose-600">
-                    <Trash2 className="w-8 h-8" />
-                  </div>
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6" />
                 </div>
-                <Typography variant="h3" className="text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
                   Delete {deleteChildConfirmation.childName}?
                 </Typography>
-                <Typography variant="body" className="text-center text-sm font-sans mb-2 text-stone-600">
+                <Typography variant="body" className="text-sm text-stone-500 mb-2">
                   This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
                 </Typography>
-                <Typography variant="body" className="text-center text-xs font-sans mb-6 text-rose-500 font-bold">
+                <Typography variant="body" className="text-xs font-bold text-rose-500 mb-6">
                   ⚠️ This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
                     onClick={() => { playSound.click(); setDeleteChildConfirmation(null); }}
-                    className="flex-1 bg-stone-100"
+                    className="flex-1"
                   >
-                    CANCEL
+                    Cancel
                   </Button>
                   <Button
                     variant="danger"
@@ -2460,11 +2508,11 @@ export default function ParentDashboard({
                     }}
                     className="flex-1"
                   >
-                    DELETE
+                    Delete
                   </Button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
@@ -2788,17 +2836,22 @@ export default function ParentDashboard({
 
       <AnimatePresence>
         {showHistoryForChild && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4"
-          >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className={`bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (historyDetailView) setHistoryDetailView(null);
+                else setShowHistoryForChild(null);
+              }}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 flex flex-col overflow-hidden max-h-[90vh]"
             >
               <Button variant="none" size="none"
                 onClick={() => {
@@ -2974,7 +3027,7 @@ export default function ParentDashboard({
                 );
               })()}
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
