@@ -2,7 +2,8 @@ import React from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
-import { getLogicalDateString } from '../utils/date';
+import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
+import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
@@ -172,6 +173,132 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           </div>
         </div>
       )}
+
+      {/* Routine Section */}
+      {(() => {
+        if (!activeChild.active_routine_id || !activeChild.routines) return null;
+        const activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
+        if (!activeRoutine || activeRoutine.taskIds.length === 0) return null;
+
+        const routineTasks = activeRoutine.taskIds
+          .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
+          .filter((t): t is Task => t !== undefined);
+
+        if (routineTasks.length === 0) return null;
+
+        return (
+          <div className="space-y-4 pt-2">
+            <div 
+              className="relative p-[3px] rounded-2xl sm:rounded-3xl shadow-sm"
+              style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+            >
+              <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Complete your routine tasks to earn gold coins!</Typography>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {routineTasks.map((task) => {
+                const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
+                let compl = null;
+                if (task.recurrence === 'daily') {
+                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
+                } else if (task.recurrence === 'weekly') {
+                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                } else if (task.recurrence === 'one_time') {
+                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                }
+
+                const isPending = compl && compl.status === 'pending';
+                const isApproved = compl && compl.status === 'approved';
+
+                let isOnCooldown = false;
+                let cooldownTimeLeftStr = '';
+                if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                  const taskComps = completions
+                    .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                    .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+                  
+                  if (taskComps.length > 0) {
+                    const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                    const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                    if (msSince < cooldownMs) {
+                      isOnCooldown = true;
+                      const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                      cooldownTimeLeftStr = `${minsLeft}m`;
+                    }
+                  }
+                }
+
+                const isCompletable = !isApproved && !isPending && !isOnCooldown;
+                const catMeta = CATEGORY_ICON_MAP[task.category] ?? CATEGORY_ICON_MAP.other;
+                const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
+
+                const cardContent = (
+                  <div className="relative z-10 w-full h-full bg-white rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+                    <div className="absolute top-2 right-2 z-10">
+                      <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
+                    </div>
+                    <div className="mt-2 relative z-10">
+                      <CoinBadge points={task.points} disabled={isApproved} />
+                    </div>
+                    <div className="w-full relative z-10 mt-1">
+                      <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800'}`}>
+                        {task.title}
+                      </Typography>
+                      <div className="mt-2 flex items-center justify-center">
+                        {isApproved ? (
+                          <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-200">
+                            <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
+                          </div>
+                        ) : isPending ? (
+                          <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 text-[9px] font-black uppercase tracking-widest rounded-full">
+                            AWAITING
+                          </div>
+                        ) : isOnCooldown ? (
+                          <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200">
+                            {cooldownTimeLeftStr}
+                          </div>
+                        ) : (
+                          <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                            {recLabel}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+                const taskBgStyle = { background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)' };
+
+                return isCompletable ? (
+                  <Button
+                    variant="none"
+                    size="none"
+                    key={task.id}
+                    onClick={() => handleTaskCheck(task.id, task.title)}
+                    className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden task-card"
+                    style={taskBgStyle}
+                  >
+                    {cardContent}
+                  </Button>
+                ) : (
+                  <div
+                    key={task.id}
+                    className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card"
+                    style={taskBgStyle}
+                  >
+                    {cardContent}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Combined Activity Section */}
       <div className="space-y-4 pt-2">

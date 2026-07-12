@@ -131,7 +131,12 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active'>('directory');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
+  const [routineChildId, setRoutineChildId] = useState<string | null>(children[0]?.id || null);
+  const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
+  const [newRoutineName, setNewRoutineName] = useState('');
+
+
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
   const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
@@ -1354,6 +1359,16 @@ export default function ParentDashboard({
                     >
                       ASSIGNED
                     </Button>
+                    <Button variant="none" size="none"
+                      onClick={() => setTaskSubTab('routines')}
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                        taskSubTab === 'routines'
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      }`}
+                    >
+                      ROUTINES
+                    </Button>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
@@ -1554,6 +1569,190 @@ export default function ParentDashboard({
                   </div>
                 </div>
                 )}
+              </motion.div>
+            )}
+
+            {taskSubTab === 'routines' && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                key="routines-tab"
+                className="space-y-6"
+                id="routines-view"
+              >
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
+                    <Button variant="none" size="none"
+                      onClick={() => setTaskSubTab('directory')}
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                        taskSubTab === 'directory'
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      }`}
+                    >
+                      BLUEPRINTS
+                    </Button>
+                    <Button variant="none" size="none"
+                      onClick={() => setTaskSubTab('active')}
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                        taskSubTab === 'active'
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      }`}
+                    >
+                      ASSIGNED
+                    </Button>
+                    <Button variant="none" size="none"
+                      onClick={() => setTaskSubTab('routines')}
+                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${
+                        taskSubTab === 'routines'
+                          ? ('bg-stone-900 text-white shadow-sm')
+                          : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      }`}
+                    >
+                      ROUTINES
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-6">
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
+                  
+                  {/* Select Child */}
+                  <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                    {children.map(child => (
+                      <button
+                        key={child.id}
+                        onClick={() => setRoutineChildId(child.id)}
+                        className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+                          routineChildId === child.id ? 'bg-stone-900 text-white' : 'bg-white text-stone-600 border border-stone-200'
+                        }`}
+                      >
+                        {child.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  {routineChildId && (
+                    <div className="space-y-6">
+                      {(() => {
+                        const child = children.find(c => c.id === routineChildId);
+                        if (!child) return null;
+                        const routines = child.routines || [];
+                        
+                        return routines.map((routine, rIdx) => (
+                          <div key={routine.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
+                            <div className="flex justify-between items-center border-b border-stone-100 pb-2">
+                              <div className="flex items-center gap-3">
+                                <Typography variant="h3" className="font-bold text-stone-900">{routine.name}</Typography>
+                                {child.active_routine_id === routine.id && (
+                                  <span className="px-2 py-1 bg-cyan-100 text-cyan-700 text-[10px] uppercase font-bold rounded-full">Active</span>
+                                )}
+                              </div>
+                              {child.active_routine_id !== routine.id && (
+                                <Button size="sm" variant="outline" onClick={() => onEditChild(child.id, { active_routine_id: routine.id })}>
+                                  Set Active
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2">
+                              {routine.taskIds.map((taskId, tIdx) => {
+                                const t = tasks.find(x => x.id === taskId);
+                                if (!t) return null;
+                                return (
+                                  <div key={taskId} className="flex justify-between items-center bg-stone-50 p-2 rounded-xl">
+                                    <span className="text-sm font-bold text-stone-700">{t.title}</span>
+                                    <div className="flex gap-1">
+                                      <button disabled={tIdx === 0} onClick={() => {
+                                        const newRoutines = [...routines];
+                                        const temp = newRoutines[rIdx].taskIds[tIdx - 1];
+                                        newRoutines[rIdx].taskIds[tIdx - 1] = taskId;
+                                        newRoutines[rIdx].taskIds[tIdx] = temp;
+                                        onEditChild(child.id, { routines: newRoutines });
+                                      }} className="p-1 disabled:opacity-30"><ArrowUpCircle className="w-4 h-4"/></button>
+                                      <button disabled={tIdx === routine.taskIds.length - 1} onClick={() => {
+                                        const newRoutines = [...routines];
+                                        const temp = newRoutines[rIdx].taskIds[tIdx + 1];
+                                        newRoutines[rIdx].taskIds[tIdx + 1] = taskId;
+                                        newRoutines[rIdx].taskIds[tIdx] = temp;
+                                        onEditChild(child.id, { routines: newRoutines });
+                                      }} className="p-1 disabled:opacity-30"><ArrowDownCircle className="w-4 h-4"/></button>
+                                      <button onClick={() => {
+                                        const newRoutines = [...routines];
+                                        newRoutines[rIdx].taskIds.splice(tIdx, 1);
+                                        onEditChild(child.id, { routines: newRoutines });
+                                      }} className="p-1 text-rose-500"><X className="w-4 h-4"/></button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {routine.taskIds.length === 0 && (
+                                <div className="text-xs text-stone-400 italic py-2">No tasks in this routine yet.</div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-2">
+                              <select 
+                                className="w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
+                                value=""
+                                onChange={(e) => {
+                                  if (!e.target.value) return;
+                                  const newRoutines = [...routines];
+                                  if (!newRoutines[rIdx].taskIds.includes(e.target.value)) {
+                                    newRoutines[rIdx].taskIds.push(e.target.value);
+                                    onEditChild(child.id, { routines: newRoutines });
+                                  }
+                                }}
+                              >
+                                <option value="">+ Add Quest to {routine.name}</option>
+                                {tasks.filter(t => t.child_id === child.id && !t.is_template && !routine.taskIds.includes(t.id)).map(t => (
+                                  <option key={t.id} value={t.id}>{t.title}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                      
+                      {(() => {
+                        const child = children.find(c => c.id === routineChildId);
+                        if (!child) return null;
+                        
+                        return (
+                          <div className="bg-stone-50 border border-stone-200 p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3">
+                            <input 
+                              type="text" 
+                              placeholder="New Routine Name (e.g. Weekday)" 
+                              className="w-full sm:flex-1 px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-sm font-sans"
+                              value={newRoutineName}
+                              onChange={(e) => setNewRoutineName(e.target.value)}
+                            />
+                            <Button 
+                              variant="primary" 
+                              size="sm"
+                              className="w-full sm:w-auto shrink-0"
+                              disabled={!newRoutineName.trim()}
+                              onClick={() => {
+                                const routines = child.routines || [];
+                                const newRoutine = {
+                                  id: Math.random().toString(36).substring(2, 9),
+                                  name: newRoutineName.trim(),
+                                  taskIds: []
+                                };
+                                onEditChild(child.id, { routines: [...routines, newRoutine] });
+                                setNewRoutineName('');
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-1" /> Create Routine
+                            </Button>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
 
