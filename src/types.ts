@@ -1,7 +1,9 @@
 export interface Routine {
   id: string;
   name: string;
-  taskIds: string[];
+  morningTaskIds: string[];
+  afternoonTaskIds: string[];
+  eveningTaskIds: string[];
 }
 
 export interface ParentProfile {

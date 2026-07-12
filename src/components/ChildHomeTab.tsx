@@ -10,6 +10,7 @@ import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
+import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -178,13 +179,99 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {(() => {
         if (!activeChild.active_routine_id || !activeChild.routines) return null;
         const activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
-        if (!activeRoutine || activeRoutine.taskIds.length === 0) return null;
+        if (!activeRoutine) return null;
 
-        const routineTasks = activeRoutine.taskIds
-          .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
-          .filter((t): t is Task => t !== undefined);
+        const renderPeriod = (title: string, taskIds: string[]) => {
+          const routineTasks = taskIds
+            .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
+            .filter((t): t is Task => t !== undefined);
 
-        if (routineTasks.length === 0) return null;
+          if (routineTasks.length === 0) return null;
+
+          return (
+            <div className="mb-6 space-y-2">
+              <Typography variant="h4" className="text-sm font-bold text-stone-600 px-1 uppercase tracking-widest">{title}</Typography>
+              <div className="space-y-2">
+                {routineTasks.map((task) => {
+                  const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
+                  let compl = null;
+                  if (task.recurrence === 'daily') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
+                  } else if (task.recurrence === 'weekly') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                  } else if (task.recurrence === 'one_time') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                  }
+
+                  const isPending = compl && compl.status === 'pending';
+                  const isApproved = compl && compl.status === 'approved';
+
+                  let isOnCooldown = false;
+                  let cooldownTimeLeftStr = '';
+                  if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                    const taskComps = completions
+                      .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                      .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+                    
+                    if (taskComps.length > 0) {
+                      const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                      const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                      if (msSince < cooldownMs) {
+                        isOnCooldown = true;
+                        const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                        cooldownTimeLeftStr = `${minsLeft}m`;
+                      }
+                    }
+                  }
+
+                  const isCompletable = !isApproved && !isPending && !isOnCooldown;
+                  let statusStr: ActivityStatus = 'pending';
+                  if (isApproved) statusStr = 'approved';
+                  else if (isPending) statusStr = 'pending';
+
+                  const cardContent = (
+                    <ActivityCard
+                      title={task.title}
+                      subtitle={isOnCooldown ? `Cooldown: ${cooldownTimeLeftStr}` : undefined}
+                      points={task.points}
+                      type="task"
+                      status={isApproved ? 'completed' : 'pending'}
+                      category={task.category}
+                      actions={
+                        isCompletable ? (
+                          <div className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200">
+                            <span className="sr-only">Complete</span>
+                          </div>
+                        ) : isApproved ? (
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500 border-2 border-emerald-200">
+                            <FaCircleCheck className="w-4 h-4" />
+                          </div>
+                        ) : null
+                      }
+                    />
+                  );
+
+                  return isCompletable ? (
+                    <button
+                      key={task.id}
+                      onClick={() => handleTaskCheck(task.id, task.title)}
+                      className="w-full text-left group"
+                    >
+                      {cardContent}
+                    </button>
+                  ) : (
+                    <div key={task.id} className="opacity-60 grayscale pointer-events-none">
+                      {cardContent}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        };
+
+        const hasAnyTasks = activeRoutine.morningTaskIds?.length > 0 || activeRoutine.afternoonTaskIds?.length > 0 || activeRoutine.eveningTaskIds?.length > 0;
+        if (!hasAnyTasks) return null;
 
         return (
           <div className="space-y-4 pt-2">
@@ -200,101 +287,10 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {routineTasks.map((task) => {
-                const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
-                let compl = null;
-                if (task.recurrence === 'daily') {
-                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
-                } else if (task.recurrence === 'weekly') {
-                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
-                } else if (task.recurrence === 'one_time') {
-                  compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
-                }
-
-                const isPending = compl && compl.status === 'pending';
-                const isApproved = compl && compl.status === 'approved';
-
-                let isOnCooldown = false;
-                let cooldownTimeLeftStr = '';
-                if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
-                  const taskComps = completions
-                    .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
-                    .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
-                  
-                  if (taskComps.length > 0) {
-                    const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
-                    const cooldownMs = task.cooldown_minutes * 60 * 1000;
-                    if (msSince < cooldownMs) {
-                      isOnCooldown = true;
-                      const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
-                      cooldownTimeLeftStr = `${minsLeft}m`;
-                    }
-                  }
-                }
-
-                const isCompletable = !isApproved && !isPending && !isOnCooldown;
-                const catMeta = CATEGORY_ICON_MAP[task.category] ?? CATEGORY_ICON_MAP.other;
-                const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
-
-                const cardContent = (
-                  <div className="relative z-10 w-full h-full bg-white rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-                    <div className="absolute top-2 right-2 z-10">
-                      <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
-                    </div>
-                    <div className="mt-2 relative z-10">
-                      <CoinBadge points={task.points} disabled={isApproved} />
-                    </div>
-                    <div className="w-full relative z-10 mt-1">
-                      <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800'}`}>
-                        {task.title}
-                      </Typography>
-                      <div className="mt-2 flex items-center justify-center">
-                        {isApproved ? (
-                          <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-200">
-                            <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
-                          </div>
-                        ) : isPending ? (
-                          <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 text-[9px] font-black uppercase tracking-widest rounded-full">
-                            AWAITING
-                          </div>
-                        ) : isOnCooldown ? (
-                          <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-200">
-                            {cooldownTimeLeftStr}
-                          </div>
-                        ) : (
-                          <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                            {recLabel}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-
-                const taskBgStyle = { background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)' };
-
-                return isCompletable ? (
-                  <Button
-                    variant="none"
-                    size="none"
-                    key={task.id}
-                    onClick={() => handleTaskCheck(task.id, task.title)}
-                    className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden task-card"
-                    style={taskBgStyle}
-                  >
-                    {cardContent}
-                  </Button>
-                ) : (
-                  <div
-                    key={task.id}
-                    className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card"
-                    style={taskBgStyle}
-                  >
-                    {cardContent}
-                  </div>
-                );
-              })}
+            <div className="flex flex-col gap-2">
+              {renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
             </div>
           </div>
         );
