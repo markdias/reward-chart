@@ -1851,58 +1851,62 @@ export default function ParentDashboard({
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1 bg-stone-100/80 p-1.5 rounded-full border border-stone-200/60">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${rewardSubTab === 'directory'
-                        ? ('bg-stone-900 text-white shadow-sm')
-                        : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
+                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('active')}
-                      className={`flex-1 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold tracking-widest transition-all ${rewardSubTab === 'active'
-                        ? ('bg-stone-900 text-white shadow-sm')
-                        : ('text-stone-500 hover:text-stone-900 hover:bg-stone-200/50')
+                      className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
+                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
                       ASSIGNED
                     </Button>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => {
-                        playSound.click();
-                        setGenerateAgeRange(getRecommendedAgeRange());
-                        setShowGenerateRewardsModal(true);
-                      }}
-                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
-                    >
-                      GENERATE <span className="hidden sm:inline">IDEAS</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={handleImportDefaultRewards}
-                      leftIcon={<Plus className="w-3.5 h-3.5" />}
-                    >
-                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </Button>
-                    <Button
-                      variant="dark"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { playSound.click(); setShowAddReward(true); }}
-                      id="add-reward-btn-top"
-                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                    >
-                      ADD <span className="hidden sm:inline">REWARD</span>
-                    </Button>
-                  </div>
+                  {rewardSubTab === 'directory' && (
+                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                      <Button
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        style={{ background: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)' }}
+                        onClick={() => {
+                          playSound.click();
+                          setGenerateAgeRange(getRecommendedAgeRange());
+                          setShowGenerateRewardsModal(true);
+                        }}
+                        leftIcon={<Sparkles className="w-4 h-4" />}
+                      >
+                        GENERATE <span className="hidden sm:inline">IDEAS</span>
+                      </Button>
+                      <Button
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-bold text-xs sm:text-sm tracking-widest text-stone-700 bg-white border border-stone-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-stone-300 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        onClick={handleImportDefaultRewards}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
+                      >
+                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                      </Button>
+                      <Button
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(14,165,233,0.35)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}
+                        onClick={() => { playSound.click(); setShowAddReward(true); }}
+                        id="add-reward-btn-top"
+                        leftIcon={<Plus className="w-4 h-4" />}
+                      >
+                        ADD <span className="hidden sm:inline">REWARD</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* REWARD DIRECTORY */}
