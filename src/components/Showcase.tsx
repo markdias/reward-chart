@@ -6,7 +6,44 @@ import { Coins, PiggyBank, Utensils, Gift } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CoinBadge } from './CoinBadge';
 import { ChildAvatar } from './ChildAvatar';
-import { Plane, Star, Zap, Shield, Crown, Play, Trophy, Flame } from 'lucide-react';
+import { Plane, Star, Zap, Shield, Crown, Play, Trophy, Flame, ChevronRight } from 'lucide-react';
+
+const SettingsBlock = ({ children, title }: { children: React.ReactNode, title?: string }) => (
+  <div className="mb-6 w-full max-w-md mx-auto">
+    {title && <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-2 px-4">{title}</h3>}
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+      {children}
+    </div>
+  </div>
+);
+
+const SettingsRow = ({ label, value, type = 'text', isToggle = false, isLast = false, toggleActive = false }: any) => (
+  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100' : ''} bg-white hover:bg-stone-50 transition-colors`}>
+    <span className="text-sm font-bold text-stone-700">{label}</span>
+    <div className="w-1/2 flex justify-end">
+      {isToggle ? (
+         <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${toggleActive ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+            <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${toggleActive ? 'translate-x-5' : 'translate-x-0'}`} />
+          </div>
+      ) : (
+        <input 
+           type={type} 
+           defaultValue={value} 
+           className="w-full text-right bg-transparent text-stone-500 font-semibold focus:outline-none focus:text-stone-900 transition-colors"
+        />
+      )}
+    </div>
+  </div>
+);
+
+const SettingsSelectRow = ({ label, options, defaultValue, isLast = false }: any) => (
+  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100' : ''} bg-white hover:bg-stone-50 transition-colors`}>
+    <span className="text-sm font-bold text-stone-700">{label}</span>
+    <select defaultValue={defaultValue} className="text-right bg-transparent text-stone-500 font-semibold focus:outline-none appearance-none cursor-pointer pr-4" style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a8a29e%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right center', backgroundSize: '8px auto' }}>
+      {options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  </div>
+);
 
 export default function Showcase() {
   const mockPet = { name: 'Astro', emoji: '👽', level: 5 };
@@ -343,6 +380,67 @@ export default function Showcase() {
               { background: 'repeating-linear-gradient(45deg, #34d399, #34d399 15px, #2dd4bf 15px, #2dd4bf 30px, #a3e635 30px, #a3e635 45px)' },
               'opt-c'
             )}
+          </div>
+        </section>
+
+        {/* =========================================
+            APP SETTINGS PROTOTYPE
+            ========================================= */}
+        <section className="space-y-6 pt-16 pb-16">
+          <Typography variant="h2" className="text-2xl font-black border-b-4 border-stone-200 pb-2 text-stone-800 uppercase tracking-widest">Native App Settings Prototype</Typography>
+          <p className="text-stone-500 font-bold mb-8">This is how the new Profile and Target tabs will look.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* PROFILE PROTOTYPE */}
+            <div className="bg-stone-100 p-6 rounded-3xl border-2 border-stone-200">
+              <Typography variant="h3" className="text-xl font-black text-stone-800 mb-6 text-center tracking-tight">Profile Tab</Typography>
+              
+              <SettingsBlock title="Personal Information">
+                <SettingsRow label="Email" value="mark@mdias.co.uk" />
+                <SettingsRow label="First Name" value="Mark" />
+                <SettingsRow label="Family Name" value="The Dias'" isLast />
+              </SettingsBlock>
+
+              <SettingsBlock title="Appearance">
+                <SettingsSelectRow 
+                  label="Theme" 
+                  defaultValue="system"
+                  options={[
+                    { label: 'System', value: 'system' },
+                    { label: 'Light', value: 'light' },
+                    { label: 'Dark', value: 'dark' },
+                  ]}
+                  isLast 
+                />
+              </SettingsBlock>
+
+              <SettingsBlock title="Notifications">
+                <SettingsRow label="Push Notifications" isToggle toggleActive isLast />
+              </SettingsBlock>
+            </div>
+
+            {/* TARGETS PROTOTYPE */}
+            <div className="bg-stone-100 p-6 rounded-3xl border-2 border-stone-200">
+              <Typography variant="h3" className="text-xl font-black text-stone-800 mb-6 text-center tracking-tight">Targets Tab</Typography>
+
+              <SettingsBlock title="Global Rewards & Targets">
+                <SettingsRow label="Daily Target (Gold)" value="50" type="number" />
+                <SettingsRow label="Weekly Target (Gold)" value="300" type="number" />
+                <SettingsRow label="Weekly Gold Bonus" value="200" type="number" />
+                <SettingsRow label="Monthly Target (Gold)" value="1200" type="number" />
+                <SettingsRow label="Monthly Gold Bonus" value="1000" type="number" isLast />
+              </SettingsBlock>
+
+              <SettingsBlock title="Levels & Pots">
+                <SettingsRow label="Gold Required to Level Up" value="500" type="number" />
+                <SettingsRow label="Level Up Gold Reward" value="500" type="number" />
+                <SettingsRow label="Savings Pot Lvl" value="2" type="number" />
+                <SettingsRow label="Food Pot Lvl" value="4" type="number" />
+                <SettingsRow label="Gifting Pot Lvl" value="6" type="number" />
+                <SettingsRow label="Maintenance Cost" value="2" type="number" isLast />
+              </SettingsBlock>
+            </div>
+
           </div>
         </section>
 
