@@ -9,6 +9,22 @@ import React, { useState, useEffect } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableTaskItem } from './ui/SortableTaskItem';
+import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
   BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home
@@ -151,6 +167,33 @@ export default function ParentDashboard({
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
+  
+  // Routine Edit State
+  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, childId: string, routineId: string, periodKey: 'morningTaskIds' | 'afternoonTaskIds' | 'eveningTaskIds') => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const child = children.find(c => c.id === childId);
+      if (!child) return;
+      const routines = [...(child.routines || [])];
+      const rIdx = routines.findIndex(r => r.id === routineId);
+      if (rIdx === -1) return;
+      
+      const oldIndex = routines[rIdx][periodKey].indexOf(active.id as string);
+      const newIndex = routines[rIdx][periodKey].indexOf(over.id as string);
+      
+      routines[rIdx][periodKey] = arrayMove(routines[rIdx][periodKey], oldIndex, newIndex);
+      onEditChild(child.id, { routines });
+    }
+  };
   // Penalty Modal State
   const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
   const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
@@ -1596,88 +1639,136 @@ export default function ParentDashboard({
                           if (!child) return null;
                           const routines = child.routines || [];
 
-                          return routines.map((routine, rIdx) => (
-                            <div key={routine.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                              <div className="flex justify-between items-center border-b border-stone-100 pb-2">
+                          return routines.map((routine, rIdx) => {
+                            const isExpanded = expandedRoutineId === routine.id;
+                            const totalTasks = routine.morningTaskIds.length + routine.afternoonTaskIds.length + routine.eveningTaskIds.length;
+                            const isActive = child.active_routine_id === routine.id;
+                            
+                            return (
+                            <div key={routine.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl flex flex-col transition-all duration-300 overflow-hidden">
+                              {/* Routine Summary Header */}
+                              <div 
+                                className={`flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'border-b border-stone-100 bg-stone-50/50' : ''}`}
+                                onClick={() => setExpandedRoutineId(isExpanded ? null : routine.id)}
+                              >
                                 <div className="flex items-center gap-3">
-                                  <Typography variant="h3" className="font-bold text-stone-900">{routine.name}</Typography>
-                                  {child.active_routine_id === routine.id && (
-                                    <span className="px-2 py-1 bg-cyan-100 text-cyan-700 text-[10px] uppercase font-bold rounded-full">Active</span>
-                                  )}
+                                  <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <Typography variant="h3" className="font-bold text-stone-900">{routine.name}</Typography>
+                                      {isActive && (
+                                        <span className="px-2 py-0.5 bg-cyan-100 text-cyan-700 text-[10px] uppercase font-bold rounded-full">Active</span>
+                                      )}
+                                    </div>
+                                    <Typography variant="body" className="text-xs text-stone-400 mt-0.5">{totalTasks} tasks assigned</Typography>
+                                  </div>
                                 </div>
-                                {child.active_routine_id !== routine.id && (
-                                  <Button size="sm" variant="outline" onClick={() => onEditChild(child.id, { active_routine_id: routine.id })}>
-                                    Set Active
-                                  </Button>
-                                )}
+                                <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                                  {/* iOS Style Toggle Switch */}
+                                  <label className="flex items-center cursor-pointer relative">
+                                    <input 
+                                      type="checkbox" 
+                                      className="sr-only" 
+                                      checked={isActive}
+                                      onChange={() => {
+                                        if (!isActive) onEditChild(child.id, { active_routine_id: routine.id });
+                                      }}
+                                    />
+                                    <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${isActive ? 'bg-cyan-500' : 'bg-stone-200'}`}>
+                                      <div className={`w-5 h-5 bg-white rounded-full shadow-md absolute top-0.5 transition-transform duration-300 ease-in-out ${isActive ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                                    </div>
+                                  </label>
+                                </div>
                               </div>
 
-                              <div className="space-y-4">
-                                {([
-                                  { key: 'morningTaskIds', label: 'Morning' },
-                                  { key: 'afternoonTaskIds', label: 'Afternoon' },
-                                  { key: 'eveningTaskIds', label: 'Evening' },
-                                ] as const).map(period => (
-                                  <div key={period.key} className="space-y-2">
-                                    <Typography variant="body" className="font-bold text-xs uppercase tracking-widest text-stone-500 pl-1">{period.label}</Typography>
-                                    {routine[period.key].map((taskId, tIdx) => {
-                                      const t = tasks.find(x => x.id === taskId);
-                                      if (!t) return null;
-                                      return (
-                                        <div key={taskId} className="flex justify-between items-center bg-stone-50 p-2 rounded-xl">
-                                          <span className="text-sm font-bold text-stone-700">{t.title}</span>
-                                          <div className="flex gap-1">
-                                            <button disabled={tIdx === 0} onClick={() => {
-                                              const newRoutines = [...routines];
-                                              const temp = newRoutines[rIdx][period.key][tIdx - 1];
-                                              newRoutines[rIdx][period.key][tIdx - 1] = taskId;
-                                              newRoutines[rIdx][period.key][tIdx] = temp;
-                                              onEditChild(child.id, { routines: newRoutines });
-                                            }} className="p-1 disabled:opacity-30"><ArrowUpCircle className="w-4 h-4" /></button>
-                                            <button disabled={tIdx === routine[period.key].length - 1} onClick={() => {
-                                              const newRoutines = [...routines];
-                                              const temp = newRoutines[rIdx][period.key][tIdx + 1];
-                                              newRoutines[rIdx][period.key][tIdx + 1] = taskId;
-                                              newRoutines[rIdx][period.key][tIdx] = temp;
-                                              onEditChild(child.id, { routines: newRoutines });
-                                            }} className="p-1 disabled:opacity-30"><ArrowDownCircle className="w-4 h-4" /></button>
-                                            <button onClick={() => {
-                                              const newRoutines = [...routines];
-                                              newRoutines[rIdx][period.key].splice(tIdx, 1);
-                                              onEditChild(child.id, { routines: newRoutines });
-                                            }} className="p-1 text-rose-500"><X className="w-4 h-4" /></button>
+                              {/* Expandable Content */}
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="p-4 space-y-6">
+                                      {([
+                                        { key: 'morningTaskIds', label: 'Morning' },
+                                        { key: 'afternoonTaskIds', label: 'Afternoon' },
+                                        { key: 'eveningTaskIds', label: 'Evening' },
+                                      ] as const).map(period => (
+                                        <div key={period.key} className="space-y-3">
+                                          <Typography variant="body" className="font-bold text-xs uppercase tracking-widest text-stone-400 pl-1">{period.label}</Typography>
+                                          
+                                          <DndContext
+                                            sensors={sensors}
+                                            collisionDetection={closestCenter}
+                                            onDragEnd={(e) => handleDragEnd(e, child.id, routine.id, period.key)}
+                                          >
+                                            <SortableContext
+                                              items={routine[period.key]}
+                                              strategy={verticalListSortingStrategy}
+                                            >
+                                              <div className="space-y-2">
+                                                {routine[period.key].map(taskId => {
+                                                  const t = tasks.find(x => x.id === taskId);
+                                                  if (!t) return null;
+                                                  return (
+                                                    <SortableTaskItem
+                                                      key={taskId}
+                                                      id={taskId}
+                                                      task={t}
+                                                      onRemove={(id) => {
+                                                        const newRoutines = [...routines];
+                                                        newRoutines[rIdx][period.key] = newRoutines[rIdx][period.key].filter(x => x !== id);
+                                                        onEditChild(child.id, { routines: newRoutines });
+                                                      }}
+                                                    />
+                                                  );
+                                                })}
+                                              </div>
+                                            </SortableContext>
+                                          </DndContext>
+
+                                          {routine[period.key].length === 0 && (
+                                            <div className="text-xs text-stone-400 italic py-3 text-center border-2 border-dashed border-stone-200 rounded-xl">No tasks assigned for {period.label}.</div>
+                                          )}
+
+                                          <div className="mt-2 relative">
+                                            <select
+                                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-700 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100/50 text-sm font-bold transition-all appearance-none cursor-pointer"
+                                              value=""
+                                              onChange={(e) => {
+                                                if (!e.target.value) return;
+                                                const newRoutines = [...routines];
+                                                if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
+                                                  newRoutines[rIdx][period.key].push(e.target.value);
+                                                  onEditChild(child.id, { routines: newRoutines });
+                                                }
+                                              }}
+                                            >
+                                              <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
+                                              {tasks.filter(t => t.child_id === child.id && !t.is_template && !routine[period.key].includes(t.id)).map(t => (
+                                                <option key={t.id} value={t.id}>{t.title}</option>
+                                              ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                              <Plus className="w-5 h-5 text-stone-400" />
+                                            </div>
+                                            <div className="absolute inset-0 flex items-center px-4 pointer-events-none">
+                                              <span className="text-stone-500 font-bold text-sm flex items-center gap-2">
+                                                <Plus className="w-4 h-4" /> Add Quest to {period.label}
+                                              </span>
+                                            </div>
                                           </div>
                                         </div>
-                                      );
-                                    })}
-                                    {routine[period.key].length === 0 && (
-                                      <div className="text-xs text-stone-400 italic py-2">No tasks assigned for {period.label}.</div>
-                                    )}
-
-                                    <div className="mt-2">
-                                      <select
-                                        className="w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
-                                        value=""
-                                        onChange={(e) => {
-                                          if (!e.target.value) return;
-                                          const newRoutines = [...routines];
-                                          if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
-                                            newRoutines[rIdx][period.key].push(e.target.value);
-                                            onEditChild(child.id, { routines: newRoutines });
-                                          }
-                                        }}
-                                      >
-                                        <option value="">+ Add Quest to {period.label}</option>
-                                        {tasks.filter(t => t.child_id === child.id && !t.is_template && !routine[period.key].includes(t.id)).map(t => (
-                                          <option key={t.id} value={t.id}>{t.title}</option>
-                                        ))}
-                                      </select>
+                                      ))}
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
-                          ));
+                            );
+                          });
                         })()}
 
                         {(() => {
