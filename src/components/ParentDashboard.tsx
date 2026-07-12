@@ -1374,31 +1374,33 @@ export default function ParentDashboard({
                   {taskSubTab === 'directory' && (
                     <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                       <Button
-                        variant="outline"
-                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        style={{ background: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)' }}
                         onClick={() => { 
                           playSound.click(); 
                           setGenerateAgeRange(getRecommendedAgeRange());
                           setShowGenerateTasksModal(true); 
                         }}
-                        leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                        leftIcon={<Sparkles className="w-4 h-4" />}
                       >
                         GENERATE <span className="hidden sm:inline">IDEAS</span>
                       </Button>
                       <Button
-                        variant="outline"
-                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-bold text-xs sm:text-sm tracking-widest text-stone-700 bg-white border border-stone-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-stone-300 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
                         onClick={handleImportDefaultTasks}
-                        leftIcon={<Plus className="w-3.5 h-3.5" />}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
                       >
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
                       <Button
-                        variant="dark"
-                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        variant="none"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(14,165,233,0.35)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}
                         onClick={() => { playSound.click(); setShowAddTask(true); }}
                         id="add-chore-btn-top"
-                        leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        leftIcon={<Plus className="w-4 h-4" />}
                       >
                         CREATE <span className="hidden sm:inline">TEMPLATE</span>
                       </Button>
