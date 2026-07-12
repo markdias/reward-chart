@@ -1371,37 +1371,39 @@ export default function ParentDashboard({
                     </Button>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { 
-                        playSound.click(); 
-                        setGenerateAgeRange(getRecommendedAgeRange());
-                        setShowGenerateTasksModal(true); 
-                      }}
-                      leftIcon={<Sparkles className="w-3.5 h-3.5" />}
-                    >
-                      GENERATE <span className="hidden sm:inline">IDEAS</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={handleImportDefaultTasks}
-                      leftIcon={<Plus className="w-3.5 h-3.5" />}
-                    >
-                      IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                    </Button>
-                    <Button
-                      variant="dark"
-                      className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
-                      onClick={() => { playSound.click(); setShowAddTask(true); }}
-                      id="add-chore-btn-top"
-                      leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                    >
-                      CREATE <span className="hidden sm:inline">TEMPLATE</span>
-                    </Button>
-                  </div>
+                  {taskSubTab === 'directory' && (
+                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                      <Button
+                        variant="outline"
+                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        onClick={() => { 
+                          playSound.click(); 
+                          setGenerateAgeRange(getRecommendedAgeRange());
+                          setShowGenerateTasksModal(true); 
+                        }}
+                        leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+                      >
+                        GENERATE <span className="hidden sm:inline">IDEAS</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        onClick={handleImportDefaultTasks}
+                        leftIcon={<Plus className="w-3.5 h-3.5" />}
+                      >
+                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
+                      </Button>
+                      <Button
+                        variant="dark"
+                        className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-2.5"
+                        onClick={() => { playSound.click(); setShowAddTask(true); }}
+                        id="add-chore-btn-top"
+                        leftIcon={<Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                      >
+                        CREATE <span className="hidden sm:inline">TEMPLATE</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* QUEST DIRECTORY */}
