@@ -12,6 +12,8 @@ import { PasswordInput } from './PasswordInput';
 import { Tooltip } from './ui/Tooltip';
 import { Button } from './ui/Button';
 import { SettingsBlock, SettingsRow, SettingsSelectRow, SettingsActionRow } from './ui/SettingsList';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface SettingsTabProps {
   theme: ThemeId;
@@ -394,7 +396,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           <SettingsBlock title="Account Password">
             <div className="p-4 border-b border-stone-100 bg-white">
               <label className="block text-sm font-bold text-stone-700 mb-2">Current Password</label>
-              <input 
+              <Input 
                 type="password" 
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -464,11 +466,11 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           )}
 
           <div className="flex gap-2">
-            <input 
+            <Input 
               type="text" 
               readOnly 
               value={shareLink}
-              className="flex-1 px-4 py-3 rounded-2xl border-2 border-stone-200 font-sans text-xs bg-white text-stone-600 outline-none" 
+               
             />
             <Button 
               variant="secondary"
@@ -565,7 +567,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               This will reset all children's progress to 0 and delete all history.
             </p>
             <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
-              <input 
+              <Input 
                 type="checkbox" 
                 id="keep-templates"
                 checked={keepTemplates}

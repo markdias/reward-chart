@@ -32,6 +32,8 @@ import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 const RECURRENCE_LABEL: Record<string, string> = {
   daily:      'Daily',
@@ -2571,7 +2573,7 @@ export default function ChildDashboard({
                                     className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
                                   >
                                     <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Donate to Charity (requires parent approval)</label>
-                                    <select
+                                    <Select
                                       value={selectedCharityId}
                                       onChange={(e) => setSelectedCharityId(e.target.value)}
                                       className="w-full bg-white border border-emerald-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
@@ -2579,7 +2581,7 @@ export default function ChildDashboard({
                                       <option value="CH-WILDLIFE"><FaCat className="inline-block mr-2" /> Global Wildlife Fund</option>
                                       <option value="CH-OCEAN"><FaWater className="inline-block mr-2" /> Save the Oceans</option>
                                       <option value="CH-CHILDREN"><FaBook className="inline-block mr-2" /> Kids Education Charity</option>
-                                    </select>
+                                    </Select>
                                     <div className="flex items-center justify-center gap-4 py-2">
                                       <Button variant="none" size="none"
                                         onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
@@ -2636,7 +2638,7 @@ export default function ChildDashboard({
                                     className="mt-3 p-3 rounded-xl bg-pink-50 border border-pink-200 space-y-2"
                                   >
                                     <label className="text-xs font-bold text-pink-800 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
-                                    <select
+                                    <Select
                                       value={selectedSiblingId}
                                       onChange={(e) => setSelectedSiblingId(e.target.value)}
                                       className="w-full bg-white border border-pink-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
@@ -2644,7 +2646,7 @@ export default function ChildDashboard({
                                       {children.filter(c => c.id !== activeChild.id).map(c => (
                                         <option key={c.id} value={c.id}><FaChildDress className="inline-block mr-1" /><FaChild className="inline-block mr-2" /> {c.name}</option>
                                       ))}
-                                    </select>
+                                    </Select>
                                     <div className="flex items-center justify-center gap-4 py-2">
                                       <Button variant="none" size="none"
                                         onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}

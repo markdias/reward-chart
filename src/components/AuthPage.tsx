@@ -390,7 +390,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                   </div>
                 )}
                 <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-2 flex flex-col gap-3">
-                  <input
+                  <Input
                     type="text"
                     placeholder="Enter 6-character code"
                     value={joinCodeInput}

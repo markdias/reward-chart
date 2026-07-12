@@ -7,6 +7,8 @@ import { ThemeId } from '../utils/theme';
 import { getSupabaseClient } from '../utils/supabase';
 import { hashPassword } from '../utils/security';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface LockScreenProps {
   parentEmail: string | null;
@@ -124,7 +126,7 @@ export default function LockScreen({
         {/* Password Entry Form */}
         <form onSubmit={handleVerify} className="p-8 flex flex-col items-center w-full">
           <div className="w-full max-w-sm mb-6 relative">
-            <input
+            <Input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {

@@ -47,6 +47,8 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 import { BottomTabBar } from './ui/BottomTabBar';
 
 interface ParentDashboardProps {
@@ -1168,52 +1170,28 @@ export default function ParentDashboard({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Quest Name</label>
-                              <input
-                                type="text"
-                                value={taskTitle}
-                                onChange={(e) => setTaskTitle(e.target.value)}
-                                placeholder="Clean your room, finish maths workbook, brush teeth..."
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                                required
-                              />
+                              <Input type="text" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Clean your room, finish maths workbook, brush teeth..." required />
                             </div>
                             <div className="flex gap-4">
                               <div className="flex-1">
                                 <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={taskPoints}
-                                  onChange={e => setTaskPoints(Number(e.target.value))}
-                                  className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                                />
+                                <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(Number(e.target.value))} />
                               </div>
                             </div>
 
                             <div>
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Recurrence Cycle</label>
-                              <select
-                                value={taskRecurrence}
-                                onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                                className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                              >
+                              <Select value={taskRecurrence} onChange={(e) => setTaskRecurrence(e.target.value as any)}>
                                 <option value="daily">Daily Habit</option>
                                 <option value="weekly">Weekly Chore</option>
                                 <option value="one_time">One-off Mission</option>
                                 <option value="repeatable">Repeatable (Cooldown)</option>
-                              </select>
+                              </Select>
                             </div>
                             {taskRecurrence === 'repeatable' && (
                               <div>
                                 <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Cooldown (Minutes)</label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={taskCooldownMinutes || ''}
-                                  onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)}
-                                  className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
-                                  required
-                                />
+                                <Input type="number" min="1" value={taskCooldownMinutes || ''} onChange={e => setTaskCooldownMinutes(e.target.value ? Number(e.target.value) : undefined)} required />
                               </div>
                             )}
                           </div>
@@ -1545,9 +1523,9 @@ export default function ParentDashboard({
                                   <Typography variant="body" className="text-sm text-stone-500">When active, the Holiday routine will override the Weekday routine.</Typography>
                                 </div>
                                 <label className="flex items-center cursor-pointer relative">
-                                  <input 
+                                  <Input 
                                     type="checkbox" 
-                                    className="sr-only" 
+                                     
                                     checked={child.holiday_mode || false}
                                     onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked })}
                                   />
@@ -1634,8 +1612,8 @@ export default function ParentDashboard({
                                               )}
 
                                               <div className="mt-2 relative">
-                                                <select
-                                                  className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-500 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100/50 text-sm font-bold transition-all appearance-none cursor-pointer"
+                                                <Select
+                                                  
                                                   value=""
                                                   onChange={(e) => {
                                                     if (!e.target.value) return;
@@ -1653,7 +1631,7 @@ export default function ParentDashboard({
                                                   {tasks.filter(t => t.child_id === child.id && !t.is_template && !periodTasks.includes(t.id)).map(t => (
                                                     <option key={t.id} value={t.id} className="text-stone-700">{t.title}</option>
                                                   ))}
-                                                </select>
+                                                </Select>
                                                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                                                   <Plus className="w-5 h-5 text-stone-400" />
                                                 </div>
@@ -1714,7 +1692,7 @@ export default function ParentDashboard({
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Prize Name</label>
-                              <input
+                              <Input
                                 type="text"
                                 value={rewardTitle}
                                 onChange={(e) => setRewardTitle(e.target.value)}
@@ -1725,7 +1703,7 @@ export default function ParentDashboard({
                             </div>
                             <div>
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Point Cost</label>
-                              <input
+                              <Input
                                 type="number"
                                 value={rewardCost}
                                 onChange={(e) => setRewardCost(Number(e.target.value))}
@@ -1738,7 +1716,7 @@ export default function ParentDashboard({
 
                             <div>
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Select Theme Icon</label>
-                              <select
+                              <Select
                                 value={rewardIcon}
                                 onChange={(e) => setRewardIcon(e.target.value)}
                                 className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
@@ -1748,11 +1726,11 @@ export default function ParentDashboard({
                                 <option value="Palette">🎨 Creative / Art</option>
                                 <option value="BookOpen">📖 Storybooks</option>
                                 <option value="Sparkles">✨ Special Trip</option>
-                              </select>
+                              </Select>
                             </div>
                             <div className="md:col-span-2">
                               <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Redemption Limit</label>
-                              <select
+                              <Select
                                 value={rewardLimit}
                                 onChange={(e) => setRewardLimit(e.target.value as any)}
                                 className={`w-full px-3 py-2 bg-white border dashboard-card border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans`}
@@ -1761,10 +1739,10 @@ export default function ParentDashboard({
                                 <option value="daily">📅 1x Daily</option>
                                 <option value="twice_daily">✌️ 2x Daily (Requires cooldown)</option>
                                 <option value="one_time">🎯 One-Time (Disappears after use)</option>
-                              </select>
+                              </Select>
                             </div>
                             <div className="md:col-span-2 flex items-center gap-2 mt-2">
-                              <input
+                              <Input
                                 type="checkbox"
                                 id="rewardBadgeEligible"
                                 checked={rewardBadgeEligible}
@@ -2153,7 +2131,7 @@ export default function ParentDashboard({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Child Name</label>
-                      <input
+                      <Input
                         type="text"
                         value={newChildName}
                         onChange={(e) => setNewChildName(e.target.value)}
@@ -2164,7 +2142,7 @@ export default function ParentDashboard({
                     </div>
                     <div>
                       <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Age</label>
-                      <input
+                      <Input
                         type="number"
                         value={newChildAge}
                         onChange={(e) => setNewChildAge(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
@@ -2176,7 +2154,7 @@ export default function ParentDashboard({
                     </div>
                     <div className="md:col-span-2">
                       <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
-                      <select
+                      <Select
                         value={newChildChar}
                         onChange={(e) => setNewChildChar(e.target.value)}
                         className="w-full px-3 py-2 bg-stone-50 border border-stone-200 text-stone-900 rounded-xl focus:outline-none focus:border-cyan-400 text-xs font-sans"
@@ -2186,7 +2164,7 @@ export default function ParentDashboard({
                             {char.name} ({char.pack_name})
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                   </div>
 
@@ -2341,7 +2319,7 @@ export default function ParentDashboard({
                   <div>
                     <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
                     <div className="relative">
-                      <input
+                      <Input
                         type="number"
                         min="1"
                         value={penaltyAmount}
@@ -2354,7 +2332,7 @@ export default function ParentDashboard({
 
                   <div>
                     <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
-                    <select
+                    <Select
                       value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
                       onChange={(e) => {
                         if (e.target.value === 'Custom') setPenaltyReason('');
@@ -2369,10 +2347,10 @@ export default function ParentDashboard({
                       <option value="Bad language">Bad language</option>
                       <option value="Lying">Lying</option>
                       <option value="Custom">Type my own...</option>
-                    </select>
+                    </Select>
 
                     {(!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) || penaltyReason === '') && (
-                      <input
+                      <Input
                         type="text"
                         placeholder="Type custom reason..."
                         value={penaltyReason}
@@ -2562,7 +2540,7 @@ export default function ParentDashboard({
                     <div className="space-y-4 mb-8">
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
-                        <select
+                        <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
                           className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -2571,7 +2549,7 @@ export default function ParentDashboard({
                           <option value="3-5">3 - 5 years</option>
                           <option value="6-8">6 - 8 years</option>
                           <option value="9-12">9 - 12 years</option>
-                        </select>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
@@ -2608,16 +2586,16 @@ export default function ParentDashboard({
                           <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
-                                <input
+                                <Input
                                   type="text"
-                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500"
+                                  
                                   value={previewEditTitle}
                                   onChange={(e) => setPreviewEditTitle(e.target.value)}
                                 />
                                 <div className="flex gap-2">
-                                  <input
+                                  <Input
                                     type="number"
-                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-indigo-500"
+                                    
                                     value={previewEditPoints}
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
                                   />
@@ -2631,9 +2609,9 @@ export default function ParentDashboard({
                             ) : (
                               <div className="flex items-start justify-between gap-3 group">
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <input
+                                  <Input
                                     type="checkbox"
-                                    className="mt-1 w-5 h-5 text-indigo-600 rounded border-stone-300 focus:ring-indigo-500"
+                                    
                                     checked={selectedTaskIdsForImport.includes(task.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -2714,7 +2692,7 @@ export default function ParentDashboard({
                     <div className="space-y-4 mb-8">
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
-                        <select
+                        <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
                           className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -2723,7 +2701,7 @@ export default function ParentDashboard({
                           <option value="3-5">3 - 5 years</option>
                           <option value="6-8">6 - 8 years</option>
                           <option value="9-12">9 - 12 years</option>
-                        </select>
+                        </Select>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
@@ -2760,16 +2738,16 @@ export default function ParentDashboard({
                           <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
-                                <input
+                                <Input
                                   type="text"
-                                  className="w-full p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500"
+                                  
                                   value={previewEditTitle}
                                   onChange={(e) => setPreviewEditTitle(e.target.value)}
                                 />
                                 <div className="flex gap-2">
-                                  <input
+                                  <Input
                                     type="number"
-                                    className="w-24 p-2 text-sm border border-stone-300 rounded focus:outline-none focus:border-amber-500"
+                                    
                                     value={previewEditPoints}
                                     onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
                                   />
@@ -2783,9 +2761,9 @@ export default function ParentDashboard({
                             ) : (
                               <div className="flex items-start justify-between gap-3 group">
                                 <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <input
+                                  <Input
                                     type="checkbox"
-                                    className="mt-1 w-5 h-5 text-amber-600 rounded border-stone-300 focus:ring-amber-500"
+                                    
                                     checked={selectedRewardIdsForImport.includes(reward.id)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
