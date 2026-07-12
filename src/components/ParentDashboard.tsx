@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -2924,66 +2924,130 @@ export default function ParentDashboard({
                       {child.name}'s History
                     </Typography>
 
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 backdrop-blur-md">
-                        <span className="font-bold text-amber-900">Total Lifetime Earned</span>
-                        <CoinBadge points={child.lifetime_points || 0} size="md" />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md flex flex-col items-center justify-center text-center">
-                          <span className="text-2xl font-black text-stone-800">{child.weekly_points || 0}</span>
-                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Weekly Coins</span>
+                    <div className="space-y-6">
+                      
+                      {/* Coins Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-xl">
+                              <Coins className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Lifetime Earned</span>
+                          </div>
+                          <span className="font-black text-amber-600 flex items-center gap-1">{child.lifetime_points || 0}</span>
                         </div>
-                        <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md flex flex-col items-center justify-center text-center">
-                          <span className="text-2xl font-black text-stone-800">{child.monthly_points || 0}</span>
-                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Monthly Coins</span>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-stone-500/10 rounded-xl">
+                              <Calendar className="w-5 h-5 text-stone-500" />
+                            </div>
+                            <span className="font-bold text-stone-700">Weekly Coins</span>
+                          </div>
+                          <span className="font-black text-stone-800">{child.weekly_points || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-stone-500/10 rounded-xl">
+                              <Calendar className="w-5 h-5 text-stone-500" />
+                            </div>
+                            <span className="font-bold text-stone-700">Monthly Coins</span>
+                          </div>
+                          <span className="font-black text-stone-800">{child.monthly_points || 0}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3">
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('tasks')} className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-emerald-500/20 transition-colors cursor-pointer w-full">
-                          <CheckSquare className="w-5 h-5 text-emerald-500 mb-2" />
-                          <span className="text-lg font-black text-emerald-700">{tasksDone}</span>
-                          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1 leading-tight">Tasks<br />Done</span>
-                        </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('rewards')} className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-indigo-500/20 transition-colors cursor-pointer w-full">
-                          <Gift className="w-5 h-5 text-indigo-500 mb-2" />
-                          <span className="text-lg font-black text-indigo-700">{rewardsClaimed}</span>
-                          <span className="text-[9px] font-bold text-indigo-600 uppercase tracking-widest mt-1 leading-tight">Rewards<br />Claimed</span>
-                        </Button>
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView('deductions')} className="p-3 bg-rose-500/10 rounded-2xl border border-rose-500/20 backdrop-blur-md flex flex-col items-center justify-center text-center hover:bg-rose-500/20 transition-colors cursor-pointer w-full">
-                          <MinusCircle className="w-5 h-5 text-rose-500 mb-2" />
-                          <span className="text-lg font-black text-rose-700">{coinsTakenOff}</span>
-                          <span className="text-[9px] font-bold text-rose-600 uppercase tracking-widest mt-1 leading-tight">Times<br />Deducted</span>
-                        </Button>
+                      {/* Interactive Logs Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <button onClick={() => setHistoryDetailView('tasks')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/10 rounded-xl">
+                              <CheckSquare className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Tasks Completed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{tasksDone}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('rewards')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500/10 rounded-xl">
+                              <Gift className="w-5 h-5 text-indigo-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Rewards Claimed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{rewardsClaimed}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
+                        <button onClick={() => setHistoryDetailView('deductions')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-rose-500/10 rounded-xl">
+                              <MinusCircle className="w-5 h-5 text-rose-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Deductions</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-stone-800">{coinsTakenOff}</span>
+                            <ChevronRight className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
                       </div>
 
-                      <div className="p-4 bg-white/40 rounded-2xl border border-stone-200/50 backdrop-blur-md space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-stone-600">Current Level</span>
+                      {/* Progression Section */}
+                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-cyan-500/10 rounded-xl">
+                              <Star className="w-5 h-5 text-cyan-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Current Level</span>
+                          </div>
                           <span className="font-black text-stone-800">Level {child.level}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-stone-600">Current Streak</span>
+                        <div className="flex justify-between items-center p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-orange-500/10 rounded-xl">
+                              <Flame className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <span className="font-bold text-stone-700">Current Streak</span>
+                          </div>
                           <span className="font-black text-stone-800">{child.streak_days} Days</span>
                         </div>
                         {child.savings_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Savings Total</span>
-                            <span className="font-black text-emerald-600 flex items-center gap-1"><Coins className="w-3.5 h-3.5" />{child.savings_pot || 0}</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                <PiggyBank className="w-5 h-5 text-emerald-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Savings Account</span>
+                            </div>
+                            <span className="font-black text-emerald-600 flex items-center gap-1">{child.savings_pot || 0}</span>
                           </div>
                         )}
                         {child.food_pot_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Pet Fed Total</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-500/10 rounded-xl">
+                                <Utensils className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Pet Fed Total</span>
+                            </div>
                             <span className="font-black text-stone-800">{child.pet_fed_total || 0} times</span>
                           </div>
                         )}
                         {child.gifting_unlocked && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-stone-600">Gifts Made</span>
-                            <span className="font-black text-stone-800">{child.gifts_made || 0}</span>
+                          <div className="flex justify-between items-center p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-pink-500/10 rounded-xl">
+                                <Heart className="w-5 h-5 text-pink-600" />
+                              </div>
+                              <span className="font-bold text-stone-700">Gifts Sent</span>
+                            </div>
+                            <span className="font-black text-stone-800">{child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>
