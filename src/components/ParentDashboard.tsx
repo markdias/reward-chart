@@ -149,14 +149,22 @@ export default function ParentDashboard({
 
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
   const [routineChildId, setRoutineChildId] = useState<string | null>(children[0]?.id || null);
+
+  useEffect(() => {
+    if (!routineChildId && children.length > 0) {
+      setRoutineChildId(children[0].id);
+    }
+  }, [children, routineChildId]);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [newRoutineName, setNewRoutineName] = useState('');
 
 
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
   const [expandedAdjustments, setExpandedAdjustments] = useState<Record<string, boolean>>({});
-  const [selectingChildForTaskId, setSelectingChildForTaskId] = useState<string | null>(null);
-
+  const [expandedTaskTemplateId, setExpandedTaskTemplateId] = useState<string | null>(null);
+  const [expandedRewardTemplateId, setExpandedRewardTemplateId] = useState<string | null>(null);
+  const [expandedActiveTaskId, setExpandedActiveTaskId] = useState<string | null>(null);
+  const [expandedActiveRewardId, setExpandedActiveRewardId] = useState<string | null>(null);
 
 
   // Sort children alphabetically so they don't jump around
@@ -187,10 +195,11 @@ export default function ParentDashboard({
       const rIdx = routines.findIndex(r => r.id === routineId);
       if (rIdx === -1) return;
       
-      const oldIndex = routines[rIdx][periodKey].indexOf(active.id as string);
-      const newIndex = routines[rIdx][periodKey].indexOf(over.id as string);
+      const periodTasks = routines[rIdx][periodKey] || [];
+      const oldIndex = periodTasks.indexOf(active.id as string);
+      const newIndex = periodTasks.indexOf(over.id as string);
       
-      routines[rIdx][periodKey] = arrayMove(routines[rIdx][periodKey], oldIndex, newIndex);
+      routines[rIdx][periodKey] = arrayMove(periodTasks, oldIndex, newIndex);
       onEditChild(child.id, { routines });
     }
   };
@@ -652,7 +661,7 @@ export default function ParentDashboard({
             <Tooltip content="Settings" position="bottom">
               <Button variant="none" size="none"
                 onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
               >
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
@@ -719,7 +728,7 @@ export default function ParentDashboard({
                   key={tab.id}
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
-                    ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                    ? 'bg-stone-900 text-white shadow-md shadow-md scale-[1.02]'
                     : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
                     }`}
                 >
@@ -1024,7 +1033,7 @@ export default function ParentDashboard({
                     <>
                       <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
                         <div className="flex justify-between items-start mb-4">
-                          <div className="w-20 h-20 rounded-[1.25rem] bg-stone-200"></div>
+                          <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
@@ -1045,7 +1054,7 @@ export default function ParentDashboard({
                       </div>
                       <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse hidden md:block">
                         <div className="flex justify-between items-start mb-4">
-                          <div className="w-20 h-20 rounded-[1.25rem] bg-stone-200"></div>
+                          <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
@@ -1080,7 +1089,7 @@ export default function ParentDashboard({
                         </div>
 
                         {/* Merged Child Card */}
-                        <div className="bg-white rounded-[24px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden border border-stone-200/60 font-sans">
+                        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200 font-sans">
 
                           {/* 1. Header: Avatar & Info */}
                           <div className="flex items-center p-4 gap-4">
@@ -1218,7 +1227,7 @@ export default function ParentDashboard({
                                 exit={{ height: 0, opacity: 0 }}
                                 className="overflow-hidden mt-4"
                               >
-                                <div className="bg-white rounded-[20px] shadow-[0_1px_3px_rgba(0,0,0,0.02)] border border-stone-200/60 p-4 space-y-4">
+                                <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 space-y-4">
                                   <div className="flex items-center justify-between gap-2">
                                     <span className="text-[15px] font-semibold text-black tracking-tight">Gold</span>
                                     <div className="flex gap-1">
@@ -1379,12 +1388,12 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
-                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                         : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
@@ -1393,7 +1402,7 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
-                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                         : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
@@ -1402,7 +1411,7 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('routines')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
-                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                         : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
@@ -1413,9 +1422,8 @@ export default function ParentDashboard({
                   {taskSubTab === 'directory' && (
                     <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-                        style={{ background: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)' }}
+                        variant="dark"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => {
                           playSound.click();
                           setGenerateAgeRange(getRecommendedAgeRange());
@@ -1426,17 +1434,16 @@ export default function ParentDashboard({
                         GENERATE <span className="hidden sm:inline">IDEAS</span>
                       </Button>
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-bold text-xs sm:text-sm tracking-widest text-stone-700 bg-white border border-stone-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-stone-300 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        variant="secondary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
                         onClick={handleImportDefaultTasks}
                         leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
                       >
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(14,165,233,0.35)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-                        style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}
+                        variant="dark"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => { playSound.click(); setShowAddTask(true); }}
                         id="add-chore-btn-top"
                         leftIcon={<Plus className="w-4 h-4" />}
@@ -1451,94 +1458,93 @@ export default function ParentDashboard({
                 {taskSubTab === 'directory' && (
                   <div className="mt-2 sm:mt-4">
                     <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Tasks Directory</Typography>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {tasks.filter(t => t.is_template).map((task) => {
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {tasks.filter(t => t.is_template || t.child_id === 'directory').map((task, index, arr) => {
                         const instances = tasks.filter(t => t.template_id === task.id);
                         const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                        const isExpanded = expandedTaskTemplateId === task.id;
 
                         return (
-                          <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex gap-4 items-center">
-                                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedTaskTemplateId(isExpanded ? null : task.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
                                   <FaStar />
                                 </div>
-                                <div>
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
-                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                    Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
-                                    Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
+                                      {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
+                                    </span>
                                   </Typography>
                                 </div>
                               </div>
-
-                              <div className="flex flex-col items-end gap-2 shrink-0">
-                                <CoinBadge points={task.points} size="lg" />
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                              <Button variant="none" size="none"
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === task.id ? null : task.id);
-                                }}
-                                className="text-xs font-bold text-stone-900 hover:text-stone-700"
-                              >
-                                Assign to Child
-                              </Button>
-
-                              <div className="flex gap-2">
-                                <Tooltip content="Edit Template" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => openEditTask(task)}>
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip content="Delete Template" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={task.points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                             </div>
 
                             <AnimatePresence>
-                              {selectingChildForTaskId === task.id && (
+                              {isExpanded && (
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100"
+                                  className="overflow-hidden bg-stone-50/50"
                                 >
-                                  <Typography variant="body" className="text-[10px] font-sans font-bold text-stone-500 uppercase">
-                                    Select children to assign this quest:
-                                  </Typography>
-                                  <div className="flex flex-wrap gap-2">
-                                    {children.map(child => {
-                                      const isAssigned = instances.some(i => i.child_id === child.id);
-                                      return (
-                                        <Button variant="none" size="none"
-                                          key={child.id}
-                                          onClick={() => {
-                                            playSound.success();
-                                            const currentAssignedIds = instances.map(i => i.child_id);
-                                            const newAssignedIds = isAssigned
-                                              ? currentAssignedIds.filter(id => id !== child.id)
-                                              : [...currentAssignedIds, child.id];
-                                            onAssignTask(task, newAssignedIds);
-                                          }}
-                                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-sans font-extrabold transition-all cursor-pointer ${isAssigned
-                                            ? ('bg-warning border-neutral-border text-dark shadow-[0_2px_0_0_var(--color-dark-shadow)]')
-                                            : ('bg-stone-50 border-stone-200 text-stone-500 hover:bg-stone-100')
-                                            }`}
-                                        >
-                                          <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-700/50" />
-                                          <span>{child.name}</span>
-                                          {isAssigned && <Check className="w-3 h-3" />}
-                                        </Button>
-                                      );
-                                    })}
+                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                    <div className="flex flex-col gap-2">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                        Assign to:
+                                      </Typography>
+                                      <div className="flex flex-wrap gap-2">
+                                        {children.map(child => {
+                                          const isAssigned = instances.some(i => i.child_id === child.id);
+                                          return (
+                                            <Button variant="none" size="none"
+                                              key={child.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                playSound.success();
+                                                const currentAssignedIds = instances.map(i => i.child_id);
+                                                const newAssignedIds = isAssigned
+                                                  ? currentAssignedIds.filter(id => id !== child.id)
+                                                  : [...currentAssignedIds, child.id];
+                                                onAssignTask(task, newAssignedIds);
+                                              }}
+                                              className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${isAssigned
+                                                ? 'bg-white text-cyan-600 shadow-md border-cyan-100/50 scale-[1.02]'
+                                                : 'bg-white/60 text-stone-500 border-transparent hover:bg-white hover:text-stone-800 shadow-sm'
+                                                }`}
+                                            >
+                                              <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-200" />
+                                              <span>{child.name}</span>
+                                              {isAssigned && <Check className="w-3 h-3" />}
+                                            </Button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                        <Edit2 className="w-4 h-4" /> Edit
+                                      </Button>
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteTask(task.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                        <Trash2 className="w-4 h-4" /> Delete
+                                      </Button>
+                                    </div>
                                   </div>
                                 </motion.div>
                               )}
@@ -1548,63 +1554,74 @@ export default function ParentDashboard({
                       })}
                     </div>
                   </div>
-
                 )}
 
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
                   <div className="mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {tasks.filter(t => !t.is_template).map((task) => {
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {tasks.filter(t => (!t.is_template && t.child_id !== 'directory') && children.some(c => c.id === t.child_id)).map((task, index, arr) => {
                         const assignedName = children.find(c => c.id === task.child_id)?.name;
+                        const isExpanded = expandedActiveTaskId === task.id;
+
                         return (
-                          <div key={task.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex gap-4 items-center">
-                                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl shrink-0">
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedActiveTaskId(isExpanded ? null : task.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
                                   <FaStar />
                                 </div>
-                                <div>
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
-                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                    Assigned: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
-                                    Category: <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
                                 </div>
                               </div>
 
-                              <div className="flex flex-col items-end gap-2 shrink-0">
-                                <CoinBadge points={task.points} size="lg" />
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={task.points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                             </div>
 
-                            <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => {
-                                  playSound.success();
-                                  onParentCompleteTask(task.id, task.child_id);
-                                }}
-                                id={`parent-complete-${task.id}`}
-                              >
-                                Mark Complete
-                              </Button>
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 flex flex-wrap justify-end items-center gap-2">
+                                    <Button
+                                      variant="none" size="none"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        playSound.success();
+                                        onParentCompleteTask(task.id, task.child_id);
+                                      }}
+                                      id={`parent-complete-${task.id}`}
+                                      className="flex-1 sm:flex-none px-4 py-2 rounded-2xl font-bold text-sm text-white bg-emerald-500 hover:bg-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.25)] transition-all flex items-center justify-center gap-2"
+                                    >
+                                      <Check className="w-4 h-4" /> Mark Complete
+                                    </Button>
 
-                              <div className="flex gap-2">
-                                <Tooltip content="Edit Assigned Quest" position="top">
-                                  <Button variant="none" size="none" onClick={() => openEditTask(task)} className="p-2 rounded-xl text-stone-400 hover:text-stone-900 hover:bg-stone-50">
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip content="Delete Assigned Quest" position="top">
-                                  <Button variant="none" size="none" onClick={() => { playSound.click(); onDeleteTask(task.id); }} className="p-2 rounded-xl text-stone-400 hover:text-rose-500 hover:bg-rose-50" id={`delete-task-${task.id}`}>
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                              </div>
-                            </div>
+                                    <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteTask(task.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                      <MinusCircle className="w-4 h-4" /> Unassign
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         );
                       })}
@@ -1617,13 +1634,13 @@ export default function ParentDashboard({
                     <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
 
                     {/* Select Child */}
-                    <div className="flex w-fit max-w-full gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-x-auto custom-scrollbar">
+                    <div className="flex w-fit max-w-full gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm overflow-x-auto custom-scrollbar">
                       {children.map(child => (
                         <button
                           key={child.id}
                           onClick={() => setRoutineChildId(child.id)}
                           className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest whitespace-nowrap transition-all duration-300 ${routineChildId === child.id
-                            ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                            ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                             : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                             }`}
                         >
@@ -1641,7 +1658,7 @@ export default function ParentDashboard({
 
                           return routines.map((routine, rIdx) => {
                             const isExpanded = expandedRoutineId === routine.id;
-                            const totalTasks = routine.morningTaskIds.length + routine.afternoonTaskIds.length + routine.eveningTaskIds.length;
+                            const totalTasks = (routine.morningTaskIds?.length || 0) + (routine.afternoonTaskIds?.length || 0) + (routine.eveningTaskIds?.length || 0);
                             const isActive = child.active_routine_id === routine.id;
                             
                             return (
@@ -1695,7 +1712,9 @@ export default function ParentDashboard({
                                         { key: 'morningTaskIds', label: 'Morning' },
                                         { key: 'afternoonTaskIds', label: 'Afternoon' },
                                         { key: 'eveningTaskIds', label: 'Evening' },
-                                      ] as const).map(period => (
+                                      ] as const).map(period => {
+                                        const periodTasks = routine[period.key] || [];
+                                        return (
                                         <div key={period.key} className="space-y-3">
                                           <Typography variant="body" className="font-bold text-xs uppercase tracking-widest text-stone-400 pl-1">{period.label}</Typography>
                                           
@@ -1705,11 +1724,11 @@ export default function ParentDashboard({
                                             onDragEnd={(e) => handleDragEnd(e, child.id, routine.id, period.key)}
                                           >
                                             <SortableContext
-                                              items={routine[period.key]}
+                                              items={periodTasks}
                                               strategy={verticalListSortingStrategy}
                                             >
                                               <div className="space-y-2">
-                                                {routine[period.key].map(taskId => {
+                                                {periodTasks.map(taskId => {
                                                   const t = tasks.find(x => x.id === taskId);
                                                   if (!t) return null;
                                                   return (
@@ -1719,7 +1738,7 @@ export default function ParentDashboard({
                                                       task={t}
                                                       onRemove={(id) => {
                                                         const newRoutines = [...routines];
-                                                        newRoutines[rIdx][period.key] = newRoutines[rIdx][period.key].filter(x => x !== id);
+                                                        newRoutines[rIdx][period.key] = (newRoutines[rIdx][period.key] || []).filter(x => x !== id);
                                                         onEditChild(child.id, { routines: newRoutines });
                                                       }}
                                                     />
@@ -1729,17 +1748,20 @@ export default function ParentDashboard({
                                             </SortableContext>
                                           </DndContext>
 
-                                          {routine[period.key].length === 0 && (
+                                          {periodTasks.length === 0 && (
                                             <div className="text-xs text-stone-400 italic py-3 text-center border-2 border-dashed border-stone-200 rounded-xl">No tasks assigned for {period.label}.</div>
                                           )}
 
                                           <div className="mt-2 relative">
                                             <select
-                                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-700 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100/50 text-sm font-bold transition-all appearance-none cursor-pointer"
+                                              className="w-full px-4 py-3 bg-stone-50 border border-stone-200 text-stone-500 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100/50 text-sm font-bold transition-all appearance-none cursor-pointer"
                                               value=""
                                               onChange={(e) => {
                                                 if (!e.target.value) return;
                                                 const newRoutines = [...routines];
+                                                if (!newRoutines[rIdx][period.key]) {
+                                                  newRoutines[rIdx][period.key] = [];
+                                                }
                                                 if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
                                                   newRoutines[rIdx][period.key].push(e.target.value);
                                                   onEditChild(child.id, { routines: newRoutines });
@@ -1747,21 +1769,17 @@ export default function ParentDashboard({
                                               }}
                                             >
                                               <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
-                                              {tasks.filter(t => t.child_id === child.id && !t.is_template && !routine[period.key].includes(t.id)).map(t => (
-                                                <option key={t.id} value={t.id}>{t.title}</option>
+                                              {tasks.filter(t => t.child_id === child.id && !t.is_template && !periodTasks.includes(t.id)).map(t => (
+                                                <option key={t.id} value={t.id} className="text-stone-700">{t.title}</option>
                                               ))}
                                             </select>
                                             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                                               <Plus className="w-5 h-5 text-stone-400" />
                                             </div>
-                                            <div className="absolute inset-0 flex items-center px-4 pointer-events-none">
-                                              <span className="text-stone-500 font-bold text-sm flex items-center gap-2">
-                                                <Plus className="w-4 h-4" /> Add Quest to {period.label}
-                                              </span>
-                                            </div>
                                           </div>
                                         </div>
-                                      ))}
+                                      );
+                                      })}
                                     </div>
                                   </motion.div>
                                 )}
@@ -1941,12 +1959,12 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200/50 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-[1.25rem] border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
-                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                         : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
@@ -1955,7 +1973,7 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
-                        ? ('bg-white text-cyan-600 shadow-[0_4px_12px_rgba(6,182,212,0.15)] border border-cyan-100/50 scale-[1.02]')
+                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                         : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
                         }`}
                     >
@@ -1966,9 +1984,8 @@ export default function ParentDashboard({
                   {rewardSubTab === 'directory' && (
                     <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(168,85,247,0.35)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-                        style={{ background: 'linear-gradient(135deg, #c084fc 0%, #a855f7 100%)' }}
+                        variant="dark"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => {
                           playSound.click();
                           setGenerateAgeRange(getRecommendedAgeRange());
@@ -1979,17 +1996,16 @@ export default function ParentDashboard({
                         GENERATE <span className="hidden sm:inline">IDEAS</span>
                       </Button>
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-bold text-xs sm:text-sm tracking-widest text-stone-700 bg-white border border-stone-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:border-stone-300 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
+                        variant="secondary"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
                         onClick={handleImportDefaultRewards}
                         leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
                       >
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
                       <Button
-                        variant="none"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 rounded-[1rem] font-black text-xs sm:text-sm tracking-widest text-white shadow-[0_4px_15px_rgba(14,165,233,0.35)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.5)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-                        style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}
+                        variant="dark"
+                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
                         onClick={() => { playSound.click(); setShowAddReward(true); }}
                         id="add-reward-btn-top"
                         leftIcon={<Plus className="w-4 h-4" />}
@@ -2004,93 +2020,93 @@ export default function ParentDashboard({
                 {rewardSubTab === 'directory' && (
                   <div className="mt-2 sm:mt-4">
                     <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Rewards Directory</Typography>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {rewards.filter(r => r.is_template).map((reward) => {
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {rewards.filter(r => r.is_template || r.child_id === 'directory').map((reward, index, arr) => {
                         const instances = rewards.filter(r => r.template_id === reward.id);
                         const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
+                        const isExpanded = expandedRewardTemplateId === reward.id;
+
                         return (
-                          <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex gap-4 items-center">
-                                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedRewardTemplateId(isExpanded ? null : reward.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-purple-100/50">
                                   <FaGift />
                                 </div>
-                                <div>
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm">{reward.title}</Typography>
-                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                    Assigned: <span className="font-bold text-stone-700">{assignedChildren.length > 0 ? assignedChildren.join(', ') : 'No one'}</span>
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{reward.title}</Typography>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
-                                    Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
+                                      {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
+                                    </span>
                                   </Typography>
                                 </div>
                               </div>
-
-                              <div className="flex flex-col items-end gap-2 shrink-0">
-                                <CoinBadge points={reward.cost_points} size="lg" />
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center border-t border-stone-50 pt-3 mt-1">
-                              <Button variant="none" size="none"
-                                onClick={() => {
-                                  playSound.click();
-                                  setSelectingChildForTaskId(selectingChildForTaskId === reward.id ? null : reward.id);
-                                }}
-                                className="text-xs font-bold text-stone-900 hover:text-stone-700"
-                              >
-                                Assign to Child
-                              </Button>
-
-                              <div className="flex gap-2">
-                                <Tooltip content="Edit Token" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip content="Delete Token" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <CoinBadge points={reward.cost_points} size="md" />
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                             </div>
 
                             <AnimatePresence>
-                              {selectingChildForTaskId === reward.id && (
+                              {isExpanded && (
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className={`border-t pt-3 mt-1 flex flex-col gap-2 overflow-hidden border-stone-100`}
+                                  className="overflow-hidden bg-stone-50/50"
                                 >
-                                  <Typography variant="body" className={`text-[10px] font-bold text-stone-500 uppercase`}>
-                                    Select children to assign this reward:
-                                  </Typography>
-                                  <div className="flex flex-wrap gap-2">
-                                    {children.map(child => {
-                                      const isAssigned = instances.some(i => i.child_id === child.id);
-                                      return (
-                                        <Button variant="none" size="none"
-                                          key={child.id}
-                                          onClick={() => {
-                                            playSound.success();
-                                            const currentAssignedIds = instances.map(i => i.child_id);
-                                            const newAssignedIds = isAssigned
-                                              ? currentAssignedIds.filter(id => id !== child.id)
-                                              : [...currentAssignedIds, child.id];
-                                            onAssignReward(reward, newAssignedIds);
-                                          }}
-                                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${isAssigned
-                                            ? ('bg-stone-900 border-stone-900 text-white')
-                                            : ('bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100')
-                                            }`}
-                                        >
-                                          <ChildAvatar iconName={child.avatar_url} className="w-5 h-5" />
-                                          <span>{child.name}</span>
-                                          {isAssigned && <Check className="w-3 h-3" />}
-                                        </Button>
-                                      );
-                                    })}
+                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                    <div className="flex flex-col gap-2">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                        Assign to:
+                                      </Typography>
+                                      <div className="flex flex-wrap gap-2">
+                                        {children.map(child => {
+                                          const isAssigned = instances.some(i => i.child_id === child.id);
+                                          return (
+                                            <Button variant="none" size="none"
+                                              key={child.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                playSound.success();
+                                                const currentAssignedIds = instances.map(i => i.child_id);
+                                                const newAssignedIds = isAssigned
+                                                  ? currentAssignedIds.filter(id => id !== child.id)
+                                                  : [...currentAssignedIds, child.id];
+                                                onAssignReward(reward, newAssignedIds);
+                                              }}
+                                              className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${isAssigned
+                                                ? 'bg-white text-cyan-600 shadow-md border-cyan-100/50 scale-[1.02]'
+                                                : 'bg-white/60 text-stone-500 border-transparent hover:bg-white hover:text-stone-800 shadow-sm'
+                                                }`}
+                                            >
+                                              <ChildAvatar iconName={child.avatar_url} className="w-5 h-5 bg-white border dashboard-card border-stone-200" />
+                                              <span>{child.name}</span>
+                                              {isAssigned && <Check className="w-3 h-3" />}
+                                            </Button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditReward(reward); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                        <Edit2 className="w-4 h-4" /> Edit
+                                      </Button>
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                        <Trash2 className="w-4 h-4" /> Delete
+                                      </Button>
+                                    </div>
                                   </div>
                                 </motion.div>
                               )}
@@ -2107,18 +2123,26 @@ export default function ParentDashboard({
                 {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
                   <div className="mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {rewards.filter(r => !r.is_template).map((reward) => {
+                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                      {rewards.filter(r => (!r.is_template && r.child_id !== 'directory') && children.some(c => c.id === r.child_id)).map((reward, index, arr) => {
                         const assignedName = children.find(c => c.id === reward.child_id)?.name;
+                        const isExpanded = expandedActiveRewardId === reward.id;
+
                         return (
-                          <div key={reward.id} className="bg-white border dashboard-card border-stone-100 p-4 rounded-2xl flex flex-col gap-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex gap-4 items-center">
-                                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl shrink-0">
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                            <div 
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              onClick={() => {
+                                playSound.click();
+                                setExpandedActiveRewardId(isExpanded ? null : reward.id);
+                              }}
+                            >
+                              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-purple-100/50">
                                   <FaGift />
                                 </div>
-                                <div>
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm">
+                                <div className="min-w-0 pr-2">
+                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">
                                     {reward.title}
                                     {!reward.is_available && reward.limit_type === 'one_time' && (
                                       <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
@@ -2126,35 +2150,38 @@ export default function ParentDashboard({
                                       </span>
                                     )}
                                   </Typography>
-                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5">
-                                    Available for: <span className="font-bold text-stone-700">{assignedName || 'None'}</span>
+                                  <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
+                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
-                                    Limit: <span className="font-bold text-stone-700 capitalize">{(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
                                 </div>
                               </div>
-
-                              <div className="flex flex-col items-end gap-2 shrink-0">
-                                <span className="w-12 h-12 rounded-full border-4 border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
+                              
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
                                   {reward.cost_points}
                                 </span>
+                                <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                               </div>
                             </div>
 
-                            <div className="flex justify-end items-center border-t border-stone-50 pt-3 mt-1">
-                              <div className="flex gap-2">
-                                <Tooltip content="Edit Assigned Token" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => openEditReward(reward)}>
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                                <Tooltip content="Delete Assigned Token" position="top">
-                                  <Button variant="ghost" size="icon" onClick={() => { playSound.click(); onDeleteReward(reward.id); }} className="text-stone-400 hover:text-rose-500 hover:bg-rose-50">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </Tooltip>
-                              </div>
-                            </div>
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden bg-stone-50/50"
+                                >
+                                  <div className="p-4 border-t border-stone-100 flex justify-end gap-2">
+                                    <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
+                                      <MinusCircle className="w-4 h-4" /> Unassign
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         );
                       })}
@@ -2254,7 +2281,7 @@ export default function ParentDashboard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -2352,13 +2379,13 @@ export default function ParentDashboard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${'bg-white border-rose-200 shadow-rose-900/10'
+                className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl ${'bg-white border-rose-200 shadow-xl'
                   }`}
               >
                 <div className="flex justify-center mb-4">
@@ -2388,7 +2415,7 @@ export default function ParentDashboard({
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       setResetConfirmation(null);
                     }}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-500"
+                    className="flex-1"
                   >
                     RESET NOW
                   </Button>
@@ -2405,13 +2432,13 @@ export default function ParentDashboard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+              className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200 shadow-rose-900/10"
+                className="w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200 shadow-xl"
               >
                 <div className="flex justify-center mb-4">
                   <div className="p-3 rounded-full bg-rose-100 text-rose-600">
@@ -2442,7 +2469,7 @@ export default function ParentDashboard({
                       if (onDeleteChild) onDeleteChild(deleteChildConfirmation.childId);
                       setDeleteChildConfirmation(null);
                     }}
-                    className="flex-1 bg-gradient-to-r from-rose-500 to-red-600"
+                    className="flex-1"
                   >
                     DELETE
                   </Button>
