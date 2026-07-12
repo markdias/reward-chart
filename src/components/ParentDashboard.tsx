@@ -1571,19 +1571,9 @@ export default function ParentDashboard({
                   </div>
                 </div>
                 )}
-              </motion.div>
-            )}
 
-            {taskSubTab === 'routines' && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                key="routines-tab"
-                className="space-y-6"
-                id="routines-view"
-              >
-                <div className="mt-4 space-y-6">
+                {taskSubTab === 'routines' && (
+                  <div className="mt-4 space-y-6" id="routines-view">
                   <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
                   
                   {/* Select Child */}
@@ -1731,6 +1721,7 @@ export default function ParentDashboard({
                     </div>
                   )}
                 </div>
+                )}
               </motion.div>
             )}
 
