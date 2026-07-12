@@ -286,7 +286,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               <p className="text-xs text-indigo-700">Create a free account to sync your family's data across devices and never lose your progress.</p>
             </div>
             <Button 
-              variant="primary"
+              variant="dark"
               size="sm"
               onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }} 
             >
@@ -492,7 +492,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>
               <p className="text-xs text-emerald-800">You must create a free account before you can share your dashboard with another parent. This ensures your data is securely synced.</p>
               <Button 
-                variant="primary"
+                variant="dark"
                 size="sm"
                 onClick={() => { playSound.click(); if (onRequireAccount) onRequireAccount(); }} 
                 className="self-start"
@@ -655,7 +655,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200`}>
             <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
               Are you sure?

@@ -125,7 +125,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
         className="w-full px-4 sm:px-8"
       >
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-4 bg-indigo-50 text-indigo-500 rounded-[1.25rem] shadow-sm border border-indigo-100 shrink-0">
+          <div className="p-4 bg-indigo-50 text-indigo-500 rounded-2xl shadow-sm border border-indigo-100 shrink-0">
             <Target className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
@@ -189,7 +189,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
           
           <div className="pt-8 border-t border-stone-100 mt-8">
             <div className="flex items-center gap-4 mb-8">
-              <div className="p-4 bg-emerald-50 text-emerald-500 rounded-[1.25rem] shadow-sm border border-emerald-100 shrink-0">
+              <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl shadow-sm border border-emerald-100 shrink-0">
                 <Database className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
               <div>
@@ -269,7 +269,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
             </div>
           </div>
           <Button 
-            variant="primary"
+            variant="dark"
             fullWidth
             onClick={handleSave}
             isLoading={isSaving}
