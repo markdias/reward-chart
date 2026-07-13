@@ -20,7 +20,7 @@ export interface ArcadeTicketCardProps {
   isLoading?: boolean;
 }
 
-const getPetStripeBackground = (characterId?: string) => {
+export const getPetStripeBackground = (characterId?: string) => {
   switch (characterId) {
     case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
     case 'robot': return 'repeating-linear-gradient(-45deg, #0ea5e9, #0ea5e9 15px, #3b82f6 15px, #3b82f6 30px, #8b5cf6 30px, #8b5cf6 45px)';

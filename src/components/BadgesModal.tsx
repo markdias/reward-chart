@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Coins, Medal, ArrowLeft, Lock, Gift } from 'lucide-react';
 import { Child, Reward } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
+import { getPetStripeBackground } from './ArcadeTicketCard';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
@@ -187,46 +188,63 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
     );
   };
 
+  const gradient = getPetStripeBackground(child.character_id);
+
   return (
     <Modal
       isOpen={true}
       onClose={onClose}
       maxWidth="3xl"
       padding="none"
-      className="h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden bg-white dark:bg-stone-900"
+      className="h-[85vh] sm:h-[80vh] w-full flex flex-col !bg-transparent !border-none !shadow-none"
     >
-      {/* Header */}
-      <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900/80 backdrop-blur-md z-10">
-        <Typography variant="h2">Badges</Typography>
-        <Button 
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col relative overflow-hidden bg-white dark:bg-stone-900">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent" />
+      <div 
+        className="w-full h-full rounded-[2rem] p-2 sm:p-3 relative flex shadow-2xl"
+        style={{ background: gradient }}
+      >
+        <div className="flex-1 bg-white dark:bg-stone-900 rounded-2xl flex flex-col overflow-hidden relative border-[3px] border-stone-800">
+          {/* Header */}
+          <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b-[3px] border-stone-800 bg-white dark:bg-stone-900 z-10">
+            <Typography variant="h2" className="font-black uppercase tracking-wider text-stone-800 dark:text-stone-100">Badges</Typography>
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 border-2 border-transparent hover:border-stone-800 transition-all"
+            >
+              <X className="w-5 h-5 text-stone-800 dark:text-stone-100" />
+            </Button>
           </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            {selectedBadge ? (
-              <React.Fragment key="detail">
-                {renderBadgeDetail()}
-              </React.Fragment>
+
+          {/* Content */}
+          <div className="flex-1 flex flex-col relative overflow-hidden bg-stone-50/50 dark:bg-stone-900/50">
+            {loading ? (
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar w-full">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-y-8 gap-x-4">
+                  {[...Array(15)].map((_, i) => (
+                    <div key={i} className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-stone-200/50 dark:bg-stone-800/50 animate-pulse border-2 border-stone-100 dark:border-stone-800" />
+                      <div className="w-20 h-3 bg-stone-200/50 dark:bg-stone-800/50 animate-pulse rounded" />
+                      <div className="w-12 h-3 bg-stone-200/50 dark:bg-stone-800/50 animate-pulse rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
-              <React.Fragment key="grid">
-                {renderGrid()}
-              </React.Fragment>
+              <AnimatePresence mode="wait">
+                {selectedBadge ? (
+                  <React.Fragment key="detail">
+                    {renderBadgeDetail()}
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment key="grid">
+                    {renderGrid()}
+                  </React.Fragment>
+                )}
+              </AnimatePresence>
             )}
-          </AnimatePresence>
-        )}
+          </div>
+        </div>
       </div>
     </Modal>
   );
