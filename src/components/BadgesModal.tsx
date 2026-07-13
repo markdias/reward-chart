@@ -60,13 +60,13 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="flex-1 flex flex-col p-6 items-center justify-center relative bg-white"
+        className="flex-1 flex flex-col p-6 items-center justify-center relative bg-white dark:bg-stone-900"
       >
         <Button 
           variant="none"
           size="none"
           onClick={() => { setSelectedBadge(null); setClaiming(false); }}
-          className="absolute top-6 left-6 text-stone-400 hover:text-stone-700 flex items-center gap-2 transition-colors font-medium text-sm"
+          className="absolute top-6 left-6 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <ArrowLeft className="w-4 h-4" /> Back to badges
         </Button>
@@ -74,16 +74,16 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
         <div className={`w-32 h-32 rounded-full flex items-center justify-center border-4 mb-6 transition-all ${
           isUnlocked 
             ? 'border-amber-400 text-amber-500 bg-amber-50 shadow-lg shadow-amber-100/50' 
-            : 'border-stone-100 text-stone-300 bg-stone-50'
+            : 'border-stone-100 dark:border-stone-800 text-stone-300 bg-stone-50 dark:bg-stone-950'
         }`}>
           <Icon className="w-16 h-16" strokeWidth={isUnlocked ? 2.5 : 2} />
         </div>
 
-        <Typography variant="h3" className={`mb-3 ${isUnlocked ? 'text-stone-800' : 'text-stone-400'}`}>
+        <Typography variant="h3" className={`mb-3 ${isUnlocked ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400'}`}>
           {selectedBadge.name}
         </Typography>
         
-        <p className="text-stone-500 text-center max-w-sm mb-8">
+        <p className="text-stone-500 dark:text-stone-400 text-center max-w-sm mb-8">
           {selectedBadge.description}
         </p>
 
@@ -95,8 +95,8 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
               </div>
             ) : (
               claiming ? (
-                <div className="w-full space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-200 animate-in fade-in zoom-in duration-200">
-                  <div className="text-sm font-bold text-stone-700 text-center mb-2">Choose your free prize:</div>
+                <div className="w-full space-y-3 bg-stone-50 dark:bg-stone-950 p-4 rounded-2xl border border-stone-200 dark:border-stone-700 animate-in fade-in zoom-in duration-200">
+                  <div className="text-sm font-bold text-stone-700 dark:text-stone-200 text-center mb-2">Choose your free prize:</div>
                   {eligibleRewards.length === 0 ? (
                     <p className="text-xs text-red-500 text-center font-medium">No eligible rewards available. Ask your parents to add some!</p>
                   ) : (
@@ -109,7 +109,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                             setUnlockedBadges(prev => prev.map(ub => ub.badge_id === selectedBadge.id ? { ...ub, reward_claimed: true } : ub));
                             setClaiming(false);
                           }}
-                          className="w-full text-left px-4 py-3 text-sm font-bold bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded-xl text-stone-700 transition-colors shadow-sm"
+                          className="w-full text-left px-4 py-3 text-sm font-bold bg-white dark:bg-stone-900 hover:bg-amber-50 border border-stone-200 dark:border-stone-700 hover:border-amber-300 rounded-xl text-stone-700 dark:text-stone-200 transition-colors shadow-sm"
                         >
                           {r.title}
                         </button>
@@ -120,7 +120,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                     variant="none"
                     size="none"
                     onClick={() => setClaiming(false)}
-                    className="w-full py-2 text-xs text-stone-500 hover:text-stone-700 font-medium transition-colors"
+                    className="w-full py-2 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium transition-colors"
                   >
                     Cancel
                   </Button>
@@ -139,7 +139,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-stone-400 font-medium bg-stone-50 px-6 py-3 rounded-full border border-stone-100">
+          <div className="flex items-center gap-2 text-stone-400 font-medium bg-stone-50 dark:bg-stone-950 px-6 py-3 rounded-full border border-stone-100 dark:border-stone-800">
             <Lock className="w-4 h-4" /> Locked
           </div>
         )}
@@ -153,7 +153,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="p-6 overflow-y-auto bg-white flex-1 custom-scrollbar"
+        className="p-6 overflow-y-auto bg-white dark:bg-stone-900 flex-1 custom-scrollbar"
       >
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-y-8 gap-x-4">
           {allBadges.map(badge => {
@@ -170,12 +170,12 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
                 <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center border-2 transition-all ${
                   isUnlocked 
                     ? 'border-amber-400 text-amber-500 bg-amber-50 group-hover:bg-amber-100 group-hover:border-amber-500 shadow-sm' 
-                    : 'border-stone-100 text-stone-300 bg-stone-50 group-hover:bg-stone-100'
+                    : 'border-stone-100 dark:border-stone-800 text-stone-300 bg-stone-50 dark:bg-stone-950 group-hover:bg-stone-100 dark:group-hover:bg-stone-800'
                 }`}>
                   <Icon strokeWidth={isUnlocked ? 2.5 : 2} className="w-8 h-8 sm:w-10 sm:h-10" />
                 </div>
                 <span className={`text-xs sm:text-sm font-bold text-center leading-tight px-1 ${
-                  isUnlocked ? 'text-stone-800' : 'text-stone-400'
+                  isUnlocked ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400'
                 }`}>
                   {badge.name}
                 </span>
@@ -193,23 +193,23 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({ child, rewards, onClos
       onClose={onClose}
       maxWidth="3xl"
       padding="none"
-      className="h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden bg-white"
+      className="h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden bg-white dark:bg-stone-900"
     >
       {/* Header */}
-      <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 bg-white/80 backdrop-blur-md z-10">
+      <div className="px-6 py-5 flex justify-between items-center shrink-0 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900/80 backdrop-blur-md z-10">
         <Typography variant="h2">Badges</Typography>
         <Button 
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="rounded-full bg-stone-100 hover:bg-stone-200"
+          className="rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200"
         >
           <X className="w-5 h-5" />
         </Button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-white dark:bg-stone-900">
         {loading ? (
           <div className="flex justify-center items-center h-full">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent" />

@@ -20,7 +20,7 @@ export const CoinBadge = ({
 
   // Determine colors based on disabled state
   const colorClasses = disabled 
-    ? 'bg-stone-50 text-stone-400 border-stone-200'
+    ? 'bg-stone-50 dark:bg-stone-950 text-stone-400 border-stone-200 dark:border-stone-700'
     : 'bg-orange-50 text-orange-500 border-orange-300';
 
   return (

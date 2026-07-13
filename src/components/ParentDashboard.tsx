@@ -35,7 +35,7 @@ import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/c
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
 import { EXTENDED_TASKS, EXTENDED_REWARDS } from '../data/extendedTemplates';
-import { ThemeId, THEME_PRESETS } from '../utils/theme';
+
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { generateShortCode } from '../utils/security';
@@ -78,7 +78,6 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
-  theme: ThemeId;
   onParentCompleteTask: (taskId: string, childId: string) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
@@ -122,7 +121,6 @@ export default function ParentDashboard({
   onRestoreReward,
   onExitParentMode,
   parentEmail,
-  theme,
   onParentCompleteTask,
   parentProfile,
   linkedParents = [],
@@ -266,7 +264,27 @@ export default function ParentDashboard({
 
 
   const approvedCompletionsCount = completions.filter(c => c.status === 'approved').length;
-  const styles = THEME_PRESETS[theme];
+  const styles = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
+    bodyBg: 'bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50',
+    cardBg: 'bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-stone-900 dark:text-stone-50',
+    headerBg: 'bg-white/90 dark:bg-stone-900/90 border-b border-stone-100 dark:border-stone-800 backdrop-blur-md',
+    btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
+    btnSecondary: 'bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-[0.98] transition-all rounded-2xl',
+    tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
+    inputBg: 'bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-50 placeholder-[#A8A29E] focus:bg-white dark:focus:bg-stone-900 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
+    accentGlow: 'bg-orange-100/40 opacity-50',
+    tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',
+    gridStyle: 'scrolling-grid opacity-[0.03]',
+    innerCard: 'bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl',
+    titleGradient: 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent',
+    divider: 'border-stone-100 dark:border-stone-800',
+    overlayCrt: 'hidden',
+    titleColor: 'text-[#1C1917] dark:text-stone-50',
+    borderStyle: 'border-stone-100 dark:border-stone-800'
+};
 
   // Auto-sync selected child IDs in forms when children list updates
   React.useEffect(() => {
@@ -652,11 +670,11 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 text-dark flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
 
 
       <header
-        className="fixed top-0 left-0 right-0 bg-white border-b border-stone-100 z-50 pb-2 sm:pb-3"
+        className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -664,23 +682,23 @@ export default function ParentDashboard({
             <Tooltip content="Settings" position="bottom">
               <Button variant="none" size="none"
                 onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-white border-[3px] border-stone-100 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-95 text-stone-600"
+                className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-white dark:bg-stone-900 border-[3px] border-stone-100 dark:border-stone-800 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-200 dark:hover:border-stone-700 transition-all active:scale-95 text-stone-600 dark:text-stone-300"
               >
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
             </Tooltip>
             <div className="flex flex-col justify-center">
-              <Typography variant="h1" className="text-2xl sm:text-4xl font-black text-stone-900 leading-none tracking-tight font-display">
+              <Typography variant="h1" className="text-2xl sm:text-4xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display">
                 {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
               </Typography>
-              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 font-semibold mt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5">
                 {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="flex items-center bg-stone-50/80 backdrop-blur-sm border border-stone-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+            <div className="flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
               {onLogout && (
                 <Tooltip content="Sign Out" position="bottom">
                   <Button variant="none" size="none"
@@ -688,7 +706,7 @@ export default function ParentDashboard({
                       playSound.click();
                       onLogout();
                     }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                     id="global-logout-btn"
                   >
                     <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -701,7 +719,7 @@ export default function ParentDashboard({
                     playSound.click();
                     onExitParentMode();
                   }}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors shrink-0"
+                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                   id="exit-to-child-view-btn"
                 >
                   <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -732,7 +750,7 @@ export default function ParentDashboard({
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
                   className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
                     ? 'bg-stone-900 text-white shadow-md shadow-md scale-[1.02]'
-                    : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900 hover:scale-[1.01]'
+                    : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
                     }`}
                 >
                   <span className="flex items-center gap-3">
@@ -773,7 +791,7 @@ export default function ParentDashboard({
                 {/* Smart Reminders */}
                 {childrenToNudge.length > 0 && (
                   <div className="space-y-3">
-                    <Typography variant="h2" className="text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
+                    <Typography variant="h2" className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-50 flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-indigo-500" />
                       Smart Reminders
                     </Typography>
@@ -785,8 +803,8 @@ export default function ParentDashboard({
                             <div className="flex items-center gap-3">
                               <ChildAvatar iconName={child.avatar_url} className="w-10 h-10" />
                               <div>
-                                <Typography variant="h3" className="font-bold text-stone-900 text-sm">{child.name} hasn't logged any activity today.</Typography>
-                                <Typography variant="body" className="text-stone-500 text-xs mt-1">Send a friendly reminder to complete their tasks!</Typography>
+                                <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{child.name} hasn't logged any activity today.</Typography>
+                                <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-xs mt-1">Send a friendly reminder to complete their tasks!</Typography>
                               </div>
                             </div>
                             <Button
@@ -814,7 +832,7 @@ export default function ParentDashboard({
 
                 {/* Needs Approval */}
                 <div className="space-y-3">
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
                     Needs Approval
                   </Typography>
 
@@ -830,7 +848,7 @@ export default function ParentDashboard({
                           points: task?.points || 0,
                           type: 'task' as const,
                           status: 'pending' as const,
-                          iconOverride: <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-10 h-10 !rounded-xl bg-stone-50" />,
+                          iconOverride: <ChildAvatar iconName={child?.avatar_url || 'Smile'} className="w-10 h-10 !rounded-xl bg-stone-50 dark:bg-stone-950" />,
                           actions: (
                             <>
                               <Button variant="secondary" size="sm" onClick={() => handleReject(appr.id)}>Deny</Button>
@@ -886,7 +904,7 @@ export default function ParentDashboard({
 
                 {/* Recent Activity */}
                 <div className="space-y-3">
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
                     Recent Activity
                   </Typography>
                   <ActivityFeed
@@ -906,7 +924,7 @@ export default function ParentDashboard({
                         title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
                         points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
                         date: new Date(r.redeemed_at),
-                        iconOverride: <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-stone-50 text-stone-500">🍦</div>
+                        iconOverride: <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400">🍦</div>
                       }))
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10)}
                     emptyMessage="No recent activity yet."
@@ -941,13 +959,13 @@ export default function ParentDashboard({
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {isLoading ? (
                     <>
-                      <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
+                      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
                         <div className="flex justify-between items-start mb-4">
                           <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
-                        <div className="p-3 rounded-2xl bg-stone-100 flex items-center gap-3 mb-5">
+                        <div className="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center gap-3 mb-5">
                           <div className="w-10 h-10 bg-stone-200 rounded-full"></div>
                           <div className="flex-1 space-y-2">
                             <div className="w-20 h-2 bg-stone-200 rounded"></div>
@@ -962,13 +980,13 @@ export default function ParentDashboard({
                           <div className="flex-1 h-10 bg-stone-200 rounded-xl"></div>
                         </div>
                       </div>
-                      <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse hidden md:block">
+                      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse hidden md:block">
                         <div className="flex justify-between items-start mb-4">
                           <div className="w-20 h-20 rounded-2xl bg-stone-200"></div>
                           <div className="w-16 h-16 rounded-full bg-stone-200"></div>
                         </div>
                         <div className="w-48 h-8 bg-stone-200 rounded-lg mb-5"></div>
-                        <div className="p-3 rounded-2xl bg-stone-100 flex items-center gap-3 mb-5">
+                        <div className="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center gap-3 mb-5">
                           <div className="w-10 h-10 bg-stone-200 rounded-full"></div>
                           <div className="flex-1 space-y-2">
                             <div className="w-20 h-2 bg-stone-200 rounded"></div>
@@ -995,25 +1013,25 @@ export default function ParentDashboard({
                       >
                         {/* Section Header */}
                         <div className="px-4 mb-2">
-                          <span className="text-[13px] text-stone-500 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
+                          <span className="text-[13px] text-stone-500 dark:text-stone-400 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
                         </div>
 
                         {/* Merged Child Card */}
-                        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-stone-200 font-sans">
+                        <div className="bg-white dark:bg-stone-900 rounded-3xl shadow-sm overflow-hidden border border-stone-200 dark:border-stone-700 font-sans">
 
                           {/* 1. Header: Avatar & Info */}
                           <div className="flex items-center p-4 gap-4">
-                            <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 shrink-0" />
+                            <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 dark:bg-stone-800 shrink-0" />
                             <div className="flex flex-col flex-1">
-                              <span className="text-[18px] font-bold text-black tracking-tight">{child.name}</span>
-                              <span className="text-[14px] text-stone-500 font-medium mt-0.5">Gold Coins: {child.points}</span>
+                              <span className="text-[18px] font-bold text-black dark:text-white tracking-tight">{child.name}</span>
+                              <span className="text-[14px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Gold Coins: {child.points}</span>
                             </div>
                           </div>
 
-                          <div className="h-[1px] bg-stone-100"></div>
+                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
 
                           {/* 2. Companion & Progress (Side-by-side on sm screens) */}
-                          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50/30">
+                          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50 dark:bg-stone-950/30">
                             <div className="flex-1 p-4 flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 shadow-inner">
                                 {stage.image_url ? (
@@ -1023,15 +1041,15 @@ export default function ParentDashboard({
                                 )}
                               </div>
                               <div className="flex flex-col flex-1">
-                                <span className="text-[14px] font-bold text-black tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
-                                <span className="text-[12px] text-stone-500 font-medium mt-0.5">Level {stage.stage_number} Active</span>
+                                <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
+                                <span className="text-[12px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Level {stage.stage_number} Active</span>
                               </div>
                             </div>
 
                             <div className="flex-1 p-4 flex flex-col justify-center">
                               <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-[14px] font-bold text-black tracking-tight">Level {child.level}</span>
-                                <span className="text-[12px] font-semibold text-stone-500">
+                                <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Level {child.level}</span>
+                                <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">
                                   {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
                                 </span>
                               </div>
@@ -1043,13 +1061,13 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="h-[1px] bg-stone-100"></div>
+                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
 
                           {/* 3. Child App Login */}
-                          <div className="flex items-center justify-between p-4 bg-white">
+                          <div className="flex items-center justify-between p-4 bg-white dark:bg-stone-900">
                             <div className="flex flex-col">
-                              <span className="text-[14px] font-bold text-black tracking-tight">Child App Login</span>
-                              <span className="text-[12px] text-stone-500 font-medium mt-0.5">Code for their device</span>
+                              <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Child App Login</span>
+                              <span className="text-[12px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Code for their device</span>
                             </div>
                             <div className="flex items-center gap-2">
                               {child.child_share_token?.startsWith('LINKED_') ? (
@@ -1060,14 +1078,14 @@ export default function ParentDashboard({
                                 </>
                               ) : child.child_share_token ? (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[15px] font-sans tracking-widest text-stone-500 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200">{child.child_share_token}</span>
+                                  <span className="text-[15px] font-sans tracking-widest text-stone-500 dark:text-stone-400 bg-stone-50 dark:bg-stone-950 px-2 py-0.5 rounded-lg border border-stone-200 dark:border-stone-700">{child.child_share_token}</span>
                                   <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
                                   <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
                                     playSound.click();
                                     onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
                                   }} title="Manually mark as linked">Link</Button>
                                   {onUnlinkChild && (
-                                    <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 transition-colors" onClick={() => {
+                                    <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 dark:hover:text-stone-300 transition-colors" onClick={() => {
                                       playSound.click();
                                       onUnlinkChild(child.id);
                                     }}>Reset</Button>
@@ -1082,15 +1100,15 @@ export default function ParentDashboard({
                             </div>
                           </div>
 
-                          <div className="h-[1px] bg-stone-100"></div>
+                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
 
                           {/* 4. Actions Group */}
-                          <div className="bg-stone-50/20">
+                          <div className="bg-stone-50 dark:bg-stone-950/20">
                             {onUpdateChildStats && (
                               <>
-                                <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
-                                  <div className="w-7 h-7 rounded bg-stone-100 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600" /></div>
-                                  <span className="text-[15px] text-black tracking-tight flex-1">Quick Adjustments</span>
+                                <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
+                                  <div className="w-7 h-7 rounded bg-stone-100 dark:bg-stone-800 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600 dark:text-stone-300" /></div>
+                                  <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Quick Adjustments</span>
                                   <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform -rotate-90`} />
                                 </button>
                                 <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
@@ -1098,28 +1116,28 @@ export default function ParentDashboard({
                             )}
                             {onDeductCoins && (
                               <>
-                                <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
                                   <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><MinusCircle className="w-4 h-4 text-rose-500" /></div>
-                                  <span className="text-[15px] text-black tracking-tight flex-1">Take Coins</span>
+                                  <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Take Coins</span>
                                 </button>
                                 <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
                               </>
                             )}
-                            <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                            <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
                               <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mr-3"><Edit2 className="w-4 h-4 text-blue-500" /></div>
-                              <span className="text-[15px] text-black tracking-tight flex-1">Edit Profile</span>
+                              <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Edit Profile</span>
                             </button>
                             <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
 
-                            <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                            <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
                               <div className="w-7 h-7 rounded bg-indigo-100 flex items-center justify-center mr-3"><ScrollText className="w-4 h-4 text-indigo-500" /></div>
-                              <span className="text-[15px] text-black tracking-tight flex-1">History</span>
+                              <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">History</span>
                             </button>
 
                             {onDeleteChild && (
                               <>
                                 <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                                <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 transition-colors active:bg-stone-100">
+                                <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
                                   <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><Trash2 className="w-4 h-4 text-rose-500" /></div>
                                   <span className="text-[15px] text-rose-500 tracking-tight flex-1">Delete Child</span>
                                 </button>
@@ -1159,11 +1177,11 @@ export default function ParentDashboard({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 dark:border-stone-700 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
                         id="add-task-box"
                       >
 
-                        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                        <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
                           {editingTaskId ? <span><Edit2 className="inline-block mr-2" /> Edit Quest Template</span> : <span><Sparkles className="inline-block mr-2" /> Create Quest Template</span>}
                         </Typography>
                         <form onSubmit={handleTaskSubmit} className="space-y-4">
@@ -1225,13 +1243,13 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 dark:border-stone-700 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
-                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                         }`}
                     >
                       TEMPLATES
@@ -1239,8 +1257,8 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
-                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                         }`}
                     >
                       ASSIGNED
@@ -1248,8 +1266,8 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('routines')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
-                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                         }`}
                     >
                       ROUTINES
@@ -1274,7 +1292,7 @@ export default function ParentDashboard({
                         variant="secondary"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
                         onClick={handleImportDefaultTasks}
-                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500 dark:text-stone-400" />}
                       >
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
@@ -1294,17 +1312,17 @@ export default function ParentDashboard({
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
                   <div className="mt-2 sm:mt-4">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Tasks Directory</Typography>
-                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Tasks Directory</Typography>
+                    <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {tasks.filter(t => t.is_template || t.child_id === 'directory').map((task, index, arr) => {
                         const instances = tasks.filter(t => t.template_id === task.id);
                         const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                         const isExpanded = expandedTaskTemplateId === task.id;
 
                         return (
-                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100 dark:border-stone-800' : ''}`}>
                             <div 
-                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isExpanded ? 'bg-stone-50 dark:bg-stone-950' : ''}`}
                               onClick={() => {
                                 playSound.click();
                                 setExpandedTaskTemplateId(isExpanded ? null : task.id);
@@ -1315,9 +1333,9 @@ export default function ParentDashboard({
                                   <FaStar />
                                 </div>
                                 <div className="min-w-0 pr-2">
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
                                       {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
@@ -1338,11 +1356,11 @@ export default function ParentDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden bg-stone-50/50"
+                                  className="overflow-hidden bg-stone-50 dark:bg-stone-950/50"
                                 >
-                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                  <div className="p-4 border-t border-stone-100 dark:border-stone-800 space-y-4">
                                     <div className="flex flex-col gap-2">
-                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest pl-1">
                                         Assign to:
                                       </Typography>
                                       <div className="flex flex-col gap-2">
@@ -1360,15 +1378,15 @@ export default function ParentDashboard({
                                                   : [...currentAssignedIds, child.id];
                                                 onAssignTask(task, newAssignedIds);
                                               }}
-                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-200 dark:hover:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer transition-colors shadow-sm"
                                             >
                                               <div className="flex items-center gap-3">
-                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
-                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700" />
+                                                <span className="font-bold text-stone-700 dark:text-stone-200 text-sm">{child.name}</span>
                                               </div>
                                               
                                               <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
                                               </div>
                                             </div>
                                           );
@@ -1376,8 +1394,8 @@ export default function ParentDashboard({
                                       </div>
                                     </div>
 
-                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
-                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditTask(task); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 transition-all flex items-center gap-2">
                                         <Edit2 className="w-4 h-4" /> Edit
                                       </Button>
                                       <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteTask(task.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
@@ -1398,15 +1416,15 @@ export default function ParentDashboard({
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
                   <div className="mt-4">
-                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {tasks.filter(t => (!t.is_template && t.child_id !== 'directory') && children.some(c => c.id === t.child_id)).map((task, index, arr) => {
                         const assignedName = children.find(c => c.id === task.child_id)?.name;
                         const isExpanded = expandedActiveTaskId === task.id;
 
                         return (
-                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                          <div key={task.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100 dark:border-stone-800' : ''}`}>
                             <div 
-                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isExpanded ? 'bg-stone-50 dark:bg-stone-950' : ''}`}
                               onClick={() => {
                                 playSound.click();
                                 setExpandedActiveTaskId(isExpanded ? null : task.id);
@@ -1417,9 +1435,9 @@ export default function ParentDashboard({
                                   <FaStar />
                                 </div>
                                 <div className="min-w-0 pr-2">
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{task.title}</Typography>
+                                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
@@ -1438,9 +1456,9 @@ export default function ParentDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden bg-stone-50/50"
+                                  className="overflow-hidden bg-stone-50 dark:bg-stone-950/50"
                                 >
-                                  <div className="p-4 border-t border-stone-100 flex flex-wrap justify-end items-center gap-2">
+                                  <div className="p-4 border-t border-stone-100 dark:border-stone-800 flex flex-wrap justify-end items-center gap-2">
                                     <Button
                                       variant="none" size="none"
                                       onClick={(e) => {
@@ -1470,17 +1488,17 @@ export default function ParentDashboard({
 
                 {taskSubTab === 'routines' && (
                   <div className="mt-4 space-y-6" id="routines-view">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Manage Routines</Typography>
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Manage Routines</Typography>
 
                     {/* Select Child */}
-                    <div className="flex w-fit max-w-full gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm overflow-x-auto custom-scrollbar">
+                    <div className="flex w-fit max-w-full gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm overflow-x-auto custom-scrollbar">
                       {children.map(child => (
                         <button
                           key={child.id}
                           onClick={() => setRoutineChildId(child.id)}
                           className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest whitespace-nowrap transition-all duration-300 ${routineChildId === child.id
-                            ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                            : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                            ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                            : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                             }`}
                         >
                           {child.name}
@@ -1517,10 +1535,10 @@ export default function ParentDashboard({
                           return (
                             <div className="space-y-6">
                               {/* Holiday Mode Toggle */}
-                              <div className="bg-white border dashboard-card border-stone-100 rounded-2xl p-4 flex items-center justify-between">
+                              <div className="bg-white dark:bg-stone-900 border dashboard-card border-stone-100 dark:border-stone-800 rounded-2xl p-4 flex items-center justify-between">
                                 <div>
-                                  <Typography variant="h3" className="font-bold text-stone-900">Holiday Mode</Typography>
-                                  <Typography variant="body" className="text-sm text-stone-500">When active, the Holiday routine will override the Weekday routine.</Typography>
+                                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50">Holiday Mode</Typography>
+                                  <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400">When active, the Holiday routine will override the Weekday routine.</Typography>
                                 </div>
                                 <label className="flex items-center cursor-pointer relative">
                                   <Input 
@@ -1530,7 +1548,7 @@ export default function ParentDashboard({
                                     onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked })}
                                   />
                                   <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${child.holiday_mode ? 'bg-cyan-500' : 'bg-stone-200'}`}>
-                                    <div className={`w-5 h-5 bg-white rounded-full shadow-md absolute top-0.5 transition-transform duration-300 ease-in-out ${child.holiday_mode ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                                    <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full shadow-md absolute top-0.5 transition-transform duration-300 ease-in-out ${child.holiday_mode ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
                                   </div>
                                 </label>
                               </div>
@@ -1540,17 +1558,17 @@ export default function ParentDashboard({
                                 const totalTasks = (routine.morningTaskIds?.length || 0) + (routine.afternoonTaskIds?.length || 0) + (routine.eveningTaskIds?.length || 0);
                                 
                                 return (
-                                <div key={routine.id} className="bg-white border dashboard-card border-stone-100 rounded-2xl flex flex-col transition-all duration-300 overflow-hidden">
+                                <div key={routine.id} className="bg-white dark:bg-stone-900 border dashboard-card border-stone-100 dark:border-stone-800 rounded-2xl flex flex-col transition-all duration-300 overflow-hidden">
                                   {/* Routine Summary Header */}
                                   <div 
-                                    className={`flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'border-b border-stone-100 bg-stone-50/50' : ''}`}
+                                    className={`flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isExpanded ? 'border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-950/50' : ''}`}
                                     onClick={() => setExpandedRoutineId(isExpanded ? null : routine.id)}
                                   >
                                     <div className="flex items-center gap-3">
                                       <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                                       <div>
                                         <div className="flex items-center gap-2">
-                                          <Typography variant="h3" className="font-bold text-stone-900">{routine.name}</Typography>
+                                          <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50">{routine.name}</Typography>
                                         </div>
                                         <Typography variant="body" className="text-xs text-stone-400 mt-0.5">{totalTasks} tasks assigned</Typography>
                                       </div>
@@ -1608,7 +1626,7 @@ export default function ParentDashboard({
                                               </DndContext>
 
                                               {periodTasks.length === 0 && (
-                                                <div className="text-xs text-stone-400 italic py-3 text-center border-2 border-dashed border-stone-200 rounded-xl">No tasks assigned for {period.label}.</div>
+                                                <div className="text-xs text-stone-400 italic py-3 text-center border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">No tasks assigned for {period.label}.</div>
                                               )}
 
                                               <div className="mt-2 relative">
@@ -1629,7 +1647,7 @@ export default function ParentDashboard({
                                                 >
                                                   <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
                                                   {tasks.filter(t => t.child_id === child.id && !t.is_template && !periodTasks.includes(t.id)).map(t => (
-                                                    <option key={t.id} value={t.id} className="text-stone-700">{t.title}</option>
+                                                    <option key={t.id} value={t.id} className="text-stone-700 dark:text-stone-200">{t.title}</option>
                                                   ))}
                                                 </Select>
                                                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
@@ -1681,11 +1699,11 @@ export default function ParentDashboard({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        className={`w-full max-w-lg p-5 sm:p-6 rounded-3xl ${styles.cardBg} border border-stone-200 dark:border-stone-700 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
                         id="add-reward-box"
                       >
 
-                        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                        <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
                           {editingRewardId ? <span><Edit2 className="inline-block mr-2" /> Edit Reward Token</span> : <span><Gift className="inline-block mr-2" /> Define Reward Token</span>}
                         </Typography>
                         <form onSubmit={handleRewardSubmit} className="space-y-4">
@@ -1744,7 +1762,7 @@ export default function ParentDashboard({
                                 checked={rewardBadgeEligible}
                                 onChange={(e) => setRewardBadgeEligible(e.target.checked)}
                               />
-                              <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600`}>
+                              <label htmlFor="rewardBadgeEligible" className={`text-xs font-sans text-stone-600 dark:text-stone-300`}>
                                 Eligible as a free badge reward (Small Reward)
                               </label>
                             </div>
@@ -1778,13 +1796,13 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 pb-3 mb-4 sm:pb-4 sm:mb-6">
-                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 dark:border-stone-700 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                  <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
-                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                         }`}
                     >
                       TEMPLATES
@@ -1792,8 +1810,8 @@ export default function ParentDashboard({
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
-                        ? ('bg-white text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                        : ('text-stone-500 hover:text-stone-800 hover:bg-white/60 border border-transparent')
+                        ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                        : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                         }`}
                     >
                       ASSIGNED
@@ -1818,7 +1836,7 @@ export default function ParentDashboard({
                         variant="secondary"
                         className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
                         onClick={handleImportDefaultRewards}
-                        leftIcon={<Plus className="w-4 h-4 text-stone-500" />}
+                        leftIcon={<Plus className="w-4 h-4 text-stone-500 dark:text-stone-400" />}
                       >
                         IMPORT <span className="hidden sm:inline">DEFAULTS</span>
                       </Button>
@@ -1838,17 +1856,17 @@ export default function ParentDashboard({
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
                   <div className="mt-2 sm:mt-4">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">Rewards Directory</Typography>
-                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Rewards Directory</Typography>
+                    <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {rewards.filter(r => r.is_template || r.child_id === 'directory').map((reward, index, arr) => {
                         const instances = rewards.filter(r => r.template_id === reward.id);
                         const assignedChildren = instances.map(i => children.find(c => c.id === i.child_id)?.name).filter(Boolean);
                         const isExpanded = expandedRewardTemplateId === reward.id;
 
                         return (
-                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100 dark:border-stone-800' : ''}`}>
                             <div 
-                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isExpanded ? 'bg-stone-50 dark:bg-stone-950' : ''}`}
                               onClick={() => {
                                 playSound.click();
                                 setExpandedRewardTemplateId(isExpanded ? null : reward.id);
@@ -1859,9 +1877,9 @@ export default function ParentDashboard({
                                   <FaGift />
                                 </div>
                                 <div className="min-w-0 pr-2">
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">{reward.title}</Typography>
+                                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{reward.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
                                       {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
@@ -1882,11 +1900,11 @@ export default function ParentDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden bg-stone-50/50"
+                                  className="overflow-hidden bg-stone-50 dark:bg-stone-950/50"
                                 >
-                                  <div className="p-4 border-t border-stone-100 space-y-4">
+                                  <div className="p-4 border-t border-stone-100 dark:border-stone-800 space-y-4">
                                     <div className="flex flex-col gap-2">
-                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 uppercase tracking-widest pl-1">
+                                      <Typography variant="body" className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest pl-1">
                                         Assign to:
                                       </Typography>
                                       <div className="flex flex-col gap-2">
@@ -1904,15 +1922,15 @@ export default function ParentDashboard({
                                                   : [...currentAssignedIds, child.id];
                                                 onAssignReward(reward, newAssignedIds);
                                               }}
-                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 bg-white hover:border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors shadow-sm"
+                                              className="flex items-center justify-between p-3 rounded-xl border border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-200 dark:hover:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer transition-colors shadow-sm"
                                             >
                                               <div className="flex items-center gap-3">
-                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 border border-stone-200" />
-                                                <span className="font-bold text-stone-700 text-sm">{child.name}</span>
+                                                <ChildAvatar iconName={child.avatar_url} className="w-8 h-8 bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700" />
+                                                <span className="font-bold text-stone-700 dark:text-stone-200 text-sm">{child.name}</span>
                                               </div>
                                               
                                               <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 ${isAssigned ? 'bg-cyan-500' : 'bg-stone-200'}`}>
-                                                <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isAssigned ? 'translate-x-5' : 'translate-x-0'}`} />
                                               </div>
                                             </div>
                                           );
@@ -1920,8 +1938,8 @@ export default function ParentDashboard({
                                       </div>
                                     </div>
 
-                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
-                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditReward(reward); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 bg-stone-100 hover:bg-stone-200 transition-all flex items-center gap-2">
+                                    <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+                                      <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditReward(reward); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 transition-all flex items-center gap-2">
                                         <Edit2 className="w-4 h-4" /> Edit
                                       </Button>
                                       <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
@@ -1944,15 +1962,15 @@ export default function ParentDashboard({
                 {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
                   <div className="mt-4">
-                    <div className="flex flex-col gap-0 border border-stone-200 bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {rewards.filter(r => (!r.is_template && r.child_id !== 'directory') && children.some(c => c.id === r.child_id)).map((reward, index, arr) => {
                         const assignedName = children.find(c => c.id === reward.child_id)?.name;
                         const isExpanded = expandedActiveRewardId === reward.id;
 
                         return (
-                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                          <div key={reward.id} className={`flex flex-col transition-all duration-300 ${index !== arr.length - 1 ? 'border-b border-stone-100 dark:border-stone-800' : ''}`}>
                             <div 
-                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 transition-colors ${isExpanded ? 'bg-stone-50' : ''}`}
+                              className={`flex justify-between items-center p-3 sm:p-4 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isExpanded ? 'bg-stone-50 dark:bg-stone-950' : ''}`}
                               onClick={() => {
                                 playSound.click();
                                 setExpandedActiveRewardId(isExpanded ? null : reward.id);
@@ -1963,7 +1981,7 @@ export default function ParentDashboard({
                                   <FaGift />
                                 </div>
                                 <div className="min-w-0 pr-2">
-                                  <Typography variant="h3" className="font-bold text-stone-900 text-sm truncate">
+                                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">
                                     {reward.title}
                                     {!reward.is_available && reward.limit_type === 'one_time' && (
                                       <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 font-bold uppercase align-middle">
@@ -1972,7 +1990,7 @@ export default function ParentDashboard({
                                     )}
                                   </Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">Limit: {(reward.limit_type || 'unlimited').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
@@ -1980,7 +1998,7 @@ export default function ParentDashboard({
                               </div>
                               
                               <div className="flex items-center gap-3 shrink-0">
-                                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-emerald-400 flex items-center justify-center bg-white text-emerald-500 font-black text-sm">
+                                <span className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] border-emerald-400 flex items-center justify-center bg-white dark:bg-stone-900 text-emerald-500 font-black text-sm">
                                   {reward.cost_points}
                                 </span>
                                 <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1993,9 +2011,9 @@ export default function ParentDashboard({
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden bg-stone-50/50"
+                                  className="overflow-hidden bg-stone-50 dark:bg-stone-950/50"
                                 >
-                                  <div className="p-4 border-t border-stone-100 flex justify-end gap-2">
+                                  <div className="p-4 border-t border-stone-100 dark:border-stone-800 flex justify-end gap-2">
                                     <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
                                       <MinusCircle className="w-4 h-4" /> Unassign
                                     </Button>
@@ -2012,8 +2030,8 @@ export default function ParentDashboard({
 
                 {/* History Log */}
                 <div className="pt-8 border-t border-stone-800">
-                  <Typography variant="h3" className={`font-bold font-sans text-sm text-stone-900 uppercase pb-4`}>
-                    <ScrollText className="inline-block mr-2 text-stone-500" /> Dispensation History Log
+                  <Typography variant="h3" className={`font-bold font-sans text-sm text-stone-900 dark:text-stone-50 uppercase pb-4`}>
+                    <ScrollText className="inline-block mr-2 text-stone-500 dark:text-stone-400" /> Dispensation History Log
                   </Typography>
                   <div className="space-y-3">
                     {redemptions.filter(r => r.status === 'delivered').length === 0 ? (
@@ -2028,9 +2046,9 @@ export default function ParentDashboard({
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
 
                           return (
-                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 border-stone-200 ${styles.textColor}`}>
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.textColor}`}>
                               <div>
-                                <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900'}>{reward?.title}</strong>
+                                <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900 dark:text-stone-50'}>{reward?.title}</strong>
                                 <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
                                   {new Date(delivery.redeemed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                 </Typography>
@@ -2066,7 +2084,7 @@ export default function ParentDashboard({
                 exit={{ opacity: 0, y: -10 }}
               >
                 <SettingsTab
-                  theme={theme}
+                  
                   parentProfile={parentProfile}
                   linkedParents={linkedParents}
                   onResetData={onResetData}
@@ -2086,7 +2104,7 @@ export default function ParentDashboard({
                 exit={{ opacity: 0, y: -10 }}
               >
                 <TargetsTab
-                  theme={theme}
+                  
                   parentProfile={parentProfile}
                   onUpdateParentProfile={onUpdateParentProfile}
                 />
@@ -2117,9 +2135,9 @@ export default function ParentDashboard({
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="w-full max-w-lg p-6 bg-white rounded-3xl border border-stone-100 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
+                className="w-full max-w-lg p-6 bg-white dark:bg-stone-900 rounded-3xl border border-stone-100 dark:border-stone-800 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar"
               >
-                <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">
+                <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
                   {editingChildId ? <span><Edit2 className="inline-block mr-2" /> Edit Child</span> : <span><UserPlus className="inline-block mr-2" /> Register Family Child</span>}
                 </Typography>
                 <form onSubmit={handleChildSubmit} className="space-y-4">
@@ -2168,7 +2186,7 @@ export default function ParentDashboard({
                           key={url}
                           type="button"
                           onClick={() => setNewChildAvatar(url)}
-                          className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
+                          className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${newChildAvatar === url ? ('border-amber-500 bg-amber-50 text-amber-500') : 'border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-500/50 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
                         >
                           <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                         </Button>
@@ -2223,49 +2241,49 @@ export default function ParentDashboard({
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                  className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
                 >
-                  <div className="w-12 h-12 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-2xl flex items-center justify-center mb-4">
                     <Settings className="w-6 h-6" />
                   </div>
-                  <Typography variant="h2" className="text-xl font-black text-stone-900 mb-6">
+                  <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-6">
                     Quick Adjustments
                   </Typography>
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[15px] font-semibold text-black tracking-tight">Gold ({child.points})</span>
+                      <span className="text-[15px] font-semibold text-black dark:text-white tracking-tight">Gold ({child.points})</span>
                       <div className="flex gap-1">
                         <Button variant="none" size="none" onClick={() => {
                           playSound.click();
                           setResetConfirmation({ childId: child.id, childName: child.name, type: 'Gold' });
-                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: Math.max(0, child.points - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { points: child.points + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
                       </div>
                     </div>
                     <div className="h-[0.5px] bg-stone-200"></div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[15px] font-semibold text-black tracking-tight">Lifetime Gold ({child.lifetime_points || 0})</span>
+                      <span className="text-[15px] font-semibold text-black dark:text-white tracking-tight">Lifetime Gold ({child.lifetime_points || 0})</span>
                       <div className="flex gap-1.5 justify-end">
                         <Button variant="none" size="none" onClick={() => {
                           playSound.click();
                           setResetConfirmation({ childId: child.id, childName: child.name, type: 'Lifetime Gold' });
-                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Lifetime Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Lifetime Gold to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: Math.max(0, (child.lifetime_points || 0) - 10), manual_deductions: (child.manual_deductions || 0) + 1 }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Remove 10 Gold"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { lifetime_points: (child.lifetime_points || 0) + 10 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Add 10 Gold"><PlusCircle className="w-4 h-4" /></Button>
                       </div>
                     </div>
                     <div className="h-[0.5px] bg-stone-200"></div>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[15px] font-semibold text-black tracking-tight">Level ({child.level})</span>
+                      <span className="text-[15px] font-semibold text-black dark:text-white tracking-tight">Level ({child.level})</span>
                       <div className="flex gap-1">
                         <Button variant="none" size="none" onClick={() => {
                           playSound.click();
                           setResetConfirmation({ childId: child.id, childName: child.name, type: 'Level' });
-                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white" title="Reset Level to 1"><RotateCcw className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white" title="Level Down"><ArrowDownCircle className="w-4 h-4" /></Button>
-                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Level to 1"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Level Down"><ArrowDownCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </div>
@@ -2295,15 +2313,15 @@ export default function ParentDashboard({
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
               >
                 <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
                   <MinusCircle className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
                   Take Coins
                 </Typography>
-                <Typography variant="body" className="text-sm text-stone-500 mb-6">
+                <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mb-6">
                   Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
                 </Typography>
 
@@ -2392,15 +2410,15 @@ export default function ParentDashboard({
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
               >
                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
                   <RotateCcw className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
                   Reset {resetConfirmation.type}?
                 </Typography>
-                <Typography variant="body" className="text-sm text-stone-500 mb-6">
+                <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mb-6">
                   Are you sure you want to reset <span className="font-bold text-rose-500">{resetConfirmation.childName}'s</span> {resetConfirmation.type} to {resetConfirmation.type === 'Level' ? '1' : '0'}? This action cannot be undone.
                 </Typography>
                 <div className="flex gap-3">
@@ -2444,15 +2462,15 @@ export default function ParentDashboard({
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 p-6 overflow-hidden"
+                className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
               >
                 <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-4">
                   <Trash2 className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
                   Delete {deleteChildConfirmation.childName}?
                 </Typography>
-                <Typography variant="body" className="text-sm text-stone-500 mb-2">
+                <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mb-2">
                   This will permanently delete <span className="font-bold text-rose-500">{deleteChildConfirmation.childName}</span> and all their tasks, rewards, and progress.
                 </Typography>
                 <Typography variant="body" className="text-xs font-bold text-rose-500 mb-6">
@@ -2512,23 +2530,23 @@ export default function ParentDashboard({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-4">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
                   {generatedTasksToPreview ? "Select Quests to Keep" : "Generate Quests"}
                 </Typography>
 
                 {!generatedTasksToPreview ? (
                   <>
-                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random quests you want to add to your template directory.</Typography>
+                    <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">Select an age range and how many random quests you want to add to your template directory.</Typography>
 
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Age Range</label>
                         <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
@@ -2540,13 +2558,13 @@ export default function ParentDashboard({
                         </Select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
                             <Button variant="none" size="none"
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-indigo-500 text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200'}`}
                             >
                               {num}
                             </Button>
@@ -2566,12 +2584,12 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <Typography variant="body" className="text-stone-500 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</Typography>
+                    <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</Typography>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedTasksToPreview.map(task => {
                         const isEditing = editingPreviewId === task.id;
                         return (
-                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
+                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <Input
@@ -2610,8 +2628,8 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 text-sm">{task.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500">{task.points} pts • {task.recurrence}</Typography>
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{task.title}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{task.points} pts • {task.recurrence}</Typography>
                                   </div>
                                 </label>
                                 <Button variant="none" size="none"
@@ -2663,23 +2681,23 @@ export default function ParentDashboard({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-100 overflow-hidden"
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 overflow-hidden"
             >
               <div className="p-6">
                 <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
                   <Gift className="w-6 h-6" />
                 </div>
-                <Typography variant="h2" className="text-xl font-black text-stone-900 mb-2">
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
                   {generatedRewardsToPreview ? "Select Prizes to Keep" : "Generate Prizes"}
                 </Typography>
 
                 {!generatedRewardsToPreview ? (
                   <>
-                    <Typography variant="body" className="text-stone-500 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</Typography>
+                    <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">Select an age range and how many random prizes you want to add to your directory.</Typography>
 
                     <div className="space-y-4 mb-8">
                       <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Age Range</label>
+                        <label className="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Age Range</label>
                         <Select
                           value={generateAgeRange}
                           onChange={(e) => setGenerateAgeRange(e.target.value as any)}
@@ -2691,13 +2709,13 @@ export default function ParentDashboard({
                         </Select>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">How many?</label>
+                        <label className="block text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">How many?</label>
                         <div className="flex gap-2">
                           {[3, 5, 10, 20].map(num => (
                             <Button variant="none" size="none"
                               key={num}
                               onClick={() => setGenerateCount(num)}
-                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${generateCount === num ? 'bg-amber-500 text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200'}`}
                             >
                               {num}
                             </Button>
@@ -2717,12 +2735,12 @@ export default function ParentDashboard({
                   </>
                 ) : (
                   <>
-                    <Typography variant="body" className="text-stone-500 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</Typography>
+                    <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</Typography>
                     <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
                       {generatedRewardsToPreview.map(reward => {
                         const isEditing = editingPreviewId === reward.id;
                         return (
-                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 bg-stone-50'} transition-colors`}>
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
                             {isEditing ? (
                               <div className="flex flex-col gap-2 w-full">
                                 <Input
@@ -2761,8 +2779,8 @@ export default function ParentDashboard({
                                     }}
                                   />
                                   <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 text-sm">{reward.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500">{reward.cost_points} pts • {reward.limit_type}</Typography>
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{reward.title}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{reward.cost_points} pts • {reward.limit_type}</Typography>
                                   </div>
                                 </label>
                                 <Button variant="none" size="none"
@@ -2816,14 +2834,14 @@ export default function ParentDashboard({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`relative w-full max-w-md ${styles.cardBg} rounded-3xl shadow-2xl border border-stone-200 p-6 flex flex-col overflow-hidden max-h-[90vh]`}
+              className={`relative w-full max-w-md ${styles.cardBg} rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-700 p-6 flex flex-col overflow-hidden max-h-[90vh]`}
             >
               <Button variant="none" size="none"
                 onClick={() => {
                   if (historyDetailView) setHistoryDetailView(null);
                   else setShowHistoryForChild(null);
                 }}
-                className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 p-2 rounded-full transition-colors"
+                className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 p-2 rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -2843,24 +2861,24 @@ export default function ParentDashboard({
                   return (
                     <div className="flex flex-col h-full max-h-[80vh]">
                       <div className="flex items-center gap-3 mb-6">
-                        <Button variant="none" size="none" onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 transition-colors">
+                        <Button variant="none" size="none" onClick={() => setHistoryDetailView(null)} className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 rounded-full text-stone-600 dark:text-stone-300 transition-colors">
                           <RotateCcw className="w-5 h-5" />
                         </Button>
-                        <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 font-display uppercase tracking-wide">
+                        <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 font-display uppercase tracking-wide">
                           {historyDetailView === 'tasks' ? 'Tasks Completed' : historyDetailView === 'deductions' ? 'Deductions' : 'Rewards Claimed'}
                         </Typography>
                       </div>
 
                       <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
                         {historyDetailView === 'tasks' && (
-                          approvedTasks.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No tasks completed yet.</Typography> :
+                          approvedTasks.length === 0 ? <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-center py-8">No tasks completed yet.</Typography> :
                             [...approvedTasks].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).map(c => {
                               const task = tasks.find(t => t.id === c.task_id);
                               return (
-                                <div key={c.id} className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
+                                <div key={c.id} className="p-3 bg-white dark:bg-stone-900/40 rounded-xl border border-stone-200 dark:border-stone-700/50 backdrop-blur-md flex justify-between items-center">
                                   <div>
-                                    <Typography variant="body" className="font-bold text-stone-800">{task?.title || 'Unknown Task'}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500">{new Date(c.completed_at).toLocaleDateString()}</Typography>
+                                    <Typography variant="body" className="font-bold text-stone-800 dark:text-stone-100">{task?.title || 'Unknown Task'}</Typography>
+                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{new Date(c.completed_at).toLocaleDateString()}</Typography>
                                   </div>
                                   <span className="text-emerald-600 font-bold">+{c.points_awarded}</span>
                                 </div>
@@ -2879,26 +2897,26 @@ export default function ParentDashboard({
                               </div>
                             ))}
                             {(child.manual_deductions || 0) > 0 && (
-                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
+                              <div className="p-3 bg-white dark:bg-stone-900/40 rounded-xl border border-stone-200 dark:border-stone-700/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
-                                  <Typography variant="body" className="font-bold text-stone-800">Quick Adjustments (Manual)</Typography>
+                                  <Typography variant="body" className="font-bold text-stone-800 dark:text-stone-100">Quick Adjustments (Manual)</Typography>
                                 </div>
-                                <span className="text-stone-600 font-bold">{child.manual_deductions} times</span>
+                                <span className="text-stone-600 dark:text-stone-300 font-bold">{child.manual_deductions} times</span>
                               </div>
                             )}
                             {(child.gold_pot_total_leaked || 0) > 0 && (
-                              <div className="p-3 bg-white/40 rounded-xl border border-stone-200/50 backdrop-blur-md flex justify-between items-center">
+                              <div className="p-3 bg-white dark:bg-stone-900/40 rounded-xl border border-stone-200 dark:border-stone-700/50 backdrop-blur-md flex justify-between items-center">
                                 <div>
-                                  <Typography variant="body" className="font-bold text-stone-800">Gold Pot Leaks</Typography>
+                                  <Typography variant="body" className="font-bold text-stone-800 dark:text-stone-100">Gold Pot Leaks</Typography>
                                 </div>
-                                <span className="text-stone-600 font-bold">{child.gold_pot_total_leaked} coins</span>
+                                <span className="text-stone-600 dark:text-stone-300 font-bold">{child.gold_pot_total_leaked} coins</span>
                               </div>
                             )}
-                            {coinsTakenOff === 0 && <Typography variant="body" className="text-stone-500 text-center py-8">No deductions recorded.</Typography>}
+                            {coinsTakenOff === 0 && <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-center py-8">No deductions recorded.</Typography>}
                           </>
                         )}
                         {historyDetailView === 'rewards' && (
-                          claimedRewardsList.length === 0 ? <Typography variant="body" className="text-stone-500 text-center py-8">No rewards claimed yet.</Typography> :
+                          claimedRewardsList.length === 0 ? <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-center py-8">No rewards claimed yet.</Typography> :
                             [...claimedRewardsList].sort((a, b) => new Date(b.redeemed_at).getTime() - new Date(a.redeemed_at).getTime()).map(r => {
                               const reward = rewards.find(rw => rw.id === r.reward_id);
                               return (
@@ -2919,7 +2937,7 @@ export default function ParentDashboard({
 
                 return (
                   <div>
-                    <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
+                    <Typography variant="h2" className="text-xl sm:text-2xl font-black text-center text-stone-900 dark:text-stone-50 mb-6 font-display uppercase tracking-wide flex items-center justify-center gap-2">
                       <ScrollText className="w-6 h-6 text-indigo-500" />
                       {child.name}'s History
                     </Typography>
@@ -2927,95 +2945,95 @@ export default function ParentDashboard({
                     <div className="space-y-6">
                       
                       {/* Coins Section */}
-                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                      <div className="bg-white dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
                         <div className="flex justify-between items-center p-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-amber-500/10 rounded-xl">
                               <Coins className="w-5 h-5 text-amber-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Lifetime Earned</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Lifetime Earned</span>
                           </div>
                           <span className="font-black text-amber-600 flex items-center gap-1">{child.lifetime_points || 0}</span>
                         </div>
                         <div className="flex justify-between items-center p-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-stone-500/10 rounded-xl">
-                              <Calendar className="w-5 h-5 text-stone-500" />
+                              <Calendar className="w-5 h-5 text-stone-500 dark:text-stone-400" />
                             </div>
-                            <span className="font-bold text-stone-700">Weekly Coins</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Weekly Coins</span>
                           </div>
-                          <span className="font-black text-stone-800">{child.weekly_points || 0}</span>
+                          <span className="font-black text-stone-800 dark:text-stone-100">{child.weekly_points || 0}</span>
                         </div>
                         <div className="flex justify-between items-center p-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-stone-500/10 rounded-xl">
-                              <Calendar className="w-5 h-5 text-stone-500" />
+                              <Calendar className="w-5 h-5 text-stone-500 dark:text-stone-400" />
                             </div>
-                            <span className="font-bold text-stone-700">Monthly Coins</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Monthly Coins</span>
                           </div>
-                          <span className="font-black text-stone-800">{child.monthly_points || 0}</span>
+                          <span className="font-black text-stone-800 dark:text-stone-100">{child.monthly_points || 0}</span>
                         </div>
                       </div>
 
                       {/* Interactive Logs Section */}
-                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
-                        <button onClick={() => setHistoryDetailView('tasks')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                      <div className="bg-white dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                        <button onClick={() => setHistoryDetailView('tasks')} className="w-full flex justify-between items-center p-4 hover:bg-white dark:hover:bg-stone-800/30 transition-colors text-left active:bg-white dark:active:bg-stone-900/50">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-emerald-500/10 rounded-xl">
                               <CheckSquare className="w-5 h-5 text-emerald-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Tasks Completed</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Tasks Completed</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-stone-800">{tasksDone}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{tasksDone}</span>
                             <ChevronRight className="w-4 h-4 text-stone-400" />
                           </div>
                         </button>
-                        <button onClick={() => setHistoryDetailView('rewards')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                        <button onClick={() => setHistoryDetailView('rewards')} className="w-full flex justify-between items-center p-4 hover:bg-white dark:hover:bg-stone-800/30 transition-colors text-left active:bg-white dark:active:bg-stone-900/50">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-500/10 rounded-xl">
                               <Gift className="w-5 h-5 text-indigo-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Rewards Claimed</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Rewards Claimed</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-stone-800">{rewardsClaimed}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{rewardsClaimed}</span>
                             <ChevronRight className="w-4 h-4 text-stone-400" />
                           </div>
                         </button>
-                        <button onClick={() => setHistoryDetailView('deductions')} className="w-full flex justify-between items-center p-4 hover:bg-white/30 transition-colors text-left active:bg-white/50">
+                        <button onClick={() => setHistoryDetailView('deductions')} className="w-full flex justify-between items-center p-4 hover:bg-white dark:hover:bg-stone-800/30 transition-colors text-left active:bg-white dark:active:bg-stone-900/50">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-rose-500/10 rounded-xl">
                               <MinusCircle className="w-5 h-5 text-rose-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Deductions</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Deductions</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-stone-800">{coinsTakenOff}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{coinsTakenOff}</span>
                             <ChevronRight className="w-4 h-4 text-stone-400" />
                           </div>
                         </button>
                       </div>
 
                       {/* Progression Section */}
-                      <div className="bg-white/40 border border-stone-200/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
+                      <div className="bg-white dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 backdrop-blur-md rounded-3xl overflow-hidden divide-y divide-stone-200/50">
                         <div className="flex justify-between items-center p-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-cyan-500/10 rounded-xl">
                               <Star className="w-5 h-5 text-cyan-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Current Level</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Current Level</span>
                           </div>
-                          <span className="font-black text-stone-800">Level {child.level}</span>
+                          <span className="font-black text-stone-800 dark:text-stone-100">Level {child.level}</span>
                         </div>
                         <div className="flex justify-between items-center p-4">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-orange-500/10 rounded-xl">
                               <Flame className="w-5 h-5 text-orange-600" />
                             </div>
-                            <span className="font-bold text-stone-700">Current Streak</span>
+                            <span className="font-bold text-stone-700 dark:text-stone-200">Current Streak</span>
                           </div>
-                          <span className="font-black text-stone-800">{child.streak_days} Days</span>
+                          <span className="font-black text-stone-800 dark:text-stone-100">{child.streak_days} Days</span>
                         </div>
                         {child.savings_unlocked && (
                           <div className="flex justify-between items-center p-4">
@@ -3023,7 +3041,7 @@ export default function ParentDashboard({
                               <div className="p-2 bg-emerald-500/10 rounded-xl">
                                 <PiggyBank className="w-5 h-5 text-emerald-600" />
                               </div>
-                              <span className="font-bold text-stone-700">Savings Account</span>
+                              <span className="font-bold text-stone-700 dark:text-stone-200">Savings Account</span>
                             </div>
                             <span className="font-black text-emerald-600 flex items-center gap-1">{child.savings_pot || 0}</span>
                           </div>
@@ -3034,9 +3052,9 @@ export default function ParentDashboard({
                               <div className="p-2 bg-blue-500/10 rounded-xl">
                                 <Utensils className="w-5 h-5 text-blue-600" />
                               </div>
-                              <span className="font-bold text-stone-700">Pet Fed Total</span>
+                              <span className="font-bold text-stone-700 dark:text-stone-200">Pet Fed Total</span>
                             </div>
-                            <span className="font-black text-stone-800">{child.pet_fed_total || 0} times</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{child.pet_fed_total || 0} times</span>
                           </div>
                         )}
                         {child.gifting_unlocked && (
@@ -3045,9 +3063,9 @@ export default function ParentDashboard({
                               <div className="p-2 bg-pink-500/10 rounded-xl">
                                 <Heart className="w-5 h-5 text-pink-600" />
                               </div>
-                              <span className="font-bold text-stone-700">Gifts Sent</span>
+                              <span className="font-bold text-stone-700 dark:text-stone-200">Gifts Sent</span>
                             </div>
-                            <span className="font-black text-stone-800">{child.gifts_sent_total || 0}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>

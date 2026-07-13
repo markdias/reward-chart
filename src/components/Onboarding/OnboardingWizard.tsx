@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from '../ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { ThemeId, THEME_PRESETS } from '../../utils/theme';
+
 
 import LandingPage from '../LandingPage'; // Using this as the welcome step
 import StepRoleSelection from './StepRoleSelection';
@@ -15,7 +15,6 @@ import { Child, Task, Reward } from '../../types';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../../data/premadeTemplates';
 
 interface OnboardingWizardProps {
-  theme: ThemeId;
   onComplete: (data: OnboardingData) => void;
   onLoginInstead: () => void;
   onJoinCodeInstead?: () => void;
@@ -37,7 +36,6 @@ export interface OnboardingData {
 export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'account';
 
 export default function OnboardingWizard({ 
-  theme, 
   onComplete, 
   onLoginInstead, 
   onJoinCodeInstead,
@@ -118,7 +116,7 @@ export default function OnboardingWizard({
         return (
           <LandingPage 
             onEnterArcade={handleWelcomeComplete} 
-            theme={theme} 
+             
             onSignIn={onLoginInstead}
             onJoinCode={onJoinCodeInstead}
           />
@@ -126,7 +124,7 @@ export default function OnboardingWizard({
       case 'role':
         return (
           <StepRoleSelection
-            theme={theme}
+            
             onSelectRole={handleRoleSelectionComplete}
             onJoinCode={onJoinCodeInstead}
             onBack={() => setStep('welcome')}
@@ -135,7 +133,7 @@ export default function OnboardingWizard({
       case 'children':
         return (
           <StepChildrenSetup
-            theme={theme}
+            
             onNext={handleChildrenSetupComplete}
             onBack={() => setStep('welcome')}
             initialChildren={onboardingData.children}
@@ -145,7 +143,7 @@ export default function OnboardingWizard({
       case 'handover':
         return (
           <StepHandover 
-            theme={theme}
+            
             onNext={handleHandoverComplete}
             onBack={() => setStep('children')}
           />
@@ -153,7 +151,7 @@ export default function OnboardingWizard({
       case 'parentDetails':
         return (
           <StepParentDetails
-            theme={theme}
+            
             onNext={handleParentDetailsComplete}
             onBack={() => startedBy === 'child' ? setStep('handover') : setStep('children')}
             initialName={onboardingData.parentName}
@@ -163,7 +161,7 @@ export default function OnboardingWizard({
       case 'tasks':
         return (
           <StepTasksSelection
-            theme={theme}
+            
             onNext={handleTasksSelectionComplete}
             onBack={() => setStep('parentDetails')}
             initialSelectedTaskIds={onboardingData.selectedTasks.map(t => t.id)}
@@ -172,7 +170,7 @@ export default function OnboardingWizard({
       case 'rewards':
         return (
           <StepRewardsSelection
-            theme={theme}
+            
             onNext={handleRewardsSelectionComplete}
             onBack={() => setStep('tasks')}
             initialSelectedRewardIds={onboardingData.selectedRewards.map(r => r.id)}
@@ -181,7 +179,7 @@ export default function OnboardingWizard({
       case 'account':
         return (
           <StepCreateAccount
-            theme={theme}
+            
             name={onboardingData.parentName}
             familyName={onboardingData.familyName}
             onComplete={handleAccountComplete}
@@ -202,7 +200,7 @@ export default function OnboardingWizard({
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
-        className="w-full h-full min-h-screen bg-white text-stone-900"
+        className="w-full h-full min-h-screen bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50"
       >
         {renderStep()}
       </motion.div>

@@ -3,7 +3,7 @@ import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Lock, ShieldAlert, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { playSound } from '../utils/sound';
-import { ThemeId } from '../utils/theme';
+
 import { getSupabaseClient } from '../utils/supabase';
 import { hashPassword } from '../utils/security';
 import { Button } from './ui/Button';
@@ -16,7 +16,6 @@ interface LockScreenProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
-  theme: ThemeId;
 }
 
 export default function LockScreen({
@@ -101,11 +100,11 @@ export default function LockScreen({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-xl relative"
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 shadow-xl relative"
         id="lock-panel"
       >
         {/* Vault Frame Header */}
-        <div className="bg-stone-50/50 p-6 text-center border-b border-stone-100 relative">
+        <div className="bg-stone-50 dark:bg-stone-950/50 p-6 text-center border-b border-stone-100 dark:border-stone-800 relative">
           <Button 
             variant="ghost"
             size="icon"
@@ -116,11 +115,11 @@ export default function LockScreen({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 shadow-sm">
-            <Lock className="w-6 h-6 text-stone-900" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 shadow-sm">
+            <Lock className="w-6 h-6 text-stone-900 dark:text-stone-50" />
           </div>
           <Typography variant="h2">{title}</Typography>
-          <p className="text-xs mt-1.5 text-stone-500">{subtitle}</p>
+          <p className="text-xs mt-1.5 text-stone-500 dark:text-stone-400">{subtitle}</p>
         </div>
 
         {/* Password Entry Form */}
@@ -135,6 +134,7 @@ export default function LockScreen({
               }}
               placeholder="Enter Password"
               autoFocus
+              inputClassName="!pr-12"
             />
             <Button
               variant="none"
@@ -144,7 +144,7 @@ export default function LockScreen({
                 playSound.click();
                 setShowPassword(!showPassword);
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 cursor-pointer transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-1 cursor-pointer transition-colors"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </Button>

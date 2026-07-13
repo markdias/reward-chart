@@ -53,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         variantClasses = 'bg-primary text-white';
         break;
       case 'secondary':
-        variantClasses = 'bg-surface border-2 border-neutral-border text-dark';
+        variantClasses = 'bg-surface border-2 border-neutral-border text-dark dark:text-white';
         break;
       case 'danger':
         variantClasses = 'bg-danger text-white';
@@ -65,16 +65,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         variantClasses = 'bg-accent-purple text-white';
         break;
       case 'warning':
-        variantClasses = 'bg-warning text-dark';
+        variantClasses = 'bg-warning text-dark dark:text-white';
         break;
       case 'dark':
         variantClasses = 'bg-dark text-white';
         break;
       case 'ghost':
-        variantClasses = 'bg-transparent hover:bg-stone-100 text-stone-600';
+        variantClasses = 'bg-transparent hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300';
         break;
       case 'outline':
-        variantClasses = 'bg-transparent hover:bg-stone-50 border-2 border-stone-300 text-stone-600';
+        variantClasses = 'bg-transparent hover:bg-stone-50 dark:hover:bg-stone-800 border-2 border-stone-300 text-stone-600 dark:text-stone-300';
         break;
       case 'none':
         variantClasses = '';

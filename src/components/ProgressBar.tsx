@@ -14,7 +14,7 @@ export const LinearProgressBar = ({
   const boundedProgress = Math.min(100, Math.max(0, progress || 0));
   
   return (
-    <div className={`w-full ${heightClass} rounded-full overflow-hidden border border-stone-200 bg-stone-100 ${className}`}>
+    <div className={`w-full ${heightClass} rounded-full overflow-hidden border border-stone-200 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 ${className}`}>
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${boundedProgress}%` }}

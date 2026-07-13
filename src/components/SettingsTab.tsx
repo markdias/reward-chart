@@ -3,7 +3,6 @@ import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell } from 'lucide-react';
 import OneSignal from 'react-onesignal';
-import { ThemeId } from '../utils/theme';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
@@ -14,9 +13,9 @@ import { Button } from './ui/Button';
 import { SettingsBlock, SettingsRow, SettingsSelectRow, SettingsActionRow } from './ui/SettingsList';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsTabProps {
-  theme: ThemeId;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onResetData?: (keepTemplates: boolean) => void;
@@ -26,7 +25,7 @@ interface SettingsTabProps {
   onRequireAccount?: () => void;
 }
 
-export default function SettingsTab({ theme, parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
+export default function SettingsTab({ parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
@@ -38,7 +37,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [themeSelection, setThemeSelection] = useState('modern');
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -49,7 +48,6 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
       setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 500);
       setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
-      setThemeSelection(parentProfile.dashboard_style || 'modern');
     }
   }, [parentProfile]);
   
@@ -66,19 +64,10 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
-  const getThemeClasses = () => {
-    return {
-      card: 'card-panel',
-      text: 'text-stone-900',
-      textMuted: 'text-stone-500',
-      input: 'input-field',
-      primaryBtn: 'btn-warning w-full !px-4 !py-3',
-      dangerBtn: 'btn-danger w-full !px-4 !py-3',
-      dangerBtnOutline: 'btn-secondary w-full !px-4 !py-3 !text-rose-600 border-rose-300',
-    };
+  const c = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
   };
-
-  const c = getThemeClasses();
   
   const baseUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
   const shareLink = parentProfile?.share_token 
@@ -105,8 +94,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           level_up_gold_reward: levelUpGoldReward,
           weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
-          monthly_reward_points: monthlyRewardPoints,
-          dashboard_style: themeSelection
+          monthly_reward_points: monthlyRewardPoints
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -237,13 +225,13 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       
-      <div className="flex border-b-2 border-stone-100 mb-8 w-full">
+      <div className="flex border-b-2 border-stone-100 dark:border-stone-800 mb-8 w-full">
         <button
           onClick={() => { playSound.click(); setActiveSubTab('profile'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'profile' 
               ? 'border-sky-500 text-sky-600'
-              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
             }`}
         >
           PROFILE
@@ -253,7 +241,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'security' 
               ? 'border-sky-500 text-sky-600'
-              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
             }`}
         >
           SECURITY
@@ -263,7 +251,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'sharing' 
               ? 'border-sky-500 text-sky-600'
-              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
             }`}
         >
           SHARING
@@ -273,7 +261,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'danger' 
               ? 'border-rose-500 text-rose-600'
-              : 'border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
             }`}
         >
           DANGER
@@ -281,8 +269,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       </div>
 
       {activeSubTab === 'profile' && (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 bg-stone-100 shadow-sm relative overflow-hidden">
-        <h3 className="text-xl font-black font-display text-stone-800 mb-6 text-center tracking-tight">Profile Tab</h3>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         {!parentProfile?.user_id && (
           <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div>
@@ -309,7 +296,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </div>
         </div>
         
-        <div className="max-w-md mx-auto">
+        <div className="max-w-4xl mx-auto">
           <SettingsBlock title="Personal Information">
             <SettingsRow label="Account Email" value={parentProfile?.email || ''} type="text" onChange={() => {}} />
             <SettingsRow label="Your Name" value={name} type="text" onChange={(v) => setName(v)} />
@@ -317,15 +304,14 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
           </SettingsBlock>
 
           <SettingsBlock title="Appearance">
-            <SettingsSelectRow 
-              label="Theme" 
-              value={themeSelection}
-              onChange={(v) => setThemeSelection(v)}
-              options={[
-                { label: 'System', value: 'system' },
-                { label: 'Light', value: 'light' },
-                { label: 'Dark', value: 'dark' },
-              ]}
+            <SettingsRow 
+              label="Dark Mode" 
+              isToggle 
+              toggleActive={isDarkMode}
+              onToggle={() => {
+                playSound.click();
+                toggleDarkMode();
+              }}
               isLast 
             />
           </SettingsBlock>
@@ -373,76 +359,78 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             />
           </SettingsBlock>
 
-          <Button 
-            variant="primary"
-            fullWidth
-            onClick={handleSaveProfile}
-            isLoading={isSavingProfile}
-            leftIcon={<Save className="w-5 h-5" />}
-            className="mt-8 py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
-          >
-            SAVE PROFILE
-          </Button>
-          {profileMsg && <p className={`text-sm font-bold mt-4 text-center ${profileMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{profileMsg}</p>}
+          <div className="max-w-md mx-auto">
+            <Button 
+              variant="primary"
+              fullWidth
+              onClick={handleSaveProfile}
+              isLoading={isSavingProfile}
+              leftIcon={<Save className="w-5 h-5" />}
+              className="mt-8 py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
+            >
+              SAVE PROFILE
+            </Button>
+            {profileMsg && <p className={`text-sm font-bold mt-4 text-center ${profileMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{profileMsg}</p>}
+          </div>
         </div>
       </motion.div>
       )}
 
       {activeSubTab === 'security' && (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 bg-stone-100 shadow-sm relative overflow-hidden">
-        <h3 className="text-xl font-black font-display text-stone-800 mb-6 text-center tracking-tight">Security Tab</h3>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         
-        <div className="max-w-md mx-auto">
+        <div className="max-w-4xl mx-auto">
           <SettingsBlock title="Account Password">
-            <div className="p-4 border-b border-stone-100 bg-white">
-              <label className="block text-sm font-bold text-stone-700 mb-2">Current Password</label>
+            <div className="p-4 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900">
+              <label className="block text-sm font-bold text-stone-700 dark:text-stone-200 mb-2">Current Password</label>
               <Input 
                 type="password" 
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
               />
             </div>
-            <div className="p-4 border-b border-stone-100 bg-white">
-              <label className="block text-sm font-bold text-stone-700 mb-2">New Password</label>
+            <div className="p-4 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900">
+              <label className="block text-sm font-bold text-stone-700 dark:text-stone-200 mb-2">New Password</label>
               <PasswordInput
                 value={newPassword}
                 onChange={setNewPassword}
                 placeholder="Leave blank to keep current"
                 showPolicy={newPassword.length > 0}
-                className="bg-white border-2 border-stone-200 rounded-xl"
+                className="bg-white dark:bg-stone-900 border-2 border-stone-200 dark:border-stone-700 rounded-xl"
               />
             </div>
-            <div className="p-4 bg-white">
-              <label className="block text-sm font-bold text-stone-700 mb-2">Confirm New Password</label>
+            <div className="p-4 bg-white dark:bg-stone-900">
+              <label className="block text-sm font-bold text-stone-700 dark:text-stone-200 mb-2">Confirm New Password</label>
               <PasswordInput
                 value={confirmPassword}
                 onChange={setConfirmPassword}
                 placeholder="Confirm new password"
-                className="bg-white border-2 border-stone-200 rounded-xl"
+                className="bg-white dark:bg-stone-900 border-2 border-stone-200 dark:border-stone-700 rounded-xl"
               />
             </div>
           </SettingsBlock>
           
-          <Button 
-            variant="primary"
-            fullWidth
-            onClick={handleSaveSecurity}
-            isLoading={isSavingSecurity}
-            leftIcon={<KeyRound className="w-5 h-5" />}
-            className="mt-8 py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
-          >
-            UPDATE PASSWORD
-          </Button>
-          {securityMsg && <p className={`text-sm font-bold mt-4 text-center ${securityMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{securityMsg}</p>}
+          <div className="max-w-md mx-auto">
+            <Button 
+              variant="primary"
+              fullWidth
+              onClick={handleSaveSecurity}
+              isLoading={isSavingSecurity}
+              leftIcon={<KeyRound className="w-5 h-5" />}
+              className="mt-8 py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
+            >
+              UPDATE PASSWORD
+            </Button>
+            {securityMsg && <p className={`text-sm font-bold mt-4 text-center ${securityMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{securityMsg}</p>}
+          </div>
         </div>
       </motion.div>
       )}
 
       {activeSubTab === 'sharing' && (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 bg-stone-100 shadow-sm relative overflow-hidden">
-        <h3 className="text-xl font-black font-display text-stone-800 mb-6 text-center tracking-tight">Sharing Tab</h3>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         
-        <div className="max-w-md mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           {!parentProfile?.user_id ? (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-3">
               <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>
@@ -452,7 +440,7 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-stone-500 font-semibold text-center mb-6">
+            <p className="text-sm text-stone-500 dark:text-stone-400 font-semibold text-center mb-6">
               Copy this link and send it to your partner. They will be joined to your family dashboard.
             </p>
           )}
@@ -487,13 +475,13 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
               {linkedParents.map((parent, idx) => {
                 const isMe = parent.user_id === parentProfile?.user_id;
                 return (
-                  <div key={parent.user_id} className={`p-4 flex items-center justify-between bg-white ${idx !== linkedParents.length - 1 ? 'border-b border-stone-100' : ''}`}>
+                  <div key={parent.user_id} className={`p-4 flex items-center justify-between bg-white dark:bg-stone-900 ${idx !== linkedParents.length - 1 ? 'border-b border-stone-100 dark:border-stone-800' : ''}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isMe ? 'bg-indigo-500 text-white' : 'bg-stone-200 text-stone-500'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isMe ? 'bg-indigo-500 text-white' : 'bg-stone-200 text-stone-500 dark:text-stone-400'}`}>
                         {parent.name?.charAt(0) || '?'}
                       </div>
                       <div>
-                        <div className="font-bold text-sm text-stone-800">
+                        <div className="font-bold text-sm text-stone-800 dark:text-stone-100">
                           {parent.name || 'Unnamed'}
                           {isMe && <span className="ml-2 text-[10px] font-sans bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full">YOU</span>}
                         </div>
@@ -515,19 +503,20 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       )}
 
       {activeSubTab === 'danger' && (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 bg-stone-100 shadow-sm relative overflow-hidden">
-        <h3 className="text-xl font-black font-display text-rose-600 mb-6 text-center tracking-tight">Danger Zone</h3>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         
-        <div className="max-w-md mx-auto space-y-4">
+        <div className="max-w-4xl mx-auto space-y-4">
           <SettingsBlock>
             <SettingsActionRow 
               label="Reset All Data" 
+              description="Erase all current progress and history."
               icon={RefreshCw} 
               onClick={() => setShowResetConfirm(true)} 
               danger
             />
             <SettingsActionRow 
               label="Run Setup Wizard" 
+              description="Erase all data and restart the onboarding process."
               icon={RefreshCw} 
               onClick={() => {
                 if (confirm("Are you sure you want to run setup again? All current data will be erased and you will be logged out.")) {
@@ -539,12 +528,14 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
             />
             <SettingsActionRow 
               label="Clean Duplicates" 
+              description="Remove duplicate or orphaned data entries."
               icon={RefreshCw} 
               onClick={() => onCleanDuplicates()} 
               danger
             />
             <SettingsActionRow 
               label="Delete Account" 
+              description="Permanently delete your account and all data."
               icon={Trash2} 
               onClick={() => setShowDeleteConfirm(true)} 
               isLast
@@ -558,8 +549,8 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-rose-200`}>
-            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
+          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white dark:bg-stone-900 border-rose-200`}>
+            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900 dark:text-stone-50`}>
               Are you sure?
             </h3>
             <p className={`text-center text-sm font-sans mb-6 ${c.textMuted}`}>
@@ -603,13 +594,13 @@ export default function SettingsTab({ theme, parentProfile, linkedParents = [], 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white border-red-500`}>
+          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white dark:bg-stone-900 border-red-500`}>
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-red-500/20 text-red-500 rounded-full animate-pulse">
                 <AlertTriangle className="w-10 h-10" />
               </div>
             </div>
-            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900`}>
+            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900 dark:text-stone-50`}>
               Delete Account
             </h3>
             <p className={`text-center text-sm font-sans mb-6 text-rose-600`}>

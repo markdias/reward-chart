@@ -3,7 +3,7 @@ import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 'lucide-react';
 import { playSound } from '../utils/sound';
-import { ThemeId, THEME_PRESETS } from '../utils/theme';
+
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
 import { hashPassword, evaluatePassword } from '../utils/security';
 import { PasswordInput } from './PasswordInput';
@@ -16,7 +16,6 @@ interface AuthPageProps {
   onSignUpReal?: (email: string, name: string, familyName: string) => void;
   onBackToLanding: () => void;
   onCreateNewAccount: () => void;
-  theme: ThemeId;
 }
 
 export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, onCreateNewAccount, theme }: AuthPageProps) {
@@ -323,14 +322,34 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
     }
   };
 
-  const styles = THEME_PRESETS[theme];
+  const styles = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
+    bodyBg: 'bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50',
+    cardBg: 'bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-stone-900 dark:text-stone-50',
+    headerBg: 'bg-white/90 dark:bg-stone-900/90 border-b border-stone-100 dark:border-stone-800 backdrop-blur-md',
+    btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
+    btnSecondary: 'bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-[0.98] transition-all rounded-2xl',
+    tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
+    inputBg: 'bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-50 placeholder-[#A8A29E] focus:bg-white dark:focus:bg-stone-900 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
+    accentGlow: 'bg-orange-100/40 opacity-50',
+    tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',
+    gridStyle: 'scrolling-grid opacity-[0.03]',
+    innerCard: 'bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl',
+    titleGradient: 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent',
+    divider: 'border-stone-100 dark:border-stone-800',
+    overlayCrt: 'hidden',
+    titleColor: 'text-[#1C1917] dark:text-stone-50',
+    borderStyle: 'border-stone-100 dark:border-stone-800'
+};
 
   return (
-    <div className="min-h-screen bg-white text-stone-900 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="auth-page-root">
+    <div className="min-h-screen bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 flex flex-col font-sans relative overflow-x-hidden transition-colors duration-300" id="auth-page-root">
       
       {/* Clean White Header */}
       <header 
-        className="w-full bg-white border-b border-stone-100 relative z-40"
+        className="w-full bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 relative z-40"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-3 sm:pb-4 pt-3 flex items-center justify-between">
@@ -350,7 +369,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
               <Typography variant="h2" as="span">
                 REWARD CHART
               </Typography>
-              <span className="block text-[9px] sm:text-[10px] text-stone-600 font-sans tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
+              <span className="block text-[9px] sm:text-[10px] text-stone-600 dark:text-stone-300 font-sans tracking-widest font-extrabold uppercase mt-0.5">MAKE CHORES FUN</span>
             </div>
           </div>
         </div>
@@ -389,7 +408,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                     <span>{realAuthError}</span>
                   </div>
                 )}
-                <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-2 flex flex-col gap-3">
+                <div className="bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 rounded-xl p-3 mb-2 flex flex-col gap-3">
                   <Input
                     type="text"
                     placeholder="Enter 6-character code"
@@ -491,8 +510,8 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
 
         {/* Small security compliance tags */}
         <div className="grid grid-cols-2 gap-3 mt-6">
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-warning/15 text-dark">
+          <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-warning/15 text-dark dark:text-white">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -500,7 +519,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
               <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-sm flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex items-center gap-3">
             <div className="p-2 rounded-xl bg-danger/10 text-danger">
               <Heart className="w-4 h-4" />
             </div>
@@ -518,9 +537,9 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
           © 2026 Reward Chart. Transforming family responsibilities into magical digital conquests.
         </div>
         <div className="flex gap-4 font-sans text-[10px]">
-          <a href="#privacy" className="hover:text-stone-900 transition-colors">PRIVACY POLICY</a>
-          <a href="#terms" className="hover:text-stone-900 transition-colors">TERMS OF SERVICE</a>
-          <span className="text-stone-600">|</span>
+          <a href="#privacy" className="hover:text-stone-900 dark:hover:text-stone-50 transition-colors">PRIVACY POLICY</a>
+          <a href="#terms" className="hover:text-stone-900 dark:hover:text-stone-50 transition-colors">TERMS OF SERVICE</a>
+          <span className="text-stone-600 dark:text-stone-300">|</span>
           <span className="text-emerald-600 font-bold animate-pulse uppercase">● SYSTEM ONLINE (v{pkg.version})</span>
         </div>
       </footer>

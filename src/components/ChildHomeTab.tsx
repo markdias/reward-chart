@@ -118,7 +118,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden hover:-translate-y-1"
           style={{ background: 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
             <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
               <div className="transform scale-[1.25] sm:scale-[1.35]">
                 <CoinBadge points={pointsEarnedToday} />
@@ -126,8 +126,8 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
             
             <div>
-              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Daily Goal</Typography>
-              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 dark:text-stone-50 mb-1">Daily Goal</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans">
                 {pointsRemaining > 0 
                   ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
                   : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
@@ -143,13 +143,13 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full"
           style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
             <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
             </div>
             <div>
-              <Typography variant="h2" className="text-lg font-bold text-stone-900 mb-1">Check Badges</Typography>
-              <p className="text-[10px] sm:text-xs text-stone-500 font-sans">
+              <Typography variant="h2" className="text-lg font-bold text-stone-900 dark:text-stone-50 mb-1">Check Badges</Typography>
+              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans">
                 View your achievements and claim your free rewards!
               </p>
             </div>
@@ -207,7 +207,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
           return (
             <div className="mb-6 space-y-2">
-              <Typography variant="h4" className="text-sm font-bold text-stone-600 px-1 uppercase tracking-widest">{title}</Typography>
+              <Typography variant="h4" className="text-sm font-bold text-stone-600 dark:text-stone-300 px-1 uppercase tracking-widest">{title}</Typography>
               <div className="space-y-2">
                 {routineTasks.map((task) => {
                   const currentTaskIndex = globalTaskIndex++;
@@ -258,7 +258,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                       numberBadge={currentTaskIndex}
                       actions={
                         isCompletable ? (
-                          <div className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200">
+                          <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200 dark:border-stone-700">
                             <span className="sr-only">Complete</span>
                           </div>
                         ) : isApproved ? (
@@ -298,10 +298,10 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
               className="relative p-[3px] rounded-2xl sm:rounded-3xl shadow-sm"
               style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
             >
-              <div className="bg-white border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-1">{activeRoutine.name} Routine</Typography>
-                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 px-1">Complete your routine tasks to earn gold coins!</Typography>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>
@@ -317,7 +317,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
       {/* Combined Activity Section */}
       <div className="space-y-4 pt-2">
-        <Typography variant="h3" className="text-lg font-bold text-stone-900 px-1 mb-3 mt-6">Today's Activity</Typography>
+        <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-3 mt-6">Today's Activity</Typography>
         
         <ActivityFeed 
           activities={recentActivities} 
