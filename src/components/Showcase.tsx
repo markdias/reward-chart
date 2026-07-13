@@ -386,6 +386,150 @@ export default function Showcase() {
         </section>
 
         {/* =========================================
+            POT UX PROTOTYPES
+            ========================================= */}
+        <section className="space-y-6 pt-16 pb-8">
+          <Typography variant="h2" className="text-2xl font-black border-b-4 border-stone-200 dark:border-stone-700 pb-2 text-stone-800 dark:text-stone-100 uppercase tracking-widest">Pot UX Options</Typography>
+          <p className="text-stone-500 dark:text-stone-400 font-bold mb-4">Different ways to show pot information without expanding the card size.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Option 1: Scrollable Card */}
+            <div className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-[260px]" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+              <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                <div className="flex justify-between items-start mb-4 shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500">
+                    <PiggyBank className="w-6 h-6" />
+                  </div>
+                  <CoinBadge points={1500} size="sm" />
+                </div>
+                <div className="shrink-0 mb-4">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Option 1</div>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Scrollable</Typography>
+                </div>
+                <div className="flex-1 shrink-0">
+                  <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed mb-6">
+                    Scroll down inside this card to see more! The card stays small. It can fit as much content as we need.
+                  </Typography>
+                  <Button variant="none" size="none" className="w-full mb-3 bg-[#FDF6CD] text-amber-900 py-3 rounded-xl font-bold text-sm border border-amber-200">
+                    Deposit (Example)
+                  </Button>
+                  <Button variant="none" size="none" className="w-full bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-3 rounded-xl font-bold text-sm border border-stone-200 dark:border-stone-700">
+                    Withdraw All
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Option 2: Flip Card (Savings Pot Example) */}
+            <style>{`
+              .showcase-flip-inner {
+                transition: transform 0.6s;
+                transform-style: preserve-3d;
+              }
+              .showcase-flip-card:hover .showcase-flip-inner {
+                transform: rotateY(180deg);
+              }
+              .showcase-flip-front, .showcase-flip-back {
+                backface-visibility: hidden;
+                -webkit-backface-visibility: hidden;
+              }
+              .showcase-flip-front {
+                transform: rotateY(0deg);
+              }
+              .showcase-flip-back {
+                transform: rotateY(180deg);
+              }
+            `}</style>
+            <div className="relative h-[260px] showcase-flip-card" style={{ perspective: '1000px' }}>
+              <div className="relative w-full h-full showcase-flip-inner">
+                
+                {/* Front Side */}
+                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl showcase-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500">
+                        <PiggyBank className="w-6 h-6" />
+                      </div>
+                      <CoinBadge points={1500} size="sm" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
+                      <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Savings</Typography>
+                    </div>
+                    <div className="mt-auto flex justify-center">
+                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-[10px] font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                         <span>Hover to Flip</span>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back Side */}
+                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl showcase-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col justify-between border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+                    
+                    {/* Goal & Description */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold text-stone-900 dark:text-stone-50 tracking-tight">Goal: Bicycle</span>
+                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 px-1.5 py-0.5 rounded-md">1500/3000</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden mb-3 border border-stone-200 dark:border-stone-700">
+                        <div className="h-full bg-emerald-500 w-1/2 rounded-full"></div>
+                      </div>
+                      <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400 leading-snug">
+                        Keep your gold coins safe here! You can't spend them until you take them out.
+                      </Typography>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="w-full flex flex-col gap-1.5 mt-2">
+                      <Button variant="none" size="none" className="w-full bg-[#FDF6CD] text-amber-900 py-2 rounded-xl font-bold text-sm border border-amber-200">
+                        Deposit
+                      </Button>
+                      <Button variant="none" size="none" className="w-full bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm border border-stone-200 dark:border-stone-700">
+                        Withdraw All
+                      </Button>
+                      <Button variant="none" size="none" className="w-full bg-emerald-100 text-emerald-700 py-2 rounded-xl font-bold text-sm border border-emerald-200">
+                        <Play className="w-3 h-3 inline-block mr-1" fill="currentColor" /> Play Video
+                      </Button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Option 3: Action Modal Trigger */}
+            <div className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-[260px]" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f472b6 10px, #f472b6 20px, #fbbf24 20px, #fbbf24 30px)' }}>
+              <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left cursor-pointer hover:scale-[0.98] transition-transform" onClick={() => alert("This would open a large modal in the center of the screen!")}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500">
+                    <Utensils className="w-6 h-6" />
+                  </div>
+                  <CoinBadge points={400} size="sm" />
+                </div>
+                <div className="flex-1 flex flex-col">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Option 3</div>
+                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Tap for Modal</Typography>
+                  <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mt-4 leading-relaxed">
+                    Tap anywhere on this card to open a big pop-up with all the details and buttons!
+                  </Typography>
+                </div>
+                <div className="mt-auto flex justify-center">
+                   <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest animate-pulse">
+                     Tap to View
+                   </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* =========================================
             APP SETTINGS PROTOTYPE
             ========================================= */}
         <section className="space-y-6 pt-16 pb-16">
