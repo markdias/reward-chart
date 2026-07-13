@@ -152,7 +152,7 @@ export interface RewardRedemption {
   parent_id: string;
   redeemed_at: string;
   status: 'requested' | 'delivered' | 'rejected';
-  payment_source?: 'main' | 'savings' | 'badge_freebie';
+  payment_source?: string; // allow 'badge_freebie:badge-id'
 }
 
 export interface GiftingRequest {

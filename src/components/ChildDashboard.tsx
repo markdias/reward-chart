@@ -63,7 +63,7 @@ interface ChildDashboardProps {
   rewards: Reward[];
   redemptions: RewardRedemption[];
   onCompleteTask: (taskId: string, childId: string) => void;
-  onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings' | 'badge_freebie') => void;
+  onClaimReward: (rewardId: string, childId: string, paymentSource?: string) => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
@@ -533,7 +533,7 @@ export default function ChildDashboard({
     if (!activeChild) return;
     
     // 1. Trigger the reward claim (freebie)
-    onClaimReward(rewardId, activeChild.id, 'badge_freebie');
+    onClaimReward(rewardId, activeChild.id, `badge_freebie:${badgeId}`);
     
     // 2. Update the child_badges table to mark as claimed
     const supabase = getSupabaseClient();
