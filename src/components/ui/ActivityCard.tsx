@@ -32,7 +32,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   iconOverride,
   numberBadge
 }) => {
-  let iconWrapperClass = "bg-stone-50 text-stone-500";
+  let iconWrapperClass = "bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400";
   let IconElement: React.ReactNode = <CheckCircle2 className="w-5 h-5" />;
   let isStrikeThrough = false;
   let isNegative = false;
@@ -73,7 +73,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     IconElement = <Gift className="w-5 h-5" />;
     isNegative = true;
   } else if (type === 'other') {
-    iconWrapperClass = "bg-stone-50 text-stone-500";
+    iconWrapperClass = "bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400";
     IconElement = <CheckCircle2 className="w-5 h-5" />;
   }
 
@@ -90,7 +90,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   }
 
   const wrapperClass = "relative p-1.5 rounded-2xl shadow-sm transition-transform duration-200 hover:-translate-y-0.5 overflow-hidden";
-  const innerClass = "relative z-10 w-full h-full bg-white rounded-[0.85rem] p-3 sm:p-4 flex flex-row justify-between items-center gap-3 sm:gap-4 border-2 border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.05)]";
+  const innerClass = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[0.85rem] p-3 sm:p-4 flex flex-row justify-between items-center gap-3 sm:gap-4 border-2 border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.05)]";
 
   return (
     <div className={wrapperClass} style={bgStyle}>
@@ -107,12 +107,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           <div className="flex-1 min-w-0">
             <Typography 
               variant="body" 
-              className={`font-black uppercase tracking-wider text-stone-800 text-xs sm:text-sm truncate`}
+              className={`font-black uppercase tracking-wider text-stone-800 dark:text-stone-100 text-xs sm:text-sm truncate`}
             >
               {title}
             </Typography>
             {subtitle && (
-              <Typography variant="body" className="text-xs text-stone-500 mt-0.5 truncate font-medium">
+              <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 truncate font-medium">
                 {subtitle}
               </Typography>
             )}

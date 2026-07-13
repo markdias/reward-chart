@@ -2,10 +2,10 @@ import React from 'react';
 import { Input } from './Input';
 import { Select } from './Select';
 
-export const SettingsBlock = ({ children, title }: { children: React.ReactNode, title?: string }) => (
+export const SettingsBlock = ({ children, title, noBorder }: { children: React.ReactNode, title?: string, noBorder?: boolean }) => (
   <div className="mb-6 w-full">
-    {title && <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-2 px-4">{title}</h3>}
-    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+    {title && <h3 className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest mb-2 px-4">{title}</h3>}
+    <div className={`bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm ${noBorder ? '' : 'border border-stone-200 dark:border-stone-700'}`}>
       {children}
     </div>
   </div>
@@ -30,15 +30,15 @@ export const SettingsRow = ({
   onChange?: (val: string) => void;
   onToggle?: () => void;
 }) => (
-  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100' : ''} bg-white hover:bg-stone-50 transition-colors`}>
-    <span className="text-sm font-bold text-stone-700">{label}</span>
+  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100 dark:border-stone-800' : ''} bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors`}>
+    <span className="text-sm font-bold text-stone-700 dark:text-stone-200">{label}</span>
     <div className="w-1/2 flex justify-end">
       {isToggle ? (
          <div 
            onClick={onToggle}
            className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 cursor-pointer ${toggleActive ? 'bg-cyan-500' : 'bg-stone-200'}`}
          >
-            <div className={`w-5 h-5 bg-white rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${toggleActive ? 'translate-x-5' : 'translate-x-0'}`} />
+            <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${toggleActive ? 'translate-x-5' : 'translate-x-0'}`} />
           </div>
       ) : (
         <Input 
@@ -64,8 +64,8 @@ export const SettingsSelectRow = ({
   isLast?: boolean;
   onChange?: (val: string) => void;
 }) => (
-  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100' : ''} bg-white hover:bg-stone-50 transition-colors`}>
-    <span className="text-sm font-bold text-stone-700">{label}</span>
+  <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100 dark:border-stone-800' : ''} bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors`}>
+    <span className="text-sm font-bold text-stone-700 dark:text-stone-200">{label}</span>
     <Select 
       value={value} 
       onChange={(e) => onChange && onChange(e.target.value)} 
@@ -78,12 +78,14 @@ export const SettingsSelectRow = ({
 
 export const SettingsActionRow = ({ 
   label, 
+  description,
   icon: Icon, 
   onClick,
   isLast = false,
   danger = false
 }: {
   label: string;
+  description?: string;
   icon?: any;
   onClick: () => void;
   isLast?: boolean;
@@ -91,9 +93,12 @@ export const SettingsActionRow = ({
 }) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100' : ''} bg-white hover:bg-stone-50 transition-colors cursor-pointer text-left`}
+    className={`w-full flex items-center justify-between p-4 ${description ? 'py-5' : ''} ${!isLast ? 'border-b border-stone-100 dark:border-stone-800' : ''} bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors cursor-pointer text-left`}
   >
-    <span className={`text-sm font-bold ${danger ? 'text-rose-600' : 'text-stone-700'}`}>{label}</span>
-    {Icon && <Icon className={`w-5 h-5 ${danger ? 'text-rose-500' : 'text-stone-400'}`} />}
+    <div className="flex flex-col pr-4">
+      <span className={`text-sm font-bold ${danger ? 'text-rose-600' : 'text-stone-700 dark:text-stone-200'}`}>{label}</span>
+      {description && <span className={`text-xs mt-0.5 ${danger ? 'text-rose-400' : 'text-stone-500 dark:text-stone-400'}`}>{description}</span>}
+    </div>
+    {Icon && <Icon className={`w-5 h-5 shrink-0 ${danger ? 'text-rose-500' : 'text-stone-400'}`} />}
   </button>
 );

@@ -25,7 +25,7 @@ export function BottomTabBar({
 }: BottomTabBarProps) {
   return (
     <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pt-4 pb-safe-bottom mb-4 ${className}`}>
-      <div className="bg-white/20 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.08)] rounded-3xl p-2 flex items-center justify-between">
+      <div className="bg-white dark:bg-stone-900/20 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.08)] rounded-3xl p-2 flex items-center justify-between">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -55,7 +55,7 @@ export function BottomTabBar({
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 ${isActive ? 'text-cyan-600' : 'text-stone-500'}`}>
+                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
                   {tab.label}
                 </span>
               </div>

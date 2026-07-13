@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography } from '../ui/Typography';
-import { ThemeId, THEME_PRESETS } from '../../utils/theme';
+
 import { Child } from '../../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../../data/characters';
 import { UserPlus, ArrowRight, User, ArrowLeft, Edit3 } from 'lucide-react';
@@ -10,15 +10,34 @@ import { Input } from '../ui/Input';
 import { ChildAvatar } from '../ChildAvatar';
 
 interface StepChildrenSetupProps {
-  theme: ThemeId;
   onNext: (children: Partial<Child>[]) => void;
   initialChildren?: Partial<Child>[];
   startedBy?: 'parent' | 'child' | null;
   onBack?: () => void;
 }
 
-export default function StepChildrenSetup({ theme, onNext, onBack, initialChildren = [], startedBy }: StepChildrenSetupProps) {
-  const styles = THEME_PRESETS[theme];
+export default function StepChildrenSetup({ onNext, onBack, initialChildren = [], startedBy }: StepChildrenSetupProps) {
+  const styles = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
+    bodyBg: 'bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50',
+    cardBg: 'bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-stone-900 dark:text-stone-50',
+    headerBg: 'bg-white/90 dark:bg-stone-900/90 border-b border-stone-100 dark:border-stone-800 backdrop-blur-md',
+    btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
+    btnSecondary: 'bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-[0.98] transition-all rounded-2xl',
+    tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
+    inputBg: 'bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-50 placeholder-[#A8A29E] focus:bg-white dark:focus:bg-stone-900 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
+    accentGlow: 'bg-orange-100/40 opacity-50',
+    tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',
+    gridStyle: 'scrolling-grid opacity-[0.03]',
+    innerCard: 'bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl',
+    titleGradient: 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent',
+    divider: 'border-stone-100 dark:border-stone-800',
+    overlayCrt: 'hidden',
+    titleColor: 'text-[#1C1917] dark:text-stone-50',
+    borderStyle: 'border-stone-100 dark:border-stone-800'
+};
   const [children, setChildren] = useState<Partial<Child>[]>(initialChildren);
   const [isAdding, setIsAdding] = useState(initialChildren.length === 0);
   const [name, setName] = useState('');
@@ -75,7 +94,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm space-y-6 shadow-xl relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-6 shadow-xl relative z-10`}>
         <div className="text-center space-y-2">
           <Typography variant="h2" className={styles.titleColor}>Setup Children</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Add the children who will be earning rewards.</p>
@@ -86,9 +105,9 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
             <Typography variant="label" className={styles.textMuted}>Added So Far</Typography>
             <div className="space-y-2">
               {children.map(child => (
-                <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200`}>
+                <div key={child.id} className={`flex items-center gap-3 p-3 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700`}>
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden p-1 border shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-stone-900 flex items-center justify-center shadow-sm overflow-hidden p-1 border shrink-0">
                       {child.avatar_url ? (
                         <ChildAvatar iconName={child.avatar_url} className="w-full h-full" />
                       ) : (
@@ -117,7 +136,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
         )}
 
         {isAdding ? (
-          <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-4`}>
+          <form onSubmit={handleAddChild} className={`p-4 rounded-2xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-700 space-y-4`}>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <Input
@@ -151,11 +170,11 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     type="button"
                     onClick={() => setSelectedCharId(char.id)}
                     className={`aspect-square rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
-                      selectedCharId === char.id ? 'border-amber-400 bg-amber-50' : 'border-transparent bg-white hover:border-stone-200'
+                      selectedCharId === char.id ? 'border-amber-400 bg-amber-50' : 'border-transparent bg-white dark:bg-stone-900 hover:border-stone-200 dark:hover:border-stone-700'
                     }`}
                   >
                     <img src={getCharacterStage(char.id, 4).image_url} alt={char.name} className="w-10 h-10 object-contain mb-1" />
-                    <span className={`text-[9px] font-bold uppercase tracking-wider ${selectedCharId === char.id ? 'text-amber-700' : 'text-stone-500'}`}>
+                    <span className={`text-[9px] font-bold uppercase tracking-wider ${selectedCharId === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
                       {char.name.split(' ')[0]}
                     </span>
                   </button>
@@ -171,7 +190,7 @@ export default function StepChildrenSetup({ theme, onNext, onBack, initialChildr
                     key={url}
                     type="button"
                     onClick={() => setSelectedAvatar(url)}
-                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-stone-500 hover:border-stone-500/50 hover:bg-stone-50'}`}
+                    className={`p-1 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-center ${selectedAvatar === url ? 'border-amber-500 bg-amber-50 text-amber-500' : 'border-transparent text-stone-500 dark:text-stone-400 hover:border-stone-500/50 hover:bg-stone-50 dark:hover:bg-stone-800'}`}
                   >
                     <ChildAvatar iconName={url} className="w-full aspect-square !rounded-lg" />
                   </button>

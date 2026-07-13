@@ -31,17 +31,17 @@ export function SortableTaskItem({ id, task, onRemove }: SortableTaskItemProps) 
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex justify-between items-center bg-white border border-stone-200 p-2 sm:p-3 rounded-xl mb-2 ${isDragging ? 'shadow-lg scale-[1.02]' : 'shadow-sm'}`}
+      className={`flex justify-between items-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 p-2 sm:p-3 rounded-xl mb-2 ${isDragging ? 'shadow-lg scale-[1.02]' : 'shadow-sm'}`}
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <button
-          className="text-stone-400 hover:text-stone-600 cursor-grab active:cursor-grabbing touch-none p-1"
+          className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 cursor-grab active:cursor-grabbing touch-none p-1"
           {...attributes}
           {...listeners}
         >
           <GripVertical className="w-5 h-5" />
         </button>
-        <span className="text-sm font-bold text-stone-700 truncate">{task.title}</span>
+        <span className="text-sm font-bold text-stone-700 dark:text-stone-200 truncate">{task.title}</span>
       </div>
       
       <button 

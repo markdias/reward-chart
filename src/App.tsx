@@ -25,9 +25,7 @@ export default function App() {
   const activeTheme = 'sunny_toybox';
 
   // Auth state
-  const [globalTheme, setGlobalTheme] = useState<string>(
-    localStorage.getItem('RCH_GLOBAL_THEME') || 'modern'
-  );
+  // Auth state
   
   const [parentEmail, setParentEmail] = useState<string | null>(
     localStorage.getItem('RCH_PARENT_EMAIL')
@@ -61,10 +59,7 @@ export default function App() {
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
   useEffect(() => {
-    if (parentProfile?.dashboard_style) {
-      setGlobalTheme(parentProfile.dashboard_style);
-      localStorage.setItem('RCH_GLOBAL_THEME', parentProfile.dashboard_style);
-    }
+    // Left empty or we can just remove the whole useEffect if we want, but let's just clear the theme logic inside.
   }, [parentProfile?.dashboard_style]);
 
   useEffect(() => {
@@ -2005,7 +2000,7 @@ export default function App() {
 
   return (
     <>
-    <div className={`relative min-h-screen transition-all duration-300`} id="app-main" data-theme={globalTheme}>
+    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950`} id="app-main">
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />

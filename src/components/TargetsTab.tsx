@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Target, Save, Database } from 'lucide-react';
-import { ThemeId } from '../utils/theme';
+
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
@@ -10,12 +10,11 @@ import { Button } from './ui/Button';
 import { SettingsBlock, SettingsRow } from './ui/SettingsList';
 
 interface TargetsTabProps {
-  theme: ThemeId;
   parentProfile?: ParentProfile | null;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
 }
 
-export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile }: TargetsTabProps) {
+export default function TargetsTab({ parentProfile, onUpdateParentProfile }: TargetsTabProps) {
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
   const [dailyPointsTarget, setDailyPointsTarget] = useState(parentProfile?.daily_points_target ?? 50);
   const [weeklyPointsTarget, setWeeklyPointsTarget] = useState(parentProfile?.weekly_points_target ?? 300);
@@ -52,10 +51,10 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
 
   const getThemeClasses = () => {
     return {
-      card: 'bg-white border-[3px] border-stone-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)]',
-      text: 'text-stone-900',
+      card: 'bg-white dark:bg-stone-900 border-[3px] border-stone-100 dark:border-stone-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)]',
+      text: 'text-stone-900 dark:text-stone-50',
       textMuted: 'text-stone-400',
-      input: 'bg-stone-50 border-2 border-stone-200 text-stone-900 placeholder-stone-400 rounded-2xl px-4 py-3 font-bold focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 outline-none transition-all',
+      input: 'bg-stone-50 dark:bg-stone-950 border-2 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-50 placeholder-stone-400 rounded-2xl px-4 py-3 font-bold focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 outline-none transition-all',
       primaryBtn: 'bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold border-2 border-indigo-600 shadow-[0_4px_0_0_rgb(79,70,229)] hover:shadow-[0_2px_0_0_rgb(79,70,229)] active:translate-y-1 active:shadow-none transition-all uppercase',
     };
   };
@@ -124,7 +123,7 @@ export default function TargetsTab({ theme, parentProfile, onUpdateParentProfile
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="bg-stone-100 p-6 sm:p-10 rounded-[2.5rem] border-2 border-stone-200 shadow-sm relative overflow-hidden">
+        <div className="p-2 sm:p-4 relative">
           
           <SettingsBlock title="Global Rewards & Targets">
             <SettingsRow 
