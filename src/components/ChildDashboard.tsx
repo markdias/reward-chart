@@ -28,6 +28,7 @@ import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BottomTabBar } from './ui/BottomTabBar';
+import { PullToRefresh } from './PullToRefresh';
 import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
@@ -85,6 +86,7 @@ interface ChildDashboardProps {
   isLoading?: boolean;
   isChildAuth?: boolean;
   onLogout?: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
 export default function ChildDashboard({
@@ -117,7 +119,8 @@ export default function ChildDashboard({
   onLockChild,
   isLoading = false,
   isChildAuth = false,
-  onLogout
+  onLogout,
+  onRefresh
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   

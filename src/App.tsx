@@ -17,9 +17,11 @@ import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
+import { executeOrQueue, processSyncQueue } from './utils/offlineSync';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 import { revokeInvalidLevelBadges } from './utils/badgeService';
 import { generateShortCode } from './utils/security';
+import { Network } from '@capacitor/network';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -144,6 +146,29 @@ export default function App() {
     }
   }, [isParentMode]);
 
+  // Handle Offline Sync Queue processing and Network status
+  useEffect(() => {
+    // Process queue on initial load if online
+    processSyncQueue();
+    
+    // Listen for network changes to process queue when coming back online
+    const listener = Network.addListener('networkStatusChange', status => {
+      if (status.connected) {
+        processSyncQueue();
+      }
+    });
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, []);
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const triggerDataRefresh = async () => {
+    setRefreshTrigger(prev => prev + 1);
+    await new Promise(resolve => setTimeout(resolve, 800)); // UI delay for pull-to-refresh
+  };
+
+
 
   
   // Guided Access Lock
@@ -254,7 +279,7 @@ export default function App() {
               // Automatically generate a share_token if one is missing from an older row
               if (!profile.share_token) {
                 profile.share_token = generateShortCode();
-                await supabase.from('parent_profiles').update({ share_token: profile.share_token }).eq('user_id', profile.user_id);
+                await executeOrQueue('parent_profiles', 'update', { share_token: profile.share_token }, { eq: { 'user_id': profile.user_id } });
               }
               setParentProfile(profile);
               loadedParentProfile = profile;
@@ -289,10 +314,10 @@ export default function App() {
                   }
 
                   if (targetChild) {
-                    await supabase.from('child_profiles').insert({ user_id: sessionData.session.user.id, child_id: targetChild.id });
+                    await executeOrQueue('child_profiles', 'insert', { user_id: sessionData.session.user.id, child_id: targetChild.id });
                     
                     // Mark token as linked in DB so parent dashboard knows
-                    await supabase.from('children').update({ child_share_token: `LINKED_${targetChild.id}`, linked_email: sessionData.session.user.email }).eq('id', targetChild.id);
+                    await executeOrQueue('children', 'update', { child_share_token: `LINKED_${targetChild.id}`, linked_email: sessionData.session.user.email }, { eq: { 'id': targetChild.id } });
                     
                     setIsChildAuth(true);
                     setAuthedChildId(targetChild.id);
@@ -347,7 +372,7 @@ export default function App() {
                     points_to_level_up: 500,
                     level_up_gold_reward: 500
                   };
-                  const { error: profileError } = await supabase.from('parent_profiles').upsert(newProfile, { onConflict: 'user_id' });
+                  const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
                   
                   if (profileError) {
                     console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
@@ -373,12 +398,12 @@ export default function App() {
                        const localGifting = localStorage.getItem(`RCH_GIFTING_${localEmail}`);
                        const parsedGifting = localGifting ? JSON.parse(localGifting).map((r: any) => ({...r, parent_id: familyId})) : [];
                        
-                       if (parsedChildren.length) await supabase.from('children').insert(parsedChildren);
-                       if (parsedTasks.length) await supabase.from('tasks').insert(parsedTasks);
-                       if (parsedCompletions.length) await supabase.from('completions').insert(parsedCompletions);
-                       if (parsedRewards.length) await supabase.from('rewards').insert(parsedRewards);
-                       if (parsedRedemptions.length) await supabase.from('reward_redemptions').insert(parsedRedemptions);
-                       if (parsedGifting.length) await supabase.from('gifting_requests').insert(parsedGifting);
+                       if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
+                       if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
+                       if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
+                       if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
+                       if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
+                       if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
                     } else {
                        const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
                          ...t, 
@@ -392,8 +417,8 @@ export default function App() {
                          created_at: new Date().toISOString(),
                          parent_id: familyId 
                        }));
-                       await supabase.from('tasks').insert(tasksToInsert);
-                       await supabase.from('rewards').insert(rewardsToInsert);
+                       await executeOrQueue('tasks', 'insert', tasksToInsert);
+                       await executeOrQueue('rewards', 'insert', rewardsToInsert);
                     }
                   }
                   
@@ -473,7 +498,7 @@ export default function App() {
             if (Object.keys(updatesByChildId).length > 0) {
               // Fire and forget updates to DB so we don't block load
               Object.entries(updatesByChildId).forEach(([id, updates]) => {
-                 supabase.from('children').update(updates).eq('id', id).then();
+                 executeOrQueue('children', 'update', updates, { eq: { 'id': id } }).then();
               });
             }
             // ---------------------------------------
@@ -587,7 +612,7 @@ export default function App() {
       // Local/demo mode - fetch from localStorage or defaults
       loadLocalStorageFallback();
     }
-  }, [parentEmail, hasCompletedOnboarding]);
+  }, [parentEmail, hasCompletedOnboarding, refreshTrigger]);
 
 
   // Sync state helpers to update local storage
@@ -890,20 +915,20 @@ export default function App() {
     const supabase = getSupabaseClient();
     if (supabase) {
       if (keepTemplates) {
-        await supabase.from('tasks').delete().eq('parent_id', familyId).eq('is_template', false);
-        await supabase.from('rewards').delete().eq('parent_id', familyId).eq('is_template', false);
+        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
+        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
       } else {
-        await supabase.from('tasks').delete().eq('parent_id', familyId);
-        await supabase.from('rewards').delete().eq('parent_id', familyId);
+        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId } });
+        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId } });
       }
       
       const childIds = children.map(c => c.id);
       if (childIds.length > 0) {
-        await supabase.from('completions').delete().in('child_id', childIds);
-        await supabase.from('child_badges').delete().in('child_id', childIds);
+        await executeOrQueue('completions', 'delete', null, { in: { column: 'child_id', values: childIds } });
+        await executeOrQueue('child_badges', 'delete', null, { in: { column: 'child_id', values: childIds } });
       }
-      await supabase.from('reward_redemptions').delete().eq('parent_id', familyId);
-      await supabase.from('gifting_requests').delete().eq('family_id', familyId);
+      await executeOrQueue('reward_redemptions', 'delete', null, { eq: { 'parent_id': familyId } });
+      await executeOrQueue('gifting_requests', 'delete', null, { eq: { 'family_id': familyId } });
 
       const updatedChildren = children.map(c => ({
         ...c,
@@ -929,7 +954,7 @@ export default function App() {
       }));
       syncChildren(updatedChildren);
       for (const child of updatedChildren) {
-        await supabase.from('children').update(child).eq('id', child.id);
+        await executeOrQueue('children', 'update', child, { eq: { 'id': child.id } });
       }
 
       if (keepTemplates) {
@@ -1010,7 +1035,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('children').insert(newChild);
+      const { error } = await executeOrQueue('children', 'insert', newChild);
       if (error) console.warn('Failed to sync new child to Supabase:', error.message);
     }
   };
@@ -1028,7 +1053,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase && updatedChild) {
-      const { error } = await supabase.from('children').update(updatedChild).eq('id', id);
+      const { error } = await executeOrQueue('children', 'update', updatedChild, { eq: { 'id': id } });
       if (error) console.warn('Failed to update child in Supabase:', error.message);
     }
   };
@@ -1042,7 +1067,7 @@ export default function App() {
       const { error } = await supabase.rpc('delete_child_account', { p_child_id: id });
       if (error) {
         console.warn('Failed to securely delete child account from Supabase:', error.message);
-        const { error: dbError } = await supabase.from('children').delete().eq('id', id);
+        const { error: dbError } = await executeOrQueue('children', 'delete', null, { eq: { 'id': id } });
         if (dbError) console.warn('Failed to delete child row:', dbError.message);
       }
     }
@@ -1245,7 +1270,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('tasks').insert(newTask);
+      const { error } = await executeOrQueue('tasks', 'insert', newTask);
       if (error) console.warn('Failed to sync task to Supabase:', error.message);
     }
   };
@@ -1274,7 +1299,7 @@ export default function App() {
         await supabase.from('tasks').delete().in('id', instancesToDelete.map(t => t.id));
       }
       if (newTasks.length > 0) {
-        await supabase.from('tasks').insert(newTasks);
+        await executeOrQueue('tasks', 'insert', newTasks);
       }
     }
   };
@@ -1290,7 +1315,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('tasks').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
+      const { error } = await executeOrQueue('tasks', 'update', updates, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
   };
@@ -1300,7 +1325,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('tasks').delete().or(`id.eq.${id},template_id.eq.${id}`);
+      const { error } = await executeOrQueue('tasks', 'delete', null, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to delete task in Supabase:', error.message);
     }
   };
@@ -1330,7 +1355,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('rewards').insert(newReward);
+      const { error } = await executeOrQueue('rewards', 'insert', newReward);
       if (error) console.warn('Failed to sync reward to Supabase:', error.message);
     }
   };
@@ -1359,7 +1384,7 @@ export default function App() {
         await supabase.from('rewards').delete().in('id', instancesToDelete.map(r => r.id));
       }
       if (newRewards.length > 0) {
-        await supabase.from('rewards').insert(newRewards);
+        await executeOrQueue('rewards', 'insert', newRewards);
       }
     }
   };
@@ -1375,7 +1400,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('rewards').update(updates).or(`id.eq.${id},template_id.eq.${id}`);
+      const { error } = await executeOrQueue('rewards', 'update', updates, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to update reward in Supabase:', error.message);
     }
   };
@@ -1385,7 +1410,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('rewards').delete().or(`id.eq.${id},template_id.eq.${id}`);
+      const { error } = await executeOrQueue('rewards', 'delete', null, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to delete reward in Supabase:', error.message);
     }
   };
@@ -1408,7 +1433,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('completions').insert(newCompletion);
+      const { error } = await executeOrQueue('completions', 'insert', newCompletion);
       if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
   };
@@ -1447,15 +1472,15 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error: childError } = await supabase.from('children').update({
+      const { error: childError } = await executeOrQueue('children', 'update', {
         points: targetChild.points,
         lifetime_points: targetChild.lifetime_points,
         level: targetChild.level,
         level_up_bonuses_received: targetChild.level_up_bonuses_received
-      }).eq('id', targetChild.id);
+      }, { eq: { 'id': targetChild.id } });
       if (childError) console.warn('Failed to update child points for penalty in Supabase:', childError.message);
 
-      const { error: compError } = await supabase.from('completions').insert(newCompletion);
+      const { error: compError } = await executeOrQueue('completions', 'insert', newCompletion);
       if (compError) console.warn('Failed to sync penalty completion to Supabase:', compError.message);
     }
   };
@@ -1514,7 +1539,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('reward_redemptions').insert(newRedemption);
+      const { error } = await executeOrQueue('reward_redemptions', 'insert', newRedemption);
       if (error) console.warn('Failed to sync redemption to Supabase:', error.message);
     }
   };
@@ -1543,7 +1568,7 @@ export default function App() {
       // Explicitly wait for child to update in DB before updating the redemption
       const supabase = getSupabaseClient();
       if (supabase) {
-        const { error } = await supabase.from('children').update(targetChild).eq('id', targetChild.id);
+        const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
         if (error) {
           console.error("Failed to update child:", error);
           alert("Database Error: Could not update child's points and pet food. " + error.message);
@@ -1559,7 +1584,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('reward_redemptions').update({ status: 'delivered' }).eq('id', redemptionId);
+      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'delivered' }, { eq: { 'id': redemptionId } });
       if (error) console.warn('Failed to update redemption in Supabase:', error.message);
     }
   };
@@ -1582,12 +1607,12 @@ export default function App() {
     
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('children').update({
+      const { error } = await executeOrQueue('children', 'update', {
         pet_food: targetChild.pet_food,
         pet_fed_today: targetChild.pet_fed_today,
         pet_unhappy: targetChild.pet_unhappy,
         last_fed_date: targetChild.last_fed_date
-      }).eq('id', targetChild.id);
+      }, { eq: { 'id': targetChild.id } });
       if (error) {
         console.error("Failed to feed pet:", error);
         alert("Database Error: Could not feed pet. " + error.message);
@@ -1752,7 +1777,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('reward_redemptions').update(targetRedemption).eq('id', redemption.id);
+      const { error } = await executeOrQueue('reward_redemptions', 'update', targetRedemption, { eq: { 'id': redemption.id } });
       if (error) {
         console.error("Failed to update redemption:", error);
       }
@@ -1781,7 +1806,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('completions').insert(newCompletion);
+      const { error } = await executeOrQueue('completions', 'insert', newCompletion);
       if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
 
@@ -1871,7 +1896,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('completions').delete().eq('id', completionId);
+      const { error } = await executeOrQueue('completions', 'delete', null, { eq: { 'id': completionId } });
       if (error) console.warn('Failed to delete completion in Supabase:', error.message);
     }
   };
@@ -1895,7 +1920,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('gifting_requests').insert(newRequest);
+      const { error } = await executeOrQueue('gifting_requests', 'insert', newRequest);
       if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
     }
   };
@@ -1918,7 +1943,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('gifting_requests').insert(newRequest);
+      const { error } = await executeOrQueue('gifting_requests', 'insert', newRequest);
       if (error) console.warn('Failed to sync gifting request to Supabase:', error.message);
     }
   };
@@ -1959,7 +1984,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('gifting_requests').update({ status: 'approved' }).eq('id', requestId);
+      const { error } = await executeOrQueue('gifting_requests', 'update', { status: 'approved' }, { eq: { 'id': requestId } });
       if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
     }
   };
@@ -1973,7 +1998,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await supabase.from('gifting_requests').update({ status: 'rejected' }).eq('id', requestId);
+      const { error } = await executeOrQueue('gifting_requests', 'update', { status: 'rejected' }, { eq: { 'id': requestId } });
       if (error) console.warn('Failed to update gifting request in Supabase:', error.message);
     }
   };
@@ -2091,6 +2116,7 @@ export default function App() {
             className="w-full"
           >
             <ParentDashboard
+              onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
               initialTab={initialParentTab}
               children={children}
@@ -2143,6 +2169,7 @@ export default function App() {
             className="w-full"
           >
             <ChildDashboard
+              onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
               parentProfile={parentProfile}
               children={children}
