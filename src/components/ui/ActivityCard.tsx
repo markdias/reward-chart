@@ -18,6 +18,7 @@ export interface ActivityCardProps {
   actions?: React.ReactNode;
   iconOverride?: React.ReactNode;
   numberBadge?: number;
+  pointsOverride?: React.ReactNode;
 }
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({
@@ -30,7 +31,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   category,
   actions,
   iconOverride,
-  numberBadge
+  numberBadge,
+  pointsOverride
 }) => {
   let iconWrapperClass = "bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400";
   let IconElement: React.ReactNode = <CheckCircle2 className="w-5 h-5" />;
@@ -126,7 +128,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="font-black text-sm flex items-center justify-center">
-            <CoinBadge points={displayPoints} size="sm" disabled={!isStrikeThrough && type === 'task' && status !== 'completed' && status !== 'approved'} />
+            <CoinBadge points={displayPoints} size="sm" customIcon={pointsOverride} disabled={!isStrikeThrough && type === 'task' && status !== 'completed' && status !== 'approved'} />
           </div>
           {actions && (
             <div className="flex items-center gap-2">

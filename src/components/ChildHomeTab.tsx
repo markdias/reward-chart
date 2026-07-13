@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Typography } from './ui/Typography';
+import { Modal } from './ui/Modal';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
@@ -8,7 +9,8 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight } from 'lucide-react';
+import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
 
@@ -35,6 +37,27 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   onOpenBadges,
   parentProfile
 }) => {
+  const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
+  const [badges, setBadges] = useState<any[]>([]);
+  const [childBadges, setChildBadges] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBadges = async () => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+      const { data: bData } = await supabase.from('badges').select('id, icon_name');
+      if (bData) setBadges(bData);
+      
+      const { data: cbData } = await supabase.from('child_badges').select('*').eq('child_id', activeChild.id);
+      if (cbData) setChildBadges(cbData);
+    };
+    fetchBadges();
+  }, [activeChild.id]);
+
+  const ICON_MAP: Record<string, React.FC<any>> = {
+    Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Medal
+  };
+
   // Daily Goal Logic
   const DAILY_GOAL = parentProfile?.daily_points_target ?? 50;
   
@@ -55,53 +78,160 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   const progressPercent = Math.min(100, (pointsEarnedToday / DAILY_GOAL) * 100);
 
   // Combine Recent Activity
-  const recentActivities: any[] = [];
+  const recentActivities: any[] = useMemo(() => {
+    const acts: any[] = [];
+    todayCompletions.forEach(c => {
+      if (c.points_awarded < 0) {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Penalty',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'penalty'
+        });
+      } else {
+        const task = tasks.find(t => t.id === c.task_id);
+        acts.push({
+          id: `comp-${c.id}`,
+          title: task?.title || 'Unknown Task',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: task?.category || 'other'
+        });
+      }
+    });
 
-  // 1. Add Completions (Positive and Negative)
-  todayCompletions.forEach(c => {
-    if (c.points_awarded < 0) {
-      recentActivities.push({
-        id: `comp-${c.id}`,
-        title: c.notes || 'Penalty',
-        points: c.points_awarded, // already negative
-        date: new Date(c.completed_at),
-        type: 'penalty'
-      });
-    } else {
-      const task = tasks.find(t => t.id === c.task_id);
-      recentActivities.push({
-        id: `comp-${c.id}`,
-        title: task?.title || 'Unknown Task',
-        points: c.points_awarded,
-        date: new Date(c.completed_at),
-        type: 'task',
-        status: 'completed',
-        category: task?.category || 'other'
-      });
-    }
-  });
+    const recentRedemptions = redemptions.filter(r => 
+      r.child_id === activeChild.id && 
+      getLogicalDateString(r.redeemed_at) === todayLogicalDate
+    );
+    recentRedemptions.forEach(r => {
+      const reward = rewards.find(rw => rw.id === r.reward_id);
+      if (reward) {
+        let pointsOverride: React.ReactNode = undefined;
+        if (r.payment_source?.startsWith('badge_freebie:')) {
+          const badgeId = r.payment_source.split(':')[1];
+          const badge = badges.find(b => b.id === badgeId);
+          if (badge && ICON_MAP[badge.icon_name]) {
+            const Icon = ICON_MAP[badge.icon_name];
+            pointsOverride = <Icon className="w-1/2 h-1/2" />;
+          } else {
+            pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+          }
+        } else if (r.payment_source === 'badge_freebie') {
+            let closestBadge = null;
+            let minDiff = Infinity;
+            childBadges.forEach(cb => {
+              const diff = Math.abs(new Date(cb.unlocked_at).getTime() - new Date(r.redeemed_at).getTime());
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestBadge = cb;
+              }
+            });
+            if (closestBadge) {
+              const badge = badges.find(b => b.id === closestBadge.badge_id);
+              if (badge && ICON_MAP[badge.icon_name]) {
+                const Icon = ICON_MAP[badge.icon_name];
+                pointsOverride = <Icon className="w-1/2 h-1/2" />;
+              }
+            }
+            if (!pointsOverride) pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+        }
 
-  // 2. Add Redemptions
-  const recentRedemptions = redemptions.filter(r => 
-    r.child_id === activeChild.id && 
-    getLogicalDateString(r.redeemed_at) === todayLogicalDate
-  );
-  recentRedemptions.forEach(r => {
-    const reward = rewards.find(rw => rw.id === r.reward_id);
-    if (reward) {
-      recentActivities.push({
-        id: `red-${r.id}`,
-        title: reward.title,
-        points: reward.cost_points, // ActivityCard will handle negative display
-        date: new Date(r.redeemed_at),
-        type: 'reward',
-        status: 'delivered'
-      });
-    }
-  });
+        acts.push({
+          id: `red-${r.id}`,
+          title: reward.title,
+          points: reward.cost_points,
+          date: new Date(r.redeemed_at),
+          type: 'reward',
+          status: 'delivered',
+          pointsOverride
+        });
+      }
+    });
 
-  // Sort descending by date
-  recentActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
+    acts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return acts;
+  }, [todayCompletions, redemptions, activeChild.id, tasks, rewards, todayLogicalDate]);
+
+  const fullActivities: any[] = useMemo(() => {
+    if (historyType !== 'full') return [];
+    const acts: any[] = [];
+    const childCompletions = completions.filter(c => c.child_id === activeChild.id && c.status === 'approved');
+    childCompletions.forEach(c => {
+      if (c.points_awarded < 0) {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Penalty',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'penalty'
+        });
+      } else {
+        const task = tasks.find(t => t.id === c.task_id);
+        acts.push({
+          id: `comp-${c.id}`,
+          title: task?.title || 'Unknown Task',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: task?.category || 'other'
+        });
+      }
+    });
+
+    const childRedemptions = redemptions.filter(r => r.child_id === activeChild.id);
+    childRedemptions.forEach(r => {
+      const reward = rewards.find(rw => rw.id === r.reward_id);
+      if (reward) {
+        let pointsOverride: React.ReactNode = undefined;
+        if (r.payment_source?.startsWith('badge_freebie:')) {
+          const badgeId = r.payment_source.split(':')[1];
+          const badge = badges.find(b => b.id === badgeId);
+          if (badge && ICON_MAP[badge.icon_name]) {
+            const Icon = ICON_MAP[badge.icon_name];
+            pointsOverride = <Icon className="w-1/2 h-1/2" />;
+          } else {
+            pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+          }
+        } else if (r.payment_source === 'badge_freebie') {
+            let closestBadge = null;
+            let minDiff = Infinity;
+            childBadges.forEach(cb => {
+              const diff = Math.abs(new Date(cb.unlocked_at).getTime() - new Date(r.redeemed_at).getTime());
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestBadge = cb;
+              }
+            });
+            if (closestBadge) {
+              const badge = badges.find(b => b.id === closestBadge.badge_id);
+              if (badge && ICON_MAP[badge.icon_name]) {
+                const Icon = ICON_MAP[badge.icon_name];
+                pointsOverride = <Icon className="w-1/2 h-1/2" />;
+              }
+            }
+            if (!pointsOverride) pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+        }
+
+        acts.push({
+          id: `red-${r.id}`,
+          title: reward.title,
+          points: reward.cost_points,
+          date: new Date(r.redeemed_at),
+          type: 'reward',
+          status: 'delivered',
+          pointsOverride
+        });
+      }
+    });
+
+    acts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return acts;
+  }, [historyType, completions, redemptions, activeChild.id, tasks, rewards]);
 
   return (
     <motion.div
@@ -111,51 +241,76 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       key="child-home-tab"
       className="space-y-6 animate-in fade-in duration-300 w-full"
     >
-      {/* Top Cards: Daily Goal and Badges */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Top Cards: Daily Goal, Current Total, and Badges */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-2 sm:mb-4">
         {/* Daily Goal Card */}
-        <div 
-          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden hover:-translate-y-1"
+        <button 
+          onClick={() => setHistoryType('today')}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left w-full group"
           style={{ background: 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
-              <div className="transform scale-[1.25] sm:scale-[1.35]">
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border-[3px] sm:border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+              <div className="transform scale-[1.1] sm:scale-[1.4]">
                 <CoinBadge points={pointsEarnedToday} />
               </div>
             </div>
             
-            <div>
-              <Typography variant="h2" className="text-lg font-bold text-stone-900 dark:text-stone-50 mb-1">Daily Goal</Typography>
-              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans">
+            <div className="flex-1 min-w-0">
+              <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Daily Goal</Typography>
+              <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
                 {pointsRemaining > 0 
-                  ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
-                  : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
+                  ? `Need ${pointsRemaining} more coins for ${DAILY_GOAL}.`
+                  : `Awesome! You reached ${DAILY_GOAL} coins!`
                 }
               </p>
             </div>
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-0.5" />
           </div>
-        </div>
+        </button>
 
-        {/* Check Badges Card */}
+        {/* Current Total Card */}
         <button 
-          onClick={onOpenBadges}
-          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full"
-          style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
+          onClick={() => setHistoryType('full')}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left w-full group"
+          style={{ background: 'repeating-linear-gradient(-45deg, #10b981, #10b981 10px, #34d399 10px, #34d399 20px, #059669 20px, #059669 30px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border-[3px] sm:border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+              <div className="transform scale-[1.1] sm:scale-[1.4]">
+                <CoinBadge points={activeChild.points} />
+              </div>
             </div>
-            <div>
-              <Typography variant="h2" className="text-lg font-bold text-stone-900 dark:text-stone-50 mb-1">Check Badges</Typography>
-              <p className="text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans">
-                View your achievements and claim your free rewards!
+            <div className="flex-1 min-w-0">
+              <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Current Total</Typography>
+              <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
+                You have {activeChild.points} gold coins to spend!
               </p>
             </div>
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-0.5" />
           </div>
         </button>
       </div>
+
+      {/* Check Badges Card */}
+      <button 
+        onClick={onOpenBadges}
+        className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full mb-6"
+        style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
+      >
+        <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Check Badges</Typography>
+            <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
+              View your achievements and claim your free rewards!
+            </p>
+          </div>
+          <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-1" />
+        </div>
+      </button>
 
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
@@ -288,9 +443,16 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
           );
         };
+        const currentHour = new Date().getHours();
+        const showMorning = currentHour >= 0 && currentHour < 12;
+        const showAfternoon = currentHour >= 12 && currentHour < 17;
+        const showEvening = currentHour >= 17;
 
-        const hasAnyTasks = activeRoutine.morningTaskIds?.length > 0 || activeRoutine.afternoonTaskIds?.length > 0 || activeRoutine.eveningTaskIds?.length > 0;
-        if (!hasAnyTasks) return null;
+        const hasMorningTasks = showMorning && (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = showAfternoon && (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = showEvening && (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+
+        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) return null;
 
         return (
           <div className="space-y-4 pt-2">
@@ -300,31 +462,48 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
-                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
+                  <Typography variant="h3" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-0.5 sm:mb-1 leading-tight">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[11px] sm:text-sm font-medium text-stone-500 dark:text-stone-400 px-1 leading-tight">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              {renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
-              {renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
-              {renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
+              {showMorning && renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {showAfternoon && renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {showEvening && renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
             </div>
           </div>
         );
       })()}
 
-      {/* Combined Activity Section */}
-      <div className="space-y-4 pt-2">
-        <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-3 mt-6">Today's Activity</Typography>
-        
-        <ActivityFeed 
-          activities={recentActivities} 
-          emptyMessage="No activity today." 
-          className="space-y-2"
-        />
-      </div>
+      {/* Activity Modals */}
+      <Modal
+        isOpen={historyType !== null}
+        onClose={() => setHistoryType(null)}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <Typography variant="h2" className="text-xl font-bold text-stone-900 dark:text-stone-50">
+            {historyType === 'today' ? "Today's Activity" : "Full History"}
+          </Typography>
+          <button 
+            onClick={() => setHistoryType(null)}
+            className="p-2 -mr-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto px-1 pb-4">
+          <ActivityFeed 
+            activities={historyType === 'today' ? recentActivities : fullActivities} 
+            emptyMessage={historyType === 'today' ? "No activity today." : "No activity history."} 
+            className="space-y-2"
+          />
+        </div>
+      </Modal>
 
     </motion.div>
   );

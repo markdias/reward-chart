@@ -1485,18 +1485,19 @@ export default function App() {
     }
   };
 
-  const handleClaimReward = async (rewardId: string, childId: string, paymentSource: 'main' | 'savings' | 'badge_freebie' = 'main') => {
+  const handleClaimReward = async (rewardId: string, childId: string, paymentSource: string = 'main') => {
     const reward = rewards.find(r => r.id === rewardId);
     const child = children.find(c => c.id === childId);
     const availablePoints = paymentSource === 'savings' ? (child?.savings_pot || 0) : (child?.points || 0);
-    const hasEnoughPoints = paymentSource === 'badge_freebie' ? true : availablePoints >= (reward?.cost_points || 0);
+    const isBadgeFreebie = paymentSource.startsWith('badge_freebie');
+    const hasEnoughPoints = isBadgeFreebie ? true : availablePoints >= (reward?.cost_points || 0);
     if (!reward || !child || !hasEnoughPoints || !reward.is_available) return;
 
     // --- Limit Checks ---
     const now = new Date();
     const childRedemptions = redemptions.filter(r => r.child_id === childId && r.reward_id === rewardId);
     
-    if (paymentSource !== 'badge_freebie') {
+    if (!isBadgeFreebie) {
       if (reward.limit_type === 'daily') {
         const startOfDay = getStartOfDailyReset(now);
         const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
@@ -1553,13 +1554,14 @@ export default function App() {
     const child = children.find(c => c.id === redemption.child_id);
 
     if (child) {
-      const cost = (reward && redemption.payment_source !== 'badge_freebie') ? reward.cost_points : 0;
+      const isBadgeFreebie = redemption.payment_source?.startsWith('badge_freebie');
+      const cost = (reward && !isBadgeFreebie) ? reward.cost_points : 0;
       const isSavingsPurchase = redemption.payment_source === 'savings';
       const targetChild = {
         ...child,
         points: isSavingsPurchase ? child.points : Math.max(0, child.points - cost),
         savings_pot: isSavingsPurchase ? Math.max(0, (child.savings_pot || 0) - cost) : child.savings_pot,
-        pet_food: (child.pet_food || 0) + (cost > 0 || redemption.payment_source === 'badge_freebie' ? 1 : 0),
+        pet_food: (child.pet_food || 0) + (cost > 0 || isBadgeFreebie ? 1 : 0),
       };
 
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
