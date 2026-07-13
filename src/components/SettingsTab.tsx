@@ -37,7 +37,7 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode, themePreference, setThemePreference } = useTheme();
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -304,14 +304,15 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
           </SettingsBlock>
 
           <SettingsBlock title="Appearance">
-            <SettingsRow 
-              label="Dark Mode" 
-              isToggle 
-              toggleActive={isDarkMode}
-              onToggle={() => {
-                playSound.click();
-                toggleDarkMode();
-              }}
+            <SettingsSelectRow 
+              label="Appearance" 
+              value={themePreference}
+              onChange={(val) => setThemePreference(val as 'light' | 'dark' | 'system')}
+              options={[
+                { label: 'Light', value: 'light' },
+                { label: 'Dark', value: 'dark' },
+                { label: 'System', value: 'system' }
+              ]}
               isLast 
             />
           </SettingsBlock>
