@@ -168,7 +168,7 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
 
       {/* Full-screen themed overlay */}
       <div
-        className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden"
         style={{
           background: theme.bg,
           backdropFilter: 'blur(12px)',

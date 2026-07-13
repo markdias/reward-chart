@@ -670,7 +670,7 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+100px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+120px)]`} id="parent-dashboard-root">
 
 
       <header
@@ -792,8 +792,7 @@ export default function ParentDashboard({
                 {childrenToNudge.length > 0 && (
                   <div className="space-y-3">
                     <Typography variant="h2" className="text-base sm:text-lg font-black text-stone-900 dark:text-stone-50 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-indigo-500" />
-                      Smart Reminders
+                      Reminders
                     </Typography>
                     <div className="space-y-3">
                       {childrenToNudge.map(child => {

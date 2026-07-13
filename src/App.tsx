@@ -59,8 +59,15 @@ export default function App() {
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
   useEffect(() => {
-    // Left empty or we can just remove the whole useEffect if we want, but let's just clear the theme logic inside.
-  }, [parentProfile?.dashboard_style]);
+    // Disable right-click globally
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, []);
 
   useEffect(() => {
     // Initialize OneSignal
