@@ -17,16 +17,6 @@ interface LandingPageProps {
 
 const CAROUSEL_CHARACTERS = [
   { 
-    id: 'dragon', 
-    name: 'Ember - Inferno Emperor', 
-    emoji: '🐉👑🔥', 
-    type: 'Fire', 
-    color: 'from-red-600 via-orange-600 to-rose-700', 
-    glow: 'shadow-red-600/30 border-red-600/40', 
-    stats: { power: 99, fun: 95, brains: 85 }, 
-    greeting: 'A magnificent dragon that breathes rainbow sparks and floats with majestic wings!' 
-  },
-  { 
     id: 'unicorn', 
     name: 'Starry - Celestial Alicorn', 
     emoji: '👑🦄🌌', 
@@ -35,16 +25,6 @@ const CAROUSEL_CHARACTERS = [
     glow: 'shadow-pink-500/30 border-pink-500/40', 
     stats: { power: 85, fun: 99, brains: 95 }, 
     greeting: 'The supreme form of Starry, boasting grand wings of starfire. Supercharged by good behavior!' 
-  },
-  { 
-    id: 'robot', 
-    name: 'Sparky - Mecha-Guardian Alpha', 
-    emoji: '🦁🤖⚡', 
-    type: 'Tech', 
-    color: 'from-blue-600 via-cyan-600 to-violet-700', 
-    glow: 'shadow-cyan-500/30 border-cyan-500/40', 
-    stats: { power: 90, fun: 88, brains: 99 }, 
-    greeting: 'Armed with helpful tools and protective forcefields, powered entirely by child responsibility.' 
   },
   { 
     id: 'dino', 
@@ -56,33 +36,13 @@ const CAROUSEL_CHARACTERS = [
     stats: { power: 98, fun: 90, brains: 85 }, 
     greeting: 'A giant, gentle dinosaur sporting glowing rainbow-colored tail plates!' 
   },
-  { 
-    id: 'cat', 
-    name: 'Pippin - Archmage Familiar', 
-    emoji: '🌌🧙‍♂️🐈‍⬛', 
-    type: 'Magic', 
-    color: 'from-purple-600 via-indigo-700 to-blue-600', 
-    glow: 'shadow-purple-500/30 border-purple-500/40', 
-    stats: { power: 85, fun: 95, brains: 99 }, 
-    greeting: 'Surrounded by floating magical scrolls, holding a glowing star-tipped wand.' 
-  },
-  { 
-    id: 'bunny', 
-    name: 'Nebula - Galaxy Vanguard', 
-    emoji: '🐰🌟🛰️', 
-    type: 'Cosmic', 
-    color: 'from-violet-600 via-indigo-600 to-fuchsia-700', 
-    glow: 'shadow-violet-500/30 border-violet-500/40', 
-    stats: { power: 92, fun: 95, brains: 90 }, 
-    greeting: 'Riding a mini cosmic speeder, charting new habit systems across the universe.' 
-  },
 ];
 
 export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: LandingPageProps) {
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
   
   const charactersWithImages = CAROUSEL_CHARACTERS.map(char => {
-    const stage = getCharacterStage(char.id, 4);
+    const stage = getCharacterStage(char.id, 99);
     return {
       ...char,
       image: stage.image_url
@@ -181,18 +141,16 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
             </p>
           </div>
 
-          <div className="w-full max-w-md pt-2 pb-4">
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full sm:w-auto shadow-lg"
-                rightIcon={<ArrowRight className="w-5 h-5" />}
-                onClick={handleEnterClick}
-              >
-                Get Started
-              </Button>
-            </div>
+          <div className="w-full pt-2 pb-4 flex justify-center">
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full sm:w-auto shadow-lg"
+              rightIcon={<ArrowRight className="w-5 h-5" />}
+              onClick={handleEnterClick}
+            >
+              Get Started
+            </Button>
           </div>
 
           {/* Value Badges */}

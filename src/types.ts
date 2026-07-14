@@ -35,7 +35,7 @@ export interface Child {
   name: string;
   age?: number;
   avatar_url: string;
-  character_id: string; // Selected character template ID (e.g. 'unicorn', 'robot')
+  character_id: string; // Selected character template ID (e.g. 'unicorn', 'dino')
   points: number;
   lifetime_points: number;
   level: number;

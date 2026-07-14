@@ -9,6 +9,7 @@ import { ChildAvatar } from './ChildAvatar';
 import { Plane, Star, Zap, Shield, Crown, Play, Trophy, Flame, ChevronRight } from 'lucide-react';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
+import { ActionShowcase } from './ActionShowcase';
 
 const SettingsBlock = ({ children, title }: { children: React.ReactNode, title?: string }) => (
   <div className="mb-6 w-full max-w-md mx-auto">
@@ -160,6 +161,13 @@ export default function Showcase() {
   return (
     <div className="min-h-screen bg-stone-100 dark:bg-stone-800 p-8 font-sans pb-32">
       <div className="max-w-4xl mx-auto space-y-16">
+
+        {/* =========================================
+            ACTION BUTTON IDEAS
+            ========================================= */}
+        <section className="space-y-6 pt-6">
+          <ActionShowcase />
+        </section>
 
         {/* =========================================
             TICKET SHOWCASE IDEAS

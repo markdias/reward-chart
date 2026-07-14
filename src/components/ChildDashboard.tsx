@@ -404,7 +404,7 @@ export default function ChildDashboard({
     }
   }
 
-  const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
+  const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level, parentProfile) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
   const pendingRedemptionsCost = activeChild ? redemptions
@@ -563,7 +563,7 @@ export default function ChildDashboard({
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
           <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
               {!lockedChildId && (
                 <Tooltip content="Go Back to Selection" position="bottom">
                   <Button
@@ -576,11 +576,11 @@ export default function ChildDashboard({
                   </Button>
                 </Tooltip>
               )}
-              <div className="flex flex-col justify-center">
-                <Typography variant="h1" as="h1" className="text-2xl sm:text-4xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display">
+              <div className="flex flex-col justify-center flex-1 min-w-0">
+                <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
                 </Typography>
-                <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5">
+                <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
                 </div>
               </div>
@@ -604,18 +604,18 @@ export default function ChildDashboard({
                       variant="none"
                       size="none"
                       onClick={() => { playSound.click(); onLogout(); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                     >
                       <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
                   </Tooltip>
                 ) : (
-                  <Tooltip content="Parent Dashboard" position="bottom">
+                  <Tooltip content="Parent Dashboard" position="bottom" align="right">
                     <Button 
                       variant="none"
                       size="none"
                       onClick={() => { playSound.click(); onEnterParentMode(); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                     >
                       <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
@@ -623,12 +623,12 @@ export default function ChildDashboard({
                 )}
 
                 {!lockedChildId && onLockChild && activeChild && (
-                  <Tooltip content="Lock Device to Child" position="bottom">
+                  <Tooltip content="Lock Device to Child" position="bottom" align="right">
                     <Button 
                       variant="none"
                       size="none"
                       onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                     >
                       <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
@@ -908,7 +908,7 @@ export default function ChildDashboard({
                 <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                   <video 
                     ref={videoRef}
-                    src="/app-intro-video.mp4" 
+                    src="/01_GoldPot_LevelUp.mp4" 
                     className="w-full h-full object-cover"
                     controls={isVideoPlaying}
                     playsInline
@@ -916,7 +916,7 @@ export default function ChildDashboard({
                     onPause={() => setIsVideoPlaying(false)}
                     onEnded={() => setIsVideoPlaying(false)}
                   >
-                    <source src="/app-intro-video.mp4" type="video/mp4" />
+                    <source src="/01_GoldPot_LevelUp.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                   {!isVideoPlaying && (
@@ -987,7 +987,7 @@ export default function ChildDashboard({
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/savings-video.mp4" 
+                  src="/02_SavingsPot_BigGoals.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -996,7 +996,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/savings-video.mp4" type="video/mp4" />
+                  <source src="/02_SavingsPot_BigGoals.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -1006,7 +1006,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
                     </div>
                   </div>
@@ -1063,7 +1063,7 @@ export default function ChildDashboard({
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/food-pot-video.mp4" 
+                  src="/03_FoodPot_PetCare.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -1072,7 +1072,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/food-pot-video.mp4" type="video/mp4" />
+                  <source src="/03_FoodPot_PetCare.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -1082,7 +1082,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-orange-500 fill-orange-500 ml-1" />
                     </div>
                   </div>
@@ -1139,7 +1139,7 @@ export default function ChildDashboard({
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/gifting-pot-video.mp4" 
+                  src="/04_GiftingPot_Charity.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -1148,7 +1148,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/gifting-pot-video.mp4" type="video/mp4" />
+                  <source src="/04_GiftingPot_Charity.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -1158,7 +1158,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-rose-500 fill-rose-500 ml-1" />
                     </div>
                   </div>
@@ -1234,7 +1234,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
                     </div>
                   </div>
@@ -1457,7 +1457,7 @@ export default function ChildDashboard({
                     ))}
                   </>
                 ) : children.map((child) => {
-                  const stage = getCharacterStage(child.character_id, child.level);
+                  const stage = getCharacterStage(child.character_id, child.level, parentProfile);
                   return (
                     <ArcadeTicketCard
                       key={child.id}

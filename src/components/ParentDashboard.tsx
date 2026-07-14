@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils
+  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -42,14 +42,26 @@ import { generateShortCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import TargetsTab from './TargetsTab';
+import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { StackedIconButton } from './ui/StackedIconButton';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { BottomTabBar } from './ui/BottomTabBar';
+
+const getPetStripeBackground = (characterId?: string) => {
+  switch (characterId) {
+    case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
+
+    case 'dino': return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #84cc16 15px, #84cc16 30px, #14b8a6 30px, #14b8a6 45px)';
+
+    default: return 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 15px, #a855f7 15px, #a855f7 30px, #38bdf8 30px, #38bdf8 45px)';
+  }
+};
 
 interface ParentDashboardProps {
   children: Child[];
@@ -157,6 +169,7 @@ export default function ParentDashboard({
   }, [children, routineChildId]);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [newRoutineName, setNewRoutineName] = useState('');
+  const [showContextActions, setShowContextActions] = useState(false);
 
 
   const [rewardSubTab, setRewardSubTab] = useState<'directory' | 'active'>('directory');
@@ -678,7 +691,7 @@ export default function ParentDashboard({
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
             <Tooltip content="Settings" position="bottom">
               <Button variant="none" size="none"
                 onClick={() => setActiveTab('settings')}
@@ -687,39 +700,150 @@ export default function ParentDashboard({
                 <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
             </Tooltip>
-            <div className="flex flex-col justify-center">
-              <Typography variant="h1" className="text-2xl sm:text-4xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display">
+            <div className="flex flex-col justify-center flex-1 min-w-0">
+              <Typography variant="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
               </Typography>
-              <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5">
+              <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
+            {/* Action Menu / Logout / Lock Pill */}
+            <div className="relative flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0 z-50">
+              
+              {/* Dynamic Context Actions Dropdown */}
+              {(activeTab === 'children' || (activeTab === 'tasks' && taskSubTab === 'directory') || (activeTab === 'rewards' && rewardSubTab === 'directory')) && (
+                <>
+                  <Button variant="none" size="none"
+                    onClick={() => { playSound.click(); setShowContextActions(!showContextActions); }}
+                    className={`h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center transition-colors shrink-0 ${showContextActions ? 'bg-stone-200 text-stone-900 dark:bg-stone-800 dark:text-stone-50' : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200'}`}
+                  >
+                    <Plus className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 ${showContextActions ? 'rotate-45' : ''}`} />
+                  </Button>
+
+                  <AnimatePresence>
+                    {showContextActions && (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowContextActions(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          className="absolute left-0 right-0 top-full mt-2 w-full flex flex-col gap-1 bg-white dark:bg-stone-900 rounded-[2rem] shadow-xl border border-stone-100 dark:border-stone-800 p-1 sm:p-1.5 z-50 origin-top"
+                        >
+                          {activeTab === 'children' && (
+                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { playSound.click(); setShowAddChild(true); setShowContextActions(false); }}>
+                              <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
+                              </div>
+                              <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Add Child</span>
+                            </button>
+                          )}
+                          {activeTab === 'tasks' && taskSubTab === 'directory' && (
+                            <>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                playSound.click();
+                                setShowAddTask(true);
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Create</span>
+                              </button>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                handleImportDefaultTasks();
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-stone-600 dark:text-stone-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Import</span>
+                              </button>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                playSound.click();
+                                setGenerateAgeRange(getRecommendedAgeRange());
+                                setShowGenerateTasksModal(true);
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Generate</span>
+                              </button>
+                            </>
+                          )}
+                          {activeTab === 'rewards' && rewardSubTab === 'directory' && (
+                            <>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                playSound.click();
+                                setShowAddReward(true);
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Create</span>
+                              </button>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                handleImportDefaultRewards();
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-stone-600 dark:text-stone-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Import</span>
+                              </button>
+                              <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => {
+                                playSound.click();
+                                setGenerateAgeRange(getRecommendedAgeRange());
+                                setShowGenerateRewardsModal(true);
+                                setShowContextActions(false);
+                              }}>
+                                <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <span className="font-bold text-sm sm:text-base text-stone-700 dark:text-stone-200 whitespace-nowrap">Generate</span>
+                              </button>
+                            </>
+                          )}
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
+
               {onLogout && (
-                <Tooltip content="Sign Out" position="bottom">
+                <Tooltip content="Sign Out" position="bottom" align="right">
                   <Button variant="none" size="none"
                     onClick={() => {
                       playSound.click();
                       onLogout();
                     }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                     id="global-logout-btn"
                   >
                     <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </Tooltip>
               )}
-              <Tooltip content="Exit Parent Mode" position="bottom">
+              <Tooltip content="Exit Parent Mode" position="bottom" align="right">
                 <Button variant="none" size="none"
                   onClick={() => {
                     playSound.click();
                     onExitParentMode();
                   }}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                   id="exit-to-child-view-btn"
                 >
                   <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -798,18 +922,18 @@ export default function ParentDashboard({
                       {childrenToNudge.map(child => {
                         const isNudged = child.has_pending_nudge || nudgedChildIds.includes(child.id);
                         return (
-                          <div key={child.id} className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <div className="flex items-center gap-3">
-                              <ChildAvatar iconName={child.avatar_url} className="w-10 h-10" />
+                          <div key={child.id} className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 flex flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                              <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 shrink-0" />
                               <div>
                                 <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{child.name} hasn't logged any activity today.</Typography>
                                 <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-xs mt-1">Send a friendly reminder to complete their tasks!</Typography>
                               </div>
                             </div>
-                            <Button
-                              variant={isNudged ? "secondary" : "primary"}
-                              size="sm"
-                              className="shrink-0"
+                            <StackedIconButton
+                              variant={isNudged ? "neutral" : "primary"}
+                              icon={Bell}
+                              label={isNudged ? 'Nudged!' : 'Nudge'}
                               disabled={isNudged}
                               onClick={() => {
                                 setNudgedChildIds(prev => [...prev, child.id]);
@@ -819,9 +943,7 @@ export default function ParentDashboard({
                                   last_nudge_time: new Date().toISOString()
                                 });
                               }}
-                            >
-                              {isNudged ? 'Nudged!' : 'Send Nudge'}
-                            </Button>
+                            />
                           </div>
                         );
                       })}
@@ -942,16 +1064,7 @@ export default function ParentDashboard({
                 className="space-y-6"
                 id="children-view"
               >
-                <div className="flex justify-end items-center">
-                  <Button
-                    variant="primary"
-                    onClick={() => { playSound.click(); setShowAddChild(true); }}
-                    id="add-child-btn-top"
-                    leftIcon={<UserPlus className="w-4 h-4" />}
-                  >
-                    ADD CHILD
-                  </Button>
-                </div>
+                {/* Add Child button moved to header */}
 
                 {/* showAddChild moved to a modal */}
 
@@ -1002,146 +1115,133 @@ export default function ParentDashboard({
                       </div>
                     </>
                   ) : sortedChildren.map((child) => {
-                    const stage = getCharacterStage(child.character_id, child.level);
-                    const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id);
+                    const stage = getCharacterStage(child.character_id, child.level, parentProfile);
+                    const pack = CHARACTER_PACKS.find(cp => cp.id === child.character_id) || CHARACTER_PACKS[0];
                     return (
                       <div
                         key={child.id}
                         className="mb-8 font-sans"
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
-                        {/* Section Header */}
-                        <div className="px-4 mb-2">
-                          <span className="text-[13px] text-stone-500 dark:text-stone-400 uppercase tracking-wide font-medium">{child.name}'s Profile</span>
-                        </div>
+                        {/* Rainbow Trading Card */}
+                        <div className="w-full max-w-[440px] mx-auto md:mx-0 group perspective-1000">
+                          <div 
+                            className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-transform duration-500 transform-gpu group-hover:-translate-y-2 group-hover:rotate-1"
+                            style={{ background: getPetStripeBackground(child.character_id) }}
+                          >
+                            <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-5 border-[3px] border-stone-900/10 dark:border-white/10 shadow-inner flex flex-col h-full relative overflow-hidden">
+                              {/* Foil Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-white/10 opacity-50 mix-blend-overlay pointer-events-none z-20"></div>
 
-                        {/* Merged Child Card */}
-                        <div className="bg-white dark:bg-stone-900 rounded-3xl shadow-sm overflow-hidden border border-stone-200 dark:border-stone-700 font-sans">
-
-                          {/* 1. Header: Avatar & Info */}
-                          <div className="flex items-center p-4 gap-4">
-                            <ChildAvatar iconName={child.avatar_url} className="w-14 h-14 !rounded-full bg-stone-100 dark:bg-stone-800 shrink-0" />
-                            <div className="flex flex-col flex-1">
-                              <span className="text-[18px] font-bold text-black dark:text-white tracking-tight">{child.name}</span>
-                              <span className="text-[14px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Gold Coins: {child.points}</span>
-                            </div>
-                          </div>
-
-                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
-
-                          {/* 2. Companion & Progress (Side-by-side on sm screens) */}
-                          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-stone-100 bg-stone-50 dark:bg-stone-950/30">
-                            <div className="flex-1 p-4 flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shrink-0 shadow-inner">
-                                {stage.image_url ? (
-                                  <img src={stage.image_url} alt={stage.name} className="w-7 h-7 drop-shadow-md" />
-                                ) : (
-                                  <span className="text-lg drop-shadow-md">{stage.emoji}</span>
-                                )}
+                              {/* Top Header */}
+                              <div className="flex justify-between items-center mb-4 z-10">
+                                <span className="text-sm font-black uppercase tracking-widest text-stone-800 dark:text-stone-100">{child.name}</span>
                               </div>
-                              <div className="flex flex-col flex-1">
-                                <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Companion: {pack?.name.split(' the ')[0] || 'Unknown'}</span>
-                                <span className="text-[12px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Level {stage.stage_number} Active</span>
-                              </div>
-                            </div>
 
-                            <div className="flex-1 p-4 flex flex-col justify-center">
-                              <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Level {child.level}</span>
-                                <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">
-                                  {(child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
-                                </span>
-                              </div>
-                              <LinearProgressBar
-                                progress={(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                                heightClass="h-2"
-                                className="!bg-stone-200/60 border-none shadow-inner"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
-
-                          {/* 3. Child App Login */}
-                          <div className="flex items-center justify-between p-4 bg-white dark:bg-stone-900">
-                            <div className="flex flex-col">
-                              <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Child App Login</span>
-                              <span className="text-[12px] text-stone-500 dark:text-stone-400 font-medium mt-0.5">Code for their device</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {child.child_share_token?.startsWith('LINKED_') ? (
-                                <>
-                                  <span className="text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> {child.linked_email ? `Linked: ${child.linked_email}` : 'Linked'}
-                                  </span>
-                                </>
-                              ) : child.child_share_token ? (
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[15px] font-sans tracking-widest text-stone-500 dark:text-stone-400 bg-stone-50 dark:bg-stone-950 px-2 py-0.5 rounded-lg border border-stone-200 dark:border-stone-700">{child.child_share_token}</span>
-                                  <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-blue-600 transition-colors" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
-                                  <Button variant="ghost" size="sm" className="text-emerald-500 font-medium bg-transparent hover:bg-transparent px-1 hover:text-emerald-600 transition-colors" onClick={() => {
-                                    playSound.click();
-                                    onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
-                                  }} title="Manually mark as linked">Link</Button>
-                                  {onUnlinkChild && (
-                                    <Button variant="ghost" size="sm" className="text-stone-400 font-medium bg-transparent hover:bg-transparent px-1 hover:text-stone-600 dark:hover:text-stone-300 transition-colors" onClick={() => {
-                                      playSound.click();
-                                      onUnlinkChild(child.id);
-                                    }}>Reset</Button>
+                              {/* Characters Banner (Balance & Companion) */}
+                              <div className="w-full h-24 bg-stone-100 dark:bg-stone-800 rounded-2xl border-2 border-stone-200 dark:border-stone-700 shadow-inner flex items-center relative overflow-hidden mb-5 z-10 group/art">
+                                <div className="absolute inset-0 bg-gradient-to-br from-stone-200/50 to-transparent dark:from-stone-700/50 mix-blend-overlay"></div>
+                                <div className="flex-1 flex items-center justify-center relative z-10">
+                                  <CoinBadge points={child.points} />
+                                </div>
+                                <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
+                                <div className="flex-1 flex items-center justify-center relative z-10">
+                                  {stage.image_url ? (
+                                    <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-contain group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                  ) : (
+                                    <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
                                   )}
                                 </div>
-                              ) : (
-                                <Button variant="ghost" size="sm" className="text-blue-500 font-medium bg-transparent hover:bg-transparent px-0 hover:text-blue-600 transition-colors" onClick={() => {
-                                  const code = generateShortCode();
-                                  onEditChild(child.id, { child_share_token: code });
-                                }}>Generate</Button>
-                              )}
+                              </div>
+
+                              {/* Middle Stats (Level Info) */}
+                              <div className="flex flex-col gap-3 mb-4 z-10 bg-stone-50 dark:bg-stone-950 p-4 rounded-2xl border border-stone-100 dark:border-stone-800">
+                                <div className="flex justify-between items-center px-1">
+                                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Level {child.level}</span>
+                                  <span className="text-amber-500 font-black text-[10px] uppercase tracking-widest">
+                                    {child.lifetime_points ? child.lifetime_points % (parentProfile?.points_to_level_up ?? 500) : 0}/{parentProfile?.points_to_level_up ?? 500} GOLD
+                                  </span>
+                                </div>
+                                {/* Level Progress */}
+                                <div className="w-full px-1">
+                                  <div className="h-2.5 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden shadow-inner">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-[0_0_5px_rgba(251,191,36,0.5)]"
+                                      style={{ width: `${(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* App Linked Status Row */}
+                              <div className="flex items-center justify-between mb-5 z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                <div className="flex flex-col shrink-0 pr-2">
+                                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
+                                </div>
+                                {child.child_share_token?.startsWith('LINKED_') ? (
+                                  <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
+                                ) : child.child_share_token ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-600" onClick={() => {
+                                      playSound.click();
+                                      onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
+                                    }}>Link</Button>
+                                  </div>
+                                ) : (
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={() => {
+                                    const code = generateShortCode();
+                                    onEditChild(child.id, { child_share_token: code });
+                                  }}>Generate Code</Button>
+                                )}
+                              </div>
+
+                              {/* Action Buttons - Clean List Option */}
+                              <div className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10 mt-auto">
+                                <button onClick={() => openEditChild(child)} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                  <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                    <Edit2 className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                    Edit Profile
+                                  </span>
+                                  <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                </button>
+                                {onUpdateChildStats && (
+                                  <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                    <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                      <Settings className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                      Adjust Balance
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                  </button>
+                                )}
+                                {onDeductCoins && (
+                                  <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
+                                    <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
+                                      <MinusCircle className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
+                                      Take Coins
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
+                                  </button>
+                                )}
+                                <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                  <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                    <ScrollText className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                    View History
+                                  </span>
+                                  <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                </button>
+                                {onDeleteChild && (
+                                  <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
+                                    <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
+                                      <Trash2 className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
+                                      Delete Profile
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="h-[1px] bg-stone-100 dark:bg-stone-800"></div>
-
-                          {/* 4. Actions Group */}
-                          <div className="bg-stone-50 dark:bg-stone-950/20">
-                            {onUpdateChildStats && (
-                              <>
-                                <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
-                                  <div className="w-7 h-7 rounded bg-stone-100 dark:bg-stone-800 flex items-center justify-center mr-3"><Settings className="w-4 h-4 text-stone-600 dark:text-stone-300" /></div>
-                                  <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Quick Adjustments</span>
-                                  <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform -rotate-90`} />
-                                </button>
-                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                              </>
-                            )}
-                            {onDeductCoins && (
-                              <>
-                                <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
-                                  <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><MinusCircle className="w-4 h-4 text-rose-500" /></div>
-                                  <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Take Coins</span>
-                                </button>
-                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                              </>
-                            )}
-                            <button onClick={() => openEditChild(child)} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
-                              <div className="w-7 h-7 rounded bg-blue-100 flex items-center justify-center mr-3"><Edit2 className="w-4 h-4 text-blue-500" /></div>
-                              <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">Edit Profile</span>
-                            </button>
-                            <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-
-                            <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
-                              <div className="w-7 h-7 rounded bg-indigo-100 flex items-center justify-center mr-3"><ScrollText className="w-4 h-4 text-indigo-500" /></div>
-                              <span className="text-[15px] text-black dark:text-white tracking-tight flex-1">History</span>
-                            </button>
-
-                            {onDeleteChild && (
-                              <>
-                                <div className="h-[0.5px] bg-stone-200 ml-[52px]"></div>
-                                <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center py-2 px-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors active:bg-stone-100 dark:active:bg-stone-800">
-                                  <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center mr-3"><Trash2 className="w-4 h-4 text-rose-500" /></div>
-                                  <span className="text-[15px] text-rose-500 tracking-tight flex-1">Delete Child</span>
-                                </button>
-                              </>
-                            )}
                           </div>
                         </div>
 
@@ -1242,7 +1342,7 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Tasks */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 dark:border-stone-700 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setTaskSubTab('directory')}
@@ -1273,45 +1373,12 @@ export default function ParentDashboard({
                     </Button>
                   </div>
 
-                  {taskSubTab === 'directory' && (
-                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                      <Button
-                        variant="purple"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
-                        onClick={() => {
-                          playSound.click();
-                          setGenerateAgeRange(getRecommendedAgeRange());
-                          setShowGenerateTasksModal(true);
-                        }}
-                        leftIcon={<Sparkles className="w-4 h-4" />}
-                      >
-                        GENERATE <span className="hidden sm:inline">IDEAS</span>
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
-                        onClick={handleImportDefaultTasks}
-                        leftIcon={<Plus className="w-4 h-4 text-stone-500 dark:text-stone-400" />}
-                      >
-                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                      </Button>
-                      <Button
-                        variant="primary"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
-                        onClick={() => { playSound.click(); setShowAddTask(true); }}
-                        id="add-chore-btn-top"
-                        leftIcon={<Plus className="w-4 h-4" />}
-                      >
-                        CREATE <span className="hidden sm:inline">TEMPLATE</span>
-                      </Button>
-                    </div>
-                  )}
+                  {/* Task Directory Buttons moved to header */}
                 </div>
 
                 {/* QUEST DIRECTORY */}
                 {taskSubTab === 'directory' && (
-                  <div className="mt-2 sm:mt-4">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Tasks Directory</Typography>
+                  <div className="mt-0">
                     <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {tasks.filter(t => t.is_template || t.child_id === 'directory').map((task, index, arr) => {
                         const instances = tasks.filter(t => t.template_id === task.id);
@@ -1414,7 +1481,7 @@ export default function ParentDashboard({
 
                 {/* ACTIVE QUESTS */}
                 {taskSubTab === 'active' && (
-                  <div className="mt-4">
+                  <div className="mt-0">
                     <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {tasks.filter(t => (!t.is_template && t.child_id !== 'directory') && children.some(c => c.id === t.child_id)).map((task, index, arr) => {
                         const assignedName = children.find(c => c.id === task.child_id)?.name;
@@ -1486,8 +1553,7 @@ export default function ParentDashboard({
                 )}
 
                 {taskSubTab === 'routines' && (
-                  <div className="mt-4 space-y-6" id="routines-view">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Manage Routines</Typography>
+                  <div className="mt-0 space-y-6" id="routines-view">
 
                     {/* Select Child */}
                     <div className="flex w-fit max-w-full gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm overflow-x-auto custom-scrollbar">
@@ -1540,9 +1606,9 @@ export default function ParentDashboard({
                                   <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400">When active, the Holiday routine will override the Weekday routine.</Typography>
                                 </div>
                                 <label className="flex items-center cursor-pointer relative">
-                                  <Input 
+                                  <input 
                                     type="checkbox" 
-                                     
+                                    className="sr-only"
                                     checked={child.holiday_mode || false}
                                     onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked })}
                                   />
@@ -1795,7 +1861,7 @@ export default function ParentDashboard({
                 </AnimatePresence>
 
                 {/* SUB-TABS AND ACTION BUTTONS FOR Rewards */}
-                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 border-b border-stone-200 dark:border-stone-700 pb-3 mb-4 sm:pb-4 sm:mb-6">
+                <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
                       onClick={() => setRewardSubTab('directory')}
@@ -1817,45 +1883,12 @@ export default function ParentDashboard({
                     </Button>
                   </div>
 
-                  {rewardSubTab === 'directory' && (
-                    <div className="flex flex-wrap gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-                      <Button
-                        variant="warning"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
-                        onClick={() => {
-                          playSound.click();
-                          setGenerateAgeRange(getRecommendedAgeRange());
-                          setShowGenerateRewardsModal(true);
-                        }}
-                        leftIcon={<Sparkles className="w-4 h-4" />}
-                      >
-                        GENERATE <span className="hidden sm:inline">IDEAS</span>
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest shadow-sm"
-                        onClick={handleImportDefaultRewards}
-                        leftIcon={<Plus className="w-4 h-4 text-stone-500 dark:text-stone-400" />}
-                      >
-                        IMPORT <span className="hidden sm:inline">DEFAULTS</span>
-                      </Button>
-                      <Button
-                        variant="primary"
-                        className="flex-1 sm:flex-none justify-center px-4 py-2 sm:py-2.5 tracking-widest"
-                        onClick={() => { playSound.click(); setShowAddReward(true); }}
-                        id="add-reward-btn-top"
-                        leftIcon={<Plus className="w-4 h-4" />}
-                      >
-                        ADD <span className="hidden sm:inline">REWARD</span>
-                      </Button>
-                    </div>
-                  )}
+                  {/* Reward Directory Buttons moved to header */}
                 </div>
 
                 {/* REWARD DIRECTORY */}
                 {rewardSubTab === 'directory' && (
-                  <div className="mt-2 sm:mt-4">
-                    <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Rewards Directory</Typography>
+                  <div className="mt-0">
                     <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {rewards.filter(r => r.is_template || r.child_id === 'directory').map((reward, index, arr) => {
                         const instances = rewards.filter(r => r.template_id === reward.id);
@@ -1960,7 +1993,7 @@ export default function ParentDashboard({
 
                 {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
-                  <div className="mt-4">
+                  <div className="mt-0">
                     <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {rewards.filter(r => (!r.is_template && r.child_id !== 'directory') && children.some(c => c.id === r.child_id)).map((reward, index, arr) => {
                         const assignedName = children.find(c => c.id === reward.child_id)?.name;
@@ -2163,17 +2196,24 @@ export default function ParentDashboard({
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Companion Egg Species</label>
-                      <Select
-                        value={newChildChar}
-                        onChange={(e) => setNewChildChar(e.target.value)}
-                      >
+                      <label className={`block text-[9px] font-bold font-sans text-center ${styles.textMuted} uppercase tracking-widest mb-2`}>Choose Companion</label>
+                      <div className="flex justify-center gap-4">
                         {CHARACTER_PACKS.map(char => (
-                          <option key={char.id} value={char.id}>
-                            {char.name} ({char.pack_name})
-                          </option>
+                          <button
+                            key={char.id}
+                            type="button"
+                            onClick={() => setNewChildChar(char.id)}
+                            className={`aspect-square w-28 rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
+                              newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
+                            }`}
+                          >
+                            <img src={getCharacterStage(char.id, 99).image_url} alt={char.name} className="w-12 h-12 object-contain mb-1" />
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
+                              {char.name.split(' ')[0]}
+                            </span>
+                          </button>
                         ))}
-                      </Select>
+                      </div>
                     </div>
                   </div>
 

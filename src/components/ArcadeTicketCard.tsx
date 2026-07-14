@@ -23,11 +23,9 @@ export interface ArcadeTicketCardProps {
 export const getPetStripeBackground = (characterId?: string) => {
   switch (characterId) {
     case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
-    case 'robot': return 'repeating-linear-gradient(-45deg, #0ea5e9, #0ea5e9 15px, #3b82f6 15px, #3b82f6 30px, #8b5cf6 30px, #8b5cf6 45px)';
+
     case 'dino': return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #84cc16 15px, #84cc16 30px, #14b8a6 30px, #14b8a6 45px)';
-    case 'dragon': return 'repeating-linear-gradient(-45deg, #ef4444, #ef4444 15px, #f97316 15px, #f97316 30px, #eab308 30px, #eab308 45px)';
-    case 'cat': return 'repeating-linear-gradient(45deg, #6366f1, #6366f1 15px, #8b5cf6 15px, #8b5cf6 30px, #d946ef 30px, #d946ef 45px)';
-    case 'bunny': return 'repeating-linear-gradient(-45deg, #d946ef, #d946ef 15px, #8b5cf6 15px, #8b5cf6 30px, #ec4899 30px, #ec4899 45px)';
+
     default: return 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 15px, #a855f7 15px, #a855f7 30px, #38bdf8 30px, #38bdf8 45px)';
   }
 };
