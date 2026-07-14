@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'framer-motion';
+import { Modal } from './ui/Modal';
+import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
-import { getLogicalDateString } from '../utils/date';
+import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
+import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame } from 'lucide-react';
+import { getSupabaseClient } from '../utils/supabase';
+import { ActivityFeed } from './ui/ActivityFeed';
+import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
 
 interface ChildHomeTabProps {
   activeChild: Child;
@@ -32,6 +37,27 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   onOpenBadges,
   parentProfile
 }) => {
+  const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
+  const [badges, setBadges] = useState<any[]>([]);
+  const [childBadges, setChildBadges] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBadges = async () => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+      const { data: bData } = await supabase.from('badges').select('id, icon_name');
+      if (bData) setBadges(bData);
+      
+      const { data: cbData } = await supabase.from('child_badges').select('*').eq('child_id', activeChild.id);
+      if (cbData) setChildBadges(cbData);
+    };
+    fetchBadges();
+  }, [activeChild.id]);
+
+  const ICON_MAP: Record<string, React.FC<any>> = {
+    Award, Star, Zap, Droplets, Target, Sparkles, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Trophy, Crown, Gem, Medal
+  };
+
   // Daily Goal Logic
   const DAILY_GOAL = parentProfile?.daily_points_target ?? 50;
   
@@ -52,51 +78,160 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   const progressPercent = Math.min(100, (pointsEarnedToday / DAILY_GOAL) * 100);
 
   // Combine Recent Activity
-  const recentActivities: any[] = [];
+  const recentActivities: any[] = useMemo(() => {
+    const acts: any[] = [];
+    todayCompletions.forEach(c => {
+      if (c.points_awarded < 0) {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Penalty',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'penalty'
+        });
+      } else {
+        const task = tasks.find(t => t.id === c.task_id);
+        acts.push({
+          id: `comp-${c.id}`,
+          title: task?.title || 'Unknown Task',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: task?.category || 'other'
+        });
+      }
+    });
 
-  // 1. Add Completions (Positive and Negative)
-  todayCompletions.forEach(c => {
-    if (c.points_awarded < 0) {
-      recentActivities.push({
-        id: `comp-${c.id}`,
-        title: c.notes || 'Penalty',
-        points: c.points_awarded, // already negative
-        date: new Date(c.completed_at),
-        type: 'penalty'
-      });
-    } else {
-      const task = tasks.find(t => t.id === c.task_id);
-      recentActivities.push({
-        id: `comp-${c.id}`,
-        title: task?.title || 'Unknown Task',
-        points: c.points_awarded,
-        date: new Date(c.completed_at),
-        type: 'earn',
-        category: task?.category || 'other'
-      });
-    }
-  });
+    const recentRedemptions = redemptions.filter(r => 
+      r.child_id === activeChild.id && 
+      getLogicalDateString(r.redeemed_at) === todayLogicalDate
+    );
+    recentRedemptions.forEach(r => {
+      const reward = rewards.find(rw => rw.id === r.reward_id);
+      if (reward) {
+        let pointsOverride: React.ReactNode = undefined;
+        if (r.payment_source?.startsWith('badge_freebie:')) {
+          const badgeId = r.payment_source.split(':')[1];
+          const badge = badges.find(b => b.id === badgeId);
+          if (badge && ICON_MAP[badge.icon_name]) {
+            const Icon = ICON_MAP[badge.icon_name];
+            pointsOverride = <Icon className="w-1/2 h-1/2" />;
+          } else {
+            pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+          }
+        } else if (r.payment_source === 'badge_freebie') {
+            let closestBadge = null;
+            let minDiff = Infinity;
+            childBadges.forEach(cb => {
+              const diff = Math.abs(new Date(cb.unlocked_at).getTime() - new Date(r.redeemed_at).getTime());
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestBadge = cb;
+              }
+            });
+            if (closestBadge) {
+              const badge = badges.find(b => b.id === closestBadge.badge_id);
+              if (badge && ICON_MAP[badge.icon_name]) {
+                const Icon = ICON_MAP[badge.icon_name];
+                pointsOverride = <Icon className="w-1/2 h-1/2" />;
+              }
+            }
+            if (!pointsOverride) pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+        }
 
-  // 2. Add Redemptions
-  const recentRedemptions = redemptions.filter(r => 
-    r.child_id === activeChild.id && 
-    getLogicalDateString(r.redeemed_at) === todayLogicalDate
-  );
-  recentRedemptions.forEach(r => {
-    const reward = rewards.find(rw => rw.id === r.reward_id);
-    if (reward) {
-      recentActivities.push({
-        id: `red-${r.id}`,
-        title: reward.title,
-        points: -reward.cost_points, // Make it negative for UI
-        date: new Date(r.redeemed_at),
-        type: 'spend'
-      });
-    }
-  });
+        acts.push({
+          id: `red-${r.id}`,
+          title: reward.title,
+          points: reward.cost_points,
+          date: new Date(r.redeemed_at),
+          type: 'reward',
+          status: 'delivered',
+          pointsOverride
+        });
+      }
+    });
 
-  // Sort descending by date
-  recentActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
+    acts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return acts;
+  }, [todayCompletions, redemptions, activeChild.id, tasks, rewards, todayLogicalDate]);
+
+  const fullActivities: any[] = useMemo(() => {
+    if (historyType !== 'full') return [];
+    const acts: any[] = [];
+    const childCompletions = completions.filter(c => c.child_id === activeChild.id && c.status === 'approved');
+    childCompletions.forEach(c => {
+      if (c.points_awarded < 0) {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Penalty',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'penalty'
+        });
+      } else {
+        const task = tasks.find(t => t.id === c.task_id);
+        acts.push({
+          id: `comp-${c.id}`,
+          title: task?.title || 'Unknown Task',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: task?.category || 'other'
+        });
+      }
+    });
+
+    const childRedemptions = redemptions.filter(r => r.child_id === activeChild.id);
+    childRedemptions.forEach(r => {
+      const reward = rewards.find(rw => rw.id === r.reward_id);
+      if (reward) {
+        let pointsOverride: React.ReactNode = undefined;
+        if (r.payment_source?.startsWith('badge_freebie:')) {
+          const badgeId = r.payment_source.split(':')[1];
+          const badge = badges.find(b => b.id === badgeId);
+          if (badge && ICON_MAP[badge.icon_name]) {
+            const Icon = ICON_MAP[badge.icon_name];
+            pointsOverride = <Icon className="w-1/2 h-1/2" />;
+          } else {
+            pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+          }
+        } else if (r.payment_source === 'badge_freebie') {
+            let closestBadge = null;
+            let minDiff = Infinity;
+            childBadges.forEach(cb => {
+              const diff = Math.abs(new Date(cb.unlocked_at).getTime() - new Date(r.redeemed_at).getTime());
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestBadge = cb;
+              }
+            });
+            if (closestBadge) {
+              const badge = badges.find(b => b.id === closestBadge.badge_id);
+              if (badge && ICON_MAP[badge.icon_name]) {
+                const Icon = ICON_MAP[badge.icon_name];
+                pointsOverride = <Icon className="w-1/2 h-1/2" />;
+              }
+            }
+            if (!pointsOverride) pointsOverride = <Trophy className="w-1/2 h-1/2" />;
+        }
+
+        acts.push({
+          id: `red-${r.id}`,
+          title: reward.title,
+          points: reward.cost_points,
+          date: new Date(r.redeemed_at),
+          type: 'reward',
+          status: 'delivered',
+          pointsOverride
+        });
+      }
+    });
+
+    acts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return acts;
+  }, [historyType, completions, redemptions, activeChild.id, tasks, rewards]);
 
   return (
     <motion.div
@@ -106,40 +241,53 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       key="child-home-tab"
       className="space-y-6 animate-in fade-in duration-300 w-full"
     >
-      {/* Top Cards: Daily Goal and Badges */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Daily Goal Card */}
-        <div className="bg-white rounded-3xl p-5 border-2 border-stone-100 shadow-sm flex items-center gap-5 dashboard-card transition-all hover:border-cyan-300">
-          <div className="w-16 h-16 shrink-0 flex items-center justify-center">
-            <div className="transform scale-[1.35]">
-              <CoinBadge points={pointsEarnedToday} />
+      {/* 3-Column Top Widgets */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        {/* Streak Widget */}
+        <button 
+          onClick={() => setHistoryType('today')}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/streak" 
+          style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
+        >
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/streak:opacity-100 group-hover/streak:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
             </div>
+            <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
+            <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Day Streak</span>
           </div>
-          
-          <div>
-            <h2 className="text-lg font-black text-slate-900">Daily Goal</h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              {pointsRemaining > 0 
-                ? `You need ${pointsRemaining} more gold coins to reach your daily goal of ${DAILY_GOAL}.`
-                : `Awesome! You've reached your daily goal of ${DAILY_GOAL} gold coins!`
-              }
-            </p>
-          </div>
-        </div>
+        </button>
 
-        {/* Check Badges Card */}
+        {/* Current Total Widget */}
+        <button 
+          onClick={() => setHistoryType('full')}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/coins"
+          style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
+        >
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/coins:opacity-100 group-hover/coins:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
+            </div>
+            <Coins className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.points > 0 ? 'text-cyan-500' : 'text-stone-300'}`} />
+            <span className={`font-black text-sm sm:text-base ${activeChild.points > 0 ? 'text-cyan-600' : 'text-stone-400'}`}>{activeChild.points}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Total Coins</span>
+          </div>
+        </button>
+
+        {/* Badges Widget */}
         <button 
           onClick={onOpenBadges}
-          className="bg-white rounded-3xl p-5 border-2 border-stone-100 shadow-sm flex items-center gap-5 dashboard-card transition-all hover:border-amber-300 cursor-pointer text-left group"
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/badge"
+          style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
         >
-          <div className="w-16 h-16 shrink-0 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Trophy className="w-8 h-8 text-amber-500" fill="currentColor" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-slate-900">Check Badges</h2>
-            <p className="text-xs text-stone-500 mt-0.5">
-              View your achievements and claim your free rewards!
-            </p>
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/badge:opacity-100 group-hover/badge:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
+            </div>
+            <Trophy className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${childBadges.length > 0 ? 'text-purple-500 group-hover/badge:scale-110 transition-transform' : 'text-stone-300 group-hover/badge:scale-110 transition-transform'}`} />
+            <span className={`font-black text-sm sm:text-base ${childBadges.length > 0 ? 'text-purple-600' : 'text-stone-400'}`}>{childBadges.length}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Badges</span>
           </div>
         </button>
       </div>
@@ -162,65 +310,180 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </div>
       )}
 
-      {/* Combined Activity Section */}
-      <div className="space-y-4 pt-2">
-        <div className="bg-white border-2 border-stone-100 rounded-3xl p-4 shadow-sm text-left dashboard-card transition-all">
-          <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">TODAY'S ACTIVITY</h2>
-          <p className="text-[10px] sm:text-xs font-mono text-stone-500">Everything you earned, claimed, or lost today.</p>
-        </div>
+      {/* Routine Section */}
+      {(() => {
+        if (!activeChild.routines) return null;
+
+        const dayOfWeek = new Date().getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-          {recentActivities.length === 0 ? (
-            <div className="col-span-full p-8 text-center text-stone-400 border-2 border-dashed border-stone-200 rounded-3xl">
-              No activity today.
+        if (activeChild.holiday_mode && !isWeekend) {
+          activeRoutineId = 'holiday';
+        }
+
+        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
+        
+        // Fallback for unmigrated data
+        if (!activeRoutine && activeChild.active_routine_id) {
+          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
+        }
+
+        if (!activeRoutine) return null;
+
+        let globalTaskIndex = 1;
+
+        const renderPeriod = (title: string, taskIds: string[]) => {
+          const routineTasks = taskIds
+            .map(id => tasks.find(t => t.id === id && t.child_id === activeChild.id))
+            .filter((t): t is Task => t !== undefined);
+
+          if (routineTasks.length === 0) return null;
+
+          return (
+            <div className="mb-6 space-y-2">
+              <Typography variant="h4" className="text-sm font-bold text-stone-600 dark:text-stone-300 px-1 uppercase tracking-widest">{title}</Typography>
+              <div className="space-y-2">
+                {routineTasks.map((task) => {
+                  const currentTaskIndex = globalTaskIndex++;
+                  const RECURRENCE_LABEL: Record<string, string> = { daily: 'Daily', weekly: 'Weekly', one_time: 'One-off', repeatable: 'Repeatable' };
+                  let compl = null;
+                  if (task.recurrence === 'daily') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
+                  } else if (task.recurrence === 'weekly') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                  } else if (task.recurrence === 'one_time') {
+                    compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                  }
+
+                  const isPending = compl && compl.status === 'pending';
+                  const isApproved = compl && compl.status === 'approved';
+
+                  let isOnCooldown = false;
+                  let cooldownTimeLeftStr = '';
+                  if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                    const taskComps = completions
+                      .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                      .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+                    
+                    if (taskComps.length > 0) {
+                      const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                      const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                      if (msSince < cooldownMs) {
+                        isOnCooldown = true;
+                        const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                        cooldownTimeLeftStr = `${minsLeft}m`;
+                      }
+                    }
+                  }
+
+                  const isCompletable = !isApproved && !isPending && !isOnCooldown;
+                  let statusStr: ActivityStatus = 'pending';
+                  if (isApproved) statusStr = 'approved';
+                  else if (isPending) statusStr = 'pending';
+
+                  const cardContent = (
+                    <ActivityCard
+                      title={task.title}
+                      subtitle={isOnCooldown ? `Cooldown: ${cooldownTimeLeftStr}` : undefined}
+                      points={task.points}
+                      type="task"
+                      status={isApproved ? 'completed' : 'pending'}
+                      category={task.category}
+                      numberBadge={currentTaskIndex}
+                      actions={
+                        isCompletable ? (
+                          <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 flex items-center justify-center text-stone-400 group-hover:text-emerald-500 group-hover:bg-emerald-100 transition-colors border-2 border-stone-200 dark:border-stone-700">
+                            <span className="sr-only">Complete</span>
+                          </div>
+                        ) : isApproved ? (
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500 border-2 border-emerald-200">
+                            <FaCircleCheck className="w-4 h-4" />
+                          </div>
+                        ) : null
+                      }
+                    />
+                  );
+
+                  return isCompletable ? (
+                    <button
+                      key={task.id}
+                      onClick={() => handleTaskCheck(task.id, task.title)}
+                      className="w-full text-left group"
+                    >
+                      {cardContent}
+                    </button>
+                  ) : (
+                    <div key={task.id} className="opacity-60 grayscale pointer-events-none">
+                      {cardContent}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            recentActivities.map((act) => {
-              let bgClass = "bg-stone-50 border-stone-100";
-              let iconBgClass = "bg-stone-200/50 text-stone-400";
-              let textClass = "text-stone-400";
-              let iconContent: React.ReactNode = <Sparkles className="w-6 h-6" />;
+          );
+        };
+        const currentHour = new Date().getHours();
+        const showMorning = currentHour >= 0 && currentHour < 12;
+        const showAfternoon = currentHour >= 12 && currentHour < 17;
+        const showEvening = currentHour >= 17;
 
-              if (act.type === 'earn') {
-                const catMeta = CATEGORY_ICON_MAP[act.category as any] || CATEGORY_ICON_MAP.other;
-                iconContent = <catMeta.Icon className="w-6 h-6" />;
-                bgClass = `${catMeta.bg} bg-opacity-50`;
-                iconBgClass = `bg-white/60 ${catMeta.iconColor}`;
-                textClass = catMeta.iconColor;
-              } else if (act.type === 'spend') {
-                bgClass = "bg-purple-50/50 border-purple-100";
-                iconBgClass = "bg-purple-100 text-purple-400";
-                textClass = "text-purple-600";
-                iconContent = <Trophy className="w-6 h-6" />;
-              } else if (act.type === 'penalty') {
-                bgClass = "bg-rose-50/50 border-rose-100";
-                iconBgClass = "bg-rose-100 text-rose-400";
-                textClass = "text-rose-600";
-                iconContent = <AlertTriangle className="w-6 h-6" />;
-              }
+        const hasMorningTasks = showMorning && (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = showAfternoon && (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = showEvening && (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
 
-              return (
-                <div key={act.id} className={`relative p-4 rounded-[1.5rem] border-2 shadow-sm flex flex-col items-center text-center gap-3 opacity-90 transition-all dashboard-card hover:-translate-y-1 ${bgClass}`}>
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconBgClass}`}>
-                    {iconContent}
-                  </div>
-                  <div className="flex flex-col gap-1 w-full">
-                    <h3 className={`font-bold text-sm sm:text-base leading-tight ${act.type === 'earn' ? 'line-through opacity-70' : ''} ${textClass}`}>
-                      {act.title}
-                    </h3>
-                    <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">
-                      {act.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <div className="mt-auto pt-2 w-full flex justify-center">
-                    <CoinBadge points={act.points} />
-                  </div>
+        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) return null;
+
+        return (
+          <div className="space-y-4 pt-2">
+            <div 
+              className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm mt-2"
+              style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+            >
+              <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
-              );
-            })
-          )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {showMorning && renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {showAfternoon && renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {showEvening && renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Activity Modals */}
+      <Modal
+        isOpen={historyType !== null}
+        onClose={() => setHistoryType(null)}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <Typography variant="h2" className="text-xl font-bold text-stone-900 dark:text-stone-50">
+            {historyType === 'today' ? "Today's Activity" : "Full History"}
+          </Typography>
+          <button 
+            onClick={() => setHistoryType(null)}
+            className="p-2 -mr-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      </div>
+        <div className="max-h-[60vh] overflow-y-auto px-1 pb-4">
+          <ActivityFeed 
+            activities={historyType === 'today' ? recentActivities : fullActivities} 
+            emptyMessage={historyType === 'today' ? "No activity today." : "No activity history."} 
+            className="space-y-2"
+          />
+        </div>
+      </Modal>
 
     </motion.div>
   );

@@ -1,6 +1,6 @@
 import { 
   FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
-  FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
+  FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation, FaCheck,
   FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
   FaWrench,
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
@@ -10,14 +10,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Trophy, Flame, Play, ChevronRight, Lock, Star,
-  ArrowLeft, CheckCircle, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone
+  Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
+  ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile } from '../types';
-import { ThemeId, THEME_PRESETS } from '../utils/theme';
+
 import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import WellDoneOverlay from './WellDoneOverlay';
@@ -27,15 +27,32 @@ import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
+import { BottomTabBar } from './ui/BottomTabBar';
+import { PullToRefresh } from './PullToRefresh';
+import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
 import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 const RECURRENCE_LABEL: Record<string, string> = {
   daily:      'Daily',
   weekly:     'Weekly',
   one_time:   'One-off',
   repeatable: 'Repeatable',
+};
+
+const getPetStripeBackground = (characterId: string) => {
+  switch (characterId) {
+    case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
+    case 'robot': return 'repeating-linear-gradient(-45deg, #0ea5e9, #0ea5e9 15px, #3b82f6 15px, #3b82f6 30px, #8b5cf6 30px, #8b5cf6 45px)';
+    case 'dino': return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #84cc16 15px, #84cc16 30px, #14b8a6 30px, #14b8a6 45px)';
+    case 'dragon': return 'repeating-linear-gradient(-45deg, #ef4444, #ef4444 15px, #f97316 15px, #f97316 30px, #eab308 30px, #eab308 45px)';
+    case 'cat': return 'repeating-linear-gradient(45deg, #6366f1, #6366f1 15px, #8b5cf6 15px, #8b5cf6 30px, #d946ef 30px, #d946ef 45px)';
+    case 'bunny': return 'repeating-linear-gradient(-45deg, #d946ef, #d946ef 15px, #8b5cf6 15px, #8b5cf6 30px, #ec4899 30px, #ec4899 45px)';
+    default: return 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 15px, #a855f7 15px, #a855f7 30px, #38bdf8 30px, #38bdf8 45px)';
+  }
 };
 
 interface ChildDashboardProps {
@@ -46,7 +63,7 @@ interface ChildDashboardProps {
   rewards: Reward[];
   redemptions: RewardRedemption[];
   onCompleteTask: (taskId: string, childId: string) => void;
-  onClaimReward: (rewardId: string, childId: string, paymentSource?: 'main' | 'savings' | 'badge_freebie') => void;
+  onClaimReward: (rewardId: string, childId: string, paymentSource?: string) => void;
   onEnterParentMode: () => void;
   onFeedPet: (childId: string) => void;
   onSavingsDeposit: (childId: string, amount: number) => void;
@@ -66,8 +83,10 @@ interface ChildDashboardProps {
   onEditChild: (childId: string, updates: Partial<Child>) => void;
   lockedChildId?: string | null;
   onLockChild?: (childId: string | null) => void;
-  theme: ThemeId;
   isLoading?: boolean;
+  isChildAuth?: boolean;
+  onLogout?: () => void;
+  onRefresh?: () => Promise<void>;
 }
 
 export default function ChildDashboard({
@@ -98,11 +117,13 @@ export default function ChildDashboard({
   onEditChild,
   lockedChildId,
   onLockChild,
-  theme,
-  isLoading = false
+  isLoading = false,
+  isChildAuth = false,
+  onLogout,
+  onRefresh
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
-  const isPlayfulPop = parentProfile?.dashboard_style === 'playful_pop';
+  
 
   // Helper to offset dates by 4 hours for a "4 AM daily reset"
   // This ensures tasks completed at 1 AM count towards the previous day
@@ -117,7 +138,7 @@ export default function ChildDashboard({
   }, [lockedChildId]);
 
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
-  const [expandedPot, setExpandedPot] = useState<'savings' | 'food' | 'gifting' | 'maintenance' | null>(null);
+  const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
   // Scroll to top when switching tabs
   useEffect(() => {
@@ -128,7 +149,7 @@ export default function ChildDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeChildTab]);
 
-  const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
+  const [expandedGoal, setExpandedGoal] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
   // Well Done celebration overlay
@@ -331,7 +352,7 @@ export default function ChildDashboard({
           updates.points = points;
           updates.gold_pot_last_leak_date = todayStr;
           updates.gold_pot_total_leaked = (activeChild.gold_pot_total_leaked || 0) + 1;
-          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+          setGoldPotPenaltyMessage(`Oh no! Your broken Gold Pot just leaked a coin! You need to go to the Pots tab and fix it before it leaks all your gold.`);
           setTimeout(() => playSound.pinError(), 800);
         }
       } else {
@@ -341,7 +362,7 @@ export default function ChildDashboard({
             breakCount += 1;
             updates.gold_pot_broken = true;
             updates.gold_pot_break_count_this_week = breakCount;
-            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the POTS tab and fix it before it leaks all your gold.`);
+            setGoldPotPenaltyMessage(`Oh no! Your Gold Pot is broken and leaking coins! You need to go to the Pots tab and fix it before it leaks all your gold.`);
             setTimeout(() => playSound.pinError(), 800);
           }
         }
@@ -383,7 +404,7 @@ export default function ChildDashboard({
     }
   }
 
-  const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level) : null;
+  const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level, parentProfile) : null;
   const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
 
   const pendingRedemptionsCost = activeChild ? redemptions
@@ -456,7 +477,27 @@ export default function ChildDashboard({
     });
   };
 
-  const styles = THEME_PRESETS[theme];
+  const styles = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
+    bodyBg: 'bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50',
+    cardBg: 'bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-stone-900 dark:text-stone-50',
+    headerBg: 'bg-white/90 dark:bg-stone-900/90 border-b border-stone-100 dark:border-stone-800 backdrop-blur-md',
+    btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
+    btnSecondary: 'bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-[0.98] transition-all rounded-2xl',
+    tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
+    inputBg: 'bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-50 placeholder-[#A8A29E] focus:bg-white dark:focus:bg-stone-900 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
+    accentGlow: 'bg-orange-100/40 opacity-50',
+    tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',
+    gridStyle: 'scrolling-grid opacity-[0.03]',
+    innerCard: 'bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl',
+    titleGradient: 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent',
+    divider: 'border-stone-100 dark:border-stone-800',
+    overlayCrt: 'hidden',
+    titleColor: 'text-[#1C1917] dark:text-stone-50',
+    borderStyle: 'border-stone-100 dark:border-stone-800'
+};
 
   const getRewardAvailability = (reward: Reward, childRedemptions: RewardRedemption[]) => {
     if (!reward.is_available) return { available: false, reason: 'CLAIMED' };
@@ -492,7 +533,7 @@ export default function ChildDashboard({
     if (!activeChild) return;
     
     // 1. Trigger the reward claim (freebie)
-    onClaimReward(rewardId, activeChild.id, 'badge_freebie');
+    onClaimReward(rewardId, activeChild.id, `badge_freebie:${badgeId}`);
     
     // 2. Update the child_badges table to mark as claimed
     const supabase = getSupabaseClient();
@@ -513,56 +554,95 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+64px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+72px)]' : ''}`} id="child-root" data-theme={parentProfile?.dashboard_style || 'modern'}>
+    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" >
       
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
         <header 
-          className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4 sm:px-8 pb-3 sm:pb-4"
+          className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex items-center flex-1 gap-3 sm:gap-4">
-            {!lockedChildId && (
-              <Tooltip content="Go Back to Selection" position="bottom">
-                <button
-                  onClick={() => setSelectedChildId(null)}
-                  className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-200 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-100 hover:text-slate-800 transition-all active:scale-95"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              </Tooltip>
-            )}
-            <div className="flex flex-row items-center justify-between flex-1 pr-2 sm:pr-4 gap-2 sm:gap-0">
-              <h1 className="text-lg sm:text-3xl font-black tracking-tight truncate font-display text-slate-800 flex items-center gap-2">
-                {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                {activeChild?.age && <span className="text-sm sm:text-xl text-slate-500 font-normal">({activeChild.age})</span>}
-              </h1>
-              <div className="flex items-center bg-slate-50/80 backdrop-blur-sm border border-slate-200 rounded-full shadow-sm p-1 sm:p-1.5 gap-1 shrink-0">
-                <Tooltip content="Current Gold Coins" position="bottom">
-                  <div className="cursor-help">
-                    <CoinBadge points={activeChild?.points || 0} />
-                  </div>
-                </Tooltip>
-                
-                <Tooltip content="Parent Dashboard" position="bottom">
-                  <button 
-                    onClick={() => { playSound.click(); onEnterParentMode(); }}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors shrink-0"
-                  >
-                    <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </Tooltip>
+          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+              {activeChild && (
+                <ChildAvatar 
+                  iconName={activeChild.avatar_url} 
+                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0" 
+                />
+              )}
+              <div className="flex flex-col justify-center min-w-0">
+                <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                  {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
+                </Typography>
+                <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                  {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
+                </div>
+              </div>
+            </div>
 
-                {!lockedChildId && onLockChild && activeChild && (
-                  <Tooltip content="Lock Device to Child" position="bottom">
-                    <button 
-                      onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
-                    >
-                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <div 
+                className="flex items-center p-1 rounded-full shadow-md shrink-0"
+                style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
+              >
+                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                {activeChildTab !== 'home' && (
+                  <Tooltip content="Current Gold Coins" position="bottom">
+                    <div className="cursor-help ml-1.5 sm:ml-2.5">
+                      <CoinBadge points={activeChild?.points || 0} />
+                    </div>
                   </Tooltip>
                 )}
+                {!lockedChildId && (
+                  <Tooltip content="Go Back" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); setSelectedChildId(null); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
+                
+                {isChildAuth && onLogout ? (
+                  <Tooltip content="Log Out" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onLogout(); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                ) : (
+                  <Tooltip content="Parent Dashboard" position="bottom" align="right">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onEnterParentMode(); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
+
+                {!lockedChildId && onLockChild && activeChild && (
+                  <Tooltip content="Lock Device to Child" position="bottom" align="right">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                    >
+                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
+                </div>
               </div>
             </div>
           </div>
@@ -576,26 +656,31 @@ export default function ChildDashboard({
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: -10 }}
-            className="mx-2 sm:mx-8 mt-2 sm:mt-4 p-4 rounded-3xl bg-indigo-50 border-[3px] border-indigo-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 z-30 relative"
+            className="mx-2 sm:mx-8 mt-2 sm:mt-4 p-[3px] rounded-3xl shadow-sm z-30 relative"
+            style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 10px, #f472b6 10px, #f472b6 20px, #c084fc 20px, #c084fc 30px)' }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
+            <div className="bg-indigo-50 dark:bg-stone-900 border-2 border-stone-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-[21px] p-3 sm:p-4 flex flex-row items-center justify-between gap-3 w-full h-full">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
+                  <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm sm:text-base truncate">You have a message!</Typography>
+                  <Typography variant="body" className="text-xs text-stone-600 dark:text-stone-300 font-medium leading-tight line-clamp-2">Your parent sent you a friendly reminder to complete your tasks today!</Typography>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-slate-800 text-sm sm:text-base">You have a message!</h3>
-                <p className="text-xs sm:text-sm text-slate-600 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</p>
-              </div>
+              <Button
+                variant="none"
+                size="none"
+                onClick={() => {
+                  playSound.click();
+                  onEditChild(activeChild.id, { has_pending_nudge: false });
+                }}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 flex items-center justify-center shrink-0 shadow-sm border border-stone-200 dark:border-stone-700 transition-transform active:scale-95"
+              >
+                <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+              </Button>
             </div>
-            <button
-              onClick={() => {
-                playSound.click();
-                onEditChild(activeChild.id, { has_pending_nudge: false });
-              }}
-              className="px-6 py-3 rounded-full bg-indigo-500 text-white font-bold text-xs sm:text-sm tracking-widest uppercase hover:bg-indigo-600 hover:-translate-y-0.5 transition-all active:scale-95 shadow-md shadow-indigo-500/20 whitespace-nowrap w-full sm:w-auto"
-            >
-              I'm on it!
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -610,7 +695,7 @@ export default function ChildDashboard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-white/95 flex flex-col items-center justify-center p-6 text-center"
+            className="fixed inset-0 z-50 bg-white dark:bg-stone-900/95 flex flex-col items-center justify-center p-6 text-center"
             id="evolution-cinematic"
           >
             <div className="absolute inset-0  opacity-30 pointer-events-none" />
@@ -620,26 +705,26 @@ export default function ChildDashboard({
               animate={{ scale: 1, rotate: 0 }}
               exit={{ scale: 0.8, rotate: 8 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative max-w-lg bg-white border-4 border-cyan-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(6,182,212,0.4)] space-y-6"
+              className="relative max-w-lg bg-white dark:bg-stone-900 border-4 border-cyan-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(6,182,212,0.4)] space-y-6"
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
               
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
               </div>
 
-              <h2 className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
+              <Typography variant="h2" className="text-3xl font-black font-display bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 bg-clip-text text-transparent text-cyan-500">
                 {isHatching && hatchPhase !== 'reveal' ? 'YOUR EGG IS HATCHING!' : 'EVOLUTION TRIGGERED!'}
-              </h2>
+              </Typography>
 
-              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <Typography variant="body" className="text-xs text-stone-400 max-w-sm mx-auto leading-relaxed">
                 {isHatching && hatchPhase !== 'reveal' ? (
                   <>Something magical is happening! <strong className="text-white">{evolvingStage.charName}</strong> is about to be born!</>
                 ) : (
                   <>Spectacular progress! Companion <strong className="text-white">{evolvingStage.charName}</strong> is transmuting into a more powerful form!</>
                 )}
-              </p>
+              </Typography>
 
               {/* Evolution / Hatching Pedestal */}
               <div className="my-8 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
@@ -688,7 +773,7 @@ export default function ChildDashboard({
                           ? { duration: 0.8, repeat: Infinity, ease: 'easeInOut' }
                           : { duration: 1, ease: 'easeOut' }
                     }
-                    className="relative h-44 w-44 rounded-full bg-white border-4 border-amber-400 flex items-center justify-center shadow-2xl overflow-hidden z-10"
+                    className="relative h-44 w-44 rounded-full bg-white dark:bg-stone-900 border-4 border-amber-400 flex items-center justify-center shadow-2xl overflow-hidden z-10"
                   >
                     <img src={evolvingStage.fromImage} alt="Egg" className="w-full h-full object-cover" />
                     {/* Crack overlay */}
@@ -744,7 +829,7 @@ export default function ChildDashboard({
                     initial={isHatching ? { scale: 0.3, opacity: 0, y: 30 } : { scale: 1, opacity: 1 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     transition={isHatching ? { type: 'spring', damping: 10, stiffness: 150, duration: 0.8 } : {}}
-                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white' : 'bg-white'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
+                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.image_url ? (
                       <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
@@ -766,15 +851,15 @@ export default function ChildDashboard({
               </div>
 
               <div>
-                <p className="text-[10px] text-cyan-400 font-mono tracking-widest uppercase">
+                <Typography variant="body" className="text-[10px] text-cyan-400 font-sans tracking-widest uppercase">
                   {isHatching && hatchPhase !== 'reveal' ? 'HATCHING IN PROGRESS...' : 'UPGRADED FORM SPEC'}
-                </p>
-                <h3 className="text-2xl font-black text-white mt-1 uppercase tracking-wide">
+                </Typography>
+                <Typography variant="h3" className="text-2xl font-black text-white mt-1">
                   {isHatching && hatchPhase !== 'reveal'
                     ? ['🥚 Wobbling...', '💥 Cracking!', '✨ Splitting open!'][['wobble', 'crack', 'split'].indexOf(hatchPhase)] || evolvingStage.toStage
                     : evolvingStage.toStage
                   }
-                </h3>
+                </Typography>
               </div>
 
               <Button
@@ -806,7 +891,7 @@ export default function ChildDashboard({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
               transition={{ type: "spring", bounce: 0.5 }}
-              className="bg-white p-6 rounded-3xl shadow-2xl max-w-md w-full relative overflow-hidden"
+              className="bg-white dark:bg-stone-900 p-6 rounded-3xl shadow-2xl max-w-md w-full relative overflow-hidden"
             >
               {/* Confetti Background */}
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
@@ -819,21 +904,21 @@ export default function ChildDashboard({
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
-                  <h3 className="font-black font-display text-2xl text-slate-800 uppercase tracking-wide leading-none">
+                  <span className="text-[10px] font-sans tracking-widest uppercase text-amber-500 font-extrabold">Welcome!</span>
+                  <Typography variant="h3" className="uppercase tracking-wide leading-none">
                     How it Works
-                  </h3>
+                  </Typography>
                 </div>
 
-                <p className="text-sm font-bold text-slate-600 leading-relaxed px-4">
+                <Typography variant="body" className="text-sm font-bold text-stone-600 dark:text-stone-300 leading-relaxed px-4">
                   Watch this quick video to learn how to earn gold coins and unlock awesome prizes!
-                </p>
+                </Typography>
 
                 {/* Video Player */}
-                <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+                <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                   <video 
                     ref={videoRef}
-                    src="/app-intro-video.mp4" 
+                    src="/01_GoldPot_LevelUp.mp4" 
                     className="w-full h-full object-cover"
                     controls={isVideoPlaying}
                     playsInline
@@ -841,20 +926,22 @@ export default function ChildDashboard({
                     onPause={() => setIsVideoPlaying(false)}
                     onEnded={() => setIsVideoPlaying(false)}
                   >
-                    <source src="/app-intro-video.mp4" type="video/mp4" />
+                    <source src="/01_GoldPot_LevelUp.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                   {!isVideoPlaying && (
-                    <button
+                    <Button
+                      variant="none"
+                      size="none"
                       onClick={() => {
                         videoRef.current?.play();
                       }}
                       className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors cursor-pointer group"
                     >
-                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                         <Play className="w-6 h-6 text-amber-600 ml-1" />
                       </div>
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -888,12 +975,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -903,14 +990,14 @@ export default function ChildDashboard({
               </Typography>
 
               <Typography variant="body">
-                Well done, <strong className="text-stone-900">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-amber-600">Savings Pot</strong>!
+                Well done, <strong className="text-stone-900 dark:text-stone-50">{activeChild.name}</strong>! You've earned a brand new feature — the <strong className="text-amber-600">Savings Pot</strong>!
               </Typography>
 
               {/* Video Player */}
-              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/savings-video.mp4" 
+                  src="/02_SavingsPot_BigGoals.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -919,7 +1006,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/savings-video.mp4" type="video/mp4" />
+                  <source src="/02_SavingsPot_BigGoals.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -929,7 +1016,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
                     </div>
                   </div>
@@ -964,12 +1051,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 border border-orange-300 text-orange-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -979,14 +1066,14 @@ export default function ChildDashboard({
               </Typography>
 
               <Typography variant="body">
-                Awesome job, <strong className="text-stone-900">{activeChild.name}</strong>! You've unlocked the <strong className="text-orange-600">Food Pot</strong>! Remember to deposit 7 gold coins per week and feed your pet every day.
+                Awesome job, <strong className="text-stone-900 dark:text-stone-50">{activeChild.name}</strong>! You've unlocked the <strong className="text-orange-600">Food Pot</strong>! Remember to deposit 7 gold coins per week and feed your pet every day.
               </Typography>
 
               {/* Video Player */}
-              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/food-pot-video.mp4" 
+                  src="/03_FoodPot_PetCare.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -995,7 +1082,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/food-pot-video.mp4" type="video/mp4" />
+                  <source src="/03_FoodPot_PetCare.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -1005,7 +1092,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-orange-500 fill-orange-500 ml-1" />
                     </div>
                   </div>
@@ -1040,12 +1127,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 border border-rose-300 text-rose-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
                 NEW FEATURE UNLOCKED
               </div>
@@ -1055,14 +1142,14 @@ export default function ChildDashboard({
               </Typography>
 
               <Typography variant="body">
-                You're so generous, <strong className="text-stone-900">{activeChild.name}</strong>! You've unlocked the <strong className="text-rose-600">Gifting Pot</strong>! You can now use your gold coins to help others by donating to charity or gifting to a sibling.
+                You're so generous, <strong className="text-stone-900 dark:text-stone-50">{activeChild.name}</strong>! You've unlocked the <strong className="text-rose-600">Gifting Pot</strong>! You can now use your gold coins to help others by donating to charity or gifting to a sibling.
               </Typography>
 
               {/* Video Player */}
-              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/gifting-pot-video.mp4" 
+                  src="/04_GiftingPot_Charity.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -1071,7 +1158,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/gifting-pot-video.mp4" type="video/mp4" />
+                  <source src="/04_GiftingPot_Charity.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
@@ -1081,7 +1168,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-rose-500 fill-rose-500 ml-1" />
                     </div>
                   </div>
@@ -1116,12 +1203,12 @@ export default function ChildDashboard({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
               transition={{ type: 'spring', damping: 15 }}
-              className="relative w-full max-w-lg bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-lg bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               {/* Sunburst background effect */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-mono">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border border-amber-300 text-amber-700 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
                 NEW RESPONSIBILITY
               </div>
@@ -1131,11 +1218,11 @@ export default function ChildDashboard({
               </Typography>
 
               <Typography variant="body">
-                Great progress, <strong className="text-stone-900">{activeChild.name}</strong>! You've reached a level where your <strong className="text-amber-600">Gold Pot</strong> needs maintenance! Sometimes it might crack, and you'll need to spend gold coins to fix it so it doesn't leak. Keep an eye on it!
+                Great progress, <strong className="text-stone-900 dark:text-stone-50">{activeChild.name}</strong>! You've reached a level where your <strong className="text-amber-600">Gold Pot</strong> needs maintenance! Sometimes it might crack, and you'll need to spend gold coins to fix it so it doesn't leak. Keep an eye on it!
               </Typography>
 
               {/* Video Player */}
-              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 border-2 border-stone-200 overflow-hidden shadow-inner group">
+              <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
                   src="/gold-pot-video.mp4" 
@@ -1157,7 +1244,7 @@ export default function ChildDashboard({
                     }}
                     className="absolute inset-0 cursor-pointer flex items-center justify-center group-hover:opacity-0 transition-opacity bg-stone-900/20"
                   >
-                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-stone-900/90 rounded-full flex items-center justify-center shadow-lg transform active:scale-[0.96] transition-transform">
                       <Play className="w-8 h-8 text-amber-500 fill-amber-500 ml-1" />
                     </div>
                   </div>
@@ -1191,15 +1278,15 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-rose-100 border border-rose-300 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="w-10 h-10 text-rose-600 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-rose-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-rose-600">
                 <FaHeartCrack className="inline-block mr-2 text-red-500" /> PET IS UNHAPPY!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {penaltyMessage}
@@ -1232,15 +1319,15 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-amber-100 border border-amber-300 rounded-2xl flex items-center justify-center">
                 <FaTriangleExclamation className="w-10 h-10 text-amber-600 animate-pulse" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-amber-600">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-amber-600">
                 GOLD POT BROKEN!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
                 {goldPotPenaltyMessage}
@@ -1256,7 +1343,7 @@ export default function ChildDashboard({
                 }}
                 id="gold-pot-penalty-dismiss-btn"
               >
-                GO TO POTS <FaCoins className="inline-block ml-2 text-yellow-100" />
+                GO TO Pots <FaCoins className="inline-block ml-2 text-yellow-100" />
               </Button>
             </motion.div>
           </motion.div>
@@ -1277,18 +1364,18 @@ export default function ChildDashboard({
               initial={{ scale: 0.8, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 30 }}
-              className="relative w-full max-w-md bg-white border-4 border-gray-200 rounded-[2.5rem] p-8 shadow-sm space-y-6"
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 border-4 border-stone-200 dark:border-stone-700 rounded-[2.5rem] p-8 shadow-sm space-y-6"
             >
               <div className="mx-auto w-16 h-16 bg-orange-100 border border-orange-300 rounded-2xl flex items-center justify-center">
                 <Utensils className="w-10 h-10 text-orange-500 animate-bounce" />
               </div>
 
-              <h2 className="text-2.5xl font-black font-display text-orange-500">
+              <Typography variant="h2" className="text-2.5xl font-black font-display text-orange-500">
                 TIME TO FEED!
-              </h2>
+              </Typography>
 
               <Typography variant="body">
-                Don't forget to feed <strong className="text-stone-900">{activeChildPack?.name.split(' the ')[0] || 'your pet'}</strong> today! A happy pet is a good companion.
+                Don't forget to feed <strong className="text-stone-900 dark:text-stone-50">{activeChildPack?.name.split(' the ')[0] || 'your pet'}</strong> today! A happy pet is a good companion.
               </Typography>
 
               <div className="flex flex-col gap-3">
@@ -1335,19 +1422,22 @@ export default function ChildDashboard({
           className="px-4 sm:px-6 pb-2 flex justify-end items-center relative z-40 bg-transparent"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => { playSound.click(); onEnterParentMode(); }}
-            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400`} />}
-          >
-            PARENT MODE
-          </Button>
+          <div className="relative flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 shrink-0 z-50">
+            <Button
+              variant="none"
+              size="none"
+              onClick={() => { playSound.click(); onEnterParentMode(); }}
+              className="flex items-center gap-2 px-4 sm:px-6 h-12 sm:h-14 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors font-bold text-xs sm:text-sm tracking-wide"
+            >
+              <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400" />
+              PARENT MODE
+            </Button>
+          </div>
         </header>
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-white mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
           
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1361,219 +1451,32 @@ export default function ChildDashboard({
               id="profile-picker"
             >
               <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold font-mono uppercase tracking-widest`}>
-                  <Plane className="w-3.5 h-3.5" /> BOARDING NOW
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold font-sans uppercase tracking-widest`}>
+                  <Gamepad2 className="w-3.5 h-3.5" /> PLAYER SELECT
                 </div>
-                <h1 className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-slate-800`}>
-                  Grab your ticket!
-                </h1>
-                <p className={`text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed`}>
-                  Select your boarding pass to start your adventure and claim your rewards!
-                </p>
+                <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800 dark:text-stone-100`}>
+                  Grab your pass!
+                </Typography>
+                <Typography variant="body" className={`text-xs sm:text-sm text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed`}>
+                  Select your arcade access ticket to start your adventure and claim your rewards!
+                </Typography>
               </div>
 
               <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (
-                      <div key={`skel-${i}`} className="w-full flex shadow-lg rounded-2xl overflow-hidden relative animate-pulse">
-                        {/* Main Pass Body */}
-                        <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
-                          {/* Header */}
-                          <div className="h-8 sm:h-10 bg-slate-200 flex items-center justify-between px-3 sm:px-6 border-b border-slate-300">
-                            <div className="flex items-center gap-2 text-transparent font-bold tracking-widest text-xs uppercase">
-                              <Plane className="w-4 h-4 text-transparent" /> <span>Reward Airways</span>
-                            </div>
-                            <div className="text-transparent font-mono text-[10px] tracking-widest uppercase">
-                              First Class
-                            </div>
-                          </div>
-                          
-                          <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
-                            
-                            <div className="flex items-center gap-2 sm:gap-6">
-                              <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-200 border-2 border-white shadow-md overflow-hidden" />
-                              
-                              <div className="flex flex-col justify-center py-1 sm:py-2">
-                                <div>
-                                  <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block w-fit">Name of Passenger</span>
-                                  <h3 className="text-xl sm:text-3xl font-black font-display text-transparent bg-slate-200 rounded uppercase tracking-tight leading-none w-fit">
-                                    LOADING...
-                                  </h3>
-                                </div>
-                                
-                                <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Flight</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">RW-000</span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Gate</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">TBD</span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider w-fit">Seat</span>
-                                    <span className="font-mono font-bold text-transparent bg-slate-200 rounded text-sm sm:text-lg mt-1 w-fit inline-block">00A</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
-                              <div className="w-16 sm:w-32 h-8 sm:h-16 bg-slate-200 rounded opacity-60" />
-                              <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-transparent bg-slate-200 rounded tracking-widest uppercase w-fit inline-block">TKT-12345678</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Divider with Notches */}
-                        <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
-                          <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
-                        </div>
-                        
-                        {/* Tear-off Stub */}
-                        <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
-                          <div className="h-10 bg-slate-200 w-full border-b border-slate-300" />
-                          <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
-                            <div className="w-full text-center mb-2 sm:mb-4 relative z-10 flex flex-col items-center">
-                              <span className="text-[8px] sm:text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase tracking-wider block mb-0.5 sm:mb-1 w-fit">Boarding Time</span>
-                              <span className="font-mono font-black text-transparent bg-slate-200 rounded text-lg sm:text-xl inline-block w-fit">NOW</span>
-                            </div>
-
-                            <div className="w-full flex justify-between relative z-10">
-                              <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Zone</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">1</span>
-                              </div>
-                              <div className="flex flex-col text-center w-1/2 items-center">
-                                <span className="text-[9px] text-transparent bg-slate-200 rounded font-bold uppercase w-fit">Class</span>
-                                <span className="font-black text-3xl text-transparent bg-slate-200 rounded leading-none mt-1 inline-block w-fit">F</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <ArcadeTicketCard key={`skel-${i}`} child={{id:'',name:'',avatar_url:'',level:0,streak_days:0,points:0}} isLoading />
                     ))}
                   </>
                 ) : children.map((child) => {
-                  const stage = getCharacterStage(child.character_id, child.level);
+                  const stage = getCharacterStage(child.character_id, child.level, parentProfile);
                   return (
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                    <ArcadeTicketCard
                       key={child.id}
-                      onClick={() => {
-                        handleSelectChild(child.id);
-                      }}
-                      className="w-full cursor-pointer group flex shadow-lg hover:shadow-xl transition-shadow rounded-2xl overflow-hidden relative"
-                    >
-                      {/* Main Pass Body */}
-                      <div className="flex-[3] bg-white border border-slate-200 border-r-0 flex flex-col relative z-10">
-                        {/* Header */}
-                        <div className="h-8 sm:h-10 bg-[#0033A0] flex items-center justify-between px-3 sm:px-6 border-b border-[#002277]">
-                          <div className="flex items-center gap-2 text-white font-bold tracking-widest text-xs uppercase">
-                            <Plane className="w-4 h-4" /> <span>Reward Airways</span>
-                          </div>
-                          <div className="text-blue-200 font-mono text-[10px] tracking-widest uppercase">
-                            First Class
-                          </div>
-                        </div>
-                        
-                        <div className="p-2 sm:p-6 flex justify-between items-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
-                          
-                          <div className="flex items-center gap-2 sm:gap-6">
-                            <div className="w-12 h-12 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-slate-100 border-2 border-white shadow-md overflow-hidden bg-white">
-                              <ChildAvatar iconName={child.avatar_url} className="w-full h-full !rounded-none border-none" />
-                            </div>
-                            
-                            <div className="flex flex-col justify-center py-1 sm:py-2">
-                              <div>
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5 sm:mb-1 block">Name of Passenger</span>
-                                <h3 className="text-xl sm:text-3xl font-black font-display text-slate-900 uppercase tracking-tight leading-none">
-                                  {child.name}
-                                  {child.age && <span className="text-sm sm:text-xl text-slate-500 font-normal ml-2">({child.age})</span>}
-                                </h3>
-                              </div>
-                              
-                              <div className="flex gap-2 sm:gap-10 mt-2 sm:mt-4">
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Flight</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">RW-{child.level.toString().padStart(3, '0')}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Gate</span>
-                                <span className="font-mono font-bold text-slate-800 text-sm sm:text-lg">{child.streak_days > 0 ? child.streak_days : 'TBD'}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Seat</span>
-                                <span className="font-mono font-bold text-[#0033A0] text-sm sm:text-lg">{child.points || '00'}A</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col items-end shrink-0 ml-2 sm:ml-4">
-                          <div className="w-16 sm:w-32 h-8 sm:h-16 flex justify-between items-end opacity-60">
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1.5 sm:w-3 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-1.5 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                            <div className="w-1 sm:w-2 h-full bg-slate-800" />
-                            <div className="w-0.5 sm:w-1 h-full bg-slate-800" />
-                            <div className="w-px sm:w-0.5 h-full bg-slate-800" />
-                          </div>
-                          <span className="font-mono text-[7px] sm:text-[9px] mt-1 text-slate-500 tracking-widest uppercase">TKT-{child.id.substring(0,8)}</span>
-                        </div>
-                        
-                      </div>
-                    </div>
-                    
-                    {/* Divider with Notches */}
-                    <div className="w-4 sm:w-6 shrink-0 bg-white relative flex flex-col justify-between border-y border-slate-200 z-0">
-                      {/* Top Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-b-full absolute top-0 left-0 border-b border-slate-200 shadow-inner" />
-                      
-                      {/* Perforation Line */}
-                      <div className="absolute top-6 bottom-6 sm:top-8 sm:bottom-8 left-1/2 -translate-x-1/2 w-px border-l-2 sm:border-l-[3px] border-dotted border-slate-300" />
-                      
-                      {/* Bottom Notch */}
-                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-slate-100 rounded-t-full absolute bottom-0 left-0 border-t border-slate-200 shadow-inner" />
-                    </div>
-                    
-                    {/* Tear-off Stub */}
-                    <div className="flex-1 shrink-0 bg-slate-50 border border-slate-200 border-l-0 flex flex-col relative overflow-hidden z-10">
-                        <div className="h-10 bg-[#0033A0] w-full border-b border-[#002277]" />
-                        <div className="p-4 sm:p-6 flex flex-col h-full justify-between items-center relative overflow-hidden">
-                          
-                          <Plane className="absolute -right-8 -bottom-8 w-24 h-24 sm:w-32 sm:h-32 text-slate-200 opacity-40 -rotate-45 pointer-events-none z-0" />
-
-                          <div className="w-full text-center mb-2 sm:mb-4 relative z-10">
-                            <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-0.5 sm:mb-1">Boarding Time</span>
-                            <span className="font-mono font-black text-[#0033A0] text-lg sm:text-xl">NOW</span>
-                          </div>
-
-                          <div className="w-full flex justify-between relative z-10">
-                            <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Zone</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">1</span>
-                            </div>
-                            <div className="flex flex-col text-center w-1/2">
-                              <span className="text-[9px] text-slate-500 font-bold uppercase">Class</span>
-                              <span className="font-black text-3xl text-slate-800 leading-none mt-1">F</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                    </motion.div>
+                      child={child}
+                      onClick={() => handleSelectChild(child.id)}
+                    />
                   );
                 })}
               </div>
@@ -1593,19 +1496,67 @@ export default function ChildDashboard({
                   id="kid-dashboard-grid"
                 >
                 
-                {/* Left Column: Star-Pet Feeding Station (Hidden on mobile unless 'companion' tab is active) */}
-                {activeChild && activeChildStage && activeChildPack && (
-                  <div className={`lg:col-span-4 space-y-4 sm:space-y-6 ${activeChildTab !== 'companion' ? 'hidden lg:block' : ''}`}>
-                    
+                {/* Left Sidebar (Desktop Only) */}
+                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                  <nav className="flex flex-col gap-2">
+                    {[
+                      { id: 'home', label: 'Home', icon: Home },
+                      { id: 'companion', label: 'Pets', icon: FaPaw },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
+                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'pots', label: 'Pots', icon: FaJar }
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = activeChildTab === tab.id;
+                      return (
+                        <Button
+                          variant="none"
+                          size="none"
+                          key={tab.id}
+                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
+                            isSelected 
+                              ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                              : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
+                          }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
+                            {tab.label}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </nav>
+                </aside>
+
+                <main className="lg:col-span-9 space-y-6">
+                  {/* Active Screen Frame */}
+                  <AnimatePresence mode="wait">
+                  
+                    {/* Pet / Companion Tab */}
+                    {activeChildTab === 'companion' && activeChild && activeChildStage && activeChildPack && (
+                      <motion.div
+                        key="companion-tab"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        className="space-y-4 sm:space-y-6"
+                      >
                     {/* Holo Pedestal */}
-                    <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center text-center relative overflow-hidden shadow-2xl`}>
+                    <div 
+                      className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center text-center shadow-2xl overflow-hidden"
+                      style={{ background: getPetStripeBackground(activeChild.character_id || 'unicorn') }}
+                    >
+                      {/* Inner Cutout */}
+                      <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
                       
-                      <div className="absolute inset-0  opacity-15 pointer-events-none" />
+                      <div className="absolute inset-0 opacity-15 pointer-events-none" />
 
                       <div className="flex justify-between w-full items-start mt-1">
                         <div className="text-left">
-                          <span className={`text-[8px] font-mono tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
-                          <h3 className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</h3>
+                          <span className={`text-[8px] font-sans tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
+                          <Typography variant="h3" className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</Typography>
                         </div>
                       </div>
 
@@ -1635,7 +1586,7 @@ export default function ChildDashboard({
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                           transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                          className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.image_url ? 'bg-white' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.image_url ? 'bg-white dark:bg-stone-900' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
                           {activeChildStage.image_url ? (
                             <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float outline outline-1 -outline-offset-1 outline-black/10" />
@@ -1647,31 +1598,32 @@ export default function ChildDashboard({
                         </motion.div>
                       </div>
                       {/* Level and evolution progression */}
-                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider} space-y-2.5`}>
-                        <div className={`flex justify-between text-xs ${styles.textMuted} font-mono`}>
-                          <span>GOLD BAR</span>
-                          <span className={`text-cyan-500 font-extrabold tabular-nums`}>LEVEL {activeChild.level}</span>
+                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider}`}>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Level {activeChild.level}</span>
+                          <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">
+                            {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
+                          </span>
                         </div>
                         <LinearProgressBar 
                           progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                          heightClass="h-3"
-                          className={`${styles.cardBg} ${styles.borderStyle} mb-1 relative`}
+                          heightClass="h-2"
+                          className="!bg-stone-200/60 border-none shadow-inner"
                         />
-                        <div className="flex justify-between items-center w-full px-1">
-                          <span className={`text-[10px] font-mono ${styles.textMuted} font-bold tabular-nums`}>GOLD BAR: {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500}</span>
-                        </div>
                       </div>
 
                       {isFoodPotUnlocked && (
-                        <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 flex flex-col gap-2">
-                          <button
+                        <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2">
+                          <Button
+                            variant="none"
+                            size="none"
                             onClick={handleFeedCompanion}
                             disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                            className={`w-full py-3 rounded-2xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                            className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
                               activeChild.pet_fed_today
-                                ? 'bg-stone-100 text-stone-400 cursor-default border border-stone-200'
+                                ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-default border border-stone-200 dark:border-stone-700'
                                 : (activeChild.pet_food || 0) > 0
-                                  ? 'bg-warning border-2 border-neutral-border text-dark shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
+                                  ? 'bg-warning border-2 border-neutral-border text-dark dark:text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
                                   : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
                             }`}
                           >
@@ -1682,8 +1634,8 @@ export default function ChildDashboard({
                             ) : (
                               <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
                             )}
-                          </button>
-                          <div className={`flex justify-between items-center text-[10px] font-mono ${styles.textMuted} font-bold`}>
+                          </Button>
+                          <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
                             <span>FOOD INVENTORY:</span>
                             <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                           </div>
@@ -1695,11 +1647,23 @@ export default function ChildDashboard({
                         </div>
                       )}
 
+                      </div>
                     </div>
 
                     {/* Streak & Goals Grid */}
                     {(() => {
                       const now = new Date();
+                      
+                      const todayLogicalDate = getLogicalDateString(now);
+                      const todayCompletions = completions.filter(c => 
+                        c.child_id === activeChild.id &&
+                        c.status === 'approved' &&
+                        getLogicalDateString(c.completed_at) === todayLogicalDate
+                      );
+                      const pointsEarnedToday = todayCompletions.reduce((acc, c) => acc + (c.points_awarded > 0 ? c.points_awarded : 0), 0);
+                      const dailyTarget = parentProfile?.daily_points_target || 50;
+                      const dailyPct = Math.min(100, Math.round((pointsEarnedToday / dailyTarget) * 100));
+
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
                       const isWeeklyReset = !nextWeekly || now >= nextWeekly;
                       const dispWeeklyPts = isWeeklyReset ? 0 : (activeChild.weekly_points || 0);
@@ -1713,40 +1677,52 @@ export default function ChildDashboard({
                       return (
                         <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                          {/* Streak Widget */}
-                          <button 
-                            onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                          {/* Daily Goal Widget */}
+                          <button
+                            onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                           >
-                            <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
-                            <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5">Day Streak</span>
+                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-orange-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${dailyPct}%` }} className="bg-orange-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${dailyPct >= 100 ? 'text-emerald-500' : 'text-orange-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${dailyPct >= 100 ? 'text-emerald-600' : 'text-orange-600'}`}>{dailyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Daily</span>
+                            </div>
                           </button>
 
                           {/* Weekly Widget */}
                           <button 
                             onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
                           >
-                            <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
-                              <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
+                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
                             </div>
-                            <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
-                            <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
                           </button>
 
                           {/* Monthly Widget */}
                           <button 
                             onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
-                            className={`p-3 rounded-2xl ${styles.cardBg} ${styles.borderStyle} flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group cursor-pointer hover:scale-105 active:scale-[0.96] transition-transform`}
+                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
                           >
-                            <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
-                              <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
+                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
                             </div>
-                            <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
-                            <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
-                            <span className="text-[8px] sm:text-[10px] font-mono font-bold text-stone-500 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
                           </button>
                         </div>
                         
@@ -1756,137 +1732,119 @@ export default function ChildDashboard({
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 overflow-hidden"
+                              className="mt-4 px-4 -mx-4 pb-6 -mb-6 pt-2 -mt-2 overflow-hidden"
                             >
-                              <div className={`p-5 rounded-3xl ${styles.cardBg} ${styles.borderStyle} flex flex-col gap-3 shadow-xl relative`}>
-                                <button 
-                                  onClick={() => setExpandedGoal(null)}
-                                  className={`absolute top-4 right-4 p-1.5 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200`}
+                                <div 
+                                  className="relative p-2 rounded-[2rem] shadow-xl overflow-hidden mt-2"
+                                  style={{ 
+                                    background: expandedGoal === 'daily' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
+                                                expandedGoal === 'weekly' ? 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' :
+                                                'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px, #9333ea 20px, #9333ea 30px)' 
+                                  }}
                                 >
-                                  <ChevronRight className="w-4 h-4 rotate-90" />
-                                </button>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.6rem] p-5 flex flex-col gap-3 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+                                    <Button 
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={() => setExpandedGoal(null)}
+                                      className="absolute top-4 right-4 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:bg-stone-200 z-20"
+                                    >
+                                      <ChevronRight className="w-4 h-4 rotate-90" />
+                                    </Button>
                                 
-                                {expandedGoal === 'streak' && (
+                                {expandedGoal === 'daily' && (
                                   <>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-10 w-10 rounded-xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center">
-                                        <Flame className="w-5 h-5 text-orange-500 flame-active" />
+                                    <div className="flex justify-between items-center pr-14">
+                                      <div>
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Daily Goal</Typography>
+                                        <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: Midnight</Typography>
                                       </div>
-                                      <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Daily Streak</h4>
+                                      {dailyPct >= 100 ? (
+                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200`}>
+                                          COMPLETED
+                                        </span>
+                                      ) : (parentProfile?.daily_reward_points && parentProfile.daily_reward_points > 0) ? (
+                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200`}>
+                                          {parentProfile.daily_reward_points} GOLD BONUS
+                                        </span>
+                                      ) : null}
                                     </div>
-                                    <p className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
-                                      You've locked in a <span className="text-orange-500 font-mono font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
-                                    </p>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{pointsEarnedToday} / {dailyTarget} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{dailyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={dailyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
+                                    </div>
                                   </>
                                 )}
                                 
                                 {expandedGoal === 'weekly' && (
                                   <>
-                                    <div className="flex justify-between items-center pr-8">
+                                    <div className="flex justify-between items-center pr-14">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Weekly Target</h4>
-                                        {nextWeekly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Weekly Target</Typography>
+                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
                                         {parentProfile?.weekly_reward_points || 200} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={weeklyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} PTS</span>
-                                      <span>{weeklyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{weeklyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={weeklyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
                                 
                                 {expandedGoal === 'monthly' && (
                                   <>
-                                    <div className="flex justify-between items-center pr-8">
+                                    <div className="flex justify-between items-center pr-14">
                                       <div>
-                                        <h4 className={`font-extrabold text-lg font-display ${styles.titleColor}`}>Monthly Target</h4>
-                                        {nextMonthly && <p className={`text-[10px] font-mono ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</p>}
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Monthly Target</Typography>
+                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
                                       </div>
-                                      <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
+                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
                                         {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
                                       </span>
                                     </div>
-                                    <LinearProgressBar 
-                                      progress={monthlyPct}
-                                      heightClass="h-3"
-                                      className="mt-2"
-                                    />
-                                    <div className={`flex justify-between text-xs font-mono font-bold ${styles.textMuted}`}>
-                                      <span>{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} PTS</span>
-                                      <span>{monthlyPct}% COMPLETED</span>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{monthlyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={monthlyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
                                     </div>
                                   </>
                                 )}
-                              </div>
+                                  </div>
+                                </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
                         </>
                       );
                     })()}
+                      </motion.div>
+                    )}
 
-                  </div>
-                )}
-
-                {/* Right Column: Chores / Prize Cabinet (Hidden on mobile if 'companion' tab is active) */}
-                {activeChild && (
-                  <div className={`lg:col-span-8 space-y-2 sm:space-y-3 ${activeChildTab === 'companion' ? 'hidden lg:block' : ''}`}>
-                    
-                    {/* Desktop style switcher tabs (Hidden on mobile) */}
-                    <div className={`hidden lg:flex gap-2 p-1 bg-gray-50 border border-gray-100 rounded-2xl`} id="kid-dashboard-tabs">
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('home'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'home' || activeChildTab === 'companion'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <Home className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" /> <span className="hidden sm:inline">HOME</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('tasks'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'tasks'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" /> <span className="hidden sm:inline">TASKS</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('rewards'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'rewards'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" /> <span className="hidden sm:inline">PRIZES</span>
-                      </button>
-                      <button
-                        onClick={() => { playSound.click(); setActiveChildTab('pots'); }}
-                        className={`flex-1 py-3 sm:py-3.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          activeChildTab === 'pots'
-                            ? 'bg-white shadow-sm text-slate-900 border border-gray-200'
-                            : 'text-gray-400 hover:text-slate-600'
-                        }`}
-                      >
-                        <FaJar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> <span className="hidden sm:inline">POTS</span>
-                      </button>
-                    </div>
-
-                    {/* Active Screen Frame */}
-                    <AnimatePresence mode="wait">
-                      {activeChildTab === 'home' || activeChildTab === 'companion' ? (
+                    {/* Home Tab */}
+                    {activeChildTab === 'home' && activeChild && (
                         <ChildHomeTab
                           activeChild={activeChild}
                           tasks={tasks}
@@ -1898,7 +1856,9 @@ export default function ChildDashboard({
                           onOpenBadges={() => setShowBadgesModal(true)}
                           parentProfile={parentProfile}
                         />
-                      ) : activeChildTab === 'tasks' ? (
+                    )}
+                    {/* Tasks Tab */}
+                    {activeChildTab === 'tasks' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -1906,10 +1866,15 @@ export default function ChildDashboard({
                           key="child-tasks-tab"
                           className="flex flex-col"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl bg-white border-gray-200 border flex items-center justify-between mb-3 sm:mb-4`}>
-                            <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900`}>Daily Quests</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono text-gray-400`}>Complete tasks to earn more gold coins!</p>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+                          >
+                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <div>
+                                <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Daily Quests</Typography>
+                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete tasks to earn more gold coins!</Typography>
+                              </div>
                             </div>
                           </div>
                           
@@ -1921,12 +1886,12 @@ export default function ChildDashboard({
                             }
                             return true;
                           }).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-3`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                               <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</h4>
-                              <p className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                                 You have conquered all assigned chores. Ask your parent to broadcast new missions!
-                              </p>
+                              </Typography>
                             </div>
                           ) : (
                             tasks.filter(t => {
@@ -1982,64 +1947,65 @@ export default function ChildDashboard({
                               const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
                               const subtitleParts = [catMeta.label, recLabel, ...(completedTodayCount > 0 ? [`Done ${completedTodayCount}×`] : [])];
 
+                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                              const taskBgStyle = {
+                                background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)',
+                              };
+
+                              const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
+
                               const cardContent = (
-                                <>
-                                  <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${isApproved ? 'bg-gray-200 text-gray-500' : 'bg-sky-100 text-sky-600 font-black text-xs'}`}>
-                                      <catMeta.Icon className="w-4 h-4" />
-                                    </div>
+                                <div className={innerContentClasses}>
+                                  <div className="absolute top-2 right-2 z-10">
+                                    <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
                                   </div>
-                                  <div className={`mt-2 ${isCompletable ? 'group-hover:scale-110 transition-transform' : 'opacity-50'}`}>
+                                  <div className="mt-2 relative z-10">
                                     <CoinBadge points={task.points} disabled={isApproved} />
                                   </div>
-                                  <div className="w-full">
-                                    <h4 className={`font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight ${isApproved ? 'line-through opacity-50' : ''}`}>
+                                  <div className="w-full relative z-10 mt-1">
+                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800 dark:text-stone-100'}`}>
                                       {task.title}
-                                    </h4>
-                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                    </Typography>
+                                    <div className="mt-2 flex items-center justify-center">
                                       {isApproved ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full">
-                                          <FaCircleCheck className="w-3 h-3" /> DONE
+                                        <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-widest rounded-full border border-emerald-200">
+                                          <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
                                         </div>
                                       ) : isPending ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full">
+                                        <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">
                                           AWAITING
                                         </div>
                                       ) : isOnCooldown ? (
-                                        <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-amber-200">
+                                        <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black uppercase tracking-widest rounded-full border border-amber-200">
                                           {cooldownTimeLeftStr}
                                         </div>
                                       ) : (
-                                        <div className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full group-hover:bg-amber-100 group-hover:text-amber-600 transition-colors">
+                                        <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full">
                                           {recLabel}
                                         </div>
                                       )}
                                     </div>
                                   </div>
-                                </>
+                                </div>
                               );
 
-                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
-
                               return isCompletable ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={task.id}
                                   onClick={() => handleTaskCheck(task.id, task.title)}
                                   id={`claim-task-${task.id}`}
-                                  className={`${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] task-card`}
+                                  className={`${baseCardClasses} task-card`}
+                                  style={taskBgStyle}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
                                 <div
                                   key={task.id}
-                                  className={`${baseCardClasses} ${
-                                    isApproved
-                                      ? `bg-gray-50 border-gray-100`
-                                      : isPending
-                                        ? 'bg-indigo-50 border-indigo-100'
-                                        : 'bg-amber-50 border-amber-100 opacity-75'
-                                  } task-card`}
+                                  className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
+                                  style={taskBgStyle}
                                 >
                                   {cardContent}
                                 </div>
@@ -2047,8 +2013,10 @@ export default function ChildDashboard({
                             })
                           )}
                           </div>
-                        </motion.div>
-                      ) : activeChildTab === 'rewards' ? (
+                          </motion.div>
+                    )}
+                    {/* Rewards Tab */}
+                    {activeChildTab === 'rewards' && activeChild && (
                         
                         /* PRIZE CABINET CONTENT */
                         <motion.div
@@ -2058,19 +2026,24 @@ export default function ChildDashboard({
                           key="child-rewards-tab"
                           className="space-y-4"
                         >
-                          <div className={`p-4 rounded-xl sm:rounded-2xl ${styles.cardBg} ${styles.borderStyle} border flex items-center justify-between`}>
-                            <div>
-                              <h3 className={`font-black font-display text-base sm:text-lg uppercase tracking-wider ${styles.titleColor}`}>Reward Shop</h3>
-                              <p className={`text-[10px] sm:text-xs font-mono ${styles.textMuted}`}>Trade your gold coins for real-world prizes!</p>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px)' }}
+                          >
+                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <div>
+                                <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Reward Shop</Typography>
+                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Trade your gold coins for real-world prizes!</Typography>
+                              </div>
                             </div>
                           </div>
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                           {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-slate-300 rounded-3xl space-y-2`}>
+                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                               <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                              <h4 className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</h4>
-                              <p className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</p>
+                              <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                              <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                             </div>
                           ) : (
                             rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
@@ -2087,80 +2060,77 @@ export default function ChildDashboard({
 
                               let statusBadge = null;
                               if (hasPendingRequest) {
-                                statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-500">Pending</span>;
+                                statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
                               } else if (!availability.available && !isSavingFor) {
                                 statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
                               } else if (isSavingsUnlocked) {
                                 if (isSavingFor) {
                                   statusBadge = (
                                     <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
-                                      <CheckCircle className="w-3 h-3" /> Saving
+                                      <CheckCircle className="w-3 h-3" /> SAVING
                                     </div>
                                   );
                                 } else {
                                   statusBadge = (
-                                    <button
+                                    <Button
+                                      variant="none"
+                                      size="none"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         onSavingsGoal(activeChild.id, rew.id);
                                         playSound.success();
                                       }}
-                                      className="inline-block px-3 py-1 bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-wider rounded-full hover:bg-emerald-100 hover:text-emerald-600 transition-colors"
+                                      className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
                                     >
-                                      Set Goal
-                                    </button>
+                                      SET GOAL
+                                    </Button>
                                   );
                                 }
                               }
 
-                              const baseCardClasses = "relative p-4 rounded-[1.5rem] border-2 shadow-sm transition-all flex flex-col items-center text-center gap-3";
-                              
-                              let wrapperClasses = "";
-                              let iconBg = "";
-                              if (isSavingFor) {
-                                wrapperClasses = `${baseCardClasses} bg-emerald-50 border-emerald-300 shadow-[0_4px_20px_rgba(52,211,153,0.2)] hover:shadow-[0_8px_25px_rgba(52,211,153,0.3)] group cursor-pointer reward-card-saving`;
-                                iconBg = "bg-emerald-100 text-emerald-600";
-                              } else if (canDispense) {
-                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 hover:shadow-xl hover:border-amber-300 group cursor-pointer active:scale-[0.98] reward-card`;
-                                iconBg = "bg-orange-100 text-orange-500";
-                              } else {
-                                wrapperClasses = `${baseCardClasses} bg-white border-stone-100 opacity-60 grayscale-[0.3] reward-card-disabled`;
-                                iconBg = "bg-stone-100 text-stone-400";
-                              }
+                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                              const rewardBgStyle = {
+                                background: 'repeating-linear-gradient(-45deg, #f472b6, #f472b6 15px, #34d399 15px, #34d399 30px, #818cf8 30px, #818cf8 45px)',
+                              };
+
+                              const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
 
                               const cardContent = (
-                                <>
-                                  <div className="absolute top-3 right-3">
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm ${iconBg}`}>
-                                      <Gift className="w-4 h-4" />
-                                    </div>
+                                <div className={innerContentClasses}>
+                                  <div className="absolute top-2 right-2 z-10">
+                                    <Gift className={`w-5 h-5 ${(canDispense || isSavingFor) ? 'text-pink-400 drop-shadow-sm group-hover:scale-125 transition-transform' : 'text-stone-300'}`} />
                                   </div>
-                                  <div className={`mt-2 ${canDispense ? 'group-hover:scale-110 transition-transform' : ''}`}>
+                                  <div className="mt-2 relative z-10">
                                     <CoinBadge points={rew.cost_points} />
                                   </div>
-                                  <div className="w-full">
-                                    <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 font-display leading-tight">{rew.title}</h4>
-                                    <div className="mt-2 min-h-[24px] flex items-center justify-center">
+                                  <div className="w-full relative z-10 mt-1">
+                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${(canDispense || isSavingFor) ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400'}`}>
+                                      {rew.title}
+                                    </Typography>
+                                    <div className="mt-2 flex items-center justify-center">
                                       {statusBadge}
                                     </div>
                                   </div>
-                                </>
+                                </div>
                               );
 
                               return canDispense ? (
-                                <button
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   key={rew.id}
                                   onClick={() => isSavingFor
                                     ? handleClaimReward(rew.id, rew.cost_points, 'savings')
                                     : handleClaimReward(rew.id, rew.cost_points)
                                   }
                                   id={`claim-reward-${rew.id}`}
-                                  className={wrapperClasses}
+                                  className={`${baseCardClasses} reward-card`}
+                                  style={rewardBgStyle}
                                 >
                                   {cardContent}
-                                </button>
+                                </Button>
                               ) : (
-                                <div key={rew.id} className={wrapperClasses}>
+                                <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
                                   {cardContent}
                                 </div>
                               );
@@ -2168,7 +2138,9 @@ export default function ChildDashboard({
                           )}
                           </div>
                         </motion.div>
-                      ) : activeChildTab === 'pots' ? (
+                    )}
+                    {/* Pots Tab */}
+                    {activeChildTab === 'pots' && activeChild && (
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -2176,246 +2148,261 @@ export default function ChildDashboard({
                           key="child-pots-tab"
                           className="space-y-4"
                         >
-                          <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl p-4 shadow-sm text-left mb-4">
-                            <h2 className="font-black font-display text-base sm:text-lg uppercase tracking-wider text-slate-900">POTS</h2>
-                            <p className="text-[10px] sm:text-xs font-mono text-stone-500">Manage your savings, food and gifting pots!</p>
+                          <div 
+                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                            style={{ background: 'repeating-linear-gradient(45deg, #10b981, #10b981 10px, #059669 10px, #059669 20px)' }}
+                          >
+                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                              <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Pots</Typography>
+                              <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Manage your savings, food and gifting pots!</Typography>
+                            </div>
                           </div>
+                          
+                          <style>{`
+                            .pot-flip-inner {
+                              transition: transform 0.6s;
+                              transform-style: preserve-3d;
+                            }
+                            .pot-flip-card.flipped .pot-flip-inner {
+                              transform: rotateY(180deg);
+                            }
+                            .pot-flip-front, .pot-flip-back {
+                              backface-visibility: hidden;
+                              -webkit-backface-visibility: hidden;
+                            }
+                            .pot-flip-front {
+                              transform: rotateY(0deg);
+                            }
+                            .pot-flip-back {
+                              transform: rotateY(180deg);
+                            }
+                          `}</style>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                           
                           {/* === MAIN GOLD POT SECTION === */}
-                          <div 
-                            onClick={() => setExpandedPot(expandedPot === 'gold' ? null : 'gold')}
-                            className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gold ${expandedPot === 'gold' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
-                          >
-                            <div className="flex justify-between items-start mb-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
-                                {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
+                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
+                            <div className="relative w-full h-full pot-flip-inner">
+                              
+                              {/* Front Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                      {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <FaJar className="w-6 h-6" />}
+                                    </div>
+                                    <CoinBadge points={activeChild.points || 0} size="sm" />
+                                  </div>
+                                  <div>
+                                    <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pot</div>
+                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gold Pot</Typography>
+                                  </div>
+                                  <div className="mt-auto flex justify-center">
+                                     <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                       <span>Tap to Flip</span>
+                                     </div>
+                                  </div>
+                                </div>
                               </div>
-                              <CoinBadge points={activeChild.points || 0} size="sm" />
-                            </div>
-                            <div>
-                              <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
-                              <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Gold Pot</h3>
-                              <div className="flex gap-2 mt-3 flex-wrap">
-                                <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gold' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                  <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gold' ? 'rotate-180' : ''}`} /> Manage
-                                </button>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
-                                  className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
-                                >
-                                  <Play className="w-3 h-3" fill="currentColor" /> Video
-                                </button>
+
+                              {/* Back Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col justify-between border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+                                  <div>
+                                    <Typography variant="body" className="text-base text-stone-500 dark:text-stone-400 leading-snug">
+                                      This is where you keep your gold coins! Use them to get rewards, save up, or feed your pets.
+                                    </Typography>
+                                  </div>
+                                  <div className="w-full flex flex-col gap-1.5 mt-2">
+                                    <Button 
+                                      variant="none"
+                                      size="none"
+                                      onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
+                                      className={`flex items-center justify-center gap-1 w-full py-2.5 rounded-xl text-base font-bold uppercase transition-colors border ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}
+                                    >
+                                      <Play className="w-4 h-4" fill="currentColor" /> Play Video
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
+
                             </div>
-                            
-                            <AnimatePresence>
-                              {expandedPot === 'gold' && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <p className="text-[10px] text-slate-500 leading-relaxed">
-                                    This is your main pocket where all the gold coins you earn are kept. You can use these coins to buy rewards, save them in your Savings Pot, or spend them on your pets!
-                                  </p>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
                           </div>
 
                           {/* === SAVINGS POT SECTION === */}
 
                           {/* Savings Pot Unlocked Card */}
                           {isSavingsUnlocked && activeChild.savings_unlock_seen && (
-                            <div 
-                              onClick={() => setExpandedPot(expandedPot === 'savings' ? null : 'savings')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-savings ${expandedPot === 'savings' ? 'border-emerald-400 shadow-md' : 'border-slate-200 hover:border-emerald-300 hover:shadow-lg'}`}
-                            >
-                              <div className="flex justify-between items-start mb-4">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                                  <PiggyBank className="w-6 h-6" />
-                                </div>
-                                <CoinBadge points={activeChild.savings_pot || 0} size="sm" />
-                              </div>
-                              <div>
-                                <div className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Savings</h3>
-                                <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'savings' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'savings' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
-                                    className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-200 transition-colors"
-                                  >
-                                    <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
-                                </div>
-                              </div>
-
-                              <AnimatePresence>
-                                {expandedPot === 'savings' && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
-                                      Move gold coins here from your main pocket to save them safely. Coins in the savings pot can't be used to buy items in the Rewards shop until you withdraw them.
-                                    </p>
-
-                              {activeChild.savings_goal_name && (
-                                <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
-                                  <div className="flex justify-between items-center mb-1">
-                                    <span className="text-xs font-bold text-emerald-850">
-                                      Goal: {activeChild.savings_goal_name}
-                                    </span>
-                                    <span className="text-[10px] font-mono font-bold text-emerald-700">
-                                      {activeChild.savings_pot || 0} / {activeChild.savings_goal_amount}
-                                    </span>
-                                  </div>
-                                  <LinearProgressBar
-                                    progress={Math.round(((activeChild.savings_pot || 0) / (activeChild.savings_goal_amount || 1)) * 100)}
-                                    className="bg-white border-emerald-200"
-                                  />
-                                  {(activeChild.savings_pot || 0) >= (activeChild.savings_goal_amount || 0) && activeChild.savings_goal_reward_id && (
-                                    <Button
-                                      variant="primary"
-                                      fullWidth
-                                      className="mt-3"
-                                      onClick={() => handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings')}
-                                      leftIcon={<FaWandMagicSparkles className="w-4 h-4" />}
-                                    >
-                                      CLAIM GOAL!
-                                    </Button>
-                                  )}
-                                </div>
-                              )}
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 relative mt-auto">
-                                      <button
-                                        onClick={() => { setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
-                                        disabled={activeChild.points <= 0}
-                                        className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2.5 rounded-xl font-bold text-xs border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <FaCoins /> Deposit
-                                      </button>
-                                      <button
-                                        onClick={() => { setShowWithdrawConfirm(true); playSound.click(); }}
-                                        disabled={(activeChild.savings_pot || 0) <= 0}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        Withdraw All
-                                      </button>
-                                    </div>
-
-                              {/* Deposit Modal */}
-                              <AnimatePresence>
-                                {showDepositModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2 relative z-20"
-                                  >
-                                    <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Deposit how many coins?</label>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
-                                        disabled={depositAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
+                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
+                              <div className="relative w-full h-full pot-flip-inner">
                                 
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <Typography variant="number">{depositAmount}</Typography>
+                                {/* Front Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                      <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500">
+                                        <PiggyBank className="w-6 h-6" />
                                       </div>
-                                
-                                      <button
-                                        onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
-                                        disabled={depositAmount >= activeChild.points}
-                                        className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
+                                      <CoinBadge points={activeChild.savings_pot || 0} size="sm" />
                                     </div>
-                                    <div className="flex flex-col gap-2 mt-2">
-                                      <Button
-                                        variant="primary"
-                                        className="w-full"
-                                        onClick={() => {
-                                          if (depositAmount > 0 && depositAmount <= activeChild.points) {
-                                            onSavingsDeposit(activeChild.id, depositAmount);
-                                            setShowDepositModal(false);
-                                            playSound.purchase();
-                                          }
-                                        }}
-                                        disabled={depositAmount <= 0 || depositAmount > activeChild.points}
-                                      >
-                                        Confirm
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        className="w-full"
-                                        onClick={() => { setShowDepositModal(false); playSound.click(); }}
-                                      >
-                                        Cancel
-                                      </Button>
+                                    <div>
+                                      <div className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
+                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Savings</Typography>
                                     </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
+                                    <div className="mt-auto flex justify-center">
+                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                         <span>Tap to Flip</span>
+                                       </div>
+                                    </div>
+                                  </div>
+                                </div>
 
-                              {/* Withdraw Confirm Modal */}
-                              <AnimatePresence>
-                                {showWithdrawConfirm && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 space-y-2 relative z-20"
-                                  >
-                                    <p className="text-xs font-bold text-rose-800 text-center">Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?</p>
-                                    <div className="flex flex-col gap-2 mt-2">
-                                      <Button
-                                        variant="danger"
-                                        className="w-full"
-                                        onClick={() => {
-                                          onSavingsWithdraw(activeChild.id);
-                                          setShowWithdrawConfirm(false);
-                                          playSound.purchase();
-                                        }}
-                                      >
-                                        Yes, Withdraw
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        className="w-full"
-                                        onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
+                                {/* Back Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                    
+                                    {!showDepositModal && !showWithdrawConfirm && (
+                                      <div className="flex flex-col h-full">
+                                        {activeChild.savings_goal_name ? (
+                                          <div className="mb-2">
+                                            <div className="flex justify-between items-center mb-1">
+                                              <span className="text-xs font-bold text-emerald-850 dark:text-emerald-400">Goal: {activeChild.savings_goal_name}</span>
+                                              <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
+                                                {activeChild.savings_pot || 0}/{activeChild.savings_goal_amount}
+                                              </span>
+                                            </div>
+                                            <LinearProgressBar
+                                              progress={Math.round(((activeChild.savings_pot || 0) / (activeChild.savings_goal_amount || 1)) * 100)}
+                                              className="bg-stone-100 dark:bg-stone-800 border-emerald-200 h-2"
+                                            />
+                                            {(activeChild.savings_pot || 0) >= (activeChild.savings_goal_amount || 0) && activeChild.savings_goal_reward_id && (
+                                              <Button
+                                                variant="primary"
+                                                size="none"
+                                                className="w-full mt-2 py-1.5 text-[10px]"
+                                                onClick={(e) => { e.stopPropagation(); handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings'); }}
+                                                leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
+                                              >
+                                                CLAIM GOAL!
+                                              </Button>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div className="mb-2">
+                                            <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 leading-snug">
+                                              Keep your gold coins safe here! You can't spend them until you take them out.
+                                            </Typography>
+                                          </div>
+                                        )}
+
+                                        <div className="mt-auto flex flex-col gap-1.5">
+                                          <div className="flex gap-1.5">
+                                            <Button variant="none" size="none"
+                                              onClick={(e) => { e.stopPropagation(); setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
+                                              disabled={activeChild.points <= 0}
+                                              className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2 rounded-xl font-bold text-sm border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                            >
+                                              <FaCoins className="w-3 h-3" /> Deposit
+                                            </Button>
+                                            <Button variant="none" size="none"
+                                              onClick={(e) => { e.stopPropagation(); setShowWithdrawConfirm(true); playSound.click(); }}
+                                              disabled={(activeChild.savings_pot || 0) <= 0}
+                                              className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
+                                            >
+                                              Withdraw
+                                            </Button>
+                                          </div>
+                                          <Button 
+                                            variant="none"
+                                            size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
+                                            className="flex items-center justify-center gap-1 bg-emerald-100 text-emerald-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-emerald-200 transition-colors"
+                                          >
+                                            <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Inline Deposit Modal (Replaces content when active) */}
+                                    {showDepositModal && (
+                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <label className="text-xs font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-2">Deposit how many coins?</label>
+                                        <div className="flex items-center justify-center gap-3 py-2">
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
+                                            disabled={depositAmount <= 1}
+                                            className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
+                                          >
+                                            <Minus className="w-4 h-4" />
+                                          </Button>
+                                    
+                                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                            <Typography variant="number" className="text-lg">{depositAmount}</Typography>
+                                          </div>
+                                    
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
+                                            disabled={depositAmount >= activeChild.points}
+                                            className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
+                                          >
+                                            <Plus className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                        <div className="flex gap-2 mt-auto">
+                                          <Button variant="ghost" size="none" className="flex-1 py-2 text-xs" onClick={() => { setShowDepositModal(false); playSound.click(); }}>
+                                            Cancel
+                                          </Button>
+                                          <Button variant="primary" size="none" className="flex-1 py-2 text-xs" disabled={depositAmount <= 0 || depositAmount > activeChild.points}
+                                            onClick={() => {
+                                              if (depositAmount > 0 && depositAmount <= activeChild.points) {
+                                                onSavingsDeposit(activeChild.id, depositAmount);
+                                                setShowDepositModal(false);
+                                                playSound.purchase();
+                                              }
+                                            }}>
+                                            Confirm
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Inline Withdraw Modal */}
+                                    {showWithdrawConfirm && (
+                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <Typography variant="body" className="text-xs font-bold text-rose-800 dark:text-rose-400 text-center mb-4">
+                                          Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?
+                                        </Typography>
+                                        <div className="flex flex-col gap-2 mt-auto">
+                                          <Button variant="danger" size="none" className="w-full py-2 text-xs"
+                                            onClick={() => {
+                                              onSavingsWithdraw(activeChild.id);
+                                              setShowWithdrawConfirm(false);
+                                              playSound.purchase();
+                                            }}>
+                                            Yes, Withdraw
+                                          </Button>
+                                          <Button variant="ghost" size="none" className="w-full py-2 text-xs" onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}>
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           )}
 
                           {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
                           {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
-                              <div className="flex items-center gap-2 text-stone-500">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaPiggyBank className="inline-block mr-2 text-pink-400" /> Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</Typography>
                               </div>
@@ -2426,111 +2413,116 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.savings_pot_unlock_level ?? 2) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}                          {/* === FOOD POT SECTION === */}
 
                           {/* Food Pot Unlocked Card */}
                           {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
-                            <div 
-                              onClick={() => setExpandedPot(expandedPot === 'food' ? null : 'food')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-food ${expandedPot === 'food' ? 'border-orange-400 shadow-md' : 'border-slate-200 hover:border-orange-300 hover:shadow-lg'}`}
-                            >
-                              <div className="flex justify-between items-start mb-4">
-                                <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
-                                  <Utensils className="w-6 h-6" />
-                                </div>
-                                <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl">
-                                  <FaBone className="w-4 h-4 text-orange-500" />
-                                  <Typography variant="number">{activeChild.pet_food || 0}</Typography>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Food</h3>
-                                <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'food' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'food' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
-                                    className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-orange-200 transition-colors"
-                                  >
-                                    <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
-                                </div>
-                              </div>
-
-                              <AnimatePresence>
-                                {expandedPot === 'food' && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-
-                              {/* Weekly Contribution Progress */}
-                              <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="text-xs font-bold text-orange-850">
-                                    Weekly Contribution
-                                  </span>
-                                  <span className="text-[10px] font-mono font-bold text-orange-700">
-                                    {activeChild.food_pot_weekly_contribution || 0} / 7 coins
-                                  </span>
-                                </div>
-                                <LinearProgressBar
-                                  progress={Math.round(((activeChild.food_pot_weekly_contribution || 0) / 7) * 100)}
-                                  heightClass="h-2.5"
-                                  className="bg-white border-orange-200"
-                                />
-                                <span className={`text-[9px] font-mono ${styles.textMuted} mt-1.5 block`}>
-                                  {activeChild.food_pot_weekly_contribution >= 7 
-                                    ? <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Weekly contribution requirement met! Great job.</span> 
-                                    : <span><FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more gold coins in the pot this week.</span>
-                                  }
-                                </span>
-                              </div>
-
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Add gold coins to your Food Pot to fund your pet's food. Once in the pot, use them to buy food pieces!
-                              </p>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 mt-auto relative">
-                                      <button
-                                        onClick={() => { onBuyPetFood(activeChild.id); playSound.purchase(); }}
-                                        disabled={(activeChild.points || 0) < 1}
-                                        className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2.5 rounded-xl font-bold text-xs border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <FaBone /> Buy (1g)
-                                      </button>
-                                      <button
-                                        onClick={() => { onSellPetFood(activeChild.id); playSound.purchase(); }}
-                                        disabled={(activeChild.pet_food || 0) < 1}
-                                        className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        Sell (+1g)
-                                      </button>
+                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
+                              <div className="relative w-full h-full pot-flip-inner">
+                                
+                                {/* Front Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                      <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500">
+                                        <Utensils className="w-6 h-6" />
+                                      </div>
+                                      <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-2 rounded-xl">
+                                        <FaBone className="w-4 h-4 text-orange-500" />
+                                        <Typography variant="number">{activeChild.pet_food || 0}</Typography>
+                                      </div>
                                     </div>
+                                    <div>
+                                      <div className="text-xs font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
+                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Food</Typography>
+                                    </div>
+                                    <div className="mt-auto flex justify-center">
+                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                         <span>Tap to Flip</span>
+                                       </div>
+                                    </div>
+                                  </div>
+                                </div>
 
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
+                                {/* Back Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                    <div className="flex flex-col h-full justify-between">
+                                      <div>
+                                        {/* Weekly Contribution Progress */}
+                                        <div className="mb-2">
+                                          <div className="flex justify-between items-center mb-1">
+                                            <span className="text-xs font-bold text-orange-850 dark:text-orange-400">Weekly Goal</span>
+                                            <span className="text-xs font-black text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
+                                              {activeChild.food_pot_weekly_contribution || 0}/7
+                                            </span>
+                                          </div>
+                                          <LinearProgressBar
+                                            progress={Math.round(((activeChild.food_pot_weekly_contribution || 0) / 7) * 100)}
+                                            className="bg-stone-100 dark:bg-stone-800 border-orange-200 h-2"
+                                          />
+                                          <span className={`text-[10px] font-sans ${styles.textMuted} mt-1.5 block`}>
+                                            {activeChild.food_pot_weekly_contribution >= 7 
+                                              ? <span><FaCircleCheck className="inline-block mr-1 text-green-500" /> Goal met!</span> 
+                                              : <span>Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more coins.</span>
+                                            }
+                                          </span>
+                                        </div>
+                                        
+                                        <Typography variant="body" className={`text-sm ${styles.textMuted} leading-snug mb-2`}>
+                                          Put coins here to feed your pet! Use them to buy yummy food.
+                                        </Typography>
+                                      </div>
+
+                                      <div className="flex flex-col gap-1.5 mt-auto">
+                                        <div className="flex gap-1.5">
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); onBuyPetFood(activeChild.id); playSound.purchase(); }}
+                                            disabled={(activeChild.points || 0) < 1}
+                                            className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2 rounded-xl font-bold text-sm border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50"
+                                          >
+                                            <FaBone className="w-3 h-3" /> Buy (1g)
+                                          </Button>
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); onSellPetFood(activeChild.id); playSound.purchase(); }}
+                                            disabled={(activeChild.pet_food || 0) < 1}
+                                            className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
+                                          >
+                                            Sell (+1g)
+                                          </Button>
+                                        </div>
+                                        <Button 
+                                          variant="none"
+                                          size="none"
+                                          onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
+                                          className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-orange-200 transition-colors"
+                                        >
+                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           )}
 
                           {/* Food Pot Locked Preview */}
                           {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
-                              <div className="flex items-center gap-2 text-stone-500">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaBowlFood className="inline-block mr-2 text-orange-400" /> Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</Typography>
                               </div>
@@ -2541,12 +2533,13 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.food_pot_unlock_level ?? 4) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 
@@ -2554,219 +2547,199 @@ export default function ChildDashboard({
 
                           {/* Gifting Pot Unlocked Card */}
                           {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
-                            <div 
-                              onClick={() => setExpandedPot(expandedPot === 'gifting' ? null : 'gifting')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-gifting ${expandedPot === 'gifting' ? 'border-purple-400 shadow-md' : 'border-slate-200 hover:border-purple-300 hover:shadow-lg'}`}
-                            >
-                              <div className="flex justify-between items-start mb-4">
-                                <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
-                                  <Gift className="w-6 h-6" />
+                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
+                              <div className="relative w-full h-full pot-flip-inner">
+                                
+                                {/* Front Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                      <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500">
+                                        <Gift className="w-6 h-6" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
+                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gifting</Typography>
+                                    </div>
+                                    <div className="mt-auto flex justify-center">
+                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                         <span>Tap to Flip</span>
+                                       </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Back Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                    
+                                    {!showCharityModal && !showSiblingModal && (
+                                      <div className="flex flex-col h-full">
+                                        <Typography variant="body" className={`text-sm ${styles.textMuted} mb-2 leading-snug`}>
+                                          Share your coins to help others or give a gift to your sibling! It feels good to give.
+                                        </Typography>
+
+                                        {/* Gifting Reminder */}
+                                        {(() => {
+                                          const lastGiftingDate = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
+                                          const daysSinceGifting = lastGiftingDate ? Math.floor((new Date().getTime() - lastGiftingDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+                                          if (daysSinceGifting > 14) {
+                                            return (
+                                              <div className="mb-2 p-1.5 bg-rose-50 dark:bg-stone-800 border border-rose-200 dark:border-stone-700 rounded-lg flex items-center gap-1.5">
+                                                <span className="text-rose-500"><FaHeart className="w-3 h-3" /></span>
+                                                <Typography variant="body" className="text-[10px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider leading-tight">
+                                                  You haven't given a gift in a while!
+                                                </Typography>
+                                              </div>
+                                            );
+                                          }
+                                          return null;
+                                        })()}
+
+                                        <div className="mt-auto flex flex-col gap-1.5">
+                                          <div className="flex gap-1.5">
+                                            <Button variant="none" size="none"
+                                              onClick={(e) => { e.stopPropagation(); setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
+                                              disabled={activeChild.points <= 0}
+                                              className="flex-1 flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 py-2 rounded-xl font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                                            >
+                                              <FaGlobe className="w-3 h-3" /> Charity
+                                            </Button>
+                                            <Button variant="none" size="none"
+                                              onClick={(e) => { e.stopPropagation(); setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
+                                              disabled={activeChild.points <= 0 || children.length <= 1}
+                                              className="flex-1 flex items-center justify-center gap-1 bg-pink-50 text-pink-700 py-2 rounded-xl font-bold text-sm border border-pink-200 hover:bg-pink-100 transition-colors disabled:opacity-50"
+                                            >
+                                              <FaGift className="w-3 h-3" /> Sibling
+                                            </Button>
+                                          </div>
+                                          <Button 
+                                            variant="none"
+                                            size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
+                                            className="flex items-center justify-center gap-1 bg-rose-100 text-rose-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-rose-200 transition-colors"
+                                          >
+                                            <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Inline Charity Modal */}
+                                    {showCharityModal && (
+                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <label className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-1">Donate to Charity (requires parent approval)</label>
+                                        <Select
+                                          value={selectedCharityId}
+                                          onChange={(e) => setSelectedCharityId(e.target.value)}
+                                          className="text-xs py-1"
+                                        >
+                                          <option value="CH-WILDLIFE">Global Wildlife Fund</option>
+                                          <option value="CH-OCEAN">Save the Oceans</option>
+                                          <option value="CH-CHILDREN">Kids Education Charity</option>
+                                        </Select>
+                                        <div className="flex items-center justify-center gap-2 py-1.5">
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
+                                            disabled={charityAmount <= 1}
+                                            className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
+                                          >
+                                            <Minus className="w-3 h-3" />
+                                          </Button>
+                                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
+                                            <Typography variant="number" className="text-sm">{charityAmount}</Typography>
+                                          </div>
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
+                                            disabled={charityAmount >= (activeChild.points || 0)}
+                                            className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
+                                          >
+                                            <Plus className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                        <div className="flex gap-2 mt-auto">
+                                          <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowCharityModal(false); playSound.click(); }}>
+                                            Cancel
+                                          </Button>
+                                          <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={charityAmount <= 0 || charityAmount > (activeChild.points || 0) || !selectedCharityId}
+                                            onClick={() => {
+                                              if (charityAmount > 0 && charityAmount <= (activeChild.points || 0) && selectedCharityId) {
+                                                onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
+                                                setShowCharityModal(false);
+                                                playSound.success();
+                                              }
+                                            }}>
+                                            Donate
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Inline Sibling Modal */}
+                                    {showSiblingModal && (
+                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <label className="text-[10px] font-bold text-pink-800 dark:text-pink-400 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
+                                        <Select
+                                          value={selectedSiblingId}
+                                          onChange={(e) => setSelectedSiblingId(e.target.value)}
+                                          className="text-xs py-1"
+                                        >
+                                          {children.filter(c => c.id !== activeChild.id).map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                          ))}
+                                        </Select>
+                                        <div className="flex items-center justify-center gap-2 py-1.5">
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
+                                            disabled={siblingAmount <= 1}
+                                            className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
+                                          >
+                                            <Minus className="w-3 h-3" />
+                                          </Button>
+                                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
+                                            <Typography variant="number" className="text-sm">{siblingAmount}</Typography>
+                                          </div>
+                                          <Button variant="none" size="none"
+                                            onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
+                                            disabled={siblingAmount >= (activeChild.points || 0)}
+                                            className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
+                                          >
+                                            <Plus className="w-3 h-3" />
+                                          </Button>
+                                        </div>
+                                        <div className="flex gap-2 mt-auto">
+                                          <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowSiblingModal(false); playSound.click(); }}>
+                                            Cancel
+                                          </Button>
+                                          <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={siblingAmount <= 0 || siblingAmount > (activeChild.points || 0) || !selectedSiblingId}
+                                            onClick={() => {
+                                              if (siblingAmount > 0 && siblingAmount <= (activeChild.points || 0) && selectedSiblingId) {
+                                                onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
+                                                setShowSiblingModal(false);
+                                                playSound.success();
+                                              }
+                                            }}>
+                                            Gift
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                  </div>
                                 </div>
                               </div>
-                              <div>
-                                <div className="text-[9px] font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                <h3 className="font-extrabold text-lg text-slate-900 leading-tight">Gifting</h3>
-                                <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'gifting' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'gifting' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
-                                    className="flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-rose-200 transition-colors"
-                                  >
-                                    <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
-                                </div>
-                              </div>
-
-                              <AnimatePresence>
-                                {expandedPot === 'gifting' && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-4 pt-4 border-t-2 border-slate-100 flex-1 flex flex-col"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-
-                              <p className={`text-[10px] ${styles.textMuted} mb-3 leading-relaxed`}>
-                                Donate to charity or gift to a sibling directly from your Main Gold Pot. It feels good to give!
-                              </p>
-
-                              {/* Gifting Reminder */}
-                              {(() => {
-                                const lastGiftingDate = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
-                                const daysSinceGifting = lastGiftingDate ? Math.floor((new Date().getTime() - lastGiftingDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
-                                if (daysSinceGifting > 14) {
-                                  return (
-                                    <div className="mb-3 p-2 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
-                                      <span className="text-rose-500"><FaHeart /></span>
-                                      <p className="text-[10px] text-rose-700 font-bold uppercase tracking-wider">
-                                        It's been a while since your last gift! Giving makes everyone happy.
-                                      </p>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              })()}
-
-                                    {/* Action Buttons */}
-                                    <div className="flex flex-col gap-2 mt-auto relative">
-                                      <button
-                                        onClick={() => { setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
-                                        disabled={activeChild.points <= 0}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-2.5 rounded-xl font-bold text-xs border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <FaGlobe /> Charity
-                                      </button>
-                                      <button
-                                        onClick={() => { setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
-                                        disabled={activeChild.points <= 0 || children.length <= 1}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-pink-50 text-pink-700 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-100 transition-colors border border-pink-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <FaGift /> Sibling
-                                      </button>
-                                    </div>
-
-                              {/* Charity Modal */}
-                              <AnimatePresence>
-                                {showCharityModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2"
-                                  >
-                                    <label className="text-xs font-bold text-emerald-800 block text-center mb-1">Donate to Charity (requires parent approval)</label>
-                                    <select
-                                      value={selectedCharityId}
-                                      onChange={(e) => setSelectedCharityId(e.target.value)}
-                                      className="w-full bg-white border border-emerald-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                                    >
-                                      <option value="CH-WILDLIFE"><FaCat className="inline-block mr-2" /> Global Wildlife Fund</option>
-                                      <option value="CH-OCEAN"><FaWater className="inline-block mr-2" /> Save the Oceans</option>
-                                      <option value="CH-CHILDREN"><FaBook className="inline-block mr-2" /> Kids Education Charity</option>
-                                    </select>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
-                                        disabled={charityAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <Typography variant="number">{charityAmount}</Typography>
-                                      </div>
-                                      <button
-                                        onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
-                                        disabled={charityAmount >= (activeChild.points || 0)}
-                                        className="w-8 h-8 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="flex flex-col gap-2 mt-2">
-                                      <Button
-                                        variant="primary"
-                                        className="w-full"
-                                        onClick={() => {
-                                          if (charityAmount > 0 && charityAmount <= (activeChild.points || 0) && selectedCharityId) {
-                                            onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
-                                            setShowCharityModal(false);
-                                            playSound.success();
-                                          }
-                                        }}
-                                        disabled={charityAmount <= 0 || charityAmount > (activeChild.points || 0) || !selectedCharityId}
-                                      >
-                                        Ask to Donate
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        className="w-full"
-                                        onClick={() => { setShowCharityModal(false); playSound.click(); }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-
-                              {/* Sibling Modal */}
-                              <AnimatePresence>
-                                {showSiblingModal && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    className="mt-3 p-3 rounded-xl bg-pink-50 border border-pink-200 space-y-2"
-                                  >
-                                    <label className="text-xs font-bold text-pink-800 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
-                                    <select
-                                      value={selectedSiblingId}
-                                      onChange={(e) => setSelectedSiblingId(e.target.value)}
-                                      className="w-full bg-white border border-pink-200 text-stone-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                                    >
-                                      {children.filter(c => c.id !== activeChild.id).map(c => (
-                                        <option key={c.id} value={c.id}><FaChildDress className="inline-block mr-1" /><FaChild className="inline-block mr-2" /> {c.name}</option>
-                                      ))}
-                                    </select>
-                                    <div className="flex items-center justify-center gap-4 py-2">
-                                      <button
-                                        onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
-                                        disabled={siblingAmount <= 1}
-                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Minus className="w-4 h-4" />
-                                      </button>
-                                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                        <Typography variant="number">{siblingAmount}</Typography>
-                                      </div>
-                                      <button
-                                        onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
-                                        disabled={siblingAmount >= (activeChild.points || 0)}
-                                        className="w-8 h-8 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="flex flex-col gap-2 mt-2">
-                                      <Button
-                                        variant="primary"
-                                        className="w-full"
-                                        onClick={() => {
-                                          if (siblingAmount > 0 && siblingAmount <= (activeChild.points || 0) && selectedSiblingId) {
-                                            onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
-                                            setShowSiblingModal(false);
-                                            playSound.success();
-                                          }
-                                        }}
-                                        disabled={siblingAmount <= 0 || siblingAmount > (activeChild.points || 0) || !selectedSiblingId}
-                                      >
-                                        Ask to Gift
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        className="w-full"
-                                        onClick={() => { setShowSiblingModal(false); playSound.click(); }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
                             </div>
                           )}
 
                           {/* Gifting Pot Locked Preview */}
                           {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
-                              <div className="flex items-center gap-2 text-stone-500">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
                               </div>
@@ -2777,113 +2750,127 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 
                           {/* === GOLD POT MAINTENANCE SECTION === */}
                           {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
-                            <div 
-                              onClick={() => setExpandedPot(expandedPot === 'maintenance' ? null : 'maintenance')}
-                              className={`bg-white border-2 rounded-[2rem] p-4 sm:p-5 flex flex-col transition-all cursor-pointer group h-full pot-card pot-maintenance ${expandedPot === 'maintenance' ? 'border-amber-500 shadow-md' : 'border-slate-200 hover:border-amber-300 hover:shadow-lg'}`}
-                            >
-                              <div className="flex justify-between items-start mb-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
-                                  <FaWrench className="w-6 h-6" />
+                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
+                              <div className="relative w-full h-full pot-flip-inner">
+                                
+                                {/* Front Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                        <FaWrench className="w-6 h-6" />
+                                      </div>
+                                      <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${activeChild.gold_pot_broken ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                                        {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
+                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Maintenance</Typography>
+                                    </div>
+                                    <div className="mt-auto flex justify-center">
+                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                         <span>Tap to Flip</span>
+                                       </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${activeChild.gold_pot_broken ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-                                  {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
-                                </div>
-                              </div>
-                              <div>
-                                <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                <h3 className={`font-extrabold text-lg leading-tight ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-900'}`}>Maintenance</h3>
-                                <div className="flex gap-2 mt-3 flex-wrap">
-                                  <button className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${expandedPot === 'maintenance' ? 'bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${expandedPot === 'maintenance' ? 'rotate-180' : ''}`} /> Manage
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
-                                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
-                                  >
-                                    <Play className="w-3 h-3" fill="currentColor" /> Video
-                                  </button>
-                                </div>
-                              </div>
 
-                              <AnimatePresence>
-                                {expandedPot === 'maintenance' && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
-                                  >
-                                    <div className="mt-4 pt-4 border-t-2 border-slate-100">
-                                      <p className={`text-xs font-bold leading-relaxed mb-4 ${activeChild.gold_pot_broken ? 'text-red-800' : 'text-slate-500'}`}>
-                                        Randomly, your Gold Pot may break and leak coins. Make sure to keep it fixed!
-                                      </p>
+                                {/* Back Side */}
+                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
+                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                    <div className="flex flex-col h-full justify-between">
+                                      <div>
+                                        <Typography variant="body" className={`text-sm font-bold leading-snug mb-3 ${activeChild.gold_pot_broken ? 'text-red-800 dark:text-red-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                                          Oh no! Sometimes your pot cracks and loses coins. Fix it quick!
+                                        </Typography>
 
-                                      {/* Status Info */}
-                                      <div className={`grid grid-cols-2 gap-2 bg-slate-50 rounded-xl p-3 mb-3 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-slate-200'}`}>
-                                        <div className="text-center">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
-                                            {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
+                                        {/* Status Info */}
+                                        <div className={`grid grid-cols-2 gap-2 bg-stone-50 dark:bg-stone-950 rounded-xl p-2 mb-2 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200 dark:border-stone-700'}`}>
+                                          <div className="text-center">
+                                            <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
+                                            <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
+                                              {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
+                                            </div>
+                                          </div>
+                                          <div className="text-center border-l border-stone-200 dark:border-stone-700">
+                                            <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
+                                            <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
+                                              {activeChild.gold_pot_total_leaked || 0} Coins
+                                            </div>
                                           </div>
                                         </div>
-                                        <div className="text-center border-l border-slate-200">
-                                          <div className={`text-[9px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-slate-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                          <div className={`text-xs font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-slate-700'}`}>
-                                            {activeChild.gold_pot_total_leaked || 0} Coins
-                                          </div>
-                                        </div>
+
+                                        {activeChild.gold_pot_broken && (
+                                          <Typography variant="body" className="text-xs text-red-700 dark:text-red-400 mb-2 leading-tight font-bold">
+                                            Your pot is broken! Fix it now or you will lose a coin every day.
+                                          </Typography>
+                                        )}
                                       </div>
 
-                              {activeChild.gold_pot_broken && (
-                                <>
-                                  <p className="text-[10px] text-red-700 mb-3 leading-relaxed font-bold">
-                                    Oh no! Your Gold Pot is cracked and leaking coins! You must fix it or you will lose a coin every day.
-                                  </p>
-                                  <Button
-                                    variant="danger"
-                                    fullWidth
-                                    disabled={(activeChild.points || 0) < (parentProfile?.gold_pot_maintenance_cost ?? 2)}
-                                    onClick={() => {
-                                      const cost = parentProfile?.gold_pot_maintenance_cost ?? 2;
-                                      if ((activeChild.points || 0) >= cost) {
-                                        playSound.success();
-                                        onUpdateChildStats(activeChild.id, {
-                                          points: activeChild.points - cost,
-                                          gold_pot_broken: false,
-                                          gold_pot_last_fix_date: new Date().toISOString().split('T')[0]
-                                        });
-                                      } else {
-                                        playSound.pinError();
-                                      }
-                                    }}
-                                    leftIcon={<FaWandMagicSparkles className="w-4 h-4" />}
-                                  >
-                                    FIX POT (-{parentProfile?.gold_pot_maintenance_cost ?? 2} COINS)
-                                  </Button>
-                                </>
-                              )}
+                                      <div className="flex flex-col gap-1.5 mt-auto">
+                                        {activeChild.gold_pot_broken && (
+                                          <Button
+                                            variant="danger"
+                                            size="sm"
+                                            fullWidth
+                                            disabled={(activeChild.points || 0) < (parentProfile?.gold_pot_maintenance_cost ?? 2)}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const cost = parentProfile?.gold_pot_maintenance_cost ?? 2;
+                                              if ((activeChild.points || 0) >= cost) {
+                                                playSound.success();
+                                                onUpdateChildStats(activeChild.id, {
+                                                  points: activeChild.points - cost,
+                                                  gold_pot_broken: false,
+                                                  gold_pot_last_fix_date: new Date().toISOString().split('T')[0]
+                                                });
+                                              } else {
+                                                playSound.pinError();
+                                              }
+                                            }}
+                                            leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
+                                            className="text-xs py-2 rounded-xl"
+                                          >
+                                            FIX (-{parentProfile?.gold_pot_maintenance_cost ?? 2} COINS)
+                                          </Button>
+                                        )}
+                                        <Button 
+                                          variant="none"
+                                          size="none"
+                                          onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
+                                          className={`flex items-center justify-center gap-1 w-full py-2 rounded-xl font-bold text-sm transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'}`}
+                                        >
+                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           )}
 
                           {/* Gold Pot Maintenance Locked Preview */}
                           {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
-                            <div className="p-4 sm:p-5 rounded-[2rem] bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center text-center gap-2 opacity-70 h-full">
-                              <div className="flex items-center gap-2 text-stone-500">
+                            <div 
+                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                            >
+                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaWrench className="inline-block mr-2 text-amber-500" /> Maintenance — Unlock at Level {parentProfile?.gold_pot_maintenance_unlock_level ?? 8}!</Typography>
                               </div>
@@ -2894,21 +2881,21 @@ export default function ChildDashboard({
                                 })()}
                                 className="max-w-[200px]"
                               />
-                              <span className="text-[10px] font-mono text-stone-400 font-bold">
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
                                 {(() => {
                                   const goldReq = ((parentProfile?.gold_pot_maintenance_unlock_level ?? 8) - 1) * (parentProfile?.points_to_level_up ?? 500);
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
+                              </div>
                             </div>
                           )}
 
                         </div>
                         </motion.div>
-                      ) : null}
+                        )}
                     </AnimatePresence>
-                  </div>
-                )}
+                  </main>
 
               </motion.div>
             )}
@@ -2921,39 +2908,18 @@ export default function ChildDashboard({
 
         {/* Mobile Sticky Bottom Nav for Child Dashboard */}
         {selectedChildId && (
-          <div className="lg:hidden fixed bottom-4 left-4 right-4 bg-white/20 backdrop-blur-md rounded-[2rem] p-1.5 flex justify-between items-center shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-white/40 z-50">
-            {[
+          <BottomTabBar
+            tabs={[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'tasks', label: 'Tasks', icon: CheckCircle },
-              { id: 'rewards', label: 'Prizes', icon: Gift },
-              { id: 'companion', label: 'Pet', icon: FaCat },
+              { id: 'companion', label: 'Pets', icon: FaPaw },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
               { id: 'pots', label: 'Pots', icon: FaJar }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isSelected = activeChildTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                  className={`relative w-[4.5rem] h-14 flex flex-col items-center justify-center transition-colors duration-300 rounded-[1.25rem] ${
-                    isSelected ? 'text-sky-600' : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                >
-                  {isSelected && (
-                    <motion.div
-                      layoutId="child-nav-pill"
-                      className="absolute inset-0 bg-sky-50 rounded-[1.25rem]"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  {Icon && <Icon className={`relative z-10 w-5 h-5 sm:w-6 sm:h-6 mb-0.5 transition-transform ${isSelected ? 'scale-105' : ''}`} strokeWidth={isSelected ? 2.5 : 2} />}
-                  <span className={`relative z-10 text-[9px] font-bold tracking-tight`}>
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+            ]}
+            activeTab={activeChildTab}
+            onTabChange={(id) => { playSound.click(); setActiveChildTab(id as any); }}
+            layoutId="child-nav-pill"
+          />
         )}
 
       {/* Badges Modal */}

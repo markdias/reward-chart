@@ -68,22 +68,12 @@ const getThemeForCompanion = (companionId: string) => {
         titleColor: '#d946ef',
         titleStroke: '4px #ffffff',
         titleShadow: '0 8px 0 #a21caf',
-        badgeBg: 'bg-white',
+        badgeBg: 'bg-white dark:bg-stone-900',
         badgeBorder: 'border-[4px] border-fuchsia-300',
         badgeTextColor: 'text-fuchsia-600',
         badgeIcon: <Sparkles className="w-5 h-5 text-fuchsia-400" />,
       };
-    case 'robot':
-      return {
-        bg: 'radial-gradient(circle at center, #ecfeff 0%, #a5f3fc 50%, #22d3ee 100%)',
-        titleColor: '#0ea5e9',
-        titleStroke: '4px #ffffff',
-        titleShadow: '0 8px 0 #0369a1',
-        badgeBg: 'bg-white',
-        badgeBorder: 'border-[4px] border-cyan-400',
-        badgeTextColor: 'text-cyan-700',
-        badgeIcon: <Zap className="w-5 h-5 text-cyan-500 fill-cyan-500" />,
-      };
+
     case 'dino':
       return {
         bg: 'radial-gradient(circle at center, #dcfce7 0%, #bbf7d0 50%, #86efac 100%)',
@@ -95,46 +85,14 @@ const getThemeForCompanion = (companionId: string) => {
         badgeTextColor: 'text-orange-800',
         badgeIcon: <PawPrint className="w-5 h-5 text-orange-500" />,
       };
-    case 'dragon':
-      return {
-        bg: 'radial-gradient(circle at center, #fff7ed 0%, #fed7aa 40%, #f97316 100%)',
-        titleColor: '#ef4444',
-        titleStroke: '4px #ffffff',
-        titleShadow: '0 8px 0 #b91c1c',
-        badgeBg: 'bg-white',
-        badgeBorder: 'border-[4px] border-red-400',
-        badgeTextColor: 'text-red-600',
-        badgeIcon: <Flame className="w-5 h-5 text-red-500 fill-red-500" />,
-      };
-    case 'cat':
-      return {
-        bg: 'radial-gradient(circle at center, #f3e8ff 0%, #d8b4fe 40%, #9333ea 100%)',
-        titleColor: '#facc15',
-        titleStroke: '4px #581c87',
-        titleShadow: '0 8px 0 #3b0764',
-        badgeBg: 'bg-purple-50',
-        badgeBorder: 'border-[4px] border-purple-400',
-        badgeTextColor: 'text-purple-800',
-        badgeIcon: <Wand2 className="w-5 h-5 text-purple-600" />,
-      };
-    case 'bunny':
-      return {
-        bg: 'radial-gradient(circle at center, #2e1065 0%, #172554 60%, #020617 100%)',
-        titleColor: '#22d3ee',
-        titleStroke: '3px #ffffff',
-        titleShadow: '0 0 20px #22d3ee, 0 8px 0 #0891b2',
-        badgeBg: 'bg-indigo-950',
-        badgeBorder: 'border-[2px] border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]',
-        badgeTextColor: 'text-cyan-300',
-        badgeIcon: <Rocket className="w-5 h-5 text-cyan-400" />,
-      };
+
     default:
       return {
         bg: 'radial-gradient(circle at center, #fef3c7 0%, #fde68a 50%, #fbbf24 100%)',
         titleColor: '#ffffff',
         titleStroke: '4px #ea580c',
         titleShadow: '0 8px 0 #c2410c',
-        badgeBg: 'bg-white',
+        badgeBg: 'bg-white dark:bg-stone-900',
         badgeBorder: 'border-[4px] border-amber-400',
         badgeTextColor: 'text-amber-800',
         badgeIcon: <CheckCircle2 className="w-5 h-5 text-amber-500" />,
@@ -146,7 +104,7 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
   if (!show) return null;
 
   const theme = getThemeForCompanion(companionId);
-  const companionImage = getCharacterStage(companionId, 4).image_url; // Default to final stage or generic stage for celebration
+  const companionImage = getCharacterStage(companionId, 99).image_url; // Default to final stage or generic stage for celebration
 
   const textStyle = (anim: string, delay: string): React.CSSProperties => ({
     display: 'block',
@@ -168,7 +126,7 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
 
       {/* Full-screen themed overlay */}
       <div
-        className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none select-none overflow-hidden"
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden"
         style={{
           background: theme.bg,
           backdropFilter: 'blur(12px)',

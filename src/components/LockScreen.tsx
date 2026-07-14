@@ -3,10 +3,12 @@ import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { Lock, ShieldAlert, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { playSound } from '../utils/sound';
-import { ThemeId } from '../utils/theme';
+
 import { getSupabaseClient } from '../utils/supabase';
 import { hashPassword } from '../utils/security';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface LockScreenProps {
   parentEmail: string | null;
@@ -14,15 +16,14 @@ interface LockScreenProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
-  theme: ThemeId;
 }
 
 export default function LockScreen({
   parentEmail,
   onSuccess,
   onClose,
-  title = "SECURE DECRYPTION CHECK",
-  subtitle = "Provide your parent account password to unlock mission variables",
+  title = "Parent Authentication",
+  subtitle = "Enter your parent account password to continue",
   theme
 }: LockScreenProps) {
   const [password, setPassword] = useState<string>('');
@@ -91,7 +92,7 @@ export default function LockScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 p-4 backdrop-blur-sm"
       id="lock-screen-container"
     >
 
@@ -99,11 +100,11 @@ export default function LockScreen({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl relative"
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 shadow-xl relative"
         id="lock-panel"
       >
         {/* Vault Frame Header */}
-        <div className="bg-gray-50/50 p-6 text-center border-b border-gray-100 relative">
+        <div className="bg-stone-50 dark:bg-stone-950/50 p-6 text-center border-b border-stone-100 dark:border-stone-800 relative">
           <Button 
             variant="ghost"
             size="icon"
@@ -114,17 +115,17 @@ export default function LockScreen({
             <ArrowLeft className="w-5 h-5" />
           </Button>
           
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 shadow-sm">
-            <Lock className="w-6 h-6 text-amber-500" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 shadow-sm">
+            <Lock className="w-6 h-6 text-stone-900 dark:text-stone-50" />
           </div>
           <Typography variant="h2">{title}</Typography>
-          <p className="font-mono text-[10px] tracking-widest mt-1.5 uppercase text-stone-500 font-bold">{subtitle}</p>
+          <p className="text-xs mt-1.5 text-stone-500 dark:text-stone-400">{subtitle}</p>
         </div>
 
         {/* Password Entry Form */}
         <form onSubmit={handleVerify} className="p-8 flex flex-col items-center w-full">
           <div className="w-full max-w-sm mb-6 relative">
-            <input
+            <Input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {
@@ -132,26 +133,28 @@ export default function LockScreen({
                 if (error) setError(false);
               }}
               placeholder="Enter Password"
-              className="w-full px-4 py-3.5 pr-12 rounded-2xl border border-gray-200 bg-gray-50 text-slate-900 font-mono text-center text-sm shadow-sm focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:text-stone-400"
               autoFocus
+              inputClassName="!pr-12"
             />
-            <button
+            <Button
+              variant="none"
+              size="none"
               type="button"
               onClick={() => {
                 playSound.click();
                 setShowPassword(!showPassword);
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1 cursor-pointer transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 p-1 cursor-pointer transition-colors"
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
+            </Button>
           </div>
 
           {error && (
             <motion.p 
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-600 font-mono font-bold text-[10px] mb-6 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-red-50 px-3 py-2 rounded-xl border border-red-100 w-full max-w-sm"
+              className="text-red-600 font-sans font-bold text-[10px] mb-6 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-red-50 px-3 py-2 rounded-xl border border-red-100 w-full max-w-sm"
             >
               <ShieldAlert className="w-4 h-4" /> Incorrect Password
             </motion.p>
@@ -169,7 +172,7 @@ export default function LockScreen({
               Cancel
             </Button>
             <Button
-              variant="warning"
+              variant="dark"
               fullWidth
               className="flex-1"
               type="submit"

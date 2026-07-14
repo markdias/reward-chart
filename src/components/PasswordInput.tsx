@@ -3,6 +3,8 @@ import { Typography } from './ui/Typography';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { evaluatePassword } from '../utils/security';
 import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 
 interface PasswordInputProps {
   value: string;
@@ -31,19 +33,19 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
   return (
     <div className="space-y-2">
       <div className="relative">
-        <input
+        <Input
           type={showPassword ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 rounded-xl pr-10 ${className}`}
+          inputClassName="!pr-10"
         />
         <Button
           variant="none"
           size="none"
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 cursor-pointer"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 cursor-pointer"
           tabIndex={-1}
         >
           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -51,8 +53,8 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
       </div>
 
       {showPolicy && (
-        <div className="space-y-2 bg-stone-50 p-3 rounded-xl border border-stone-100">
-          <div className="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-widest text-stone-500 mb-2">
+        <div className="space-y-2 bg-stone-50 dark:bg-stone-950 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+          <div className="flex items-center justify-between text-xs font-sans font-bold uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2">
             <span>Password Strength:</span>
             <span className={strength === 5 ? 'text-emerald-600' : (strength >= 3 ? 'text-amber-600' : 'text-rose-600')}>
               {getStrengthLabel()}
@@ -67,7 +69,7 @@ export function PasswordInput({ value, onChange, placeholder = "•••••�
             <div className={`flex-1 rounded-full ${strength === 5 ? getStrengthColor() : 'bg-stone-200'}`} />
           </div>
 
-          <div className="grid grid-cols-1 gap-1 text-[10px] font-mono font-medium text-stone-500">
+          <div className="grid grid-cols-1 gap-1 text-[10px] font-sans font-medium text-stone-500 dark:text-stone-400">
             <div className={`flex items-center gap-2 ${policy.minLength ? 'text-emerald-600' : ''}`}>
               {policy.minLength ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
               At least 8 characters

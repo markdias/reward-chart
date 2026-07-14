@@ -1,19 +1,38 @@
 import React, { useState } from 'react';
 import { Typography } from '../ui/Typography';
-import { ThemeId, THEME_PRESETS } from '../../utils/theme';
+
 import { PREMADE_TASKS } from '../../data/premadeTemplates';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface StepTasksSelectionProps {
-  theme: ThemeId;
   initialSelectedTaskIds: string[];
   onNext: (selectedTaskIds: string[]) => void;
   onBack: () => void;
 }
 
-export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNext, onBack }: StepTasksSelectionProps) {
-  const styles = THEME_PRESETS[theme];
+export default function StepTasksSelection({ initialSelectedTaskIds, onNext, onBack }: StepTasksSelectionProps) {
+  const styles = {
+    text: 'text-stone-900 dark:text-stone-50',
+    textMuted: 'text-stone-500 dark:text-stone-400',
+    bodyBg: 'bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50',
+    cardBg: 'bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-stone-900 dark:text-stone-50',
+    headerBg: 'bg-white/90 dark:bg-stone-900/90 border-b border-stone-100 dark:border-stone-800 backdrop-blur-md',
+    btnPrimary: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all uppercase tracking-wider rounded-2xl border-none',
+    btnSecondary: 'bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-stone-800 active:scale-[0.98] transition-all rounded-2xl',
+    tabActive: 'bg-rose-400 text-white shadow-md shadow-rose-400/30 font-bold rounded-2xl',
+    tabInactive: 'text-stone-400 hover:text-stone-600 bg-transparent',
+    inputBg: 'bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-stone-50 placeholder-[#A8A29E] focus:bg-white dark:focus:bg-stone-900 focus:border-orange-400 focus:ring-4 focus:ring-orange-400/10 focus:outline-none transition-all',
+    accentGlow: 'bg-orange-100/40 opacity-50',
+    tagCategory: 'text-orange-600 bg-orange-50 border border-orange-100 font-bold uppercase rounded-full',
+    gridStyle: 'scrolling-grid opacity-[0.03]',
+    innerCard: 'bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl',
+    titleGradient: 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent',
+    divider: 'border-stone-100 dark:border-stone-800',
+    overlayCrt: 'hidden',
+    titleColor: 'text-[#1C1917] dark:text-stone-50',
+    borderStyle: 'border-stone-100 dark:border-stone-800'
+};
   // Select first 3 by default if none selected
   const [selectedIds, setSelectedIds] = useState<string[]>(
     initialSelectedTaskIds.length > 0 
@@ -33,12 +52,14 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white border border-gray-200 shadow-xl space-y-6 flex flex-col h-full max-h-[85vh] relative z-10`}>
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-xl space-y-6 flex flex-col h-full max-h-[85vh] relative z-10`}>
         <div className="text-center space-y-2 shrink-0">
-          <h2 className={`text-2xl font-display font-bold ${styles.titleColor}`}>Pick Starting Tasks</h2>
+          <Typography variant="h2" className={styles.titleColor}>Pick Starting Tasks</Typography>
           <p className={`text-xs ${styles.textMuted}`}>Select some common tasks to add to your children's dashboard right away. You can add more later!</p>
           <div className="flex justify-end pt-1">
-            <button
+            <Button
+              variant="none"
+              size="none"
               onClick={() => {
                 if (selectedIds.length === PREMADE_TASKS.length) {
                   setSelectedIds([]);
@@ -46,10 +67,10 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
                   setSelectedIds(PREMADE_TASKS.map(t => t.id));
                 }
               }}
-              className={`text-xs font-bold transition-colors underline ${selectedIds.length === PREMADE_TASKS.length ? 'text-stone-500 hover:text-stone-700' : 'text-amber-600 hover:text-amber-700'}`}
+              className={`text-xs font-bold transition-colors underline ${selectedIds.length === PREMADE_TASKS.length ? 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200' : 'text-amber-600 hover:text-amber-700'}`}
             >
               {selectedIds.length === PREMADE_TASKS.length ? 'Deselect All' : 'Select All'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -57,32 +78,34 @@ export default function StepTasksSelection({ theme, initialSelectedTaskIds, onNe
           {PREMADE_TASKS.map(task => {
             const isSelected = selectedIds.includes(task.id);
             return (
-              <button
+              <Button
+                variant="none"
+                size="none"
                 key={task.id}
                 onClick={() => toggleTask(task.id)}
                 className={`w-full text-left p-3 rounded-xl border-2 transition-all flex items-center justify-between gap-3 ${
                   isSelected 
                     ? 'border-amber-400 bg-amber-50 shadow-sm' 
-                    : `border-stone-200 bg-white hover:border-stone-300`
+                    : `border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-stone-300`
                 }`}
               >
                 <div>
-                  <span className={`block font-bold text-sm ${isSelected ? 'text-amber-900' : 'text-stone-700'}`}>
+                  <span className={`block font-bold text-sm ${isSelected ? 'text-amber-900' : 'text-stone-700 dark:text-stone-200'}`}>
                     {task.title}
                   </span>
-                  <span className="text-xs text-stone-500">{task.points} Gold</span>
+                  <span className="text-xs text-stone-500 dark:text-stone-400">{task.points} Gold</span>
                 </div>
                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${
                   isSelected ? 'bg-amber-400 border-amber-400' : 'border-stone-300'
                 }`}>
                   {isSelected && <Check className="w-4 h-4 text-white" />}
                 </div>
-              </button>
+              </Button>
             )
           })}
         </div>
 
-        <div className="flex gap-3 pt-4 shrink-0 border-t border-stone-200">
+        <div className="flex gap-3 pt-4 shrink-0 border-t border-stone-200 dark:border-stone-700">
           <Button
             variant="ghost"
             size="icon"

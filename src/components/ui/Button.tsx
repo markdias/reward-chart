@@ -13,7 +13,7 @@ export type ButtonVariant =
   | 'outline'
   | 'none';
 
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'none';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'none';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -40,69 +40,75 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    // Playful Sticker Base Classes
-    const isSticker = variant !== 'none';
-    const baseClasses = isSticker 
-      ? 'transition-transform hover:-translate-y-1 active:translate-y-0 shadow-lg font-black' 
-      : 'transition-colors active:scale-95 font-bold';
+    // Native iOS Base Classes
+    const baseClasses = variant !== 'none' 
+      ? 'transition-opacity active:opacity-60 font-semibold' 
+      : '';
 
-    // Base classes based on variant using Tailwind v4 theme colors
+    const iosFont = { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' };
+
+    // Base classes based on variant (Native iOS theme)
     let variantClasses = '';
     switch (variant) {
       case 'primary':
-        variantClasses = 'bg-primary text-white';
+        variantClasses = 'bg-[#007AFF] text-white active:bg-[#005bb5] active:opacity-100 transition-colors';
         break;
       case 'secondary':
-        variantClasses = 'bg-surface border-2 border-neutral-border text-dark';
+        variantClasses = 'bg-[#E5E5EA] dark:bg-[#1C1C1E] text-black dark:text-white';
         break;
       case 'danger':
-        variantClasses = 'bg-danger text-white';
+        variantClasses = 'bg-[#FF3B30] text-white active:bg-[#c92a22] active:opacity-100 transition-colors';
         break;
       case 'info':
-        variantClasses = 'bg-info text-white';
+        variantClasses = 'bg-[#5AC8FA] text-white active:bg-[#47a1c9] active:opacity-100 transition-colors';
         break;
       case 'purple':
-        variantClasses = 'bg-accent-purple text-white';
+        variantClasses = 'bg-[#AF52DE] text-white active:bg-[#8e42b5] active:opacity-100 transition-colors';
         break;
       case 'warning':
-        variantClasses = 'bg-warning text-dark';
+        variantClasses = 'bg-[#FF9500] text-white active:bg-[#cc7700] active:opacity-100 transition-colors';
         break;
       case 'dark':
-        variantClasses = 'bg-dark text-white';
+        variantClasses = 'bg-black text-white dark:bg-white dark:text-black';
         break;
       case 'ghost':
-        variantClasses = 'bg-transparent hover:bg-stone-100 text-stone-600';
+        variantClasses = 'bg-transparent text-[#007AFF]';
         break;
       case 'outline':
-        variantClasses = 'bg-transparent hover:bg-stone-50 border-2 border-stone-300 text-stone-600';
+        variantClasses = 'bg-transparent border-[1.5px] border-[#E5E5EA] dark:border-[#38383A] text-black dark:text-white';
         break;
       case 'none':
         variantClasses = '';
         break;
     }
 
-    // Size classes
+    // Size classes (iOS Standard rounded)
     let sizeClasses = '';
     switch (size) {
       case 'sm':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-xs px-4 py-2 rounded-xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-[13px] px-4 py-2 rounded-[10px]';
         break;
       case 'md':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-sm px-6 py-3 rounded-2xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-[17px] leading-[22px] px-6 py-2.5 rounded-[14px]';
         break;
       case 'lg':
-        if (!['icon', 'none'].includes(size)) sizeClasses = 'text-lg px-8 py-4 rounded-3xl';
+        if (!['icon', 'icon-sm', 'none'].includes(size)) sizeClasses = 'text-[17px] leading-[22px] px-8 py-3.5 rounded-[14px]';
         break;
       case 'icon':
-        sizeClasses = 'p-2 rounded-xl';
+        sizeClasses = 'p-2.5 rounded-[12px] touch-target';
+        break;
+      case 'icon-sm':
+        sizeClasses = 'p-1.5 rounded-[10px] touch-target';
         break;
       case 'none':
         sizeClasses = '';
         break;
     }
 
-    const widthClass = fullWidth ? 'w-full flex justify-center' : 'inline-flex justify-center';
-    const disabledClass = disabled || isLoading ? 'opacity-70 cursor-not-allowed pointer-events-none' : '';
+    const widthClass = fullWidth 
+      ? `w-full flex ${variant !== 'none' ? 'justify-center' : ''}`
+      : (variant !== 'none' ? 'inline-flex justify-center' : '');
+    const disabledClass = disabled || isLoading ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
 
     const combinedClasses = [
       `btn-${variant}`,
@@ -111,8 +117,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       widthClass,
       disabledClass,
       baseClasses,
-      'items-center gap-2 uppercase tracking-wider',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-500',
+      variant !== 'none' ? 'items-center gap-2' : 'items-center',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#007AFF]',
       className
     ].filter(Boolean).join(' ');
 
@@ -121,6 +127,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={combinedClasses}
         disabled={disabled || isLoading}
+        style={variant !== 'none' ? { ...iosFont, ...(props.style || {}) } : props.style}
         {...props}
       >
         {isLoading && (

@@ -46,3 +46,16 @@ export function evaluatePassword(password: string): { policy: PasswordPolicy; st
     isValid: strength === 5
   };
 }
+
+/**
+ * Generates a random 6-character alphanumeric code for sharing profiles.
+ * It uses uppercase letters and numbers, avoiding ambiguous characters like 0, O, I, 1.
+ */
+export function generateShortCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}

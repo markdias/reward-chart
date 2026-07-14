@@ -1,3 +1,11 @@
+export interface Routine {
+  id: string;
+  name: string;
+  morningTaskIds: string[];
+  afternoonTaskIds: string[];
+  eveningTaskIds: string[];
+}
+
 export interface ParentProfile {
   user_id: string;
   email: string;
@@ -14,6 +22,7 @@ export interface ParentProfile {
   weekly_points_target?: number;
   daily_points_target?: number;
   weekly_reward_points?: number;
+  daily_reward_points?: number;
   monthly_points_target?: number;
   monthly_reward_points?: number;
   gold_pot_maintenance_unlock_level?: number;
@@ -27,7 +36,7 @@ export interface Child {
   name: string;
   age?: number;
   avatar_url: string;
-  character_id: string; // Selected character template ID (e.g. 'unicorn', 'robot')
+  character_id: string; // Selected character template ID (e.g. 'unicorn', 'dino')
   points: number;
   lifetime_points: number;
   level: number;
@@ -81,7 +90,18 @@ export interface Child {
   gold_pot_fixes?: number;
   gold_pot_unbroken_days?: number;
   manual_deductions?: number;
+  child_share_token?: string | null;
+  linked_email?: string | null;
+  routines?: Routine[];
+  active_routine_id?: string | null;
+  holiday_mode?: boolean;
   created_at: string;
+}
+
+export interface ChildProfile {
+  user_id: string;
+  child_id: string;
+  created_at?: string;
 }
 
 export interface Task {
@@ -133,7 +153,7 @@ export interface RewardRedemption {
   parent_id: string;
   redeemed_at: string;
   status: 'requested' | 'delivered' | 'rejected';
-  payment_source?: 'main' | 'savings' | 'badge_freebie';
+  payment_source?: string; // allow 'badge_freebie:badge-id'
 }
 
 export interface GiftingRequest {

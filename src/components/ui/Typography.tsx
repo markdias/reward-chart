@@ -3,9 +3,13 @@ import React from 'react';
 export type TypographyVariant = 
   | 'h1' 
   | 'h2' 
+  | 'h3'
+  | 'h4'
   | 'body' 
   | 'label' 
   | 'helper' 
+  | 'caption'
+  | 'badge'
   | 'number';
 
 export interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
@@ -27,27 +31,43 @@ export function Typography({
 
   switch (variant) {
     case 'h1':
-      baseClasses = 'text-3xl md:text-5xl font-black font-display text-stone-900';
+      baseClasses = 'text-3xl md:text-5xl font-black font-display text-stone-900 dark:text-stone-50';
       if (!as) Component = 'h1';
       break;
     case 'h2':
-      baseClasses = 'text-xl md:text-2xl font-bold font-display text-stone-900';
+      baseClasses = 'text-xl md:text-2xl font-bold font-display text-stone-900 dark:text-stone-50';
       if (!as) Component = 'h2';
       break;
+    case 'h3':
+      baseClasses = 'text-lg md:text-xl font-bold font-display text-stone-800 dark:text-stone-100';
+      if (!as) Component = 'h3';
+      break;
+    case 'h4':
+      baseClasses = 'text-base font-bold font-display text-stone-800 dark:text-stone-100';
+      if (!as) Component = 'h4';
+      break;
     case 'body':
-      baseClasses = 'text-sm md:text-base font-sans text-stone-600';
+      baseClasses = 'text-sm md:text-base font-sans text-stone-600 dark:text-stone-300';
       if (!as) Component = 'p';
       break;
     case 'label':
-      baseClasses = 'text-2xs font-mono uppercase tracking-widest text-stone-400 font-bold';
+      baseClasses = 'text-2xs font-sans uppercase tracking-widest text-stone-400 font-bold';
       if (!as) Component = 'span';
       break;
     case 'helper':
-      baseClasses = 'text-xs font-mono text-stone-500';
+      baseClasses = 'text-xs font-sans text-stone-500 dark:text-stone-400 font-semibold tracking-wide';
       if (!as) Component = 'p';
       break;
+    case 'caption':
+      baseClasses = 'text-xs font-sans text-stone-500 dark:text-stone-400 italic';
+      if (!as) Component = 'span';
+      break;
+    case 'badge':
+      baseClasses = 'text-[10px] md:text-xs font-sans uppercase font-bold tracking-wider text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full';
+      if (!as) Component = 'span';
+      break;
     case 'number':
-      baseClasses = 'text-lg font-mono font-black tabular-nums text-amber-900';
+      baseClasses = 'text-lg font-sans font-black tabular-nums text-stone-900 dark:text-stone-50 tracking-tight';
       if (!as) Component = 'span';
       break;
   }
