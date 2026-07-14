@@ -149,7 +149,7 @@ export default function ChildDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeChildTab]);
 
-  const [expandedGoal, setExpandedGoal] = useState<'streak' | 'weekly' | 'monthly' | null>(null);
+  const [expandedGoal, setExpandedGoal] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
   const [isFeeding, setIsFeeding] = useState(false);
 
   // Well Done celebration overlay
@@ -586,12 +586,13 @@ export default function ChildDashboard({
                 style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
               >
                 <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                <Tooltip content="Current Gold Coins" position="bottom">
-                  <div className="cursor-help">
-                    <CoinBadge points={activeChild?.points || 0} />
-                  </div>
-                </Tooltip>
-                
+                {activeChildTab !== 'home' && (
+                  <Tooltip content="Current Gold Coins" position="bottom">
+                    <div className="cursor-help ml-1.5 sm:ml-2.5">
+                      <CoinBadge points={activeChild?.points || 0} />
+                    </div>
+                  </Tooltip>
+                )}
                 {!lockedChildId && (
                   <Tooltip content="Go Back" position="bottom">
                     <Button 
@@ -1647,6 +1648,17 @@ export default function ChildDashboard({
                     {/* Streak & Goals Grid */}
                     {(() => {
                       const now = new Date();
+                      
+                      const todayLogicalDate = getLogicalDateString(now);
+                      const todayCompletions = completions.filter(c => 
+                        c.child_id === activeChild.id &&
+                        c.status === 'approved' &&
+                        getLogicalDateString(c.completed_at) === todayLogicalDate
+                      );
+                      const pointsEarnedToday = todayCompletions.reduce((acc, c) => acc + (c.points_awarded > 0 ? c.points_awarded : 0), 0);
+                      const dailyTarget = parentProfile?.daily_points_target || 50;
+                      const dailyPct = Math.min(100, Math.round((pointsEarnedToday / dailyTarget) * 100));
+
                       const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
                       const isWeeklyReset = !nextWeekly || now >= nextWeekly;
                       const dispWeeklyPts = isWeeklyReset ? 0 : (activeChild.weekly_points || 0);
@@ -1660,16 +1672,19 @@ export default function ChildDashboard({
                       return (
                         <>
                         <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                          {/* Streak Widget */}
+                          {/* Daily Goal Widget */}
                           <button
-                            onClick={() => { playSound.click(); setExpandedGoal('streak'); }}
+                            onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
                             className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                             style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                           >
-                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
-                              <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
-                              <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
-                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Day Streak</span>
+                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                              <div className="absolute bottom-0 inset-x-0 w-full bg-orange-100/30 z-0">
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${dailyPct}%` }} className="bg-orange-200/50 absolute bottom-0 inset-x-0 w-full" />
+                              </div>
+                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${dailyPct >= 100 ? 'text-emerald-500' : 'text-orange-500'}`} />
+                              <span className={`font-black text-sm sm:text-base relative z-10 ${dailyPct >= 100 ? 'text-emerald-600' : 'text-orange-600'}`}>{dailyPct}%</span>
+                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Daily</span>
                             </div>
                           </button>
 
@@ -1717,7 +1732,7 @@ export default function ChildDashboard({
                                 <div 
                                   className="relative p-2 rounded-[2rem] shadow-xl overflow-hidden mt-2"
                                   style={{ 
-                                    background: expandedGoal === 'streak' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
+                                    background: expandedGoal === 'daily' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
                                                 expandedGoal === 'weekly' ? 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' :
                                                 'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px, #9333ea 20px, #9333ea 30px)' 
                                   }}
@@ -1732,17 +1747,34 @@ export default function ChildDashboard({
                                       <ChevronRight className="w-4 h-4 rotate-90" />
                                     </Button>
                                 
-                                {expandedGoal === 'streak' && (
+                                {expandedGoal === 'daily' && (
                                   <>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-10 w-10 rounded-xl bg-orange-950/40 border border-orange-900/30 flex items-center justify-center">
-                                        <Flame className="w-5 h-5 text-orange-500 flame-active" />
+                                    <div className="flex justify-between items-center pr-14">
+                                      <div>
+                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Daily Goal</Typography>
+                                        <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: Midnight</Typography>
                                       </div>
-                                      <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Daily Streak</Typography>
+                                      {dailyPct >= 100 ? (
+                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200`}>
+                                          COMPLETED
+                                        </span>
+                                      ) : (parentProfile?.daily_reward_points && parentProfile.daily_reward_points > 0) ? (
+                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200`}>
+                                          {parentProfile.daily_reward_points} GOLD BONUS
+                                        </span>
+                                      ) : null}
                                     </div>
-                                    <Typography variant="body" className={`text-sm ${styles.textMuted} leading-normal mt-1`}>
-                                      You've locked in a <span className="text-orange-500 font-sans font-bold">{activeChild.streak_days} Day Streak</span> by keeping chores up to speed! Keep completing your daily quests to grow the streak.
-                                    </Typography>
+                                    <div className="mt-4">
+                                      <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{pointsEarnedToday} / {dailyTarget} gold coins</span>
+                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{dailyPct}% COMPLETED</span>
+                                      </div>
+                                      <LinearProgressBar 
+                                        progress={dailyPct}
+                                        heightClass="h-2"
+                                        className="!bg-stone-200/60 border-none shadow-inner"
+                                      />
+                                    </div>
                                   </>
                                 )}
                                 
@@ -2152,12 +2184,12 @@ export default function ChildDashboard({
                                 <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
                                   <div className="flex justify-between items-start mb-4">
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
-                                      {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <Coins className="w-6 h-6" />}
+                                      {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <FaJar className="w-6 h-6" />}
                                     </div>
                                     <CoinBadge points={activeChild.points || 0} size="sm" />
                                   </div>
                                   <div>
-                                    <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pocket</div>
+                                    <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pot</div>
                                     <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gold Pot</Typography>
                                   </div>
                                   <div className="mt-auto flex justify-center">

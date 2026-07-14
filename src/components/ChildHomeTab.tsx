@@ -9,7 +9,7 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
@@ -241,76 +241,56 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       key="child-home-tab"
       className="space-y-6 animate-in fade-in duration-300 w-full"
     >
-      {/* Top Cards: Daily Goal, Current Total, and Badges */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-2 sm:mb-4">
-        {/* Daily Goal Card */}
+      {/* 3-Column Top Widgets */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        {/* Streak Widget */}
         <button 
           onClick={() => setHistoryType('today')}
-          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left w-full group"
-          style={{ background: 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' }}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/streak" 
+          style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border-[3px] sm:border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
-              <div className="transform scale-[1.1] sm:scale-[1.4]">
-                <CoinBadge points={pointsEarnedToday} />
-              </div>
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/streak:opacity-100 group-hover/streak:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
             </div>
-            
-            <div className="flex-1 min-w-0">
-              <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Daily Goal</Typography>
-              <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
-                {pointsRemaining > 0 
-                  ? `Need ${pointsRemaining} more coins for ${DAILY_GOAL}.`
-                  : `Awesome! You reached ${DAILY_GOAL} coins!`
-                }
-              </p>
-            </div>
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-0.5" />
+            <Flame className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.streak_days > 0 ? 'text-orange-500 flame-active' : 'text-stone-300'}`} />
+            <span className={`font-black text-sm sm:text-base ${activeChild.streak_days > 0 ? 'text-orange-600' : 'text-stone-400'}`}>{activeChild.streak_days}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Day Streak</span>
           </div>
         </button>
 
-        {/* Current Total Card */}
+        {/* Current Total Widget */}
         <button 
           onClick={() => setHistoryType('full')}
-          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left w-full group"
-          style={{ background: 'repeating-linear-gradient(-45deg, #10b981, #10b981 10px, #34d399 10px, #34d399 20px, #059669 20px, #059669 30px)' }}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/coins"
+          style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
         >
-          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-3 sm:p-5 flex items-center gap-3 sm:gap-4 border-[3px] sm:border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
-              <div className="transform scale-[1.1] sm:scale-[1.4]">
-                <CoinBadge points={activeChild.points} />
-              </div>
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/coins:opacity-100 group-hover/coins:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
             </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Current Total</Typography>
-              <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
-                You have {activeChild.points} gold coins to spend!
-              </p>
+            <Coins className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${activeChild.points > 0 ? 'text-cyan-500' : 'text-stone-300'}`} />
+            <span className={`font-black text-sm sm:text-base ${activeChild.points > 0 ? 'text-cyan-600' : 'text-stone-400'}`}>{activeChild.points}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Total Coins</span>
+          </div>
+        </button>
+
+        {/* Badges Widget */}
+        <button 
+          onClick={onOpenBadges}
+          className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none group/badge"
+          style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
+        >
+          <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
+            <div className="absolute top-2 right-2 opacity-40 group-hover/badge:opacity-100 group-hover/badge:translate-x-0.5 transition-all">
+              <ChevronRight className="w-3.5 h-3.5 text-stone-400" strokeWidth={3} />
             </div>
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-0.5" />
+            <Trophy className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 ${childBadges.length > 0 ? 'text-purple-500 group-hover/badge:scale-110 transition-transform' : 'text-stone-300 group-hover/badge:scale-110 transition-transform'}`} />
+            <span className={`font-black text-sm sm:text-base ${childBadges.length > 0 ? 'text-purple-600' : 'text-stone-400'}`}>{childBadges.length}</span>
+            <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5">Badges</span>
           </div>
         </button>
       </div>
-
-      {/* Check Badges Card */}
-      <button 
-        onClick={onOpenBadges}
-        className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-xl overflow-hidden cursor-pointer hover:-translate-y-1 text-left group w-full mb-6"
-        style={{ background: 'repeating-linear-gradient(-45deg, #f59e0b, #f59e0b 10px, #fbbf24 10px, #fbbf24 20px, #d97706 20px, #d97706 30px)' }}
-      >
-        <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex items-center gap-4 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-[1rem] bg-amber-100 border-2 border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-amber-500" fill="currentColor" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <Typography variant="h2" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 mb-0.5 sm:mb-1 leading-tight">Check Badges</Typography>
-            <p className="text-[11px] sm:text-sm text-stone-500 dark:text-stone-400 font-medium leading-tight group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
-              View your achievements and claim your free rewards!
-            </p>
-          </div>
-          <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-stone-300 dark:text-stone-600 shrink-0 group-hover:text-stone-400 dark:group-hover:text-stone-500 transition-colors group-hover:translate-x-1" />
-        </div>
-      </button>
 
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
@@ -457,13 +437,13 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         return (
           <div className="space-y-4 pt-2">
             <div 
-              className="relative p-[3px] rounded-2xl sm:rounded-3xl shadow-sm"
+              className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm mt-2"
               style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-sm sm:text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-0.5 sm:mb-1 leading-tight">{activeRoutine.name} Routine</Typography>
-                  <Typography variant="body" className="text-[11px] sm:text-sm font-medium text-stone-500 dark:text-stone-400 px-1 leading-tight">Complete your routine tasks to earn gold coins!</Typography>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>

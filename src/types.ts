@@ -22,6 +22,7 @@ export interface ParentProfile {
   weekly_points_target?: number;
   daily_points_target?: number;
   weekly_reward_points?: number;
+  daily_reward_points?: number;
   monthly_points_target?: number;
   monthly_reward_points?: number;
   gold_pot_maintenance_unlock_level?: number;

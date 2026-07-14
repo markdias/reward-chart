@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
 import { Button } from './ui/Button';
-import { FaBone } from 'react-icons/fa6';
+import { FaBone, FaJar } from 'react-icons/fa6';
 import { Coins, PiggyBank, Utensils, Gift } from 'lucide-react';
 import { motion } from 'motion/react';
 import { CoinBadge } from './CoinBadge';
@@ -326,9 +326,9 @@ export default function Showcase() {
             {/* Active Pots */}
             {renderPot(
               "Gold Pot", 
-              "Main Pocket", 
+              "Main Pot", 
               { background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }, 
-              Coins, 
+              FaJar, 
               "bg-amber-100 text-amber-500", 
               250
             )}

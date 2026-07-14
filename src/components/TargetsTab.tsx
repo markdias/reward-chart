@@ -57,6 +57,7 @@ const NumberInputCard = ({
 export default function TargetsTab({ parentProfile, onUpdateParentProfile }: TargetsTabProps) {
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
   const [dailyPointsTarget, setDailyPointsTarget] = useState(parentProfile?.daily_points_target ?? 50);
+  const [dailyRewardPoints, setDailyRewardPoints] = useState(parentProfile?.daily_reward_points ?? 50);
   const [weeklyPointsTarget, setWeeklyPointsTarget] = useState(parentProfile?.weekly_points_target ?? 300);
   const [weeklyRewardPoints, setWeeklyRewardPoints] = useState(parentProfile?.weekly_reward_points ?? 200);
   const [monthlyPointsTarget, setMonthlyPointsTarget] = useState(parentProfile?.monthly_points_target ?? 1200);
@@ -73,6 +74,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
     if (parentProfile) {
       setLevelUpGoldReward(parentProfile.level_up_gold_reward ?? 500);
       setDailyPointsTarget(parentProfile.daily_points_target ?? 50);
+      setDailyRewardPoints(parentProfile.daily_reward_points ?? 50);
       setWeeklyPointsTarget(parentProfile.weekly_points_target ?? 300);
       setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
       setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 1200);
@@ -101,6 +103,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
         .update({ 
           level_up_gold_reward: levelUpGoldReward,
           daily_points_target: dailyPointsTarget,
+          daily_reward_points: dailyRewardPoints,
           weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
           monthly_points_target: monthlyPointsTarget,
@@ -113,6 +116,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
           gold_pot_maintenance_cost: goldPotMaintenanceCost,
           level_up_gold_reward: Number(levelUpGoldReward) || 0,
           daily_points_target: Number(dailyPointsTarget) || 0,
+          daily_reward_points: Number(dailyRewardPoints) || 0,
           weekly_points_target: Number(weeklyPointsTarget) || 0,
           weekly_reward_points: Number(weeklyRewardPoints) || 0,
           monthly_points_target: Number(monthlyPointsTarget) || 0,
@@ -132,6 +136,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
         onUpdateParentProfile({
           level_up_gold_reward: Number(levelUpGoldReward) || 0,
           daily_points_target: Number(dailyPointsTarget) || 0,
+          daily_reward_points: Number(dailyRewardPoints) || 0,
           weekly_points_target: Number(weeklyPointsTarget) || 0,
           weekly_reward_points: Number(weeklyRewardPoints) || 0,
           monthly_points_target: Number(monthlyPointsTarget) || 0,
@@ -182,6 +187,15 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 onChange={setDailyPointsTarget}
                 onBlur={handleSave}
                 colorClass="bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
+              />
+              <NumberInputCard
+                icon={Gift}
+                title="Daily Bonus"
+                description="Reward given for hitting the daily target."
+                value={dailyRewardPoints}
+                onChange={setDailyRewardPoints}
+                onBlur={handleSave}
+                colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
               />
               <NumberInputCard
                 icon={CalendarDays}
