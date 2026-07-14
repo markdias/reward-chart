@@ -1,6 +1,6 @@
 import { 
   FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
-  FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation,
+  FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation, FaCheck,
   FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
   FaWrench,
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
@@ -10,7 +10,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Trophy, Flame, Play, ChevronRight, Lock, Star,
+  Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
 } from 'lucide-react';
@@ -656,27 +656,29 @@ export default function ChildDashboard({
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, y: -10 }}
-            className="mx-2 sm:mx-8 mt-2 sm:mt-4 p-[3px] rounded-3xl bg-gradient-to-r from-cyan-400 via-pink-400 to-purple-400 shadow-sm z-30 relative"
+            className="mx-2 sm:mx-8 mt-2 sm:mt-4 p-[3px] rounded-3xl shadow-sm z-30 relative"
+            style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 10px, #f472b6 10px, #f472b6 20px, #c084fc 20px, #c084fc 30px)' }}
           >
-            <div className="bg-indigo-50 dark:bg-stone-900 rounded-[21px] p-4 flex flex-col sm:flex-row items-center justify-between gap-4 w-full h-full">
-              <div className="flex items-center gap-3">
+            <div className="bg-indigo-50 dark:bg-stone-900 border-2 border-stone-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-[21px] p-3 sm:p-4 flex flex-row items-center justify-between gap-3 w-full h-full">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
                   <Bell className="w-5 h-5 text-indigo-500 animate-pulse" />
                 </div>
-                <div>
-                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm sm:text-base">You have a message!</Typography>
-                  <Typography variant="body" className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 font-medium">Your parent sent you a friendly reminder to complete your tasks today!</Typography>
+                <div className="min-w-0 flex-1">
+                  <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm sm:text-base truncate">You have a message!</Typography>
+                  <Typography variant="body" className="text-xs text-stone-600 dark:text-stone-300 font-medium leading-tight line-clamp-2">Your parent sent you a friendly reminder to complete your tasks today!</Typography>
                 </div>
               </div>
               <Button
-                variant="purple"
+                variant="none"
+                size="none"
                 onClick={() => {
                   playSound.click();
                   onEditChild(activeChild.id, { has_pending_nudge: false });
                 }}
-                className="px-6 py-3 rounded-full text-xs sm:text-sm whitespace-nowrap w-full sm:w-auto"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 flex items-center justify-center shrink-0 shadow-sm border border-stone-200 dark:border-stone-700 transition-transform active:scale-95"
               >
-                I'm on it!
+                <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               </Button>
             </div>
           </motion.div>
@@ -1420,14 +1422,17 @@ export default function ChildDashboard({
           className="px-4 sm:px-6 pb-2 flex justify-end items-center relative z-40 bg-transparent"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => { playSound.click(); onEnterParentMode(); }}
-            leftIcon={<Lock className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-stone-400`} />}
-          >
-            PARENT MODE
-          </Button>
+          <div className="relative flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 shrink-0 z-50">
+            <Button
+              variant="none"
+              size="none"
+              onClick={() => { playSound.click(); onEnterParentMode(); }}
+              className="flex items-center gap-2 px-4 sm:px-6 h-12 sm:h-14 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors font-bold text-xs sm:text-sm tracking-wide"
+            >
+              <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400" />
+              PARENT MODE
+            </Button>
+          </div>
         </header>
       )}
 
