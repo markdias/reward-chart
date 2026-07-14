@@ -178,6 +178,7 @@ export default function ParentDashboard({
   const [expandedRewardTemplateId, setExpandedRewardTemplateId] = useState<string | null>(null);
   const [expandedActiveTaskId, setExpandedActiveTaskId] = useState<string | null>(null);
   const [expandedActiveRewardId, setExpandedActiveRewardId] = useState<string | null>(null);
+  const [expandedChildId, setExpandedChildId] = useState<string | null>(null);
 
 
   // Sort children alphabetically so they don't jump around
@@ -1068,7 +1069,7 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 xl:grid-cols-3 sm:gap-6 sm:overflow-visible sm:snap-none">
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
@@ -1120,7 +1121,7 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={child.id}
-                        className="mb-8 font-sans"
+                        className="w-[calc(100vw-2rem)] sm:w-auto shrink-0 snap-center sm:shrink sm:snap-none mb-8 font-sans"
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
                         {/* Rainbow Trading Card */}
@@ -1197,8 +1198,26 @@ export default function ParentDashboard({
                                 )}
                               </div>
 
+                              {/* Action Buttons Toggle */}
+                              <div className="mt-auto pt-2">
+                                <button
+                                  onClick={() => setExpandedChildId(expandedChildId === child.id ? null : child.id)}
+                                  className="w-full flex justify-center items-center gap-2 p-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-2xl text-stone-600 dark:text-stone-300 font-bold transition-colors shadow-sm active:scale-95"
+                                >
+                                  <Settings className="w-5 h-5" />
+                                  Manage Profile
+                                </button>
+                              </div>
+
                               {/* Action Buttons - Clean List Option */}
-                              <div className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10 mt-auto">
+                              <AnimatePresence>
+                                {expandedChildId === child.id && (
+                                  <motion.div 
+                                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                    className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10 overflow-hidden"
+                                  >
                                 <button onClick={() => openEditChild(child)} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
                                   <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
                                     <Edit2 className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
@@ -1240,12 +1259,12 @@ export default function ParentDashboard({
                                     <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
                                   </button>
                                 )}
-                              </div>
+                              </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           </div>
                         </div>
-
-                        {/* Quick adjustments moved to a modal */}
                       </div>
                     );
                   })}
