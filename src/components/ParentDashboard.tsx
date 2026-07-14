@@ -179,6 +179,7 @@ export default function ParentDashboard({
   const [expandedActiveTaskId, setExpandedActiveTaskId] = useState<string | null>(null);
   const [expandedActiveRewardId, setExpandedActiveRewardId] = useState<string | null>(null);
   const [expandedChildId, setExpandedChildId] = useState<string | null>(null);
+  const [activeCarouselIndex, setActiveCarouselIndex] = useState(0);
 
 
   // Sort children alphabetically so they don't jump around
@@ -1069,7 +1070,15 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar gap-6 pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 xl:grid-cols-3 sm:gap-6 sm:overflow-visible sm:snap-none">
+                <div 
+                  className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 xl:grid-cols-3 sm:gap-6 sm:overflow-visible sm:snap-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                  onScroll={(e) => {
+                    if (window.innerWidth >= 640) return; // Ignore on sm and up (grid mode)
+                    const container = e.currentTarget;
+                    const index = Math.round(container.scrollLeft / container.clientWidth);
+                    if (index !== activeCarouselIndex) setActiveCarouselIndex(index);
+                  }}
+                >
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
@@ -1127,7 +1136,7 @@ export default function ParentDashboard({
                         {/* Rainbow Trading Card */}
                         <div className="w-full max-w-[440px] mx-auto md:mx-0 group perspective-1000">
                           <div 
-                            className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-transform duration-500 transform-gpu group-hover:-translate-y-2 group-hover:rotate-1"
+                            className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-shadow duration-500 transform-gpu"
                             style={{ background: getPetStripeBackground(child.character_id) }}
                           >
                             <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-5 border-[3px] border-stone-900/10 dark:border-white/10 shadow-inner flex flex-col h-full relative overflow-hidden">
@@ -1269,6 +1278,16 @@ export default function ParentDashboard({
                     );
                   })}
                 </div>
+                
+                {/* Mobile Carousel Indicator */}
+                {!isLoading && sortedChildren.length > 1 && (
+                  <div className="flex justify-center items-center sm:hidden mt-2 mb-6">
+                    <div className="bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full text-xs font-bold text-stone-500 dark:text-stone-400">
+                      {activeCarouselIndex + 1} / {sortedChildren.length}
+                    </div>
+                  </div>
+                )}
+
               </motion.div>
             )}
 
