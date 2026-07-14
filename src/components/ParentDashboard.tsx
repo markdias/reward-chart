@@ -617,7 +617,7 @@ export default function ParentDashboard({
         cooldown_minutes: taskCooldownMinutes
       });
     } else {
-      onAddTask(taskTitle, taskPoints, taskCategory, taskRecurrence, taskCooldownMinutes);
+      onAddTask(taskTitle, Number(taskPoints) || 0, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
     setShowAddTask(false);
     setTaskSubTab('directory');
@@ -635,13 +635,13 @@ export default function ParentDashboard({
     if (editingRewardId) {
       onEditReward(editingRewardId, {
         title: rewardTitle,
-        cost_points: rewardCost,
+        cost_points: Number(rewardCost) || 0,
         icon_name: rewardIcon,
         limit_type: rewardLimit,
         is_badge_eligible: rewardBadgeEligible
       });
     } else {
-      onAddReward(rewardTitle, rewardCost, rewardIcon, rewardLimit, rewardBadgeEligible);
+      onAddReward(rewardTitle, Number(rewardCost) || 0, rewardIcon, rewardLimit, rewardBadgeEligible);
     }
     setShowAddReward(false);
     setRewardSubTab('directory');
@@ -1292,7 +1292,7 @@ export default function ParentDashboard({
                             <div className="flex gap-4">
                               <div className="flex-1">
                                 <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
-                                <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(Number(e.target.value))} />
+                                <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(e.target.value === '' ? '' as any : Number(e.target.value))} />
                               </div>
                             </div>
 
@@ -1788,7 +1788,7 @@ export default function ParentDashboard({
                               <Input
                                 type="number"
                                 value={rewardCost}
-                                onChange={(e) => setRewardCost(Number(e.target.value))}
+                                onChange={(e) => setRewardCost(e.target.value === '' ? '' as any : Number(e.target.value))}
                                 min="10"
                                 max="500"
                                 required
@@ -2372,7 +2372,7 @@ export default function ParentDashboard({
                         type="number"
                         min="1"
                         value={penaltyAmount}
-                        onChange={(e) => setPenaltyAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                        onChange={(e) => setPenaltyAmount(e.target.value === '' ? '' as any : Math.max(1, parseInt(e.target.value) || 0))}
                       />
                       <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
                     </div>
@@ -2419,13 +2419,13 @@ export default function ParentDashboard({
                     variant="danger"
                     onClick={() => {
                       playSound.click();
-                      onDeductCoins(penaltyModalChildId, penaltyAmount, penaltyReason || 'Penalty applied');
+                      onDeductCoins(penaltyModalChildId, Number(penaltyAmount) || 0, penaltyReason || 'Penalty applied');
                       setPenaltyModalChildId(null);
                       setPenaltyReason('');
                       setPenaltyAmount(5);
                     }}
                     className="flex-1"
-                    disabled={!penaltyReason.trim() || penaltyAmount <= 0}
+                    disabled={!penaltyReason.trim() || Number(penaltyAmount) <= 0}
                   >
                     Deduct Coins
                   </Button>
@@ -2642,10 +2642,10 @@ export default function ParentDashboard({
                                     type="number"
                                     
                                     value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
+                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
                                   />
                                   <Button size="sm" variant="primary" onClick={() => {
-                                    setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: previewEditPoints } : t));
+                                    setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: Number(previewEditPoints) || 0 } : t));
                                     setEditingPreviewId(null);
                                   }}>Save</Button>
                                   <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
@@ -2793,10 +2793,10 @@ export default function ParentDashboard({
                                     type="number"
                                     
                                     value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(parseInt(e.target.value) || 0)}
+                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
                                   />
                                   <Button size="sm" variant="warning" onClick={() => {
-                                    setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: previewEditPoints } : r));
+                                    setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: Number(previewEditPoints) || 0 } : r));
                                     setEditingPreviewId(null);
                                   }}>Save</Button>
                                   <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>

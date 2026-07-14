@@ -19,7 +19,8 @@ export const SettingsRow = ({
   isLast = false, 
   toggleActive = false,
   onChange,
-  onToggle
+  onToggle,
+  onBlur
 }: {
   label: string;
   value?: string | number;
@@ -29,6 +30,7 @@ export const SettingsRow = ({
   toggleActive?: boolean;
   onChange?: (val: string) => void;
   onToggle?: () => void;
+  onBlur?: () => void;
 }) => (
   <div className={`flex items-center justify-between p-4 ${!isLast ? 'border-b border-stone-100 dark:border-stone-800' : ''} bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors`}>
     <span className="text-sm font-bold text-stone-700 dark:text-stone-200">{label}</span>
@@ -45,6 +47,7 @@ export const SettingsRow = ({
            type={type} 
            value={value} 
            onChange={(e) => onChange && onChange(e.target.value)}
+           onBlur={onBlur}
         />
       )}
     </div>

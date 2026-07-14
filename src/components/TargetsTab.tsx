@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'motion/react';
-import { Save, Target, CalendarDays, Calendar, Trophy, PiggyBank, Bone, Gift, Wrench, ShieldAlert, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Save, Target, CalendarDays, Calendar, Trophy, PiggyBank, Bone, Gift, Wrench, ShieldAlert, Zap, Star, IceCream, Heart } from 'lucide-react';
 
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -19,6 +19,7 @@ const NumberInputCard = ({
   description, 
   value, 
   onChange, 
+  onBlur,
   colorClass 
 }: { 
   icon: any, 
@@ -26,6 +27,7 @@ const NumberInputCard = ({
   description: string, 
   value: number, 
   onChange: (val: number) => void,
+  onBlur?: () => void,
   colorClass: string 
 }) => (
   <div className="bg-white dark:bg-stone-900 border-2 border-stone-100 dark:border-stone-800 rounded-xl p-3 flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -39,7 +41,8 @@ const NumberInputCard = ({
         <input 
           type="number" 
           value={value} 
-          onChange={(e) => onChange(Number(e.target.value))}
+          onChange={(e) => onChange(e.target.value === '' ? '' as any : Number(e.target.value))}
+          onBlur={onBlur}
           className="w-full bg-stone-50 dark:bg-stone-950 border-2 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-50 rounded-lg px-2 py-0.5 text-sm font-black text-center focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/20 outline-none transition-all"
         />
       </div>
@@ -87,13 +90,8 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
   const [msg, setMsg] = useState('');
 
   const handleSave = async () => {
-    if (!parentProfile?.user_id) {
-      setMsg('Settings are only saved to the cloud when you create an account.');
-      playSound.pinError();
-      return;
-    }
+    if (!parentProfile?.user_id) return;
     setIsSaving(true);
-    setMsg('');
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
@@ -113,6 +111,18 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
           gifting_pot_unlock_level: giftingPotUnlockLevel,
           gold_pot_maintenance_unlock_level: goldPotMaintenanceUnlockLevel,
           gold_pot_maintenance_cost: goldPotMaintenanceCost,
+          level_up_gold_reward: Number(levelUpGoldReward) || 0,
+          daily_points_target: Number(dailyPointsTarget) || 0,
+          weekly_points_target: Number(weeklyPointsTarget) || 0,
+          weekly_reward_points: Number(weeklyRewardPoints) || 0,
+          monthly_points_target: Number(monthlyPointsTarget) || 0,
+          monthly_reward_points: Number(monthlyRewardPoints) || 0,
+          points_to_level_up: Number(pointsToLevelUp) || 0,
+          savings_pot_unlock_level: Number(savingsPotUnlockLevel) || 0,
+          food_pot_unlock_level: Number(foodPotUnlockLevel) || 0,
+          gifting_pot_unlock_level: Number(giftingPotUnlockLevel) || 0,
+          gold_pot_maintenance_unlock_level: Number(goldPotMaintenanceUnlockLevel) || 0,
+          gold_pot_maintenance_cost: Number(goldPotMaintenanceCost) || 0,
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -120,21 +130,22 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
       
       if (onUpdateParentProfile) {
         onUpdateParentProfile({
-          level_up_gold_reward: levelUpGoldReward,
-          daily_points_target: dailyPointsTarget,
-          weekly_points_target: weeklyPointsTarget,
-          weekly_reward_points: weeklyRewardPoints,
-          monthly_points_target: monthlyPointsTarget,
-          monthly_reward_points: monthlyRewardPoints,
-          points_to_level_up: pointsToLevelUp,
-          savings_pot_unlock_level: savingsPotUnlockLevel,
-          food_pot_unlock_level: foodPotUnlockLevel,
-          gifting_pot_unlock_level: giftingPotUnlockLevel,
+          level_up_gold_reward: Number(levelUpGoldReward) || 0,
+          daily_points_target: Number(dailyPointsTarget) || 0,
+          weekly_points_target: Number(weeklyPointsTarget) || 0,
+          weekly_reward_points: Number(weeklyRewardPoints) || 0,
+          monthly_points_target: Number(monthlyPointsTarget) || 0,
+          monthly_reward_points: Number(monthlyRewardPoints) || 0,
+          points_to_level_up: Number(pointsToLevelUp) || 0,
+          savings_pot_unlock_level: Number(savingsPotUnlockLevel) || 0,
+          food_pot_unlock_level: Number(foodPotUnlockLevel) || 0,
+          gifting_pot_unlock_level: Number(giftingPotUnlockLevel) || 0,
         });
       }
         
-      setMsg('Targets updated successfully!');
+      setMsg('Saved!');
       playSound.success();
+      setTimeout(() => setMsg(''), 2000);
     } catch (e: any) {
       setMsg(`Error: ${e.message}`);
       playSound.pinError();
@@ -169,6 +180,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="Gold needed to complete the daily goal ring."
                 value={dailyPointsTarget}
                 onChange={setDailyPointsTarget}
+                onBlur={handleSave}
                 colorClass="bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
               />
               <NumberInputCard
@@ -177,6 +189,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="Gold needed to unlock the weekly bonus."
                 value={weeklyPointsTarget}
                 onChange={setWeeklyPointsTarget}
+                onBlur={handleSave}
                 colorClass="bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400"
               />
               <NumberInputCard
@@ -185,28 +198,30 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="Reward given for hitting the weekly target."
                 value={weeklyRewardPoints}
                 onChange={setWeeklyRewardPoints}
+                onBlur={handleSave}
                 colorClass="bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
               />
               <NumberInputCard
-                icon={Calendar}
+                icon={CalendarDays}
                 title="Monthly Target"
-                description="Gold needed to unlock the huge monthly bonus."
+                description="Gold needed to unlock the big monthly bonus."
                 value={monthlyPointsTarget}
                 onChange={setMonthlyPointsTarget}
+                onBlur={handleSave}
                 colorClass="bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
               />
               <NumberInputCard
-                icon={Trophy}
+                icon={Star}
                 title="Monthly Bonus"
                 description="Reward given for hitting the monthly target."
                 value={monthlyRewardPoints}
                 onChange={setMonthlyRewardPoints}
+                onBlur={handleSave}
                 colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
               />
             </div>
           </section>
 
-          {/* Leveling Section */}
           <section>
             <div className="mb-3 px-1">
               <Typography variant="h3" className="text-lg font-black text-stone-800 dark:text-stone-100 flex items-center gap-2">
@@ -225,20 +240,21 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="How much gold is needed to reach the next level."
                 value={pointsToLevelUp}
                 onChange={setPointsToLevelUp}
-                colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                onBlur={handleSave}
+                colorClass="bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400"
               />
               <NumberInputCard
                 icon={Gift}
-                title="Level Up Gold Reward"
-                description="Bonus gold awarded automatically upon leveling up."
+                title="Level Up Reward"
+                description="Gold given when they reach the next level."
                 value={levelUpGoldReward}
                 onChange={setLevelUpGoldReward}
+                onBlur={handleSave}
                 colorClass="bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400"
               />
             </div>
           </section>
 
-          {/* Feature Unlocks Section */}
           <section>
             <div className="mb-3 px-1">
               <Typography variant="h3" className="text-lg font-black text-stone-800 dark:text-stone-100 flex items-center gap-2">
@@ -257,22 +273,25 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="Level required to unlock the Savings Pot."
                 value={savingsPotUnlockLevel}
                 onChange={setSavingsPotUnlockLevel}
+                onBlur={handleSave}
+                colorClass="bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+              />
+              <NumberInputCard
+                icon={IceCream}
+                title="Food Pot Level"
+                description="Level required to unlock the Food Pot."
+                value={foodPotUnlockLevel}
+                onChange={setFoodPotUnlockLevel}
+                onBlur={handleSave}
                 colorClass="bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400"
               />
               <NumberInputCard
-                icon={Bone}
-                title="Food Pot Level"
-                description="Level required to unlock Pet feeding."
-                value={foodPotUnlockLevel}
-                onChange={setFoodPotUnlockLevel}
-                colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
-              />
-              <NumberInputCard
-                icon={Gift}
+                icon={Heart}
                 title="Gifting Pot Level"
-                description="Level required to unlock Charity/Sibling gifting."
+                description="Level required to unlock the Gifting Pot."
                 value={giftingPotUnlockLevel}
                 onChange={setGiftingPotUnlockLevel}
+                onBlur={handleSave}
                 colorClass="bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"
               />
               <NumberInputCard
@@ -281,36 +300,35 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 description="Level where the Gold Pot starts breaking randomly."
                 value={goldPotMaintenanceUnlockLevel}
                 onChange={setGoldPotMaintenanceUnlockLevel}
-                colorClass="bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300"
+                onBlur={handleSave}
+                colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
               />
               <NumberInputCard
-                icon={ShieldAlert}
+                icon={Wrench}
                 title="Maintenance Cost"
                 description="How much gold it costs to fix the broken Gold Pot."
                 value={goldPotMaintenanceCost}
                 onChange={setGoldPotMaintenanceCost}
+                onBlur={handleSave}
                 colorClass="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
               />
             </div>
           </section>
 
-          <div className="max-w-md mx-auto pt-8">
-            <Button 
-              variant="primary"
-              fullWidth
-              onClick={handleSave}
-              isLoading={isSaving}
-              leftIcon={<Save className="w-5 h-5" />}
-              className="py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
-            >
-              SAVE SETTINGS
-            </Button>
-            {msg && (
-              <p className={`text-sm font-bold mt-4 text-center ${msg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>
-                {msg}
-              </p>
-            )}
-          </div>
+            <div className="flex justify-center items-center h-12">
+              <AnimatePresence>
+                {msg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className={`px-4 py-2 rounded-full font-bold shadow-lg ${msg.includes('Error') ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}
+                  >
+                    {msg}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
         </div>
       </motion.div>

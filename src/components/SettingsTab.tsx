@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell } from 'lucide-react';
 import OneSignal from 'react-onesignal';
 import { ParentProfile } from '../types';
@@ -75,13 +75,8 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
     : 'Generating...';
 
   const handleSaveProfile = async () => {
-    if (!parentProfile?.user_id) {
-      setProfileMsg('Profile settings are only saved to the cloud when you create an account.');
-      playSound.pinError();
-      return;
-    }
+    if (!parentProfile?.user_id) return;
     setIsSavingProfile(true);
-    setProfileMsg('');
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
@@ -108,8 +103,9 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
 
       if (familyError) throw familyError;
         
-      setProfileMsg('Profile updated successfully!');
+      setProfileMsg('Saved!');
       playSound.success();
+      setTimeout(() => setProfileMsg(''), 2000);
     } catch (e: any) {
       setProfileMsg(`Error: ${e.message}`);
       playSound.pinError();
@@ -299,8 +295,8 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
         <div className="max-w-4xl mx-auto">
           <SettingsBlock title="Personal Information">
             <SettingsRow label="Account Email" value={parentProfile?.email || ''} type="text" onChange={() => {}} />
-            <SettingsRow label="Your Name" value={name} type="text" onChange={(v) => setName(v)} />
-            <SettingsRow label="Family Name" value={familyName} type="text" onChange={(v) => setFamilyName(v)} isLast />
+            <SettingsRow label="Your Name" value={name} type="text" onChange={(v) => setName(v)} onBlur={handleSaveProfile} />
+            <SettingsRow label="Family Name" value={familyName} type="text" onChange={(v) => setFamilyName(v)} onBlur={handleSaveProfile} isLast />
           </SettingsBlock>
 
           <SettingsBlock title="Appearance">
@@ -360,18 +356,19 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
             />
           </SettingsBlock>
 
-          <div className="max-w-md mx-auto">
-            <Button 
-              variant="primary"
-              fullWidth
-              onClick={handleSaveProfile}
-              isLoading={isSavingProfile}
-              leftIcon={<Save className="w-5 h-5" />}
-              className="mt-8 py-4 font-black tracking-widest shadow-xl shadow-stone-900/10"
-            >
-              SAVE PROFILE
-            </Button>
-            {profileMsg && <p className={`text-sm font-bold mt-4 text-center ${profileMsg.includes('Error') ? 'text-rose-500' : 'text-emerald-500'}`}>{profileMsg}</p>}
+          <div className="flex justify-center items-center h-12 mt-4">
+            <AnimatePresence>
+              {profileMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`px-4 py-2 rounded-full font-bold shadow-lg ${profileMsg.includes('Error') ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}
+                >
+                  {profileMsg}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </motion.div>
