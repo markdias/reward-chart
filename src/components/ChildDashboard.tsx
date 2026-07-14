@@ -564,19 +564,13 @@ export default function ChildDashboard({
         >
           <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {!lockedChildId && (
-                <Tooltip content="Go Back to Selection" position="bottom">
-                  <Button
-                    variant="none"
-                    size="none"
-                    onClick={() => setSelectedChildId(null)}
-                    className="h-11 w-11 sm:h-14 sm:w-14 rounded-[1.25rem] bg-white dark:bg-stone-900 border-[3px] border-stone-100 dark:border-stone-800 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-200 dark:hover:border-stone-700 transition-all active:scale-95 text-stone-600 dark:text-stone-300"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </Button>
-                </Tooltip>
+              {activeChild && (
+                <ChildAvatar 
+                  iconName={activeChild.avatar_url} 
+                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0" 
+                />
               )}
-              <div className="flex flex-col justify-center flex-1 min-w-0">
+              <div className="flex flex-col justify-center min-w-0">
                 <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
                 </Typography>
@@ -597,6 +591,19 @@ export default function ChildDashboard({
                     <CoinBadge points={activeChild?.points || 0} />
                   </div>
                 </Tooltip>
+                
+                {!lockedChildId && (
+                  <Tooltip content="Go Back" position="bottom">
+                    <Button 
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); setSelectedChildId(null); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
+                )}
                 
                 {isChildAuth && onLogout ? (
                   <Tooltip content="Log Out" position="bottom">

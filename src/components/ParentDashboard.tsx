@@ -694,14 +694,7 @@ export default function ParentDashboard({
       >
         <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-            <Tooltip content="Settings" position="bottom">
-              <Button variant="none" size="none"
-                onClick={() => setActiveTab('settings')}
-                className="h-11 w-11 sm:h-14 sm:w-14 rounded-2xl bg-white dark:bg-stone-900 border-[3px] border-stone-100 dark:border-stone-800 shadow-sm flex items-center justify-center shrink-0 hover:bg-stone-50 dark:hover:bg-stone-800 hover:border-stone-200 dark:hover:border-stone-700 transition-all active:scale-95 text-stone-600 dark:text-stone-300"
-              >
-                <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
-              </Button>
-            </Tooltip>
+
             <div className="flex flex-col justify-center flex-1 min-w-0">
               <Typography variant="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
@@ -839,6 +832,14 @@ export default function ParentDashboard({
                   </Button>
                 </Tooltip>
               )}
+              <Tooltip content="Settings" position="bottom" align="right">
+                <Button variant="none" size="none"
+                  onClick={() => { playSound.click(); setActiveTab('settings'); }}
+                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                >
+                  <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </Tooltip>
               <Tooltip content="Exit Parent Mode" position="bottom" align="right">
                 <Button variant="none" size="none"
                   onClick={() => {
