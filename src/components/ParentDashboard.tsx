@@ -2364,9 +2364,9 @@ export default function ParentDashboard({
                   Deduct coins from {children.find(c => c.id === penaltyModalChildId)?.name} and leave a reason in their activity log.
                 </Typography>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Amount to deduct</label>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-2">Amount to deduct</label>
                     <div className="relative">
                       <Input
                         type="number"
@@ -2379,29 +2379,44 @@ export default function ParentDashboard({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-1.5">Reason for penalty</label>
-                    <Select
-                      value={['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) ? penaltyReason : penaltyReason ? 'Custom' : ''}
-                      onChange={(e) => {
-                        if (e.target.value === 'Custom') setPenaltyReason('');
-                        else setPenaltyReason(e.target.value);
-                      }}
-                    >
-                      <option value="" disabled>Select a reason...</option>
-                      <option value="Not listening">Not listening</option>
-                      <option value="Hitting">Hitting</option>
-                      <option value="Refusing chores">Refusing to do chores</option>
-                      <option value="Bad language">Bad language</option>
-                      <option value="Lying">Lying</option>
-                      <option value="Custom">Type my own...</option>
-                    </Select>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-3">Reason for penalty</label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].map(reason => (
+                        <button
+                          key={reason}
+                          onClick={() => setPenaltyReason(reason)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            penaltyReason === reason 
+                              ? 'bg-rose-500 text-white shadow-md' 
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                          }`}
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          if (['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason)) {
+                            setPenaltyReason('');
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          !['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason)
+                            ? 'bg-rose-500 text-white shadow-md' 
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                        }`}
+                      >
+                        Other...
+                      </button>
+                    </div>
 
-                    {(!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) || penaltyReason === '') && (
+                    {!['Not listening', 'Hitting', 'Refusing chores', 'Bad language', 'Lying'].includes(penaltyReason) && (
                       <Input
                         type="text"
                         placeholder="Type custom reason..."
                         value={penaltyReason}
                         onChange={(e) => setPenaltyReason(e.target.value)}
+                        autoFocus
                       />
                     )}
                   </div>
