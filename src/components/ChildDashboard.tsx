@@ -1225,7 +1225,7 @@ export default function ChildDashboard({
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
                 <video 
                   ref={videoRef}
-                  src="/gold-pot-video.mp4" 
+                  src="/05_MaintenancePot.mp4" 
                   controls 
                   playsInline
                   className="w-full h-full object-cover"
@@ -1234,7 +1234,7 @@ export default function ChildDashboard({
                   onPause={() => setIsVideoPlaying(false)}
                   onEnded={() => setIsVideoPlaying(false)}
                 >
-                  <source src="/gold-pot-video.mp4" type="video/mp4" />
+                  <source src="/05_MaintenancePot.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
