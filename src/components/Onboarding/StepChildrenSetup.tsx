@@ -161,26 +161,7 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
               </div>
             </div>
             
-            <div>
-              <label className={`block text-[10px] font-bold uppercase text-center tracking-wider ${styles.textMuted} mb-2`}>Choose Companion</label>
-              <div className="flex justify-center gap-4">
-                {CHARACTER_PACKS.map(char => (
-                  <button
-                    key={char.id}
-                    type="button"
-                    onClick={() => setSelectedCharId(char.id)}
-                    className={`aspect-square w-28 rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
-                      selectedCharId === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
-                    }`}
-                  >
-                    <img src={getCharacterStage(char.id, 99).image_url} alt={char.name} className="w-12 h-12 object-contain mb-1" />
-                    <span className={`text-[9px] font-bold uppercase tracking-wider ${selectedCharId === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
-                      {char.name.split(' ')[0]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             <div>
               <label className={`block text-[10px] font-bold uppercase tracking-wider ${styles.textMuted} mb-2`}>Select Avatar</label>

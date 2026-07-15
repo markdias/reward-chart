@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -41,6 +41,7 @@ import { getSupabaseClient } from '../utils/supabase';
 import { generateShortCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
+import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
@@ -148,7 +149,7 @@ export default function ParentDashboard({
   initialTab = 'home',
   isLoading = false
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -832,6 +833,14 @@ export default function ParentDashboard({
                   </Button>
                 </Tooltip>
               )}
+              <Tooltip content="Guide" position="bottom" align="right">
+                <Button variant="none" size="none"
+                  onClick={() => { playSound.click(); setActiveTab('help'); }}
+                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                >
+                  <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </Tooltip>
               <Tooltip content="Settings" position="bottom" align="right">
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('settings'); }}
@@ -867,7 +876,8 @@ export default function ParentDashboard({
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'targets', label: 'Targets', icon: Target },
-              { id: 'settings', label: 'Settings', icon: Settings }
+              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'help', label: 'Guide', icon: HelpCircle }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -1157,8 +1167,8 @@ export default function ParentDashboard({
                                 </div>
                                 <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
                                 <div className="flex-1 flex items-center justify-center relative z-10">
-                                  {stage.image_url ? (
-                                    <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-contain group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                  {stage.model_url ? (
+                                    <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
                                   ) : (
                                     <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
                                   )}
@@ -2182,6 +2192,17 @@ export default function ParentDashboard({
               </motion.div>
             )}
 
+            {activeTab === 'help' && (
+              <motion.div
+                key="help"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <HelpTab />
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </main>
 
@@ -2246,7 +2267,7 @@ export default function ParentDashboard({
                               newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
                             }`}
                           >
-                            <img src={getCharacterStage(char.id, 99).image_url} alt={char.name} className="w-12 h-12 object-contain mb-1" />
+                            <model-viewer src={getCharacterStage(char.id, 99).model_url} alt={char.name} auto-rotate camera-controls class="w-12 h-12 mb-1" />
                             <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
                               {char.name.split(' ')[0]}
                             </span>

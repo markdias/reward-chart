@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils, Wrench } from 'lucide-react';
@@ -17,35 +17,27 @@ interface LandingPageProps {
 
 const CAROUSEL_CHARACTERS = [
   { 
-    id: 'unicorn', 
-    name: 'Starry - Celestial Alicorn', 
-    emoji: '👑🦄🌌', 
-    type: 'Celestial', 
-    color: 'from-fuchsia-600 via-indigo-600 to-pink-500', 
-    glow: 'shadow-pink-500/30 border-pink-500/40', 
-    stats: { power: 85, fun: 99, brains: 95 }, 
-    greeting: 'The supreme form of Starry, boasting grand wings of starfire. Supercharged by good behavior!' 
-  },
-  { 
-    id: 'dino', 
-    name: 'Barnaby - Stegosaurus Overlord', 
-    emoji: '🦕👑🌿', 
-    type: 'Nature', 
-    color: 'from-green-600 via-emerald-600 to-teal-700', 
+    id: 'sparky', 
+    name: 'Sparky - Emerald Dragon Adult', 
+    emoji: '👑🐉🌌', 
+    type: 'Dragon', 
+    color: 'from-cyan-600 via-teal-600 to-emerald-500', 
     glow: 'shadow-emerald-500/30 border-emerald-500/40', 
     stats: { power: 98, fun: 90, brains: 85 }, 
-    greeting: 'A giant, gentle dinosaur sporting glowing rainbow-colored tail plates!' 
-  },
+    greeting: 'The supreme form of Sparky, boasting grand wings and wisdom. Supercharged by good behavior!' 
+  }
 ];
 
 export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: LandingPageProps) {
   const [selectedCharIndex, setSelectedCharIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const charactersWithImages = CAROUSEL_CHARACTERS.map(char => {
     const stage = getCharacterStage(char.id, 99);
     return {
       ...char,
-      image: stage.image_url
+      model: stage.model_url
     };
   });
 
@@ -141,6 +133,37 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
             </p>
           </div>
 
+          {/* Video Player */}
+          <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
+            <video 
+              ref={videoRef}
+              src="/00_Main_Landing.mp4" 
+              className="w-full h-full object-cover"
+              controls={isVideoPlaying}
+              playsInline
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onEnded={() => setIsVideoPlaying(false)}
+            >
+              <source src="/00_Main_Landing.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            {!isVideoPlaying && (
+              <Button
+                variant="none"
+                size="none"
+                onClick={() => {
+                  videoRef.current?.play();
+                }}
+                className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors cursor-pointer group"
+              >
+                <div className="w-16 h-16 rounded-full bg-white/90 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play className="w-8 h-8 text-amber-500 translate-x-0.5" />
+                </div>
+              </Button>
+            )}
+          </div>
+
           <div className="w-full pt-2 pb-4 flex justify-center">
             <Button
               variant="primary"
@@ -197,11 +220,13 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
               >
                 {/* Internal overlay shine */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                {activeChar.image ? (
-                  <img 
-                    src={activeChar.image} 
+                {activeChar.model ? (
+                  <model-viewer 
+                    src={activeChar.model} 
                     alt={activeChar.name} 
-                    className="w-full h-full object-contain p-2 animate-bounce-slow drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] outline outline-1 -outline-offset-1 outline-black/10" 
+                    auto-rotate
+                    camera-controls
+                    class="w-full h-full object-contain" 
                   />
                 ) : (
                   <span className="text-6xl md:text-8xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] animate-bounce-slow">
@@ -287,11 +312,12 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                         : 'bg-surface border-2 border-neutral-border text-dark dark:text-white hover:border-dark'
                     }`}
                   >
-                    {char.image ? (
-                      <img 
-                        src={char.image} 
+                    {char.model ? (
+                      <model-viewer 
+                        src={char.model} 
                         alt={char.name} 
-                        className="w-full h-full object-contain p-1 outline outline-1 -outline-offset-1 outline-black/10"
+                        camera-controls
+                        class="w-full h-full object-contain p-1"
                       />
                     ) : (
                       <span className="text-2xl sm:text-3xl">{char.emoji}</span>
