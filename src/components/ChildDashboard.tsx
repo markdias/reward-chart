@@ -1,4 +1,4 @@
-import { 
+import {
   FaStar, FaHeart, FaEgg, FaBurst, FaWandMagicSparkles, FaHeartCrack,
   FaFaceSadTear, FaBone, FaCartShopping, FaGamepad, FaFaceFrown, FaCircleCheck, FaTriangleExclamation, FaCheck,
   FaBullseye, FaGift, FaJar, FaCoins, FaPiggyBank, FaBowlFood, FaGlobe, FaCat, FaWater, FaBook,
@@ -9,7 +9,7 @@ import {
 import React, { useState, useEffect, useRef } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
   PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
@@ -37,9 +37,9 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 
 const RECURRENCE_LABEL: Record<string, string> = {
-  daily:      'Daily',
-  weekly:     'Weekly',
-  one_time:   'One-off',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  one_time: 'One-off',
   repeatable: 'Repeatable',
 };
 
@@ -115,7 +115,7 @@ export default function ChildDashboard({
   onRefresh
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
-  
+
 
   // Helper to offset dates by 4 hours for a "4 AM daily reset"
   // This ensures tasks completed at 1 AM count towards the previous day
@@ -170,15 +170,15 @@ export default function ChildDashboard({
   // Gifting Pot UI State
   const [showGiftingReplayVideo, setShowGiftingReplayVideo] = useState(false);
 
-  
+
   const [showCharityModal, setShowCharityModal] = useState(false);
   const [charityAmount, setCharityAmount] = useState<number>(1);
   const [selectedCharityId, setSelectedCharityId] = useState<string>('');
-  
+
   const [showSiblingModal, setShowSiblingModal] = useState(false);
   const [siblingAmount, setSiblingAmount] = useState<number>(1);
   const [selectedSiblingId, setSelectedSiblingId] = useState<string>('');
-  
+
   // Character Evolution Special Cinematic State
   const [evolvingStage, setEvolvingStage] = useState<{
     childName: string;
@@ -223,14 +223,14 @@ export default function ChildDashboard({
       }).catch(err => console.error("Error evaluating badges", err));
     }
   }, [
-    activeChild?.id, 
-    activeChild?.points, 
-    activeChild?.level, 
-    activeChild?.streak_days, 
-    activeChild?.pet_fed_total, 
-    activeChild?.savings_deposits, 
-    activeChild?.gifts_made, 
-    activeChild?.gold_pot_fixes, 
+    activeChild?.id,
+    activeChild?.points,
+    activeChild?.level,
+    activeChild?.streak_days,
+    activeChild?.pet_fed_total,
+    activeChild?.savings_deposits,
+    activeChild?.gifts_made,
+    activeChild?.gold_pot_fixes,
     activeChild?.gold_pot_unbroken_days,
     completions.length
   ]);
@@ -260,7 +260,7 @@ export default function ChildDashboard({
       let points = child.points || 0;
       let petUnhappy = child.pet_unhappy || false;
       let petFedToday = child.pet_fed_today;
-      
+
       let updates: Partial<Child> = {
         last_hunger_check_date: todayStr
       };
@@ -279,7 +279,7 @@ export default function ChildDashboard({
             setPenaltyMessage(`Oh no! You forgot to feed your pet yesterday. Your pet is unhappy and you lost 1 gold coin! Buy some food and feed your pet to make them happy again.`);
             setTimeout(() => playSound.pinError(), 800);
           }
-          
+
           updates.pet_fed_today = false;
           updates.pet_unhappy = petUnhappy;
           updates.points = points;
@@ -297,13 +297,13 @@ export default function ChildDashboard({
   // Feed Reminder Check
   useEffect(() => {
     if (!selectedChildId || !activeChild) return;
-    
+
     // Only check if they have the food pot unlocked, haven't fed today, and no penalty modal is showing
     if (isFoodPotUnlocked && activeChild.food_pot_unlock_seen && !activeChild.pet_fed_today && !penaltyMessage) {
       const todayStr = new Date().toISOString().split('T')[0];
       const storageKey = `feed_reminder_${activeChild.id}`;
       const lastAsked = localStorage.getItem(storageKey);
-      
+
       if (lastAsked !== todayStr) {
         // We haven't asked them today yet!
         setShowFeedReminder(true);
@@ -320,24 +320,24 @@ export default function ChildDashboard({
 
     const todayStr = new Date().toISOString().split('T')[0];
     const currentWeekKey = getCurrentWeekKey();
-    
+
     if (activeChild.gold_pot_last_check_date !== todayStr) {
       let updates: Partial<Child> = {
         gold_pot_last_check_date: todayStr
       };
-      
+
       let broken = activeChild.gold_pot_broken || false;
       let breakCount = activeChild.gold_pot_break_count_this_week || 0;
       let breakWeek = activeChild.gold_pot_break_week;
       let points = activeChild.points || 0;
-      
+
       if (breakWeek !== currentWeekKey) {
         breakCount = 0;
         breakWeek = currentWeekKey;
         updates.gold_pot_break_week = breakWeek;
         updates.gold_pot_break_count_this_week = 0;
       }
-      
+
       if (broken) {
         if (points > 0) {
           points = Math.max(0, points - 1);
@@ -359,7 +359,7 @@ export default function ChildDashboard({
           }
         }
       }
-      
+
       onUpdateChildStats(activeChild.id, updates);
     }
   }, [selectedChildId, activeChild?.id, activeChild?.gold_pot_last_check_date, isGoldPotMaintenanceUnlocked, onUpdateChildStats]);
@@ -451,7 +451,7 @@ export default function ChildDashboard({
   // Test Evolution manually to let kids experience the high-quality character milestone!
   const triggerManualEvolution = () => {
     if (!activeChild || !activeChildStage || !activeChildPack) return;
-    
+
     // Find next stage
     const currentIdx = activeChildPack.stages.findIndex(s => s.stage_number === activeChildStage.stage_number);
     const nextStage = activeChildPack.stages[currentIdx + 1] || activeChildPack.stages[0];
@@ -489,7 +489,7 @@ export default function ChildDashboard({
     overlayCrt: 'hidden',
     titleColor: 'text-[#1C1917] dark:text-stone-50',
     borderStyle: 'border-stone-100 dark:border-stone-800'
-};
+  };
 
   const getRewardAvailability = (reward: Reward, childRedemptions: RewardRedemption[]) => {
     if (!reward.is_available) return { available: false, reason: 'CLAIMED' };
@@ -499,14 +499,14 @@ export default function ChildDashboard({
     const startOfDay = getStartOfDailyReset(now);
 
     if (reward.limit_type === 'daily') {
-      const todayClaims = childRedemptions.filter(r => 
+      const todayClaims = childRedemptions.filter(r =>
         r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
       );
       if (todayClaims.length >= 1) return { available: false, reason: 'TOMORROW' };
     }
 
     if (reward.limit_type === 'twice_daily') {
-      const todayClaims = childRedemptions.filter(r => 
+      const todayClaims = childRedemptions.filter(r =>
         r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
       );
       if (todayClaims.length >= 2) return { available: false, reason: 'TOMORROW' };
@@ -523,10 +523,10 @@ export default function ChildDashboard({
   // Claim Free Reward from Badge
   const handleClaimFreeReward = async (badgeId: string, rewardId: string) => {
     if (!activeChild) return;
-    
+
     // 1. Trigger the reward claim (freebie)
     onClaimReward(rewardId, activeChild.id, `badge_freebie:${badgeId}`);
-    
+
     // 2. Update the child_badges table to mark as claimed
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -539,7 +539,7 @@ export default function ChildDashboard({
         console.error('Error updating badge claimed state:', error);
       }
     }
-    
+
     setShowConfetti(true);
     setConfettiMessage('Free Prize Claimed! Enjoy!');
     setTimeout(() => setShowConfetti(false), 5000);
@@ -547,19 +547,19 @@ export default function ChildDashboard({
 
   return (
     <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" >
-      
+
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
-        <header 
+        <header
           className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
           <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
               {activeChild && (
-                <ChildAvatar 
-                  iconName={activeChild.avatar_url} 
-                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0" 
+                <ChildAvatar
+                  iconName={activeChild.avatar_url}
+                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0"
                 />
               )}
               <div className="flex flex-col justify-center min-w-0">
@@ -573,67 +573,67 @@ export default function ChildDashboard({
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <div 
+              <div
                 className="flex items-center p-1 rounded-full shadow-md shrink-0"
                 style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
               >
                 <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                {activeChildTab !== 'home' && (
-                  <Tooltip content="Current Gold Coins" position="bottom">
-                    <div className="cursor-help ml-1.5 sm:ml-2.5">
-                      <CoinBadge points={activeChild?.points || 0} />
-                    </div>
-                  </Tooltip>
-                )}
-                {!lockedChildId && (
-                  <Tooltip content="Go Back" position="bottom">
-                    <Button 
-                      variant="none"
-                      size="none"
-                      onClick={() => { playSound.click(); setSelectedChildId(null); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
-                    >
-                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </Button>
-                  </Tooltip>
-                )}
-                
-                {isChildAuth && onLogout ? (
-                  <Tooltip content="Log Out" position="bottom">
-                    <Button 
-                      variant="none"
-                      size="none"
-                      onClick={() => { playSound.click(); onLogout(); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
-                    >
-                      <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </Button>
-                  </Tooltip>
-                ) : (
-                  <Tooltip content="Parent Dashboard" position="bottom" align="right">
-                    <Button 
-                      variant="none"
-                      size="none"
-                      onClick={() => { playSound.click(); onEnterParentMode(); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
-                    >
-                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </Button>
-                  </Tooltip>
-                )}
+                  {activeChildTab !== 'home' && (
+                    <Tooltip content="Current Gold Coins" position="bottom">
+                      <div className="cursor-help ml-1.5 sm:ml-2.5">
+                        <CoinBadge points={activeChild?.points || 0} />
+                      </div>
+                    </Tooltip>
+                  )}
+                  {!lockedChildId && (
+                    <Tooltip content="Go Back" position="bottom">
+                      <Button
+                        variant="none"
+                        size="none"
+                        onClick={() => { playSound.click(); setSelectedChildId(null); }}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                      >
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
 
-                {!lockedChildId && onLockChild && activeChild && (
-                  <Tooltip content="Lock Device to Child" position="bottom" align="right">
-                    <Button 
-                      variant="none"
-                      size="none"
-                      onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
-                    >
-                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </Button>
-                  </Tooltip>
-                )}
+                  {isChildAuth && onLogout ? (
+                    <Tooltip content="Log Out" position="bottom">
+                      <Button
+                        variant="none"
+                        size="none"
+                        onClick={() => { playSound.click(); onLogout(); }}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                      >
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip content="Parent Dashboard" position="bottom" align="right">
+                      <Button
+                        variant="none"
+                        size="none"
+                        onClick={() => { playSound.click(); onEnterParentMode(); }}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                      >
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
+
+                  {!lockedChildId && onLockChild && activeChild && (
+                    <Tooltip content="Lock Device to Child" position="bottom" align="right">
+                      <Button
+                        variant="none"
+                        size="none"
+                        onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
+                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                      >
+                        <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
             </div>
@@ -691,7 +691,7 @@ export default function ChildDashboard({
             id="evolution-cinematic"
           >
             <div className="absolute inset-0  opacity-30 pointer-events-none" />
-            
+
             <motion.div
               initial={{ scale: 0.8, rotate: -8 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -700,7 +700,7 @@ export default function ChildDashboard({
               className="relative max-w-lg bg-white dark:bg-stone-900 border-4 border-cyan-400 rounded-3xl p-8 shadow-[0_0_50px_rgba(6,182,212,0.4)] space-y-6"
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-ping pointer-events-none" />
-              
+
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 rounded-full text-xs font-bold uppercase tracking-widest font-sans">
                 <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
                 {isHatching && hatchPhase !== 'reveal' ? 'EGG HATCHING...' : 'COMPANION UPGRADE'}
@@ -720,11 +720,10 @@ export default function ChildDashboard({
 
               {/* Evolution / Hatching Pedestal */}
               <div className="my-8 relative flex items-center justify-center" style={{ minHeight: '200px' }}>
-                <div className={`absolute -inset-2 rounded-full bg-gradient-to-r ${
-                  isHatching && hatchPhase !== 'reveal'
-                    ? 'from-amber-400 via-pink-400 to-fuchsia-500'
-                    : 'from-cyan-400 via-pink-500 to-purple-500'
-                } blur-md opacity-75 animate-spin duration-[10s]`} />
+                <div className={`absolute -inset-2 rounded-full bg-gradient-to-r ${isHatching && hatchPhase !== 'reveal'
+                  ? 'from-amber-400 via-pink-400 to-fuchsia-500'
+                  : 'from-cyan-400 via-pink-500 to-purple-500'
+                  } blur-md opacity-75 animate-spin duration-[10s]`} />
 
                 {/* Hatching sparkle particles */}
                 {isHatching && (hatchPhase === 'crack' || hatchPhase === 'split') && (
@@ -908,9 +907,9 @@ export default function ChildDashboard({
 
                 {/* Video Player */}
                 <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
-                  <video 
+                  <video
                     ref={videoRef}
-                    src="/01_GoldPot_LevelUp.mp4" 
+                    src="/01_GoldPot_LevelUp.mp4"
                     className="w-full h-full object-cover"
                     controls={isVideoPlaying}
                     playsInline
@@ -987,10 +986,10 @@ export default function ChildDashboard({
 
               {/* Video Player */}
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
-                <video 
+                <video
                   ref={videoRef}
-                  src="/02_SavingsPot_BigGoals.mp4" 
-                  controls 
+                  src="/02_SavingsPot_BigGoals.mp4"
+                  controls
                   playsInline
                   className="w-full h-full object-cover"
                   poster="/savings-poster.jpg"
@@ -1002,7 +1001,7 @@ export default function ChildDashboard({
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
-                  <div 
+                  <div
                     onClick={() => {
                       videoRef.current?.play();
                     }}
@@ -1063,10 +1062,10 @@ export default function ChildDashboard({
 
               {/* Video Player */}
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
-                <video 
+                <video
                   ref={videoRef}
-                  src="/03_FoodPot_PetCare.mp4" 
-                  controls 
+                  src="/03_FoodPot_PetCare.mp4"
+                  controls
                   playsInline
                   className="w-full h-full object-cover"
                   poster="/food-pot-poster.jpg"
@@ -1078,7 +1077,7 @@ export default function ChildDashboard({
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
-                  <div 
+                  <div
                     onClick={() => {
                       videoRef.current?.play();
                     }}
@@ -1139,10 +1138,10 @@ export default function ChildDashboard({
 
               {/* Video Player */}
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
-                <video 
+                <video
                   ref={videoRef}
-                  src="/04_GiftingPot_Charity.mp4" 
-                  controls 
+                  src="/04_GiftingPot_Charity.mp4"
+                  controls
                   playsInline
                   className="w-full h-full object-cover"
                   poster="/gifting-pot-poster.jpg"
@@ -1154,7 +1153,7 @@ export default function ChildDashboard({
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
-                  <div 
+                  <div
                     onClick={() => {
                       videoRef.current?.play();
                     }}
@@ -1215,10 +1214,10 @@ export default function ChildDashboard({
 
               {/* Video Player */}
               <div className="relative w-full aspect-video rounded-2xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 overflow-hidden shadow-inner group">
-                <video 
+                <video
                   ref={videoRef}
-                  src="/05_MaintenancePot.mp4" 
-                  controls 
+                  src="/05_MaintenancePot.mp4"
+                  controls
                   playsInline
                   className="w-full h-full object-cover"
                   poster="/gold-pot-poster.jpg"
@@ -1230,7 +1229,7 @@ export default function ChildDashboard({
                   Your browser does not support the video tag.
                 </video>
                 {!isVideoPlaying && (
-                  <div 
+                  <div
                     onClick={() => {
                       videoRef.current?.play();
                     }}
@@ -1328,9 +1327,9 @@ export default function ChildDashboard({
               <Button
                 variant="warning"
                 fullWidth
-                onClick={() => { 
-                  playSound.click(); 
-                  setGoldPotPenaltyMessage(null); 
+                onClick={() => {
+                  playSound.click();
+                  setGoldPotPenaltyMessage(null);
                   setActiveChildTab('pots');
                 }}
                 id="gold-pot-penalty-dismiss-btn"
@@ -1374,8 +1373,8 @@ export default function ChildDashboard({
                 <Button
                   variant="warning"
                   fullWidth
-                  onClick={() => { 
-                    playSound.success(); 
+                  onClick={() => {
+                    playSound.success();
                     setShowFeedReminder(false);
                     if (activeChild) {
                       localStorage.setItem(`feed_reminder_${activeChild.id}`, new Date().toISOString().split('T')[0]);
@@ -1392,9 +1391,9 @@ export default function ChildDashboard({
                 <Button
                   variant="ghost"
                   fullWidth
-                  onClick={() => { 
-                    playSound.click(); 
-                    setShowFeedReminder(false); 
+                  onClick={() => {
+                    playSound.click();
+                    setShowFeedReminder(false);
                     if (activeChild) {
                       localStorage.setItem(`feed_reminder_${activeChild.id}`, new Date().toISOString().split('T')[0]);
                     }
@@ -1410,7 +1409,7 @@ export default function ChildDashboard({
 
       {/* Simple Navigation for Profile Selection */}
       {!selectedChildId && (
-        <header 
+        <header
           className="px-4 sm:px-6 pb-2 flex justify-end items-center relative z-40 bg-transparent"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
@@ -1431,7 +1430,7 @@ export default function ChildDashboard({
       {/* Central HUD Viewport */}
       <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
-          
+
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
           {!selectedChildId ? (
             <motion.div
@@ -1458,7 +1457,7 @@ export default function ChildDashboard({
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (
-                      <ArcadeTicketCard key={`skel-${i}`} child={{id:'',name:'',avatar_url:'',level:0,streak_days:0,points:0}} isLoading />
+                      <ArcadeTicketCard key={`skel-${i}`} child={{ id: '', name: '', avatar_url: '', level: 0, streak_days: 0, points: 0 }} isLoading />
                     ))}
                   </>
                 ) : children.map((child) => {
@@ -1475,680 +1474,685 @@ export default function ChildDashboard({
 
 
 
-              </motion.div>
-            ) : (
-              
-              /* ACTIVE CHILD ARCADE HUDS */
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  key="kid-kiosk"
-                  className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start pb-12"
-                  id="kid-dashboard-grid"
-                >
-                
-                {/* Left Sidebar (Desktop Only) */}
-                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
-                  <nav className="flex flex-col gap-2">
-                    {[
-                      { id: 'home', label: 'Home', icon: Home },
-                      { id: 'companion', label: 'Pets', icon: FaPaw },
-                      { id: 'rewards', label: 'Rewards', icon: Gift },
-                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-                      { id: 'pots', label: 'Pots', icon: FaJar }
-                    ].map((tab) => {
-                      const Icon = tab.icon;
-                      const isSelected = activeChildTab === tab.id;
-                      return (
-                        <Button
-                          variant="none"
-                          size="none"
-                          key={tab.id}
-                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                          className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${
-                            isSelected 
-                              ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
-                              : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
+            </motion.div>
+          ) : (
+
+            /* ACTIVE CHILD ARCADE HUDS */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              key="kid-kiosk"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-start pb-12"
+              id="kid-dashboard-grid"
+            >
+
+              {/* Left Sidebar (Desktop Only) */}
+              <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                <nav className="flex flex-col gap-2">
+                  {[
+                    { id: 'home', label: 'Home', icon: Home },
+                    { id: 'companion', label: 'Pets', icon: FaPaw },
+                    { id: 'rewards', label: 'Rewards', icon: Gift },
+                    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                    { id: 'pots', label: 'Pots', icon: FaJar }
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isSelected = activeChildTab === tab.id;
+                    return (
+                      <Button
+                        variant="none"
+                        size="none"
+                        key={tab.id}
+                        onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                          ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                          : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
                           }`}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} /> 
-                            {tab.label}
-                          </span>
-                        </Button>
-                      );
-                    })}
-                  </nav>
-                </aside>
-
-                <main className="lg:col-span-9 space-y-6">
-                  {/* Active Screen Frame */}
-                  <AnimatePresence mode="wait">
-                  
-                    {/* Pet / Companion Tab */}
-                    {activeChildTab === 'companion' && activeChild && activeChildStage && activeChildPack && (
-                      <motion.div
-                        key="companion-tab"
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -15 }}
-                        className="space-y-4 sm:space-y-6"
                       >
-                    {/* Holo Pedestal */}
-                    <div 
-                      className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center text-center shadow-2xl overflow-hidden"
-                      style={{ background: getPetStripeBackground(activeChild.character_id || 'unicorn') }}
+                        <span className="flex items-center gap-3">
+                          <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
+                          {tab.label}
+                        </span>
+                      </Button>
+                    );
+                  })}
+                </nav>
+              </aside>
+
+              <main className="lg:col-span-9 space-y-6">
+                {/* Active Screen Frame */}
+                <AnimatePresence mode="wait">
+
+                  {/* Pet / Companion Tab */}
+                  {activeChildTab === 'companion' && activeChild && activeChildStage && activeChildPack && (
+                    <motion.div
+                      key="companion-tab"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      className="space-y-4 sm:space-y-6"
                     >
-                      {/* Inner Cutout */}
-                      <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-                      
-                      <div className="absolute inset-0 opacity-15 pointer-events-none" />
-
-                      <div className="flex justify-between w-full items-start mt-1">
-                        <div className="text-left">
-                          <span className={`text-[8px] font-sans tracking-widest uppercase ${styles.textMuted} font-extrabold`}>PET SPECIES</span>
-                          <Typography variant="h3" className={`font-black ${styles.textColor} text-xs mt-0.5 uppercase tracking-wider`}>{activeChildStage.name}</Typography>
-                        </div>
-                      </div>
-
-                      {isFoodPotUnlocked && (
-                        <div className="mt-4 flex items-center justify-center w-full">
-                          {activeChild.pet_unhappy ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
-                              <FaFaceFrown className="inline-block mr-2 text-blue-500" /> Pet Unhappy & Hungry
-                            </span>
-                          ) : activeChild.pet_fed_today ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
-                              <FaHeart className="inline-block mr-2 text-green-500" /> Pet Fed & Happy!
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold animate-bounce">
-                              <FaBone className="inline-block mr-2 text-amber-700" /> Hungry! Needs Food
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Giant Levitating Pedestal */}
-                      <div className="my-6 sm:my-10 relative flex items-center justify-center">
-                        
-                        <motion.div
-                          animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
-                          transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                          className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500`}
+                      {/* Holo Pedestal */}
+                      <div
+                        className="relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center text-center shadow-2xl overflow-hidden"
+                        style={{ background: getPetStripeBackground(activeChild.character_id || 'unicorn') }}
+                      >
+                        {/* Inner Cutout */}
+                        <div
+                          className="relative z-10 w-full h-full rounded-[1rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
+                          style={{
+                            backgroundImage: "url('/field_stand_bg.png')",
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center 55%'
+                          }}
                         >
-                          {activeChildStage.model_url ? (
-                            <model-viewer src={activeChildStage.model_url} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.8]" />
-                          ) : (
-                            <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
-                              {activeChildStage.emoji}
-                            </span>
-                          )}
-                        </motion.div>
-                      </div>
-                      {/* Level and evolution progression */}
-                      <div className={`w-full pt-5 mt-5 border-t ${styles.divider}`}>
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">Level {activeChild.level}</span>
-                          <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">
-                            {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} gold coins
-                          </span>
-                        </div>
-                        <LinearProgressBar 
-                          progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                          heightClass="h-2"
-                          className="!bg-stone-200/60 border-none shadow-inner"
-                        />
-                      </div>
 
-                      {isFoodPotUnlocked && (
-                        <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2">
-                          <Button
-                            variant="none"
-                            size="none"
-                            onClick={handleFeedCompanion}
-                            disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                            className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                              activeChild.pet_fed_today
-                                ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-default border border-stone-200 dark:border-stone-700'
-                                : (activeChild.pet_food || 0) > 0
-                                  ? 'bg-warning border-2 border-neutral-border text-dark dark:text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
-                                  : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
-                            }`}
-                          >
-                            {isFeeding ? (
-                              <span><FaBone className="inline-block mr-2 text-amber-700" /> Chomp Chomp...</span>
-                            ) : activeChild.pet_fed_today ? (
-                              <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Fed for Today!</span>
-                            ) : (
-                              <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
-                            )}
-                          </Button>
-                          <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
-                            <span>FOOD INVENTORY:</span>
-                            <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
+                          <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent rounded-[1rem]" />
+
+                          <div className="flex justify-left w-full items-start mt-1 relative z-20">
+                            <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200/50 dark:border-stone-700/50 text-center flex flex-col items-center">
+                              <span className={`text-[9px] font-sans tracking-widest uppercase text-stone-500 font-extrabold mb-0.5`}>PET SPECIES</span>
+                              <Typography variant="h3" className={`font-black text-stone-900 dark:text-white text-sm uppercase tracking-wider leading-none`}>{activeChildStage.name}</Typography>
+                            </div>
                           </div>
-                          {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
-                            <span className="text-[9px] text-red-500 font-bold text-center mt-1">
-                              <FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> No food left! Buy food from your Food Pot below.
-                            </span>
+
+                          {isFoodPotUnlocked && (
+                            <div className="mt-4 flex items-center justify-center w-full">
+                              {activeChild.pet_unhappy ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
+                                  <FaFaceFrown className="inline-block mr-2 text-blue-500" /> Pet Unhappy & Hungry
+                                </span>
+                              ) : activeChild.pet_fed_today ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
+                                  <FaHeart className="inline-block mr-2 text-green-500" /> Pet Fed & Happy!
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold animate-bounce">
+                                  <FaBone className="inline-block mr-2 text-amber-700" /> Hungry! Needs Food
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </div>
-                      )}
 
-                      </div>
-                    </div>
+                          {/* Giant Levitating Pedestal */}
+                          <div className="my-6 sm:my-10 relative flex items-center justify-center">
 
-                    {/* Streak & Goals Grid */}
-                    {(() => {
-                      const now = new Date();
-                      
-                      const todayLogicalDate = getLogicalDateString(now);
-                      const todayCompletions = completions.filter(c => 
-                        c.child_id === activeChild.id &&
-                        c.status === 'approved' &&
-                        getLogicalDateString(c.completed_at) === todayLogicalDate
-                      );
-                      const pointsEarnedToday = todayCompletions.reduce((acc, c) => acc + (c.points_awarded > 0 ? c.points_awarded : 0), 0);
-                      const dailyTarget = parentProfile?.daily_points_target || 50;
-                      const dailyPct = Math.min(100, Math.round((pointsEarnedToday / dailyTarget) * 100));
-
-                      const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
-                      const isWeeklyReset = !nextWeekly || now >= nextWeekly;
-                      const dispWeeklyPts = isWeeklyReset ? 0 : (activeChild.weekly_points || 0);
-                      const weeklyPct = Math.min(100, Math.round((dispWeeklyPts / (parentProfile?.weekly_points_target || 300)) * 100));
-
-                      const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
-                      const isMonthlyReset = !nextMonthly || now >= nextMonthly;
-                      const dispMonthlyPts = isMonthlyReset ? 0 : (activeChild.monthly_points || 0);
-                      const monthlyPct = Math.min(100, Math.round((dispMonthlyPts / (parentProfile?.monthly_points_target || 1000)) * 100));
-
-                      return (
-                        <>
-                        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                          {/* Daily Goal Widget */}
-                          <button
-                            onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
-                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
-                            style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
-                          >
-                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
-                              <div className="absolute bottom-0 inset-x-0 w-full bg-orange-100/30 z-0">
-                                <motion.div initial={{ height: 0 }} animate={{ height: `${dailyPct}%` }} className="bg-orange-200/50 absolute bottom-0 inset-x-0 w-full" />
-                              </div>
-                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${dailyPct >= 100 ? 'text-emerald-500' : 'text-orange-500'}`} />
-                              <span className={`font-black text-sm sm:text-base relative z-10 ${dailyPct >= 100 ? 'text-emerald-600' : 'text-orange-600'}`}>{dailyPct}%</span>
-                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Daily</span>
-                            </div>
-                          </button>
-
-                          {/* Weekly Widget */}
-                          <button 
-                            onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
-                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
-                            style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
-                          >
-                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
-                              <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
-                                <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
-                              </div>
-                              <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
-                              <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
-                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
-                            </div>
-                          </button>
-
-                          {/* Monthly Widget */}
-                          <button 
-                            onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
-                            className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
-                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
-                          >
-                            <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
-                              <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
-                                <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
-                              </div>
-                              <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
-                              <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
-                              <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
-                            </div>
-                          </button>
-                        </div>
-                        
-                        <AnimatePresence>
-                          {expandedGoal && (
                             <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 px-4 -mx-4 pb-6 -mb-6 pt-2 -mt-2 overflow-hidden"
+                              animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
+                              transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
+                              className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-4`}
                             >
-                                <div 
-                                  className="relative p-2 rounded-[2rem] shadow-xl overflow-hidden mt-2"
-                                  style={{ 
-                                    background: expandedGoal === 'daily' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
-                                                expandedGoal === 'weekly' ? 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' :
-                                                'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px, #9333ea 20px, #9333ea 30px)' 
-                                  }}
-                                >
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.6rem] p-5 flex flex-col gap-3 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
-                                    <Button 
-                                      variant="ghost"
-                                      size="icon-sm"
-                                      onClick={() => setExpandedGoal(null)}
-                                      className="absolute top-4 right-4 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:bg-stone-200 z-20"
-                                    >
-                                      <ChevronRight className="w-4 h-4 rotate-90" />
-                                    </Button>
-                                
-                                {expandedGoal === 'daily' && (
-                                  <>
-                                    <div className="flex justify-between items-center pr-14">
-                                      <div>
-                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Daily Goal</Typography>
-                                        <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: Midnight</Typography>
-                                      </div>
-                                      {dailyPct >= 100 ? (
-                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200`}>
-                                          COMPLETED
-                                        </span>
-                                      ) : (parentProfile?.daily_reward_points && parentProfile.daily_reward_points > 0) ? (
-                                        <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200`}>
-                                          {parentProfile.daily_reward_points} GOLD BONUS
-                                        </span>
-                                      ) : null}
-                                    </div>
-                                    <div className="mt-4">
-                                      <div className="flex justify-between items-center mb-1.5">
-                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{pointsEarnedToday} / {dailyTarget} gold coins</span>
-                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{dailyPct}% COMPLETED</span>
-                                      </div>
-                                      <LinearProgressBar 
-                                        progress={dailyPct}
-                                        heightClass="h-2"
-                                        className="!bg-stone-200/60 border-none shadow-inner"
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                                
-                                {expandedGoal === 'weekly' && (
-                                  <>
-                                    <div className="flex justify-between items-center pr-14">
-                                      <div>
-                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Weekly Target</Typography>
-                                        {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
-                                      </div>
-                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
-                                        {parentProfile?.weekly_reward_points || 200} GOLD BONUS
-                                      </span>
-                                    </div>
-                                    <div className="mt-4">
-                                      <div className="flex justify-between items-center mb-1.5">
-                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} gold coins</span>
-                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{weeklyPct}% COMPLETED</span>
-                                      </div>
-                                      <LinearProgressBar 
-                                        progress={weeklyPct}
-                                        heightClass="h-2"
-                                        className="!bg-stone-200/60 border-none shadow-inner"
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                                
-                                {expandedGoal === 'monthly' && (
-                                  <>
-                                    <div className="flex justify-between items-center pr-14">
-                                      <div>
-                                        <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Monthly Target</Typography>
-                                        {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
-                                      </div>
-                                      <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
-                                        {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
-                                      </span>
-                                    </div>
-                                    <div className="mt-4">
-                                      <div className="flex justify-between items-center mb-1.5">
-                                        <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} gold coins</span>
-                                        <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{monthlyPct}% COMPLETED</span>
-                                      </div>
-                                      <LinearProgressBar 
-                                        progress={monthlyPct}
-                                        heightClass="h-2"
-                                        className="!bg-stone-200/60 border-none shadow-inner"
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                                  </div>
-                                </div>
+                              {activeChildStage.model_url ? (
+                                <model-viewer src={activeChildStage.model_url} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
+                              ) : (
+                                <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
+                                  {activeChildStage.emoji}
+                                </span>
+                              )}
                             </motion.div>
-                          )}
-                        </AnimatePresence>
-                        </>
-                      );
-                    })()}
-                      </motion.div>
-                    )}
-
-                    {/* Home Tab */}
-                    {activeChildTab === 'home' && activeChild && (
-                        <ChildHomeTab
-                          activeChild={activeChild}
-                          tasks={tasks}
-                          completions={completions}
-                          redemptions={redemptions}
-                          rewards={rewards}
-                          handleTaskCheck={handleTaskCheck}
-                          potReminders={potReminders}
-                          onOpenBadges={() => setShowBadgesModal(true)}
-                          parentProfile={parentProfile}
-                        />
-                    )}
-                    {/* Tasks Tab */}
-                    {activeChildTab === 'tasks' && activeChild && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          key="child-tasks-tab"
-                          className="flex flex-col"
-                        >
-                          <div 
-                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm"
-                            style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
-                          >
-                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                              <div>
-                                <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Daily Quests</Typography>
-                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete tasks to earn more gold coins!</Typography>
-                              </div>
-                            </div>
                           </div>
-                          
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-tasks-deck">
-                          {tasks.filter(t => {
+                          {/* Level and evolution progression */}
+                          <div className={`w-full mt-6 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-stone-200/50 dark:border-stone-700/50 relative z-20`}>
+                            <div className="flex justify-between items-center mb-3">
+                              <span className="text-[15px] font-black text-stone-900 dark:text-white tracking-tight uppercase">Level {activeChild.level}</span>
+                              <span className="text-[13px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full border border-stone-200 dark:border-stone-700">
+                                {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
+                              </span>
+                            </div>
+                            <LinearProgressBar
+                              progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                              heightClass="h-3"
+                              className="!bg-stone-200/80 dark:!bg-stone-800/80 border-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
+                            />
+                          </div>
+
+                          {isFoodPotUnlocked && (
+                            <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2">
+                              <Button
+                                variant="none"
+                                size="none"
+                                onClick={handleFeedCompanion}
+                                disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
+                                className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${activeChild.pet_fed_today
+                                  ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-default border border-stone-200 dark:border-stone-700'
+                                  : (activeChild.pet_food || 0) > 0
+                                    ? 'bg-warning border-2 border-neutral-border text-dark dark:text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
+                                    : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
+                                  }`}
+                              >
+                                {isFeeding ? (
+                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Chomp Chomp...</span>
+                                ) : activeChild.pet_fed_today ? (
+                                  <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Fed for Today!</span>
+                                ) : (
+                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
+                                )}
+                              </Button>
+                              <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
+                                <span>FOOD INVENTORY:</span>
+                                <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
+                              </div>
+                              {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
+                                <span className="text-[9px] text-red-500 font-bold text-center mt-1">
+                                  <FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> No food left! Buy food from your Food Pot below.
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                        </div>
+                      </div>
+
+                      {/* Streak & Goals Grid */}
+                      {(() => {
+                        const now = new Date();
+
+                        const todayLogicalDate = getLogicalDateString(now);
+                        const todayCompletions = completions.filter(c =>
+                          c.child_id === activeChild.id &&
+                          c.status === 'approved' &&
+                          getLogicalDateString(c.completed_at) === todayLogicalDate
+                        );
+                        const pointsEarnedToday = todayCompletions.reduce((acc, c) => acc + (c.points_awarded > 0 ? c.points_awarded : 0), 0);
+                        const dailyTarget = parentProfile?.daily_points_target || 50;
+                        const dailyPct = Math.min(100, Math.round((pointsEarnedToday / dailyTarget) * 100));
+
+                        const nextWeekly = activeChild.weekly_reset_date ? new Date(activeChild.weekly_reset_date) : null;
+                        const isWeeklyReset = !nextWeekly || now >= nextWeekly;
+                        const dispWeeklyPts = isWeeklyReset ? 0 : (activeChild.weekly_points || 0);
+                        const weeklyPct = Math.min(100, Math.round((dispWeeklyPts / (parentProfile?.weekly_points_target || 300)) * 100));
+
+                        const nextMonthly = activeChild.monthly_reset_date ? new Date(activeChild.monthly_reset_date) : null;
+                        const isMonthlyReset = !nextMonthly || now >= nextMonthly;
+                        const dispMonthlyPts = isMonthlyReset ? 0 : (activeChild.monthly_points || 0);
+                        const monthlyPct = Math.min(100, Math.round((dispMonthlyPts / (parentProfile?.monthly_points_target || 1000)) * 100));
+
+                        return (
+                          <>
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                              {/* Daily Goal Widget */}
+                              <button
+                                onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
+                                className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                                style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
+                              >
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                                  <div className="absolute bottom-0 inset-x-0 w-full bg-orange-100/30 z-0">
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${dailyPct}%` }} className="bg-orange-200/50 absolute bottom-0 inset-x-0 w-full" />
+                                  </div>
+                                  <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${dailyPct >= 100 ? 'text-emerald-500' : 'text-orange-500'}`} />
+                                  <span className={`font-black text-sm sm:text-base relative z-10 ${dailyPct >= 100 ? 'text-emerald-600' : 'text-orange-600'}`}>{dailyPct}%</span>
+                                  <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Daily</span>
+                                </div>
+                              </button>
+
+                              {/* Weekly Widget */}
+                              <button
+                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
+                                className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                                style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
+                              >
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                                  <div className="absolute bottom-0 inset-x-0 w-full bg-cyan-100/30 z-0">
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${weeklyPct}%` }} className="bg-cyan-200/50 absolute bottom-0 inset-x-0 w-full" />
+                                  </div>
+                                  <Target className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${weeklyPct >= 100 ? 'text-emerald-500' : 'text-cyan-500'}`} />
+                                  <span className={`font-black text-sm sm:text-base relative z-10 ${weeklyPct >= 100 ? 'text-emerald-600' : 'text-cyan-600'}`}>{weeklyPct}%</span>
+                                  <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Weekly</span>
+                                </div>
+                              </button>
+
+                              {/* Monthly Widget */}
+                              <button
+                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
+                                className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
+                                style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
+                              >
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.4rem] p-2.5 sm:p-3 flex flex-col items-center justify-center border-[3px] border-stone-900 shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)] overflow-hidden">
+                                  <div className="absolute bottom-0 inset-x-0 w-full bg-purple-100/30 z-0">
+                                    <motion.div initial={{ height: 0 }} animate={{ height: `${monthlyPct}%` }} className="bg-purple-200/50 absolute bottom-0 inset-x-0 w-full" />
+                                  </div>
+                                  <Zap className={`w-5 h-5 sm:w-7 sm:h-7 mb-1 relative z-10 ${monthlyPct >= 100 ? 'text-emerald-500' : 'text-purple-500'}`} />
+                                  <span className={`font-black text-sm sm:text-base relative z-10 ${monthlyPct >= 100 ? 'text-emerald-600' : 'text-purple-600'}`}>{monthlyPct}%</span>
+                                  <span className="text-[8px] sm:text-[10px] font-sans font-bold text-stone-500 dark:text-stone-400 uppercase tracking-tighter mt-0.5 relative z-10">Monthly</span>
+                                </div>
+                              </button>
+                            </div>
+
+                            <AnimatePresence>
+                              {expandedGoal && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="mt-4 px-4 -mx-4 pb-6 -mb-6 pt-2 -mt-2 overflow-hidden"
+                                >
+                                  <div
+                                    className="relative p-2 rounded-[2rem] shadow-xl overflow-hidden mt-2"
+                                    style={{
+                                      background: expandedGoal === 'daily' ? 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' :
+                                        expandedGoal === 'weekly' ? 'repeating-linear-gradient(45deg, #06b6d4, #06b6d4 10px, #22d3ee 10px, #22d3ee 20px, #0891b2 20px, #0891b2 30px)' :
+                                          'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px, #9333ea 20px, #9333ea 30px)'
+                                    }}
+                                  >
+                                    <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.6rem] p-5 flex flex-col gap-3 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={() => setExpandedGoal(null)}
+                                        className="absolute top-4 right-4 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:bg-stone-200 z-20"
+                                      >
+                                        <ChevronRight className="w-4 h-4 rotate-90" />
+                                      </Button>
+
+                                      {expandedGoal === 'daily' && (
+                                        <>
+                                          <div className="flex justify-between items-center pr-14">
+                                            <div>
+                                              <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Daily Goal</Typography>
+                                              <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: Midnight</Typography>
+                                            </div>
+                                            {dailyPct >= 100 ? (
+                                              <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200`}>
+                                                COMPLETED
+                                              </span>
+                                            ) : (parentProfile?.daily_reward_points && parentProfile.daily_reward_points > 0) ? (
+                                              <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-orange-50 text-orange-700 border border-orange-200`}>
+                                                {parentProfile.daily_reward_points} GOLD BONUS
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                          <div className="mt-4">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                              <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{pointsEarnedToday} / {dailyTarget} gold coins</span>
+                                              <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{dailyPct}% COMPLETED</span>
+                                            </div>
+                                            <LinearProgressBar
+                                              progress={dailyPct}
+                                              heightClass="h-2"
+                                              className="!bg-stone-200/60 border-none shadow-inner"
+                                            />
+                                          </div>
+                                        </>
+                                      )}
+
+                                      {expandedGoal === 'weekly' && (
+                                        <>
+                                          <div className="flex justify-between items-center pr-14">
+                                            <div>
+                                              <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Weekly Target</Typography>
+                                              {nextWeekly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextWeekly.toLocaleDateString()}</Typography>}
+                                            </div>
+                                            <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-700 border border-cyan-200`}>
+                                              {parentProfile?.weekly_reward_points || 200} GOLD BONUS
+                                            </span>
+                                          </div>
+                                          <div className="mt-4">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                              <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispWeeklyPts} / {(parentProfile?.weekly_points_target || 300)} gold coins</span>
+                                              <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{weeklyPct}% COMPLETED</span>
+                                            </div>
+                                            <LinearProgressBar
+                                              progress={weeklyPct}
+                                              heightClass="h-2"
+                                              className="!bg-stone-200/60 border-none shadow-inner"
+                                            />
+                                          </div>
+                                        </>
+                                      )}
+
+                                      {expandedGoal === 'monthly' && (
+                                        <>
+                                          <div className="flex justify-between items-center pr-14">
+                                            <div>
+                                              <Typography variant="h4" className="font-extrabold text-lg text-stone-900 dark:text-stone-50">Monthly Target</Typography>
+                                              {nextMonthly && <Typography variant="body" className={`text-[10px] font-sans ${styles.textMuted}`}>Resets: {nextMonthly.toLocaleDateString()}</Typography>}
+                                            </div>
+                                            <span className={`text-xs font-sans font-bold px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200`}>
+                                              {parentProfile?.monthly_reward_points || 1000} GOLD BONUS
+                                            </span>
+                                          </div>
+                                          <div className="mt-4">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                              <span className="text-[14px] font-bold text-black dark:text-white tracking-tight">{dispMonthlyPts} / {(parentProfile?.monthly_points_target || 1000)} gold coins</span>
+                                              <span className="text-[12px] font-semibold text-stone-500 dark:text-stone-400">{monthlyPct}% COMPLETED</span>
+                                            </div>
+                                            <LinearProgressBar
+                                              progress={monthlyPct}
+                                              heightClass="h-2"
+                                              className="!bg-stone-200/60 border-none shadow-inner"
+                                            />
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        );
+                      })()}
+                    </motion.div>
+                  )}
+
+                  {/* Home Tab */}
+                  {activeChildTab === 'home' && activeChild && (
+                    <ChildHomeTab
+                      activeChild={activeChild}
+                      tasks={tasks}
+                      completions={completions}
+                      redemptions={redemptions}
+                      rewards={rewards}
+                      handleTaskCheck={handleTaskCheck}
+                      potReminders={potReminders}
+                      onOpenBadges={() => setShowBadgesModal(true)}
+                      parentProfile={parentProfile}
+                    />
+                  )}
+                  {/* Tasks Tab */}
+                  {activeChildTab === 'tasks' && activeChild && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      key="child-tasks-tab"
+                      className="flex flex-col"
+                    >
+                      <div
+                        className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-3 sm:mb-4 shadow-sm"
+                        style={{ background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 10px, #0ea5e9 10px, #0ea5e9 20px)' }}
+                      >
+                        <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                          <div>
+                            <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Daily Quests</Typography>
+                            <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete tasks to earn more gold coins!</Typography>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-tasks-deck">
+                        {tasks.filter(t => {
+                          if (t.child_id !== activeChild.id) return false;
+                          if (t.recurrence === 'one_time') {
+                            return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
+                          }
+                          return true;
+                        }).length === 0 ? (
+                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
+                            <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
+                            <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                            <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                              You have conquered all assigned chores. Ask your parent to broadcast new missions!
+                            </Typography>
+                          </div>
+                        ) : (
+                          tasks.filter(t => {
                             if (t.child_id !== activeChild.id) return false;
                             if (t.recurrence === 'one_time') {
                               return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
                             }
                             return true;
-                          }).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                              <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
-                              <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                                You have conquered all assigned chores. Ask your parent to broadcast new missions!
-                              </Typography>
-                            </div>
-                          ) : (
-                            tasks.filter(t => {
-                              if (t.child_id !== activeChild.id) return false;
-                              if (t.recurrence === 'one_time') {
-                                return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
-                              }
-                              return true;
-                            }).map((task) => {
-                              // Filter completions by recurrence type
-                              let compl = null;
-                              if (task.recurrence === 'daily') {
-                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
-                              } else if (task.recurrence === 'weekly') {
-                                // For weekly, we could also use logical date, but getCurrentWeekKey is fine for now
-                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
-                              } else if (task.recurrence === 'one_time') {
-                                compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
-                              }
+                          }).map((task) => {
+                            // Filter completions by recurrence type
+                            let compl = null;
+                            if (task.recurrence === 'daily') {
+                              compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getLogicalDateString(c.completed_at) === getLogicalDateString(new Date()));
+                            } else if (task.recurrence === 'weekly') {
+                              // For weekly, we could also use logical date, but getCurrentWeekKey is fine for now
+                              compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id && getCurrentWeekKey(new Date(c.completed_at)) === getCurrentWeekKey(new Date()));
+                            } else if (task.recurrence === 'one_time') {
+                              compl = completions.find(c => c.task_id === task.id && c.child_id === activeChild.id);
+                            }
 
-                              const isPending = compl && compl.status === 'pending';
-                              const isApproved = compl && compl.status === 'approved';
+                            const isPending = compl && compl.status === 'pending';
+                            const isApproved = compl && compl.status === 'approved';
 
-                              // Count how many times repeatable quest was completed today (using logical day)
-                              const completedTodayCount = completions.filter(c => 
-                                c.task_id === task.id && 
-                                c.child_id === activeChild.id && 
-                                getLogicalDateString(c.completed_at) === getLogicalDateString(new Date())
-                              ).length;
+                            // Count how many times repeatable quest was completed today (using logical day)
+                            const completedTodayCount = completions.filter(c =>
+                              c.task_id === task.id &&
+                              c.child_id === activeChild.id &&
+                              getLogicalDateString(c.completed_at) === getLogicalDateString(new Date())
+                            ).length;
 
-                              // Cooldown logic
-                              let isOnCooldown = false;
-                              let cooldownTimeLeftStr = '';
-                              if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
-                                const taskComps = completions
-                                  .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
-                                  .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
-                                
-                                if (taskComps.length > 0) {
-                                  const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
-                                  const cooldownMs = task.cooldown_minutes * 60 * 1000;
-                                  if (msSince < cooldownMs) {
-                                    isOnCooldown = true;
-                                    const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
-                                    cooldownTimeLeftStr = `${minsLeft}m`;
-                                  }
+                            // Cooldown logic
+                            let isOnCooldown = false;
+                            let cooldownTimeLeftStr = '';
+                            if (task.recurrence === 'repeatable' && task.cooldown_minutes) {
+                              const taskComps = completions
+                                .filter(c => c.task_id === task.id && c.child_id === activeChild.id)
+                                .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+
+                              if (taskComps.length > 0) {
+                                const msSince = new Date().getTime() - new Date(taskComps[0].completed_at).getTime();
+                                const cooldownMs = task.cooldown_minutes * 60 * 1000;
+                                if (msSince < cooldownMs) {
+                                  isOnCooldown = true;
+                                  const minsLeft = Math.ceil((cooldownMs - msSince) / 60000);
+                                  cooldownTimeLeftStr = `${minsLeft}m`;
                                 }
                               }
+                            }
 
-                              const isCompletable = !isApproved && !isPending && !isOnCooldown;
+                            const isCompletable = !isApproved && !isPending && !isOnCooldown;
 
-                              const catMeta = CATEGORY_ICON_MAP[task.category] ?? CATEGORY_ICON_MAP.other;
-                              const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
-                              const subtitleParts = [catMeta.label, recLabel, ...(completedTodayCount > 0 ? [`Done ${completedTodayCount}×`] : [])];
+                            const catMeta = CATEGORY_ICON_MAP[task.category] ?? CATEGORY_ICON_MAP.other;
+                            const recLabel = RECURRENCE_LABEL[task.recurrence] ?? task.recurrence;
+                            const subtitleParts = [catMeta.label, recLabel, ...(completedTodayCount > 0 ? [`Done ${completedTodayCount}×`] : [])];
 
-                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
-                              const taskBgStyle = {
-                                background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)',
-                              };
+                            const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                            const taskBgStyle = {
+                              background: 'repeating-linear-gradient(45deg, #38bdf8, #38bdf8 15px, #facc15 15px, #facc15 30px, #fb923c 30px, #fb923c 45px)',
+                            };
 
-                              const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
+                            const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
 
-                              const cardContent = (
-                                <div className={innerContentClasses}>
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
-                                  </div>
-                                  <div className="mt-2 relative z-10">
-                                    <CoinBadge points={task.points} disabled={isApproved} />
-                                  </div>
-                                  <div className="w-full relative z-10 mt-1">
-                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800 dark:text-stone-100'}`}>
-                                      {task.title}
-                                    </Typography>
-                                    <div className="mt-2 flex items-center justify-center">
-                                      {isApproved ? (
-                                        <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-widest rounded-full border border-emerald-200">
-                                          <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
-                                        </div>
-                                      ) : isPending ? (
-                                        <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">
-                                          AWAITING
-                                        </div>
-                                      ) : isOnCooldown ? (
-                                        <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black uppercase tracking-widest rounded-full border border-amber-200">
-                                          {cooldownTimeLeftStr}
-                                        </div>
-                                      ) : (
-                                        <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full">
-                                          {recLabel}
-                                        </div>
-                                      )}
-                                    </div>
+                            const cardContent = (
+                              <div className={innerContentClasses}>
+                                <div className="absolute top-2 right-2 z-10">
+                                  <catMeta.Icon className={`w-5 h-5 ${isApproved ? 'text-stone-300' : 'text-amber-400 drop-shadow-sm group-hover:scale-125 transition-transform'}`} />
+                                </div>
+                                <div className="mt-2 relative z-10">
+                                  <CoinBadge points={task.points} disabled={isApproved} />
+                                </div>
+                                <div className="w-full relative z-10 mt-1">
+                                  <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${isApproved ? 'text-stone-400' : 'text-stone-800 dark:text-stone-100'}`}>
+                                    {task.title}
+                                  </Typography>
+                                  <div className="mt-2 flex items-center justify-center">
+                                    {isApproved ? (
+                                      <div className="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-widest rounded-full border border-emerald-200">
+                                        <FaCircleCheck className="w-3 h-3 mr-1" /> DONE
+                                      </div>
+                                    ) : isPending ? (
+                                      <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">
+                                        AWAITING
+                                      </div>
+                                    ) : isOnCooldown ? (
+                                      <div className="inline-flex px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black uppercase tracking-widest rounded-full border border-amber-200">
+                                        {cooldownTimeLeftStr}
+                                      </div>
+                                    ) : (
+                                      <div className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full">
+                                        {recLabel}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
-                              );
-
-                              return isCompletable ? (
-                                <Button
-                                  variant="none"
-                                  size="none"
-                                  key={task.id}
-                                  onClick={() => handleTaskCheck(task.id, task.title)}
-                                  id={`claim-task-${task.id}`}
-                                  className={`${baseCardClasses} task-card`}
-                                  style={taskBgStyle}
-                                >
-                                  {cardContent}
-                                </Button>
-                              ) : (
-                                <div
-                                  key={task.id}
-                                  className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
-                                  style={taskBgStyle}
-                                >
-                                  {cardContent}
-                                </div>
-                              );
-                            })
-                          )}
-                          </div>
-                          </motion.div>
-                    )}
-                    {/* Rewards Tab */}
-                    {activeChildTab === 'rewards' && activeChild && (
-                        
-                        /* PRIZE CABINET CONTENT */
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          key="child-rewards-tab"
-                          className="space-y-4"
-                        >
-                          <div 
-                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
-                            style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px)' }}
-                          >
-                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                              <div>
-                                <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Reward Shop</Typography>
-                                <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Trade your gold coins for real-world prizes!</Typography>
                               </div>
-                            </div>
+                            );
+
+                            return isCompletable ? (
+                              <Button
+                                variant="none"
+                                size="none"
+                                key={task.id}
+                                onClick={() => handleTaskCheck(task.id, task.title)}
+                                id={`claim-task-${task.id}`}
+                                className={`${baseCardClasses} task-card`}
+                                style={taskBgStyle}
+                              >
+                                {cardContent}
+                              </Button>
+                            ) : (
+                              <div
+                                key={task.id}
+                                className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
+                                style={taskBgStyle}
+                              >
+                                {cardContent}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                  {/* Rewards Tab */}
+                  {activeChildTab === 'rewards' && activeChild && (
+
+                    /* PRIZE CABINET CONTENT */
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      key="child-rewards-tab"
+                      className="space-y-4"
+                    >
+                      <div
+                        className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                        style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 10px, #a855f7 10px, #a855f7 20px)' }}
+                      >
+                        <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                          <div>
+                            <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Reward Shop</Typography>
+                            <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Trade your gold coins for real-world prizes!</Typography>
                           </div>
+                        </div>
+                      </div>
 
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
-                          {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                            <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
-                              <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                              <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
-                              <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
-                            </div>
-                          ) : (
-                            rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
-                              const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
-                              const isAffordable = availablePoints >= rew.cost_points;
-                              const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                              const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
-                              const canDispense = isAffordable && availability.available && !hasPendingRequest;
-                              
-                              // Hide claimed one_time rewards entirely
-                              if (!rew.is_available && rew.limit_type === 'one_time') {
-                                return null;
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
+                        {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
+                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
+                            <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
+                            <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                            <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
+                          </div>
+                        ) : (
+                          rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
+                            const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
+                            const isAffordable = availablePoints >= rew.cost_points;
+                            const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
+                            const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
+                            const canDispense = isAffordable && availability.available && !hasPendingRequest;
+
+                            // Hide claimed one_time rewards entirely
+                            if (!rew.is_available && rew.limit_type === 'one_time') {
+                              return null;
+                            }
+
+                            let statusBadge = null;
+                            if (hasPendingRequest) {
+                              statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
+                            } else if (!availability.available && !isSavingFor) {
+                              statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
+                            } else if (isSavingsUnlocked) {
+                              if (isSavingFor) {
+                                statusBadge = (
+                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+                                    <CheckCircle className="w-3 h-3" /> SAVING
+                                  </div>
+                                );
+                              } else {
+                                statusBadge = (
+                                  <Button
+                                    variant="none"
+                                    size="none"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSavingsGoal(activeChild.id, rew.id);
+                                      playSound.success();
+                                    }}
+                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
+                                  >
+                                    SET GOAL
+                                  </Button>
+                                );
                               }
+                            }
 
-                              let statusBadge = null;
-                              if (hasPendingRequest) {
-                                statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
-                              } else if (!availability.available && !isSavingFor) {
-                                statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
-                              } else if (isSavingsUnlocked) {
-                                if (isSavingFor) {
-                                  statusBadge = (
-                                    <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
-                                      <CheckCircle className="w-3 h-3" /> SAVING
-                                    </div>
-                                  );
-                                } else {
-                                  statusBadge = (
-                                    <Button
-                                      variant="none"
-                                      size="none"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onSavingsGoal(activeChild.id, rew.id);
-                                        playSound.success();
-                                      }}
-                                      className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
-                                    >
-                                      SET GOAL
-                                    </Button>
-                                  );
+                            const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
+                            const rewardBgStyle = {
+                              background: 'repeating-linear-gradient(-45deg, #f472b6, #f472b6 15px, #34d399 15px, #34d399 30px, #818cf8 30px, #818cf8 45px)',
+                            };
+
+                            const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
+
+                            const cardContent = (
+                              <div className={innerContentClasses}>
+                                <div className="absolute top-2 right-2 z-10">
+                                  <Gift className={`w-5 h-5 ${(canDispense || isSavingFor) ? 'text-pink-400 drop-shadow-sm group-hover:scale-125 transition-transform' : 'text-stone-300'}`} />
+                                </div>
+                                <div className="mt-2 relative z-10">
+                                  <CoinBadge points={rew.cost_points} />
+                                </div>
+                                <div className="w-full relative z-10 mt-1">
+                                  <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${(canDispense || isSavingFor) ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400'}`}>
+                                    {rew.title}
+                                  </Typography>
+                                  <div className="mt-2 flex items-center justify-center">
+                                    {statusBadge}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+
+                            return canDispense ? (
+                              <Button
+                                variant="none"
+                                size="none"
+                                key={rew.id}
+                                onClick={() => isSavingFor
+                                  ? handleClaimReward(rew.id, rew.cost_points, 'savings')
+                                  : handleClaimReward(rew.id, rew.cost_points)
                                 }
-                              }
+                                id={`claim-reward-${rew.id}`}
+                                className={`${baseCardClasses} reward-card`}
+                                style={rewardBgStyle}
+                              >
+                                {cardContent}
+                              </Button>
+                            ) : (
+                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
+                                {cardContent}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                  {/* Pots Tab */}
+                  {activeChildTab === 'pots' && activeChild && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      key="child-pots-tab"
+                      className="space-y-4"
+                    >
+                      <div
+                        className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
+                        style={{ background: 'repeating-linear-gradient(45deg, #10b981, #10b981 10px, #059669 10px, #059669 20px)' }}
+                      >
+                        <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                          <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Pots</Typography>
+                          <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Manage your savings, food and gifting pots!</Typography>
+                        </div>
+                      </div>
 
-                              const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
-                              const rewardBgStyle = {
-                                background: 'repeating-linear-gradient(-45deg, #f472b6, #f472b6 15px, #34d399 15px, #34d399 30px, #818cf8 30px, #818cf8 45px)',
-                              };
-
-                              const innerContentClasses = "relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[1.25rem] p-4 flex flex-col items-center gap-2 border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]";
-
-                              const cardContent = (
-                                <div className={innerContentClasses}>
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <Gift className={`w-5 h-5 ${(canDispense || isSavingFor) ? 'text-pink-400 drop-shadow-sm group-hover:scale-125 transition-transform' : 'text-stone-300'}`} />
-                                  </div>
-                                  <div className="mt-2 relative z-10">
-                                    <CoinBadge points={rew.cost_points} />
-                                  </div>
-                                  <div className="w-full relative z-10 mt-1">
-                                    <Typography variant="h4" className={`font-black text-xs sm:text-sm font-display leading-tight uppercase tracking-wider ${(canDispense || isSavingFor) ? 'text-stone-800 dark:text-stone-100' : 'text-stone-400'}`}>
-                                      {rew.title}
-                                    </Typography>
-                                    <div className="mt-2 flex items-center justify-center">
-                                      {statusBadge}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-
-                              return canDispense ? (
-                                <Button
-                                  variant="none"
-                                  size="none"
-                                  key={rew.id}
-                                  onClick={() => isSavingFor
-                                    ? handleClaimReward(rew.id, rew.cost_points, 'savings')
-                                    : handleClaimReward(rew.id, rew.cost_points)
-                                  }
-                                  id={`claim-reward-${rew.id}`}
-                                  className={`${baseCardClasses} reward-card`}
-                                  style={rewardBgStyle}
-                                >
-                                  {cardContent}
-                                </Button>
-                              ) : (
-                                <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
-                                  {cardContent}
-                                </div>
-                              );
-                            })
-                          )}
-                          </div>
-                        </motion.div>
-                    )}
-                    {/* Pots Tab */}
-                    {activeChildTab === 'pots' && activeChild && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          key="child-pots-tab"
-                          className="space-y-4"
-                        >
-                          <div 
-                            className="relative p-[3px] rounded-2xl sm:rounded-3xl mb-4 shadow-sm"
-                            style={{ background: 'repeating-linear-gradient(45deg, #10b981, #10b981 10px, #059669 10px, #059669 20px)' }}
-                          >
-                            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 text-left shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                              <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Pots</Typography>
-                              <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Manage your savings, food and gifting pots!</Typography>
-                            </div>
-                          </div>
-                          
-                          <style>{`
+                      <style>{`
                             .pot-flip-inner {
                               transition: transform 0.6s;
                               transform-style: preserve-3d;
@@ -2168,230 +2172,230 @@ export default function ChildDashboard({
                             }
                           `}</style>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
-                          
-                          {/* === MAIN GOLD POT SECTION === */}
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
+
+                        {/* === MAIN GOLD POT SECTION === */}
+                        <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
+                          <div className="relative w-full h-full pot-flip-inner">
+
+                            {/* Front Side */}
+                            <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
+                              <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                <div className="flex justify-between items-start mb-4">
+                                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                    {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <FaJar className="w-6 h-6" />}
+                                  </div>
+                                  <CoinBadge points={activeChild.points || 0} size="sm" />
+                                </div>
+                                <div>
+                                  <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pot</div>
+                                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gold Pot</Typography>
+                                </div>
+                                <div className="mt-auto flex justify-center">
+                                  <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                    <span>Tap to Flip</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Back Side */}
+                            <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
+                              <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col justify-between border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
+                                <div>
+                                  <Typography variant="body" className="text-base text-stone-500 dark:text-stone-400 leading-snug">
+                                    This is where you keep your gold coins! Use them to get rewards, save up, or feed your pets.
+                                  </Typography>
+                                </div>
+                                <div className="w-full flex flex-col gap-1.5 mt-2">
+                                  <Button
+                                    variant="none"
+                                    size="none"
+                                    onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
+                                    className={`flex items-center justify-center gap-1 w-full py-2.5 rounded-xl text-base font-bold uppercase transition-colors border ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}
+                                  >
+                                    <Play className="w-4 h-4" fill="currentColor" /> Play Video
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+
+                        {/* === SAVINGS POT SECTION === */}
+
+                        {/* Savings Pot Unlocked Card */}
+                        {isSavingsUnlocked && activeChild.savings_unlock_seen && (
+                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
                             <div className="relative w-full h-full pot-flip-inner">
-                              
+
                               {/* Front Side */}
-                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
                                 <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
                                   <div className="flex justify-between items-start mb-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
-                                      {activeChild.gold_pot_broken ? <FaTriangleExclamation className="w-6 h-6" /> : <FaJar className="w-6 h-6" />}
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500">
+                                      <PiggyBank className="w-6 h-6" />
                                     </div>
-                                    <CoinBadge points={activeChild.points || 0} size="sm" />
+                                    <CoinBadge points={activeChild.savings_pot || 0} size="sm" />
                                   </div>
                                   <div>
-                                    <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Main Pot</div>
-                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gold Pot</Typography>
+                                    <div className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
+                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Savings</Typography>
                                   </div>
                                   <div className="mt-auto flex justify-center">
-                                     <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                                       <span>Tap to Flip</span>
-                                     </div>
+                                    <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                      <span>Tap to Flip</span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
 
                               {/* Back Side */}
-                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}>
-                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col justify-between border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left">
-                                  <div>
-                                    <Typography variant="body" className="text-base text-stone-500 dark:text-stone-400 leading-snug">
-                                      This is where you keep your gold coins! Use them to get rewards, save up, or feed your pets.
-                                    </Typography>
-                                  </div>
-                                  <div className="w-full flex flex-col gap-1.5 mt-2">
-                                    <Button 
-                                      variant="none"
-                                      size="none"
-                                      onClick={(e) => { e.stopPropagation(); setShowAppIntroVideo(true); }}
-                                      className={`flex items-center justify-center gap-1 w-full py-2.5 rounded-xl text-base font-bold uppercase transition-colors border ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}
-                                    >
-                                      <Play className="w-4 h-4" fill="currentColor" /> Play Video
-                                    </Button>
-                                  </div>
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+
+                                  {!showDepositModal && !showWithdrawConfirm && (
+                                    <div className="flex flex-col h-full">
+                                      {activeChild.savings_goal_name ? (
+                                        <div className="mb-2">
+                                          <div className="flex justify-between items-center mb-1">
+                                            <span className="text-xs font-bold text-emerald-850 dark:text-emerald-400">Goal: {activeChild.savings_goal_name}</span>
+                                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
+                                              {activeChild.savings_pot || 0}/{activeChild.savings_goal_amount}
+                                            </span>
+                                          </div>
+                                          <LinearProgressBar
+                                            progress={Math.round(((activeChild.savings_pot || 0) / (activeChild.savings_goal_amount || 1)) * 100)}
+                                            className="bg-stone-100 dark:bg-stone-800 border-emerald-200 h-2"
+                                          />
+                                          {(activeChild.savings_pot || 0) >= (activeChild.savings_goal_amount || 0) && activeChild.savings_goal_reward_id && (
+                                            <Button
+                                              variant="primary"
+                                              size="none"
+                                              className="w-full mt-2 py-1.5 text-[10px]"
+                                              onClick={(e) => { e.stopPropagation(); handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings'); }}
+                                              leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
+                                            >
+                                              CLAIM GOAL!
+                                            </Button>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="mb-2">
+                                          <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 leading-snug">
+                                            Keep your gold coins safe here! You can't spend them until you take them out.
+                                          </Typography>
+                                        </div>
+                                      )}
+
+                                      <div className="mt-auto flex flex-col gap-1.5">
+                                        <div className="flex gap-1.5">
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
+                                            disabled={activeChild.points <= 0}
+                                            className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2 rounded-xl font-bold text-sm border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                          >
+                                            <FaCoins className="w-3 h-3" /> Deposit
+                                          </Button>
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowWithdrawConfirm(true); playSound.click(); }}
+                                            disabled={(activeChild.savings_pot || 0) <= 0}
+                                            className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
+                                          >
+                                            Withdraw
+                                          </Button>
+                                        </div>
+                                        <Button
+                                          variant="none"
+                                          size="none"
+                                          onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
+                                          className="flex items-center justify-center gap-1 bg-emerald-100 text-emerald-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-emerald-200 transition-colors"
+                                        >
+                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Inline Deposit Modal (Replaces content when active) */}
+                                  {showDepositModal && (
+                                    <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                      <label className="text-xs font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-2">Deposit how many coins?</label>
+                                      <div className="flex items-center justify-center gap-3 py-2">
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
+                                          disabled={depositAmount <= 1}
+                                          className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
+                                        >
+                                          <Minus className="w-4 h-4" />
+                                        </Button>
+
+                                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
+                                          <Typography variant="number" className="text-lg">{depositAmount}</Typography>
+                                        </div>
+
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
+                                          disabled={depositAmount >= activeChild.points}
+                                          className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                      <div className="flex gap-2 mt-auto">
+                                        <Button variant="ghost" size="none" className="flex-1 py-2 text-xs" onClick={() => { setShowDepositModal(false); playSound.click(); }}>
+                                          Cancel
+                                        </Button>
+                                        <Button variant="primary" size="none" className="flex-1 py-2 text-xs" disabled={depositAmount <= 0 || depositAmount > activeChild.points}
+                                          onClick={() => {
+                                            if (depositAmount > 0 && depositAmount <= activeChild.points) {
+                                              onSavingsDeposit(activeChild.id, depositAmount);
+                                              setShowDepositModal(false);
+                                              playSound.purchase();
+                                            }
+                                          }}>
+                                          Confirm
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Inline Withdraw Modal */}
+                                  {showWithdrawConfirm && (
+                                    <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                      <Typography variant="body" className="text-xs font-bold text-rose-800 dark:text-rose-400 text-center mb-4">
+                                        Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?
+                                      </Typography>
+                                      <div className="flex flex-col gap-2 mt-auto">
+                                        <Button variant="danger" size="none" className="w-full py-2 text-xs"
+                                          onClick={() => {
+                                            onSavingsWithdraw(activeChild.id);
+                                            setShowWithdrawConfirm(false);
+                                            playSound.purchase();
+                                          }}>
+                                          Yes, Withdraw
+                                        </Button>
+                                        <Button variant="ghost" size="none" className="w-full py-2 text-xs" onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}>
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
                                 </div>
                               </div>
-
                             </div>
                           </div>
+                        )}
 
-                          {/* === SAVINGS POT SECTION === */}
-
-                          {/* Savings Pot Unlocked Card */}
-                          {isSavingsUnlocked && activeChild.savings_unlock_seen && (
-                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
-                              <div className="relative w-full h-full pot-flip-inner">
-                                
-                                {/* Front Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
-                                    <div className="flex justify-between items-start mb-4">
-                                      <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500">
-                                        <PiggyBank className="w-6 h-6" />
-                                      </div>
-                                      <CoinBadge points={activeChild.savings_pot || 0} size="sm" />
-                                    </div>
-                                    <div>
-                                      <div className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-1">Savings Pot</div>
-                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Savings</Typography>
-                                    </div>
-                                    <div className="mt-auto flex justify-center">
-                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                                         <span>Tap to Flip</span>
-                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Back Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #34d399, #34d399 10px, #10b981 10px, #10b981 20px, #059669 20px, #059669 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
-                                    
-                                    {!showDepositModal && !showWithdrawConfirm && (
-                                      <div className="flex flex-col h-full">
-                                        {activeChild.savings_goal_name ? (
-                                          <div className="mb-2">
-                                            <div className="flex justify-between items-center mb-1">
-                                              <span className="text-xs font-bold text-emerald-850 dark:text-emerald-400">Goal: {activeChild.savings_goal_name}</span>
-                                              <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
-                                                {activeChild.savings_pot || 0}/{activeChild.savings_goal_amount}
-                                              </span>
-                                            </div>
-                                            <LinearProgressBar
-                                              progress={Math.round(((activeChild.savings_pot || 0) / (activeChild.savings_goal_amount || 1)) * 100)}
-                                              className="bg-stone-100 dark:bg-stone-800 border-emerald-200 h-2"
-                                            />
-                                            {(activeChild.savings_pot || 0) >= (activeChild.savings_goal_amount || 0) && activeChild.savings_goal_reward_id && (
-                                              <Button
-                                                variant="primary"
-                                                size="none"
-                                                className="w-full mt-2 py-1.5 text-[10px]"
-                                                onClick={(e) => { e.stopPropagation(); handleClaimReward(activeChild.savings_goal_reward_id!, activeChild.savings_goal_amount!, 'savings'); }}
-                                                leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
-                                              >
-                                                CLAIM GOAL!
-                                              </Button>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <div className="mb-2">
-                                            <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 leading-snug">
-                                              Keep your gold coins safe here! You can't spend them until you take them out.
-                                            </Typography>
-                                          </div>
-                                        )}
-
-                                        <div className="mt-auto flex flex-col gap-1.5">
-                                          <div className="flex gap-1.5">
-                                            <Button variant="none" size="none"
-                                              onClick={(e) => { e.stopPropagation(); setShowDepositModal(true); setDepositAmount(Math.min(5, activeChild.points)); playSound.click(); }}
-                                              disabled={activeChild.points <= 0}
-                                              className="flex-1 flex items-center justify-center gap-1 bg-[#FDF6CD] text-amber-900 py-2 rounded-xl font-bold text-sm border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
-                                            >
-                                              <FaCoins className="w-3 h-3" /> Deposit
-                                            </Button>
-                                            <Button variant="none" size="none"
-                                              onClick={(e) => { e.stopPropagation(); setShowWithdrawConfirm(true); playSound.click(); }}
-                                              disabled={(activeChild.savings_pot || 0) <= 0}
-                                              className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
-                                            >
-                                              Withdraw
-                                            </Button>
-                                          </div>
-                                          <Button 
-                                            variant="none"
-                                            size="none"
-                                            onClick={(e) => { e.stopPropagation(); setShowReplayVideo(true); }}
-                                            className="flex items-center justify-center gap-1 bg-emerald-100 text-emerald-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-emerald-200 transition-colors"
-                                          >
-                                            <Play className="w-3 h-3" fill="currentColor" /> Play Video
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Inline Deposit Modal (Replaces content when active) */}
-                                    {showDepositModal && (
-                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
-                                        <label className="text-xs font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-2">Deposit how many coins?</label>
-                                        <div className="flex items-center justify-center gap-3 py-2">
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setDepositAmount(Math.max(1, depositAmount - 5)); playSound.click(); }}
-                                            disabled={depositAmount <= 1}
-                                            className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                          >
-                                            <Minus className="w-4 h-4" />
-                                          </Button>
-                                    
-                                          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-4 border-yellow-200 shadow-[0_4px_10px_rgba(245,158,11,0.4)]">
-                                            <Typography variant="number" className="text-lg">{depositAmount}</Typography>
-                                          </div>
-                                    
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setDepositAmount(Math.min(activeChild.points, depositAmount + 5)); playSound.click(); }}
-                                            disabled={depositAmount >= activeChild.points}
-                                            className="w-8 h-8 rounded-full bg-emerald-205 text-emerald-755 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-[0.96] transition-[background-color,transform]"
-                                          >
-                                            <Plus className="w-4 h-4" />
-                                          </Button>
-                                        </div>
-                                        <div className="flex gap-2 mt-auto">
-                                          <Button variant="ghost" size="none" className="flex-1 py-2 text-xs" onClick={() => { setShowDepositModal(false); playSound.click(); }}>
-                                            Cancel
-                                          </Button>
-                                          <Button variant="primary" size="none" className="flex-1 py-2 text-xs" disabled={depositAmount <= 0 || depositAmount > activeChild.points}
-                                            onClick={() => {
-                                              if (depositAmount > 0 && depositAmount <= activeChild.points) {
-                                                onSavingsDeposit(activeChild.id, depositAmount);
-                                                setShowDepositModal(false);
-                                                playSound.purchase();
-                                              }
-                                            }}>
-                                            Confirm
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Inline Withdraw Modal */}
-                                    {showWithdrawConfirm && (
-                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
-                                        <Typography variant="body" className="text-xs font-bold text-rose-800 dark:text-rose-400 text-center mb-4">
-                                          Are you sure you want to withdraw all {activeChild.savings_pot} coins back to your pocket?
-                                        </Typography>
-                                        <div className="flex flex-col gap-2 mt-auto">
-                                          <Button variant="danger" size="none" className="w-full py-2 text-xs"
-                                            onClick={() => {
-                                              onSavingsWithdraw(activeChild.id);
-                                              setShowWithdrawConfirm(false);
-                                              playSound.purchase();
-                                            }}>
-                                            Yes, Withdraw
-                                          </Button>
-                                          <Button variant="ghost" size="none" className="w-full py-2 text-xs" onClick={() => { setShowWithdrawConfirm(false); playSound.click(); }}>
-                                            Cancel
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
-                          {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
-                            <div 
-                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
-                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
-                            >
-                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                        {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
+                        {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
+                          <div
+                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                          >
+                            <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
                               <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaPiggyBank className="inline-block mr-2 text-pink-400" /> Savings Pot — Unlock at Level {parentProfile?.savings_pot_unlock_level ?? 2}!</Typography>
@@ -2409,109 +2413,109 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
-                              </div>
                             </div>
-                          )}                          {/* === FOOD POT SECTION === */}
+                          </div>
+                        )}                          {/* === FOOD POT SECTION === */}
 
-                          {/* Food Pot Unlocked Card */}
-                          {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
-                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
-                              <div className="relative w-full h-full pot-flip-inner">
-                                
-                                {/* Front Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
-                                    <div className="flex justify-between items-start mb-4">
-                                      <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500">
-                                        <Utensils className="w-6 h-6" />
-                                      </div>
-                                      <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-2 rounded-xl">
-                                        <FaBone className="w-4 h-4 text-orange-500" />
-                                        <Typography variant="number">{activeChild.pet_food || 0}</Typography>
-                                      </div>
+                        {/* Food Pot Unlocked Card */}
+                        {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
+                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
+                            <div className="relative w-full h-full pot-flip-inner">
+
+                              {/* Front Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500">
+                                      <Utensils className="w-6 h-6" />
                                     </div>
-                                    <div>
-                                      <div className="text-xs font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
-                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Food</Typography>
+                                    <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-2 rounded-xl">
+                                      <FaBone className="w-4 h-4 text-orange-500" />
+                                      <Typography variant="number">{activeChild.pet_food || 0}</Typography>
                                     </div>
-                                    <div className="mt-auto flex justify-center">
-                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                                         <span>Tap to Flip</span>
-                                       </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-black uppercase tracking-widest text-orange-500 mb-1">Food Pot</div>
+                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Food</Typography>
+                                  </div>
+                                  <div className="mt-auto flex justify-center">
+                                    <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                      <span>Tap to Flip</span>
                                     </div>
                                   </div>
                                 </div>
+                              </div>
 
-                                {/* Back Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
-                                    <div className="flex flex-col h-full justify-between">
-                                      <div>
-                                        {/* Weekly Contribution Progress */}
-                                        <div className="mb-2">
-                                          <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-bold text-orange-850 dark:text-orange-400">Weekly Goal</span>
-                                            <span className="text-xs font-black text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
-                                              {activeChild.food_pot_weekly_contribution || 0}/7
-                                            </span>
-                                          </div>
-                                          <LinearProgressBar
-                                            progress={Math.round(((activeChild.food_pot_weekly_contribution || 0) / 7) * 100)}
-                                            className="bg-stone-100 dark:bg-stone-800 border-orange-200 h-2"
-                                          />
-                                          <span className={`text-[10px] font-sans ${styles.textMuted} mt-1.5 block`}>
-                                            {activeChild.food_pot_weekly_contribution >= 7 
-                                              ? <span><FaCircleCheck className="inline-block mr-1 text-green-500" /> Goal met!</span> 
-                                              : <span>Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more coins.</span>
-                                            }
+                              {/* Back Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 10px, #f97316 10px, #f97316 20px, #ea580c 20px, #ea580c 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                  <div className="flex flex-col h-full justify-between">
+                                    <div>
+                                      {/* Weekly Contribution Progress */}
+                                      <div className="mb-2">
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-bold text-orange-850 dark:text-orange-400">Weekly Goal</span>
+                                          <span className="text-xs font-black text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-stone-800 px-1.5 py-0.5 rounded-md">
+                                            {activeChild.food_pot_weekly_contribution || 0}/7
                                           </span>
                                         </div>
-                                        
-                                        <Typography variant="body" className={`text-sm ${styles.textMuted} leading-snug mb-2`}>
-                                          Put coins here to feed your pet! Use them to buy yummy food.
-                                        </Typography>
+                                        <LinearProgressBar
+                                          progress={Math.round(((activeChild.food_pot_weekly_contribution || 0) / 7) * 100)}
+                                          className="bg-stone-100 dark:bg-stone-800 border-orange-200 h-2"
+                                        />
+                                        <span className={`text-[10px] font-sans ${styles.textMuted} mt-1.5 block`}>
+                                          {activeChild.food_pot_weekly_contribution >= 7
+                                            ? <span><FaCircleCheck className="inline-block mr-1 text-green-500" /> Goal met!</span>
+                                            : <span>Need {7 - (activeChild.food_pot_weekly_contribution || 0)} more coins.</span>
+                                          }
+                                        </span>
                                       </div>
 
-                                      <div className="flex flex-col gap-1.5 mt-auto">
-                                        <div className="flex gap-1.5">
-                                          <Button variant="none" size="none"
-                                            onClick={(e) => { e.stopPropagation(); onBuyPetFood(activeChild.id); playSound.purchase(); }}
-                                            disabled={(activeChild.points || 0) < 1}
-                                            className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2 rounded-xl font-bold text-sm border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50"
-                                          >
-                                            <FaBone className="w-3 h-3" /> Buy (1g)
-                                          </Button>
-                                          <Button variant="none" size="none"
-                                            onClick={(e) => { e.stopPropagation(); onSellPetFood(activeChild.id); playSound.purchase(); }}
-                                            disabled={(activeChild.pet_food || 0) < 1}
-                                            className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
-                                          >
-                                            Sell (+1g)
-                                          </Button>
-                                        </div>
-                                        <Button 
-                                          variant="none"
-                                          size="none"
-                                          onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
-                                          className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-orange-200 transition-colors"
+                                      <Typography variant="body" className={`text-sm ${styles.textMuted} leading-snug mb-2`}>
+                                        Put coins here to feed your pet! Use them to buy yummy food.
+                                      </Typography>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 mt-auto">
+                                      <div className="flex gap-1.5">
+                                        <Button variant="none" size="none"
+                                          onClick={(e) => { e.stopPropagation(); onBuyPetFood(activeChild.id); playSound.purchase(); }}
+                                          disabled={(activeChild.points || 0) < 1}
+                                          className="flex-1 flex items-center justify-center gap-1 bg-orange-50 text-orange-700 py-2 rounded-xl font-bold text-sm border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50"
                                         >
-                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                          <FaBone className="w-3 h-3" /> Buy (1g)
+                                        </Button>
+                                        <Button variant="none" size="none"
+                                          onClick={(e) => { e.stopPropagation(); onSellPetFood(activeChild.id); playSound.purchase(); }}
+                                          disabled={(activeChild.pet_food || 0) < 1}
+                                          className="flex-1 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-300 py-2 rounded-xl font-bold text-sm hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors border border-stone-200 disabled:opacity-50"
+                                        >
+                                          Sell (+1g)
                                         </Button>
                                       </div>
+                                      <Button
+                                        variant="none"
+                                        size="none"
+                                        onClick={(e) => { e.stopPropagation(); setShowFoodReplayVideo(true); }}
+                                        className="flex items-center justify-center gap-1 bg-orange-100 text-orange-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-orange-200 transition-colors"
+                                      >
+                                        <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Food Pot Locked Preview */}
-                          {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
-                            <div 
-                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
-                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
-                            >
-                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                        {/* Food Pot Locked Preview */}
+                        {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
+                          <div
+                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                          >
+                            <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
                               <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaBowlFood className="inline-block mr-2 text-orange-400" /> Food Pot — Unlock at Level {parentProfile?.food_pot_unlock_level ?? 4}!</Typography>
@@ -2529,206 +2533,206 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
-                              </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* === GIFTING POT SECTION === */}
+                        {/* === GIFTING POT SECTION === */}
 
-                          {/* Gifting Pot Unlocked Card */}
-                          {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
-                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
-                              <div className="relative w-full h-full pot-flip-inner">
-                                
-                                {/* Front Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
-                                    <div className="flex justify-between items-start mb-4">
-                                      <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500">
-                                        <Gift className="w-6 h-6" />
-                                      </div>
+                        {/* Gifting Pot Unlocked Card */}
+                        {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
+                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
+                            <div className="relative w-full h-full pot-flip-inner">
+
+                              {/* Front Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-500">
+                                      <Gift className="w-6 h-6" />
                                     </div>
-                                    <div>
-                                      <div className="text-xs font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
-                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gifting</Typography>
-                                    </div>
-                                    <div className="mt-auto flex justify-center">
-                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                                         <span>Tap to Flip</span>
-                                       </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-black uppercase tracking-widest text-rose-500 mb-1">Gifting Pot</div>
+                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Gifting</Typography>
+                                  </div>
+                                  <div className="mt-auto flex justify-center">
+                                    <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                      <span>Tap to Flip</span>
                                     </div>
                                   </div>
                                 </div>
+                              </div>
 
-                                {/* Back Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
-                                    
-                                    {!showCharityModal && !showSiblingModal && (
-                                      <div className="flex flex-col h-full">
-                                        <Typography variant="body" className={`text-sm ${styles.textMuted} mb-2 leading-snug`}>
-                                          Share your coins to help others or give a gift to your sibling! It feels good to give.
-                                        </Typography>
+                              {/* Back Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(-45deg, #fb7185, #fb7185 10px, #f43f5e 10px, #f43f5e 20px, #e11d48 20px, #e11d48 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
 
-                                        {/* Gifting Reminder */}
-                                        {(() => {
-                                          const lastGiftingDate = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
-                                          const daysSinceGifting = lastGiftingDate ? Math.floor((new Date().getTime() - lastGiftingDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
-                                          if (daysSinceGifting > 14) {
-                                            return (
-                                              <div className="mb-2 p-1.5 bg-rose-50 dark:bg-stone-800 border border-rose-200 dark:border-stone-700 rounded-lg flex items-center gap-1.5">
-                                                <span className="text-rose-500"><FaHeart className="w-3 h-3" /></span>
-                                                <Typography variant="body" className="text-[10px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider leading-tight">
-                                                  You haven't given a gift in a while!
-                                                </Typography>
-                                              </div>
-                                            );
-                                          }
-                                          return null;
-                                        })()}
+                                  {!showCharityModal && !showSiblingModal && (
+                                    <div className="flex flex-col h-full">
+                                      <Typography variant="body" className={`text-sm ${styles.textMuted} mb-2 leading-snug`}>
+                                        Share your coins to help others or give a gift to your sibling! It feels good to give.
+                                      </Typography>
 
-                                        <div className="mt-auto flex flex-col gap-1.5">
-                                          <div className="flex gap-1.5">
-                                            <Button variant="none" size="none"
-                                              onClick={(e) => { e.stopPropagation(); setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
-                                              disabled={activeChild.points <= 0}
-                                              className="flex-1 flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 py-2 rounded-xl font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-                                            >
-                                              <FaGlobe className="w-3 h-3" /> Charity
-                                            </Button>
-                                            <Button variant="none" size="none"
-                                              onClick={(e) => { e.stopPropagation(); setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
-                                              disabled={activeChild.points <= 0 || children.length <= 1}
-                                              className="flex-1 flex items-center justify-center gap-1 bg-pink-50 text-pink-700 py-2 rounded-xl font-bold text-sm border border-pink-200 hover:bg-pink-100 transition-colors disabled:opacity-50"
-                                            >
-                                              <FaGift className="w-3 h-3" /> Sibling
-                                            </Button>
-                                          </div>
-                                          <Button 
-                                            variant="none"
-                                            size="none"
-                                            onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
-                                            className="flex items-center justify-center gap-1 bg-rose-100 text-rose-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-rose-200 transition-colors"
+                                      {/* Gifting Reminder */}
+                                      {(() => {
+                                        const lastGiftingDate = activeChild.last_gifting_date ? new Date(activeChild.last_gifting_date) : null;
+                                        const daysSinceGifting = lastGiftingDate ? Math.floor((new Date().getTime() - lastGiftingDate.getTime()) / (1000 * 60 * 60 * 24)) : 999;
+                                        if (daysSinceGifting > 14) {
+                                          return (
+                                            <div className="mb-2 p-1.5 bg-rose-50 dark:bg-stone-800 border border-rose-200 dark:border-stone-700 rounded-lg flex items-center gap-1.5">
+                                              <span className="text-rose-500"><FaHeart className="w-3 h-3" /></span>
+                                              <Typography variant="body" className="text-[10px] text-rose-700 dark:text-rose-400 font-bold uppercase tracking-wider leading-tight">
+                                                You haven't given a gift in a while!
+                                              </Typography>
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      })()}
+
+                                      <div className="mt-auto flex flex-col gap-1.5">
+                                        <div className="flex gap-1.5">
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowCharityModal(true); setCharityAmount(Math.min(5, activeChild.points || 0)); setSelectedCharityId('CH-WILDLIFE'); playSound.click(); }}
+                                            disabled={activeChild.points <= 0}
+                                            className="flex-1 flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 py-2 rounded-xl font-bold text-sm border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
                                           >
-                                            <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                            <FaGlobe className="w-3 h-3" /> Charity
+                                          </Button>
+                                          <Button variant="none" size="none"
+                                            onClick={(e) => { e.stopPropagation(); setShowSiblingModal(true); setSiblingAmount(Math.min(5, activeChild.points || 0)); setSelectedSiblingId(children.filter(c => c.id !== activeChild.id)[0]?.id || ''); playSound.click(); }}
+                                            disabled={activeChild.points <= 0 || children.length <= 1}
+                                            className="flex-1 flex items-center justify-center gap-1 bg-pink-50 text-pink-700 py-2 rounded-xl font-bold text-sm border border-pink-200 hover:bg-pink-100 transition-colors disabled:opacity-50"
+                                          >
+                                            <FaGift className="w-3 h-3" /> Sibling
                                           </Button>
                                         </div>
-                                      </div>
-                                    )}
-
-                                    {/* Inline Charity Modal */}
-                                    {showCharityModal && (
-                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
-                                        <label className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-1">Donate to Charity (requires parent approval)</label>
-                                        <Select
-                                          value={selectedCharityId}
-                                          onChange={(e) => setSelectedCharityId(e.target.value)}
-                                          className="text-xs py-1"
+                                        <Button
+                                          variant="none"
+                                          size="none"
+                                          onClick={(e) => { e.stopPropagation(); setShowGiftingReplayVideo(true); }}
+                                          className="flex items-center justify-center gap-1 bg-rose-100 text-rose-700 w-full py-2 rounded-xl font-bold text-sm hover:bg-rose-200 transition-colors"
                                         >
-                                          <option value="CH-WILDLIFE">Global Wildlife Fund</option>
-                                          <option value="CH-OCEAN">Save the Oceans</option>
-                                          <option value="CH-CHILDREN">Kids Education Charity</option>
-                                        </Select>
-                                        <div className="flex items-center justify-center gap-2 py-1.5">
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
-                                            disabled={charityAmount <= 1}
-                                            className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
-                                          >
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
-                                            <Typography variant="number" className="text-sm">{charityAmount}</Typography>
-                                          </div>
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
-                                            disabled={charityAmount >= (activeChild.points || 0)}
-                                            className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
-                                          >
-                                            <Plus className="w-3 h-3" />
-                                          </Button>
-                                        </div>
-                                        <div className="flex gap-2 mt-auto">
-                                          <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowCharityModal(false); playSound.click(); }}>
-                                            Cancel
-                                          </Button>
-                                          <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={charityAmount <= 0 || charityAmount > (activeChild.points || 0) || !selectedCharityId}
-                                            onClick={() => {
-                                              if (charityAmount > 0 && charityAmount <= (activeChild.points || 0) && selectedCharityId) {
-                                                onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
-                                                setShowCharityModal(false);
-                                                playSound.success();
-                                              }
-                                            }}>
-                                            Donate
-                                          </Button>
-                                        </div>
+                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                        </Button>
                                       </div>
-                                    )}
+                                    </div>
+                                  )}
 
-                                    {/* Inline Sibling Modal */}
-                                    {showSiblingModal && (
-                                      <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
-                                        <label className="text-[10px] font-bold text-pink-800 dark:text-pink-400 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
-                                        <Select
-                                          value={selectedSiblingId}
-                                          onChange={(e) => setSelectedSiblingId(e.target.value)}
-                                          className="text-xs py-1"
+                                  {/* Inline Charity Modal */}
+                                  {showCharityModal && (
+                                    <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                      <label className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block text-center mb-1">Donate to Charity (requires parent approval)</label>
+                                      <Select
+                                        value={selectedCharityId}
+                                        onChange={(e) => setSelectedCharityId(e.target.value)}
+                                        className="text-xs py-1"
+                                      >
+                                        <option value="CH-WILDLIFE">Global Wildlife Fund</option>
+                                        <option value="CH-OCEAN">Save the Oceans</option>
+                                        <option value="CH-CHILDREN">Kids Education Charity</option>
+                                      </Select>
+                                      <div className="flex items-center justify-center gap-2 py-1.5">
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setCharityAmount(Math.max(1, charityAmount - 1)); playSound.click(); }}
+                                          disabled={charityAmount <= 1}
+                                          className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
                                         >
-                                          {children.filter(c => c.id !== activeChild.id).map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                          ))}
-                                        </Select>
-                                        <div className="flex items-center justify-center gap-2 py-1.5">
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
-                                            disabled={siblingAmount <= 1}
-                                            className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
-                                          >
-                                            <Minus className="w-3 h-3" />
-                                          </Button>
-                                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
-                                            <Typography variant="number" className="text-sm">{siblingAmount}</Typography>
-                                          </div>
-                                          <Button variant="none" size="none"
-                                            onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
-                                            disabled={siblingAmount >= (activeChild.points || 0)}
-                                            className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
-                                          >
-                                            <Plus className="w-3 h-3" />
-                                          </Button>
+                                          <Minus className="w-3 h-3" />
+                                        </Button>
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
+                                          <Typography variant="number" className="text-sm">{charityAmount}</Typography>
                                         </div>
-                                        <div className="flex gap-2 mt-auto">
-                                          <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowSiblingModal(false); playSound.click(); }}>
-                                            Cancel
-                                          </Button>
-                                          <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={siblingAmount <= 0 || siblingAmount > (activeChild.points || 0) || !selectedSiblingId}
-                                            onClick={() => {
-                                              if (siblingAmount > 0 && siblingAmount <= (activeChild.points || 0) && selectedSiblingId) {
-                                                onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
-                                                setShowSiblingModal(false);
-                                                playSound.success();
-                                              }
-                                            }}>
-                                            Gift
-                                          </Button>
-                                        </div>
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setCharityAmount(Math.min((activeChild.points || 0), charityAmount + 1)); playSound.click(); }}
+                                          disabled={charityAmount >= (activeChild.points || 0)}
+                                          className="w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer hover:bg-emerald-300 disabled:opacity-50 transition-colors"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                        </Button>
                                       </div>
-                                    )}
+                                      <div className="flex gap-2 mt-auto">
+                                        <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowCharityModal(false); playSound.click(); }}>
+                                          Cancel
+                                        </Button>
+                                        <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={charityAmount <= 0 || charityAmount > (activeChild.points || 0) || !selectedCharityId}
+                                          onClick={() => {
+                                            if (charityAmount > 0 && charityAmount <= (activeChild.points || 0) && selectedCharityId) {
+                                              onGiftingRequestCharity(activeChild.id, charityAmount, selectedCharityId);
+                                              setShowCharityModal(false);
+                                              playSound.success();
+                                            }
+                                          }}>
+                                          Donate
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
 
-                                  </div>
+                                  {/* Inline Sibling Modal */}
+                                  {showSiblingModal && (
+                                    <div className="flex flex-col h-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                      <label className="text-[10px] font-bold text-pink-800 dark:text-pink-400 block text-center mb-1">Gift to Sibling (requires parent approval)</label>
+                                      <Select
+                                        value={selectedSiblingId}
+                                        onChange={(e) => setSelectedSiblingId(e.target.value)}
+                                        className="text-xs py-1"
+                                      >
+                                        {children.filter(c => c.id !== activeChild.id).map(c => (
+                                          <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                      </Select>
+                                      <div className="flex items-center justify-center gap-2 py-1.5">
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setSiblingAmount(Math.max(1, siblingAmount - 1)); playSound.click(); }}
+                                          disabled={siblingAmount <= 1}
+                                          className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
+                                        >
+                                          <Minus className="w-3 h-3" />
+                                        </Button>
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-yellow-200 shadow-sm">
+                                          <Typography variant="number" className="text-sm">{siblingAmount}</Typography>
+                                        </div>
+                                        <Button variant="none" size="none"
+                                          onClick={() => { setSiblingAmount(Math.min((activeChild.points || 0), siblingAmount + 1)); playSound.click(); }}
+                                          disabled={siblingAmount >= (activeChild.points || 0)}
+                                          className="w-6 h-6 rounded-full bg-pink-200 text-pink-700 flex items-center justify-center cursor-pointer hover:bg-pink-300 disabled:opacity-50 transition-colors"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                      <div className="flex gap-2 mt-auto">
+                                        <Button variant="ghost" size="none" className="flex-1 py-1.5 text-xs" onClick={() => { setShowSiblingModal(false); playSound.click(); }}>
+                                          Cancel
+                                        </Button>
+                                        <Button variant="primary" size="none" className="flex-1 py-1.5 text-xs" disabled={siblingAmount <= 0 || siblingAmount > (activeChild.points || 0) || !selectedSiblingId}
+                                          onClick={() => {
+                                            if (siblingAmount > 0 && siblingAmount <= (activeChild.points || 0) && selectedSiblingId) {
+                                              onGiftingRequestSibling(activeChild.id, siblingAmount, selectedSiblingId);
+                                              setShowSiblingModal(false);
+                                              playSound.success();
+                                            }
+                                          }}>
+                                          Gift
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
                                 </div>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Gifting Pot Locked Preview */}
-                          {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
-                            <div 
-                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
-                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
-                            >
-                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                        {/* Gifting Pot Locked Preview */}
+                        {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
+                          <div
+                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                          >
+                            <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
                               <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
@@ -2746,120 +2750,120 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
-                              </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* === GOLD POT MAINTENANCE SECTION === */}
-                          {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
-                            <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
-                              <div className="relative w-full h-full pot-flip-inner">
-                                
-                                {/* Front Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
-                                    <div className="flex justify-between items-start mb-4">
-                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
-                                        <FaWrench className="w-6 h-6" />
-                                      </div>
-                                      <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${activeChild.gold_pot_broken ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-                                        {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
-                                      </div>
+                        {/* === GOLD POT MAINTENANCE SECTION === */}
+                        {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
+                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
+                            <div className="relative w-full h-full pot-flip-inner">
+
+                              {/* Front Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-front" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left group-hover:scale-[1.02] transition-transform duration-300">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-500' : 'bg-amber-100 text-amber-500'}`}>
+                                      <FaWrench className="w-6 h-6" />
                                     </div>
-                                    <div>
-                                      <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
-                                      <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Maintenance</Typography>
+                                    <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${activeChild.gold_pot_broken ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                                      {activeChild.gold_pot_broken ? 'NEEDS REPAIR' : 'SAFE'}
                                     </div>
-                                    <div className="mt-auto flex justify-center">
-                                       <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
-                                         <span>Tap to Flip</span>
-                                       </div>
+                                  </div>
+                                  <div>
+                                    <div className={`text-xs font-black uppercase tracking-widest mb-1 ${activeChild.gold_pot_broken ? 'text-red-500' : 'text-amber-500'}`}>Gold Pot</div>
+                                    <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">Maintenance</Typography>
+                                  </div>
+                                  <div className="mt-auto flex justify-center">
+                                    <div className="px-4 py-2 bg-stone-100 dark:bg-stone-800 rounded-full text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                      <span>Tap to Flip</span>
                                     </div>
                                   </div>
                                 </div>
+                              </div>
 
-                                {/* Back Side */}
-                                <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
-                                  <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
-                                    <div className="flex flex-col h-full justify-between">
-                                      <div>
-                                        <Typography variant="body" className={`text-sm font-bold leading-snug mb-3 ${activeChild.gold_pot_broken ? 'text-red-800 dark:text-red-400' : 'text-stone-500 dark:text-stone-400'}`}>
-                                          Oh no! Sometimes your pot cracks and loses coins. Fix it quick!
-                                        </Typography>
+                              {/* Back Side */}
+                              <div className="absolute inset-0 p-2 rounded-[2.5rem] flex flex-col shadow-xl pot-flip-back" style={{ background: 'repeating-linear-gradient(45deg, #94a3b8, #94a3b8 10px, #64748b 10px, #64748b 20px, #475569 20px, #475569 30px)' }}>
+                                <div className="relative z-10 w-full h-full bg-white dark:bg-stone-900 rounded-[2rem] p-4 flex flex-col border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] text-left overflow-y-auto no-scrollbar">
+                                  <div className="flex flex-col h-full justify-between">
+                                    <div>
+                                      <Typography variant="body" className={`text-sm font-bold leading-snug mb-3 ${activeChild.gold_pot_broken ? 'text-red-800 dark:text-red-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                                        Oh no! Sometimes your pot cracks and loses coins. Fix it quick!
+                                      </Typography>
 
-                                        {/* Status Info */}
-                                        <div className={`grid grid-cols-2 gap-2 bg-stone-50 dark:bg-stone-950 rounded-xl p-2 mb-2 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200 dark:border-stone-700'}`}>
-                                          <div className="text-center">
-                                            <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                            <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                              {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
-                                            </div>
-                                          </div>
-                                          <div className="text-center border-l border-stone-200 dark:border-stone-700">
-                                            <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                            <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                              {activeChild.gold_pot_total_leaked || 0} Coins
-                                            </div>
+                                      {/* Status Info */}
+                                      <div className={`grid grid-cols-2 gap-2 bg-stone-50 dark:bg-stone-950 rounded-xl p-2 mb-2 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200 dark:border-stone-700'}`}>
+                                        <div className="text-center">
+                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
+                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
+                                            {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
                                           </div>
                                         </div>
-
-                                        {activeChild.gold_pot_broken && (
-                                          <Typography variant="body" className="text-xs text-red-700 dark:text-red-400 mb-2 leading-tight font-bold">
-                                            Your pot is broken! Fix it now or you will lose a coin every day.
-                                          </Typography>
-                                        )}
+                                        <div className="text-center border-l border-stone-200 dark:border-stone-700">
+                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
+                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
+                                            {activeChild.gold_pot_total_leaked || 0} Coins
+                                          </div>
+                                        </div>
                                       </div>
 
-                                      <div className="flex flex-col gap-1.5 mt-auto">
-                                        {activeChild.gold_pot_broken && (
-                                          <Button
-                                            variant="danger"
-                                            size="sm"
-                                            fullWidth
-                                            disabled={(activeChild.points || 0) < (parentProfile?.gold_pot_maintenance_cost ?? 2)}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const cost = parentProfile?.gold_pot_maintenance_cost ?? 2;
-                                              if ((activeChild.points || 0) >= cost) {
-                                                playSound.success();
-                                                onUpdateChildStats(activeChild.id, {
-                                                  points: activeChild.points - cost,
-                                                  gold_pot_broken: false,
-                                                  gold_pot_last_fix_date: new Date().toISOString().split('T')[0]
-                                                });
-                                              } else {
-                                                playSound.pinError();
-                                              }
-                                            }}
-                                            leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
-                                            className="text-xs py-2 rounded-xl"
-                                          >
-                                            FIX (-{parentProfile?.gold_pot_maintenance_cost ?? 2} COINS)
-                                          </Button>
-                                        )}
-                                        <Button 
-                                          variant="none"
-                                          size="none"
-                                          onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
-                                          className={`flex items-center justify-center gap-1 w-full py-2 rounded-xl font-bold text-sm transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'}`}
+                                      {activeChild.gold_pot_broken && (
+                                        <Typography variant="body" className="text-xs text-red-700 dark:text-red-400 mb-2 leading-tight font-bold">
+                                          Your pot is broken! Fix it now or you will lose a coin every day.
+                                        </Typography>
+                                      )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 mt-auto">
+                                      {activeChild.gold_pot_broken && (
+                                        <Button
+                                          variant="danger"
+                                          size="sm"
+                                          fullWidth
+                                          disabled={(activeChild.points || 0) < (parentProfile?.gold_pot_maintenance_cost ?? 2)}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const cost = parentProfile?.gold_pot_maintenance_cost ?? 2;
+                                            if ((activeChild.points || 0) >= cost) {
+                                              playSound.success();
+                                              onUpdateChildStats(activeChild.id, {
+                                                points: activeChild.points - cost,
+                                                gold_pot_broken: false,
+                                                gold_pot_last_fix_date: new Date().toISOString().split('T')[0]
+                                              });
+                                            } else {
+                                              playSound.pinError();
+                                            }
+                                          }}
+                                          leftIcon={<FaWandMagicSparkles className="w-3 h-3" />}
+                                          className="text-xs py-2 rounded-xl"
                                         >
-                                          <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                          FIX (-{parentProfile?.gold_pot_maintenance_cost ?? 2} COINS)
                                         </Button>
-                                      </div>
+                                      )}
+                                      <Button
+                                        variant="none"
+                                        size="none"
+                                        onClick={(e) => { e.stopPropagation(); setShowGoldPotMaintenanceVideo(true); }}
+                                        className={`flex items-center justify-center gap-1 w-full py-2 rounded-xl font-bold text-sm transition-colors ${activeChild.gold_pot_broken ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'}`}
+                                      >
+                                        <Play className="w-3 h-3" fill="currentColor" /> Play Video
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Gold Pot Maintenance Locked Preview */}
-                          {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
-                            <div 
-                              className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
-                              style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
-                            >
-                              <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
+                        {/* Gold Pot Maintenance Locked Preview */}
+                        {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
+                          <div
+                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
+                          >
+                            <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
                               <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
                                 <Lock className="w-4 h-4" />
                                 <Typography variant="label"><FaWrench className="inline-block mr-2 text-amber-500" /> Maintenance — Unlock at Level {parentProfile?.gold_pot_maintenance_unlock_level ?? 8}!</Typography>
@@ -2877,40 +2881,40 @@ export default function ChildDashboard({
                                   return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
                                 })()}
                               </span>
-                              </div>
                             </div>
-                          )}
-
-                        </div>
-                        </motion.div>
+                          </div>
                         )}
-                    </AnimatePresence>
-                  </main>
 
-              </motion.div>
-            )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </main>
 
-          </AnimatePresence>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
 
 
 
-    </div>
+      </div>
 
-        {/* Mobile Sticky Bottom Nav for Child Dashboard */}
-        {selectedChildId && (
-          <BottomTabBar
-            tabs={[
-              { id: 'home', label: 'Home', icon: Home },
-              { id: 'companion', label: 'Pets', icon: FaPaw },
-              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-              { id: 'rewards', label: 'Rewards', icon: Gift },
-              { id: 'pots', label: 'Pots', icon: FaJar }
-            ]}
-            activeTab={activeChildTab}
-            onTabChange={(id) => { playSound.click(); setActiveChildTab(id as any); }}
-            layoutId="child-nav-pill"
-          />
-        )}
+      {/* Mobile Sticky Bottom Nav for Child Dashboard */}
+      {selectedChildId && (
+        <BottomTabBar
+          tabs={[
+            { id: 'home', label: 'Home', icon: Home },
+            { id: 'companion', label: 'Pets', icon: FaPaw },
+            { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+            { id: 'rewards', label: 'Rewards', icon: Gift },
+            { id: 'pots', label: 'Pots', icon: FaJar }
+          ]}
+          activeTab={activeChildTab}
+          onTabChange={(id) => { playSound.click(); setActiveChildTab(id as any); }}
+          layoutId="child-nav-pill"
+        />
+      )}
 
       {/* Badges Modal */}
       <AnimatePresence>
@@ -2924,6 +2928,6 @@ export default function ChildDashboard({
         )}
       </AnimatePresence>
 
-      </div>
-    );
+    </div>
+  );
 }

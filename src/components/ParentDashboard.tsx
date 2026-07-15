@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, HelpCircle, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -41,6 +41,7 @@ import { getSupabaseClient } from '../utils/supabase';
 import { generateShortCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
+import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
@@ -148,7 +149,7 @@ export default function ParentDashboard({
   initialTab = 'home',
   isLoading = false
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -832,6 +833,14 @@ export default function ParentDashboard({
                   </Button>
                 </Tooltip>
               )}
+              <Tooltip content="Guide" position="bottom" align="right">
+                <Button variant="none" size="none"
+                  onClick={() => { playSound.click(); setActiveTab('help'); }}
+                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                >
+                  <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </Tooltip>
               <Tooltip content="Settings" position="bottom" align="right">
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('settings'); }}
@@ -867,7 +876,8 @@ export default function ParentDashboard({
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'targets', label: 'Targets', icon: Target },
-              { id: 'settings', label: 'Settings', icon: Settings }
+              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'help', label: 'Guide', icon: HelpCircle }
             ].map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -2179,6 +2189,17 @@ export default function ParentDashboard({
                   parentProfile={parentProfile}
                   onUpdateParentProfile={onUpdateParentProfile}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'help' && (
+              <motion.div
+                key="help"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <HelpTab />
               </motion.div>
             )}
 
