@@ -180,17 +180,23 @@ export default function App() {
 
   // Helper fallback to load local storage state or blank state
   const loadLocalStorageFallback = () => {
-    const keyChildren = parentEmail ? `RCH_CHILDREN_${parentEmail}` : 'RCH_CHILDREN';
-    const keyTasks = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
-    const keyCompletions = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
-    const keyRewards = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
-    const keyRedemptions = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
-    const keyGiftingRequests = parentEmail ? `RCH_GIFTING_${parentEmail}` : 'RCH_GIFTING';
-
+    let familyIdToUse = parentProfile?.family_id || parentEmail;
+    
     const savedProfile = localStorage.getItem('RCH_PARENT_PROFILE');
     if (savedProfile) {
-      setParentProfile(JSON.parse(savedProfile));
+      const parsed = JSON.parse(savedProfile);
+      setParentProfile(parsed);
+      if (parsed.family_id) {
+        familyIdToUse = parsed.family_id;
+      }
     }
+
+    const keyChildren = familyIdToUse ? `RCH_CHILDREN_${familyIdToUse}` : 'RCH_CHILDREN';
+    const keyTasks = familyIdToUse ? `RCH_TASKS_${familyIdToUse}` : 'RCH_TASKS';
+    const keyCompletions = familyIdToUse ? `RCH_COMPLETIONS_${familyIdToUse}` : 'RCH_COMPLETIONS';
+    const keyRewards = familyIdToUse ? `RCH_REWARDS_${familyIdToUse}` : 'RCH_REWARDS';
+    const keyRedemptions = familyIdToUse ? `RCH_REDEMPTIONS_${familyIdToUse}` : 'RCH_REDEMPTIONS';
+    const keyGiftingRequests = familyIdToUse ? `RCH_GIFTING_${familyIdToUse}` : 'RCH_GIFTING';
 
     const savedChildren = localStorage.getItem(keyChildren);
     const savedTasks = localStorage.getItem(keyTasks);
@@ -618,37 +624,37 @@ export default function App() {
   // Sync state helpers to update local storage
   const syncChildren = (newList: Child[]) => {
     setChildren(newList);
-    const key = parentEmail ? `RCH_CHILDREN_${parentEmail}` : 'RCH_CHILDREN';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_CHILDREN_${parentProfile?.family_id || parentEmail}` : 'RCH_CHILDREN';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
   const syncTasks = (newList: Task[]) => {
     setTasks(newList);
-    const key = parentEmail ? `RCH_TASKS_${parentEmail}` : 'RCH_TASKS';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_TASKS_${parentProfile?.family_id || parentEmail}` : 'RCH_TASKS';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
   const syncCompletions = (newList: TaskCompletion[]) => {
     setCompletions(newList);
-    const key = parentEmail ? `RCH_COMPLETIONS_${parentEmail}` : 'RCH_COMPLETIONS';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_COMPLETIONS_${parentProfile?.family_id || parentEmail}` : 'RCH_COMPLETIONS';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
   const syncRewards = (newList: Reward[]) => {
     setRewards(newList);
-    const key = parentEmail ? `RCH_REWARDS_${parentEmail}` : 'RCH_REWARDS';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_REWARDS_${parentProfile?.family_id || parentEmail}` : 'RCH_REWARDS';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
   const syncRedemptions = (newList: RewardRedemption[]) => {
     setRedemptions(newList);
-    const key = parentEmail ? `RCH_REDEMPTIONS_${parentEmail}` : 'RCH_REDEMPTIONS';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_REDEMPTIONS_${parentProfile?.family_id || parentEmail}` : 'RCH_REDEMPTIONS';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
   const syncGiftingRequests = (newList: GiftingRequest[]) => {
     setGiftingRequests(newList);
-    const key = parentEmail ? `RCH_GIFTING_${parentEmail}` : 'RCH_GIFTING';
+    const key = (parentProfile?.family_id || parentEmail) ? `RCH_GIFTING_${parentProfile?.family_id || parentEmail}` : 'RCH_GIFTING';
     localStorage.setItem(key, JSON.stringify(newList));
   };
 
