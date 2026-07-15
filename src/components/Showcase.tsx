@@ -79,14 +79,13 @@ export default function Showcase() {
 
             {/* Giant Levitating Pedestal */}
             <div className="my-6 sm:my-10 relative flex items-center justify-center">
-              <div className="absolute h-40 w-40 sm:h-64 sm:w-64 rounded-full bg-gradient-to-tr from-cyan-400/10 to-purple-500/10 animate-spin duration-[15s]" />
               
               <motion.div
                 animate={{ scale: [1, 1.05, 1], y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center shadow-2xl border-4 border-stone-900 relative z-10 transition-colors duration-500 overflow-hidden`}
+                className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 transition-colors duration-500`}
               >
-                <span className="text-6xl sm:text-[9rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)]">
+                <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] absolute">
                   {mockPet.emoji}
                 </span>
               </motion.div>
