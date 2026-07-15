@@ -274,6 +274,13 @@ export default function App() {
 
           // Fetch parent profile first
           const { data: sessionData } = await supabase.auth.getSession();
+          
+          if (!sessionData?.session?.user) {
+            console.warn('No active Supabase session found during fetch. Falling back to local storage.');
+            loadLocalStorageFallback();
+            return;
+          }
+
           if (sessionData?.session?.user) {
             const { data: profile } = await supabase
               .from('parent_profiles')
