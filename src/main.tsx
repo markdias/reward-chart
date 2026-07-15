@@ -4,6 +4,7 @@ import App from './App.tsx';
 import './index.css';
 import { Analytics } from '@vercel/analytics/react';
 import { ThemeProvider } from './contexts/ThemeContext';
+import '@google/model-viewer';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -44,15 +44,7 @@ const RECURRENCE_LABEL: Record<string, string> = {
 };
 
 const getPetStripeBackground = (characterId: string) => {
-  switch (characterId) {
-    case 'unicorn': return 'repeating-linear-gradient(45deg, #a855f7, #a855f7 15px, #f472b6 15px, #f472b6 30px, #e879f9 30px, #e879f9 45px)';
-    case 'robot': return 'repeating-linear-gradient(-45deg, #0ea5e9, #0ea5e9 15px, #3b82f6 15px, #3b82f6 30px, #8b5cf6 30px, #8b5cf6 45px)';
-    case 'dino': return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #84cc16 15px, #84cc16 30px, #14b8a6 30px, #14b8a6 45px)';
-    case 'dragon': return 'repeating-linear-gradient(-45deg, #ef4444, #ef4444 15px, #f97316 15px, #f97316 30px, #eab308 30px, #eab308 45px)';
-    case 'cat': return 'repeating-linear-gradient(45deg, #6366f1, #6366f1 15px, #8b5cf6 15px, #8b5cf6 30px, #d946ef 30px, #d946ef 45px)';
-    case 'bunny': return 'repeating-linear-gradient(-45deg, #d946ef, #d946ef 15px, #8b5cf6 15px, #8b5cf6 30px, #ec4899 30px, #ec4899 45px)';
-    default: return 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 15px, #a855f7 15px, #a855f7 30px, #38bdf8 30px, #38bdf8 45px)';
-  }
+  return 'repeating-linear-gradient(45deg, #10b981, #10b981 15px, #059669 15px, #059669 30px, #047857 30px, #047857 45px)';
 };
 
 interface ChildDashboardProps {
@@ -194,7 +186,7 @@ export default function ChildDashboard({
     fromStage: string;
     toStage: string;
     emoji: string;
-    image_url?: string;
+    model_url?: string;
     fromStageNumber?: number;
     fromImage?: string;
   } | null>(null);
@@ -405,7 +397,7 @@ export default function ChildDashboard({
   }
 
   const activeChildStage = activeChild ? getCharacterStage(activeChild.character_id, activeChild.level, parentProfile) : null;
-  const activeChildPack = activeChild ? CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) : null;
+  const activeChildPack = activeChild ? (CHARACTER_PACKS.find(cp => cp.id === activeChild.character_id) || CHARACTER_PACKS[0]) : null;
 
   const pendingRedemptionsCost = activeChild ? redemptions
     .filter(r => r.child_id === activeChild.id && r.status === 'requested')
@@ -471,9 +463,9 @@ export default function ChildDashboard({
       fromStage: activeChildStage.name,
       toStage: nextStage.name,
       emoji: nextStage.emoji,
-      image_url: nextStage.image_url,
-      fromStageNumber: activeChildStage.stage_number,
-      fromImage: activeChildStage.image_url
+      model_url: nextStage.model_url,
+      toImage: nextStage.model_url,
+      fromImage: activeChildStage.model_url
     });
   };
 
@@ -829,10 +821,10 @@ export default function ChildDashboard({
                     initial={isHatching ? { scale: 0.3, opacity: 0, y: 30 } : { scale: 1, opacity: 1 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     transition={isHatching ? { type: 'spring', damping: 10, stiffness: 150, duration: 0.8 } : {}}
-                    className={`relative h-44 w-44 rounded-full ${evolvingStage.image_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
+                    className={`relative h-44 w-44 rounded-full ${evolvingStage.model_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
-                    {evolvingStage.image_url ? (
-                      <img src={evolvingStage.image_url} alt={evolvingStage.toStage} className="w-full h-full object-cover" />
+                    {evolvingStage.model_url ? (
+                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover" />
                     ) : (
                       <span>{evolvingStage.emoji}</span>
                     )}
@@ -1586,10 +1578,10 @@ export default function ChildDashboard({
                         <motion.div
                           animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                           transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                          className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.image_url ? 'bg-white dark:bg-stone-900' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
+                          className={`h-32 w-32 sm:h-56 sm:w-56 rounded-full ${activeChildStage.model_url ? 'bg-white dark:bg-stone-900' : `bg-gradient-to-br ${activeChildStage.color_theme}`} flex items-center justify-center shadow-2xl border-4 border-stone-300 relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 overflow-hidden`}
                         >
-                          {activeChildStage.image_url ? (
-                            <img src={activeChildStage.image_url} alt={activeChildStage.name} className="w-full h-full object-cover animate-float outline outline-1 -outline-offset-1 outline-black/10" />
+                          {activeChildStage.model_url ? (
+                            <model-viewer src={activeChildStage.model_url} alt={activeChildStage.name} auto-rotate camera-controls class="w-full h-full animate-float outline outline-1 -outline-offset-1 outline-black/10" />
                           ) : (
                             <span className="text-6xl sm:text-[9rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]">
                               {activeChildStage.emoji}

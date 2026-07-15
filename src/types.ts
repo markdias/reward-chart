@@ -186,7 +186,7 @@ export interface CharacterEvolutionStage {
   emoji: string;
   color_theme: string;
   animation_class: string;
-  image_url?: string;
+  model_url?: string;
 }
 
 export interface CharacterPack {

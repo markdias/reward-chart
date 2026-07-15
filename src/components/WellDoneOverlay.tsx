@@ -104,7 +104,7 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
   if (!show) return null;
 
   const theme = getThemeForCompanion(companionId);
-  const companionImage = getCharacterStage(companionId, 99).image_url; // Default to final stage or generic stage for celebration
+  const companionImage = getCharacterStage(companionId, 99).model_url; // Default to final stage or generic stage for celebration
 
   const textStyle = (anim: string, delay: string): React.CSSProperties => ({
     display: 'block',
@@ -147,7 +147,7 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
             className="filter drop-shadow-2xl"
             style={{ animation: 'wd-kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.05s forwards, wd-kid-float 3s ease-in-out infinite 0.85s' }}
           >
-            <img src={companionImage} alt="Companion" className="w-[clamp(12rem,40vw,24rem)] h-[clamp(12rem,40vw,24rem)] object-contain" />
+            <model-viewer src={companionImage} alt="Companion" auto-rotate camera-controls class="w-[clamp(12rem,40vw,24rem)] h-[clamp(12rem,40vw,24rem)]" />
           </div>
 
           <div className="flex flex-col items-center mt-2">

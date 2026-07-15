@@ -1157,8 +1157,8 @@ export default function ParentDashboard({
                                 </div>
                                 <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
                                 <div className="flex-1 flex items-center justify-center relative z-10">
-                                  {stage.image_url ? (
-                                    <img src={stage.image_url} alt={stage.name} className="w-14 h-14 object-contain group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                  {stage.model_url ? (
+                                    <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
                                   ) : (
                                     <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
                                   )}
@@ -2246,7 +2246,7 @@ export default function ParentDashboard({
                               newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
                             }`}
                           >
-                            <img src={getCharacterStage(char.id, 99).image_url} alt={char.name} className="w-12 h-12 object-contain mb-1" />
+                            <model-viewer src={getCharacterStage(char.id, 99).model_url} alt={char.name} auto-rotate camera-controls class="w-12 h-12 mb-1" />
                             <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
                               {char.name.split(' ')[0]}
                             </span>
