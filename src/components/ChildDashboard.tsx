@@ -1583,13 +1583,18 @@ export default function ChildDashboard({
                               transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
                               className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-4`}
                             >
-                              {activeChildStage.model_url ? (
-                                <model-viewer src={activeChildStage.model_url} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
-                              ) : (
-                                <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
-                                  {activeChildStage.emoji}
-                                </span>
-                              )}
+                              {(() => {
+                                const modelUrl = activeChildStage.model_url_fed && activeChildStage.model_url_not_fed
+                                  ? (activeChild.pet_fed_today ? activeChildStage.model_url_fed : activeChildStage.model_url_not_fed)
+                                  : activeChildStage.model_url;
+                                return modelUrl ? (
+                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
+                                ) : (
+                                  <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
+                                    {activeChildStage.emoji}
+                                  </span>
+                                );
+                              })()}
                             </motion.div>
                           </div>
                           {/* Level and evolution progression */}

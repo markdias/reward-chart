@@ -59,7 +59,9 @@ export const CHARACTER_PACKS: CharacterPack[] = [
         emoji: '🐉✨',
         color_theme: 'from-emerald-500 via-teal-400 to-cyan-500',
         animation_class: 'hover:scale-105 duration-500',
-        model_url: '/03_Emerald_Dragon_Teen.glb'
+        model_url: '/03_Emerald_Dragon_Teen_Fed.glb',
+        model_url_fed: '/03_Emerald_Dragon_Teen_Fed.glb',
+        model_url_not_fed: '/03_Emerald_Dragon_Teen_Not_Fed.glb'
       },
       {
         stage_number: 4,
@@ -70,7 +72,9 @@ export const CHARACTER_PACKS: CharacterPack[] = [
         emoji: '👑🐉🌌',
         color_theme: 'from-cyan-600 via-teal-600 to-emerald-500',
         animation_class: 'hover:skew-y-3 duration-500',
-        model_url: '/04_Emerald_Dragon_Adult.glb'
+        model_url: '/04_Emerald_Dragon_Adult_Fed.glb',
+        model_url_fed: '/04_Emerald_Dragon_Adult_Fed.glb',
+        model_url_not_fed: '/04_Emerald_Dragon_Adult_Not_Fed.glb'
       }
     ]
   }
