@@ -1081,15 +1081,7 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div 
-                  className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 xl:grid-cols-3 sm:gap-6 sm:overflow-visible sm:snap-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                  onScroll={(e) => {
-                    if (window.innerWidth >= 640) return; // Ignore on sm and up (grid mode)
-                    const container = e.currentTarget;
-                    const index = Math.round(container.scrollLeft / container.clientWidth);
-                    if (index !== activeCarouselIndex) setActiveCarouselIndex(index);
-                  }}
-                >
+                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 xl:grid-cols-3">
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
@@ -1141,7 +1133,7 @@ export default function ParentDashboard({
                     return (
                       <div
                         key={child.id}
-                        className="w-[calc(100vw-2rem)] sm:w-auto shrink-0 snap-center sm:shrink sm:snap-none mb-8 font-sans"
+                        className="w-full font-sans"
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
                         {/* Rainbow Trading Card */}
@@ -1298,14 +1290,6 @@ export default function ParentDashboard({
                   })}
                 </div>
                 
-                {/* Mobile Carousel Indicator */}
-                {!isLoading && sortedChildren.length > 1 && (
-                  <div className="flex justify-center items-center sm:hidden mt-2 mb-6">
-                    <div className="bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full text-xs font-bold text-stone-500 dark:text-stone-400">
-                      {activeCarouselIndex + 1} / {sortedChildren.length}
-                    </div>
-                  </div>
-                )}
 
               </motion.div>
             )}
