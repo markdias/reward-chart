@@ -1150,136 +1150,144 @@ export default function ParentDashboard({
                             className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-shadow duration-500 transform-gpu"
                             style={{ background: getPetStripeBackground(child.character_id) }}
                           >
-                            <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] p-5 border-[3px] border-stone-900/10 dark:border-white/10 shadow-inner flex flex-col h-full relative overflow-hidden">
+                            <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] border-[3px] border-stone-900/10 dark:border-white/10 shadow-inner flex flex-col h-full relative overflow-hidden">
                               {/* Foil Overlay */}
                               <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-white/10 opacity-50 mix-blend-overlay pointer-events-none z-20"></div>
 
-                              {/* Top Header */}
-                              <div className="flex justify-between items-center mb-4 z-10">
-                                <span className="text-sm font-black uppercase tracking-widest text-stone-800 dark:text-stone-100">{child.name}</span>
-                              </div>
+                              {/* Clickable Header — always visible, toggles body */}
+                              <button
+                                onClick={() => setExpandedChildId(expandedChildId === child.id ? null : child.id)}
+                                className="w-full text-left p-5 pb-4 z-10 focus:outline-none"
+                              >
+                                {/* Top Header */}
+                                <div className="flex justify-between items-center mb-4">
+                                  <span className="text-sm font-black uppercase tracking-widest text-stone-800 dark:text-stone-100">{child.name}</span>
+                                  <ChevronDown
+                                    className={`w-4 h-4 text-stone-400 transition-transform duration-300 ${expandedChildId === child.id ? 'rotate-180' : ''}`}
+                                  />
+                                </div>
 
-                              {/* Characters Banner (Balance & Companion) */}
-                              <div className="w-full h-24 bg-stone-100 dark:bg-stone-800 rounded-2xl border-2 border-stone-200 dark:border-stone-700 shadow-inner flex items-center relative overflow-hidden mb-5 z-10 group/art">
-                                <div className="absolute inset-0 bg-gradient-to-br from-stone-200/50 to-transparent dark:from-stone-700/50 mix-blend-overlay"></div>
-                                <div className="flex-1 flex items-center justify-center relative z-10">
-                                  <CoinBadge points={child.points} />
-                                </div>
-                                <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
-                                <div className="flex-1 flex items-center justify-center relative z-10">
-                                  {stage.model_url ? (
-                                    <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
-                                  ) : (
-                                    <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Middle Stats (Level Info) */}
-                              <div className="flex flex-col gap-3 mb-4 z-10 bg-stone-50 dark:bg-stone-950 p-4 rounded-2xl border border-stone-100 dark:border-stone-800">
-                                <div className="flex justify-between items-center px-1">
-                                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Level {child.level}</span>
-                                  <span className="text-amber-500 font-black text-[10px] uppercase tracking-widest">
-                                    {child.lifetime_points ? child.lifetime_points % (parentProfile?.points_to_level_up ?? 500) : 0}/{parentProfile?.points_to_level_up ?? 500} GOLD
-                                  </span>
-                                </div>
-                                {/* Level Progress */}
-                                <div className="w-full px-1">
-                                  <div className="h-2.5 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden shadow-inner">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-[0_0_5px_rgba(251,191,36,0.5)]"
-                                      style={{ width: `${(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}%` }}
-                                    ></div>
+                                {/* Characters Banner (Balance & Companion) */}
+                                <div className="w-full h-24 bg-stone-100 dark:bg-stone-800 rounded-2xl border-2 border-stone-200 dark:border-stone-700 shadow-inner flex items-center relative overflow-hidden group/art">
+                                  <div className="absolute inset-0 bg-gradient-to-br from-stone-200/50 to-transparent dark:from-stone-700/50 mix-blend-overlay"></div>
+                                  <div className="flex-1 flex items-center justify-center relative z-10">
+                                    <CoinBadge points={child.points} />
+                                  </div>
+                                  <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
+                                  <div className="flex-1 flex items-center justify-center relative z-10">
+                                    {stage.model_url ? (
+                                      <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                    ) : (
+                                      <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
+                                    )}
                                   </div>
                                 </div>
-                              </div>
+                              </button>
 
-                              {/* App Linked Status Row */}
-                              <div className="flex items-center justify-between mb-5 z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                <div className="flex flex-col shrink-0 pr-2">
-                                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
-                                </div>
-                                {child.child_share_token?.startsWith('LINKED_') ? (
-                                  <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
-                                ) : child.child_share_token ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
-                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={() => navigator.clipboard.writeText(child.child_share_token || '')}>Copy</Button>
-                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-600" onClick={() => {
-                                      playSound.click();
-                                      onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
-                                    }}>Link</Button>
-                                  </div>
-                                ) : (
-                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={() => {
-                                    const code = generateShortCode();
-                                    onEditChild(child.id, { child_share_token: code });
-                                  }}>Generate Code</Button>
-                                )}
-                              </div>
-
-                              {/* Action Buttons Toggle */}
-                              <div className="mt-auto pt-2">
-                                <button
-                                  onClick={() => setExpandedChildId(expandedChildId === child.id ? null : child.id)}
-                                  className="w-full flex justify-center items-center gap-2 p-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-2xl text-stone-600 dark:text-stone-300 font-bold transition-colors shadow-sm active:scale-95"
-                                >
-                                  <Settings className="w-5 h-5" />
-                                  Manage Profile
-                                </button>
-                              </div>
-
-                              {/* Action Buttons - Clean List Option */}
-                              <AnimatePresence>
+                              {/* Collapsible Body */}
+                              <AnimatePresence initial={false}>
                                 {expandedChildId === child.id && (
-                                  <motion.div 
-                                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                                    animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-                                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                                    className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10 overflow-hidden"
+                                  <motion.div
+                                    key="card-body"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                    className="overflow-hidden"
                                   >
-                                <button onClick={() => openEditChild(child)} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
-                                  <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
-                                    <Edit2 className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
-                                    Edit Profile
-                                  </span>
-                                  <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
-                                </button>
-                                {onUpdateChildStats && (
-                                  <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
-                                    <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
-                                      <Settings className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
-                                      Adjust Balance
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
-                                  </button>
-                                )}
-                                {onDeductCoins && (
-                                  <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
-                                    <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
-                                      <MinusCircle className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
-                                      Take Coins
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
-                                  </button>
-                                )}
-                                <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
-                                  <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
-                                    <ScrollText className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
-                                    View History
-                                  </span>
-                                  <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
-                                </button>
-                                {onDeleteChild && (
-                                  <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
-                                    <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
-                                      <Trash2 className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
-                                      Delete Profile
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
-                                  </button>
-                                )}
-                              </motion.div>
+                                    <div className="px-5 pb-5 flex flex-col gap-4">
+
+                                      {/* Middle Stats (Level Info) */}
+                                      <div className="flex flex-col gap-3 z-10 bg-stone-50 dark:bg-stone-950 p-4 rounded-2xl border border-stone-100 dark:border-stone-800">
+                                        <div className="flex justify-between items-center px-1">
+                                          <span className="text-[10px] font-bold text-stone-500 uppercase tracking-widest">Level {child.level}</span>
+                                          <span className="text-amber-500 font-black text-[10px] uppercase tracking-widest">
+                                            {child.lifetime_points ? child.lifetime_points % (parentProfile?.points_to_level_up ?? 500) : 0}/{parentProfile?.points_to_level_up ?? 500} GOLD
+                                          </span>
+                                        </div>
+                                        <div className="w-full px-1">
+                                          <div className="h-2.5 w-full bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden shadow-inner">
+                                            <div
+                                              className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-[0_0_5px_rgba(251,191,36,0.5)]"
+                                              style={{ width: `${(((child.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}%` }}
+                                            ></div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* App Linked Status Row */}
+                                      <div className="flex items-center justify-between z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                        <div className="flex flex-col shrink-0 pr-2">
+                                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
+                                        </div>
+                                        {child.child_share_token?.startsWith('LINKED_') ? (
+                                          <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
+                                        ) : child.child_share_token ? (
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(child.child_share_token || ''); }}>Copy</Button>
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-600" onClick={(e) => {
+                                              e.stopPropagation();
+                                              playSound.click();
+                                              onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
+                                            }}>Link</Button>
+                                          </div>
+                                        ) : (
+                                          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => {
+                                            e.stopPropagation();
+                                            const code = generateShortCode();
+                                            onEditChild(child.id, { child_share_token: code });
+                                          }}>Generate Code</Button>
+                                        )}
+                                      </div>
+
+                                      {/* Action Buttons List */}
+                                      <div className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10">
+                                        <button onClick={() => openEditChild(child)} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                          <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                            <Edit2 className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                            Edit Profile
+                                          </span>
+                                          <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                        </button>
+                                        {onUpdateChildStats && (
+                                          <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                            <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                              <Settings className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                              Adjust Balance
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                          </button>
+                                        )}
+                                        {onDeductCoins && (
+                                          <button onClick={() => { playSound.click(); setPenaltyModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
+                                            <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
+                                              <MinusCircle className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
+                                              Take Coins
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
+                                          </button>
+                                        )}
+                                        <button onClick={() => { playSound.click(); setShowHistoryForChild(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
+                                          <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
+                                            <ScrollText className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
+                                            View History
+                                          </span>
+                                          <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                        </button>
+                                        {onDeleteChild && (
+                                          <button onClick={() => { playSound.click(); setDeleteChildConfirmation({ childId: child.id, childName: child.name }); }} className="w-full flex items-center justify-between p-3 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-colors group">
+                                            <span className="text-sm font-bold text-rose-600 flex items-center gap-3">
+                                              <Trash2 className="w-4 h-4 text-rose-400 group-hover:text-rose-500" />
+                                              Delete Profile
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-rose-200 group-hover:text-rose-400" />
+                                          </button>
+                                        )}
+                                      </div>
+
+                                    </div>
+                                  </motion.div>
                                 )}
                               </AnimatePresence>
                             </div>
