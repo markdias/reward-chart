@@ -187,6 +187,8 @@ export interface CharacterEvolutionStage {
   color_theme: string;
   animation_class: string;
   model_url?: string;
+  model_url_fed?: string;
+  model_url_not_fed?: string;
 }
 
 export interface CharacterPack {
