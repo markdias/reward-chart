@@ -17,6 +17,7 @@ import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
 import { getSupabaseClient } from './utils/supabase';
+import posthog from 'posthog-js';
 import { executeOrQueue, processSyncQueue } from './utils/offlineSync';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 import { revokeInvalidLevelBadges } from './utils/badgeService';
@@ -111,6 +112,17 @@ export default function App() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
   const [giftingRequests, setGiftingRequests] = useState<GiftingRequest[]>([]);
+
+  // Identify user in PostHog whenever parentProfile is set
+  useEffect(() => {
+    if (parentProfile) {
+      posthog.identify(parentProfile.user_id, {
+        email: parentEmail ?? undefined,
+        name: parentProfile.name ?? undefined,
+        family_name: parentProfile.family_name ?? undefined,
+      });
+    }
+  }, [parentProfile]);
 
   // UI state overlays
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
@@ -901,6 +913,7 @@ export default function App() {
     if (supabase) {
       await supabase.auth.signOut();
     }
+    posthog.reset();
     setParentEmail(null);
     setParentProfile(null);
     setIsParentMode(false);
