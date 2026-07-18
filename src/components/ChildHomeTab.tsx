@@ -425,25 +425,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
           );
         };
-        const currentHour = new Date().getHours();
-        const isMorning = currentHour >= 0 && currentHour < 12;
-        const isAfternoon = currentHour >= 12 && currentHour < 17;
-        const isEvening = currentHour >= 17;
+        const hasMorningTasks = (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
 
-        let activePeriodLabel = "Morning";
-        let activePeriodKey: 'morningTaskIds' | 'afternoonTaskIds' | 'eveningTaskIds' = 'morningTaskIds';
-        if (isAfternoon) {
-          activePeriodLabel = "Afternoon";
-          activePeriodKey = 'afternoonTaskIds';
-        } else if (isEvening) {
-          activePeriodLabel = "Evening";
-          activePeriodKey = 'eveningTaskIds';
-        }
-
-        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
-        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-
-        if (!hasActivePeriodTasks) {
+        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) {
           return (
             <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
               <div className="w-12 h-12 rounded-full bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-500">
@@ -452,7 +438,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
               <div>
                 <Typography variant="h3" className="text-base font-bold text-stone-850 dark:text-stone-200">No Routines</Typography>
                 <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-xs">
-                  No routines setup for {activePeriodLabel.toLowerCase()}
+                  Ask your parents to set up a daily routine for you!
                 </Typography>
               </div>
             </div>
@@ -474,7 +460,9 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              {renderPeriod(activePeriodLabel, activePeriodTaskIds)}
+              {renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
             </div>
           </div>
         );
