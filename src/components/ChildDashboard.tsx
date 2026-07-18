@@ -174,9 +174,9 @@ export default function ChildDashboard({
       setActiveChildTab('tasks');
     } else if (nextStepIndex === 5 || nextStepIndex === 6) {
       setActiveChildTab('rewards');
-    } else if (nextStepIndex >= 7 && nextStepIndex <= 11) {
+    } else if (nextStepIndex >= 7 && nextStepIndex <= 12) {
       setActiveChildTab('pots');
-    } else if (nextStepIndex === 12) {
+    } else if (nextStepIndex === 13) {
       setActiveChildTab('home');
     }
 
@@ -245,6 +245,11 @@ export default function ChildDashboard({
     {
       target: '.joyride-target-pot-gifting',
       content: 'Your Gifting Pot! Send coins to your family as a nice gift!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-maintenance',
+      content: 'The Maintenance Pot! Keep your Gold Pot repaired so it doesn\'t leak coins.',
       placement: 'bottom',
     },
     {
@@ -3013,7 +3018,7 @@ export default function ChildDashboard({
 
                         {/* === GOLD POT MAINTENANCE SECTION === */}
                         {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
+                          <div className={`joyride-target-pot-maintenance relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -3117,7 +3122,7 @@ export default function ChildDashboard({
                         {/* Gold Pot Maintenance Locked Preview */}
                         {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-maintenance relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
