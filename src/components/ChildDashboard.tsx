@@ -2037,13 +2037,25 @@ export default function ChildDashboard({
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   className={`w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
                 >
-                  <div className="flex justify-between items-center sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 border-b border-stone-100 dark:border-stone-800">
-                    <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
-                      For Kids (Child Mode) Guide
-                    </Typography>
-                    <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
-                      <X className="w-5 h-5" />
-                    </Button>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 pt-2 border-b border-stone-100 dark:border-stone-800 gap-4">
+                    <div className="flex justify-between w-full sm:w-auto items-center">
+                      <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
+                        How to Use the App
+                      </Typography>
+                      <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors sm:hidden">
+                        <X className="w-5 h-5" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2 shrink-0">
+                        <PlayCircle className="w-4 h-4" />
+                        Replay Child Tutorial
+                      </Button>
+                      <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
+                        <X className="w-5 h-5" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-6 text-left pb-4">
@@ -2086,12 +2098,7 @@ export default function ChildDashboard({
                       </div>
                     </section>
 
-                    <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
-                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2">
-                        <PlayCircle className="w-4 h-4" />
-                        Replay Tutorial
-                      </Button>
-                    </div>
+
                   </div>
                 </motion.div>
               </motion.div>
