@@ -6,13 +6,15 @@ interface WalkthroughProps {
   run: boolean;
   onFinish: () => void;
   onStepChange?: (index: number) => void;
+  stepIndex?: number;
 }
 
 export const Walkthrough: React.FC<WalkthroughProps> = ({ 
   steps, 
   run, 
   onFinish,
-  onStepChange
+  onStepChange,
+  stepIndex
 }) => {
   const { Tour, state, on, controls } = useJoyride({
     continuous: true,
@@ -22,6 +24,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     showProgress: true,
     showSkipButton: true,
     steps,
+    stepIndex,
     styles: {
       options: {
         zIndex: 10000,

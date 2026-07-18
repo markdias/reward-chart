@@ -157,6 +157,7 @@ export default function ParentDashboard({
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
 
@@ -170,6 +171,8 @@ export default function ParentDashboard({
   useEffect(() => {
     if (parentProfile && !parentProfile.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
       setHasAutoStarted(true);
+      setTourStepIndex(0);
+      setActiveTab('home');
       setTimeout(() => setRunTour(true), 1000);
     }
   }, [isLoading, parentProfile, runTour, hasAutoStarted]);
@@ -207,6 +210,11 @@ export default function ParentDashboard({
     } else if (nextStepIndex === 12) {
       setActiveTab('home');
     }
+
+    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    setTimeout(() => {
+      setTourStepIndex(nextStepIndex);
+    }, 300);
   };
 
   const tourSteps: Step[] = [
@@ -837,6 +845,7 @@ export default function ParentDashboard({
       <Walkthrough 
         steps={tourSteps} 
         run={runTour} 
+        stepIndex={tourStepIndex}
         onFinish={handleTourFinish} 
         onStepChange={handleTourStepChange}
       />
@@ -2366,7 +2375,7 @@ export default function ParentDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <HelpTab onReplayTutorial={() => setRunTour(true)} />
+                <HelpTab onReplayTutorial={() => { setTourStepIndex(0); setActiveTab('home'); setRunTour(true); }} />
               </motion.div>
             )}
 

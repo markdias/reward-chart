@@ -121,6 +121,7 @@ export default function ChildDashboard({
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
 
@@ -141,6 +142,7 @@ export default function ChildDashboard({
       const activeChild = children.find(c => c.id === selectedChildId);
       if (activeChild && !activeChild.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
         setHasAutoStarted(true);
+        setTourStepIndex(0);
         setActiveChildTab('home');
         setTimeout(() => setRunTour(true), 1000);
       }
@@ -172,6 +174,11 @@ export default function ChildDashboard({
     } else if (nextStepIndex === 5) {
       setActiveChildTab('home');
     }
+
+    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    setTimeout(() => {
+      setTourStepIndex(nextStepIndex);
+    }, 300);
   };
 
   const tourSteps: Step[] = [
@@ -655,6 +662,7 @@ export default function ChildDashboard({
         <Walkthrough 
           steps={tourSteps} 
           run={runTour} 
+          stepIndex={tourStepIndex}
           onFinish={handleTourFinish}
           onStepChange={handleTourStepChange}
         />
@@ -2033,7 +2041,7 @@ export default function ChildDashboard({
                     </section>
 
                     <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
-                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setRunTour(true); }} className="flex items-center gap-2">
+                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2">
                         <PlayCircle className="w-4 h-4" />
                         Replay Tutorial
                       </Button>
