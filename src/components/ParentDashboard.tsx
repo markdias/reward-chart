@@ -100,7 +100,7 @@ interface ParentDashboardProps {
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onRequireAccount?: () => void;
-  onResetData?: (keepTemplates: boolean) => void;
+  onResetData?: (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, childId: string) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onLogout?: () => void;
@@ -2356,7 +2356,7 @@ export default function ParentDashboard({
                 exit={{ opacity: 0, y: -10 }}
               >
                 <SettingsTab
-                  
+                  children={children}
                   parentProfile={parentProfile}
                   linkedParents={linkedParents}
                   onResetData={onResetData}

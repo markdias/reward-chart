@@ -15,17 +15,20 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { useTheme } from '../contexts/ThemeContext';
 
+import { Child } from '../types';
+
 interface SettingsTabProps {
+  children?: Child[];
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
-  onResetData?: (keepTemplates: boolean) => void;
+  onResetData?: (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, childId: string) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
   onRequireAccount?: () => void;
 }
 
-export default function SettingsTab({ parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
+export default function SettingsTab({ children = [], parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
@@ -59,8 +62,15 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
   
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [keepTemplates, setKeepTemplates] = useState(true);
+  const [keepAssignments, setKeepAssignments] = useState(true);
+  const [keepRoutines, setKeepRoutines] = useState(true);
+  const [resetChildId, setResetChildId] = useState('all');
+  
+  const [showSetupConfirm, setShowSetupConfirm] = useState(false);
+  const [setupConfirmText, setSetupConfirmText] = useState('');
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
@@ -517,10 +527,8 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
               description="Erase all data and restart the onboarding process."
               icon={RefreshCw} 
               onClick={() => {
-                if (confirm("Are you sure you want to run setup again? All current data will be erased and you will be logged out.")) {
-                  playSound.pinError();
-                  if (onRunSetup) onRunSetup();
-                }
+                setSetupConfirmText('');
+                setShowSetupConfirm(true);
               }} 
               danger
             />
@@ -533,10 +541,12 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
             />
             <SettingsActionRow 
               label="Delete Account" 
-              description="Permanently delete your account and all data."
+              description="Permanently delete your family account and all associated data."
               icon={Trash2} 
-              onClick={() => setShowDeleteConfirm(true)} 
-              isLast
+              onClick={() => {
+                setDeleteConfirmText('');
+                setShowDeleteConfirm(true);
+              }} 
               danger
             />
           </SettingsBlock>
@@ -551,38 +561,146 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
             <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900 dark:text-stone-50`}>
               Are you sure?
             </h3>
-            <p className={`text-center text-sm font-sans mb-6 ${c.textMuted}`}>
-              This will reset all children's progress to 0 and delete all history.
+            <p className={`text-center text-sm font-sans mb-4 ${c.textMuted}`}>
+              This will reset {resetChildId === 'all' ? "all children's" : "the selected child's"} progress (coins, levels, food, stats) to 0 and delete their history.
             </p>
-            <div className="flex items-center gap-2 mb-6 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
-              <Input 
-                type="checkbox" 
-                id="keep-templates"
-                checked={keepTemplates}
-                onChange={(e) => setKeepTemplates(e.target.checked)}
-              />
-              <label htmlFor="keep-templates" className={`text-sm font-semibold cursor-pointer select-none ${c.text}`}>
-                Keep Quest/Reward Templates
-              </label>
+            
+            <div className="space-y-3 mb-6">
+              {children.length > 0 && (
+                <div className="flex flex-col gap-1 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
+                  <label className={`text-xs font-bold uppercase ${c.textMuted}`}>Target</label>
+                  <Select value={resetChildId} onChange={(e) => setResetChildId(e.target.value)} className="w-full bg-white dark:bg-stone-900">
+                    <option value="all">All Children</option>
+                    {children.map(child => (
+                      <option key={child.id} value={child.id}>{child.name}</option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+
+              {resetChildId === 'all' && (
+                <div className="flex items-start gap-3 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
+                  <input 
+                    type="checkbox" 
+                    id="keep-templates"
+                    checked={keepTemplates}
+                    onChange={(e) => setKeepTemplates(e.target.checked)}
+                    className="w-5 h-5 text-indigo-600 rounded mt-0.5"
+                  />
+                  <div className="flex flex-col">
+                    <label htmlFor="keep-templates" className={`text-sm font-bold cursor-pointer select-none ${c.text}`}>
+                      Keep Templates
+                    </label>
+                    <span className="text-xs text-stone-500">Preserve saved quests & prizes</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
+                <input 
+                  type="checkbox" 
+                  id="keep-assignments"
+                  checked={keepAssignments}
+                  onChange={(e) => setKeepAssignments(e.target.checked)}
+                  className="w-5 h-5 text-indigo-600 rounded mt-0.5"
+                />
+                <div className="flex flex-col">
+                  <label htmlFor="keep-assignments" className={`text-sm font-bold cursor-pointer select-none ${c.text}`}>
+                    Keep Assignments
+                  </label>
+                  <span className="text-xs text-stone-500">Preserve all active quests/prizes</span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl">
+                <input 
+                  type="checkbox" 
+                  id="keep-routines"
+                  checked={keepRoutines}
+                  onChange={(e) => setKeepRoutines(e.target.checked)}
+                  className="w-5 h-5 text-indigo-600 rounded mt-0.5"
+                />
+                <div className="flex flex-col">
+                  <label htmlFor="keep-routines" className={`text-sm font-bold cursor-pointer select-none ${c.text}`}>
+                    Keep Routines
+                  </label>
+                  <span className="text-xs text-stone-500">Preserve saved daily/weekly schedules</span>
+                </div>
+              </div>
             </div>
+
             <div className="flex gap-3">
               <Button
                 variant="secondary"
-                className="flex-1"
+                className="flex-1 font-bold"
                 onClick={() => setShowResetConfirm(false)}
               >
                 CANCEL
               </Button>
               <Button
                 variant="danger"
-                className="flex-1"
+                className="flex-1 font-bold"
                 onClick={() => {
                   playSound.pinError();
-                  if (onResetData) onResetData(keepTemplates);
+                  if (onResetData) onResetData(keepTemplates, keepAssignments, keepRoutines, resetChildId);
                   setShowResetConfirm(false);
                 }}
               >
                 RESET DATA
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Setup Wizard Confirmation Modal */}
+      {showSetupConfirm && (
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className={`w-full max-w-sm rounded-3xl p-6 border shadow-2xl bg-white dark:bg-stone-900 border-rose-500`}>
+            <div className="flex justify-center mb-4">
+              <div className="p-4 bg-rose-500/20 text-rose-500 rounded-full animate-pulse">
+                <AlertTriangle className="w-10 h-10" />
+              </div>
+            </div>
+            <h3 className={`text-xl font-black text-center font-display uppercase tracking-wide mb-2 text-stone-900 dark:text-stone-50`}>
+              Delete Everything?
+            </h3>
+            <p className={`text-center text-sm font-sans mb-4 text-rose-600 font-bold`}>
+              This will completely delete all child profiles, progress, tasks, and rewards to let you start fresh. This cannot be undone!
+            </p>
+            
+            <div className="mb-6">
+              <label className={`block text-center text-sm font-bold mb-2 ${c.text}`}>
+                Type "RESET" to confirm:
+              </label>
+              <input
+                type="text"
+                value={setupConfirmText}
+                onChange={(e) => setSetupConfirmText(e.target.value)}
+                placeholder="RESET"
+                className="w-full text-center p-3 rounded-xl border-2 bg-stone-50 border-stone-200 dark:bg-stone-800 dark:border-stone-700 font-mono font-bold tracking-widest uppercase focus:border-rose-500 outline-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1 font-bold"
+                onClick={() => setShowSetupConfirm(false)}
+              >
+                CANCEL
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1 font-bold"
+                disabled={setupConfirmText.toLowerCase() !== 'reset'}
+                onClick={() => {
+                  playSound.pinError();
+                  if (onRunSetup) onRunSetup();
+                  setShowSetupConfirm(false);
+                }}
+              >
+                START FRESH
               </Button>
             </div>
           </div>
@@ -604,10 +722,25 @@ export default function SettingsTab({ parentProfile, linkedParents = [], onReset
             <p className={`text-center text-sm font-sans mb-6 text-rose-600`}>
               This is permanent. All your family data, children, and progress will be erased forever. You cannot undo this.
             </p>
+            
+            <div className="mb-6">
+              <label className={`block text-center text-sm font-bold mb-2 ${c.text}`}>
+                Type "DELETE" to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full text-center p-3 rounded-xl border-2 bg-stone-50 border-stone-200 dark:bg-stone-800 dark:border-stone-700 font-mono font-bold tracking-widest uppercase focus:border-red-500 outline-none"
+              />
+            </div>
+
             <div className="flex flex-col gap-3">
               <Button
                 variant="danger"
                 fullWidth
+                disabled={deleteConfirmText.toLowerCase() !== 'delete'}
                 onClick={() => {
                   playSound.pinError();
                   if (onDeleteAccount) onDeleteAccount();

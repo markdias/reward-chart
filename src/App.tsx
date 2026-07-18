@@ -935,65 +935,114 @@ export default function App() {
   };
 
 
-  const handleResetData = async (keepTemplates: boolean) => {
+  const handleResetData = async (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, targetChildId: string) => {
     const familyId = parentProfile?.family_id || parentEmail;
     if (!familyId) return;
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      if (keepTemplates) {
-        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
-        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
-      } else {
-        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId } });
-        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId } });
+      if (!keepTemplates && targetChildId === 'all') {
+        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': true } });
+        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': true } });
+      }
+
+      if (!keepAssignments) {
+        if (targetChildId === 'all') {
+          await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
+          await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
+        } else {
+          await executeOrQueue('tasks', 'delete', null, { eq: { 'child_id': targetChildId, 'is_template': false } });
+          await executeOrQueue('rewards', 'delete', null, { eq: { 'child_id': targetChildId, 'is_template': false } });
+        }
       }
       
-      const childIds = children.map(c => c.id);
+      const childrenToReset = targetChildId === 'all' ? children : children.filter(c => c.id === targetChildId);
+      const childIds = childrenToReset.map(c => c.id);
+      
       if (childIds.length > 0) {
         await executeOrQueue('completions', 'delete', null, { in: { column: 'child_id', values: childIds } });
         await executeOrQueue('child_badges', 'delete', null, { in: { column: 'child_id', values: childIds } });
+        await executeOrQueue('reward_redemptions', 'delete', null, { in: { column: 'child_id', values: childIds } });
+        await executeOrQueue('gifting_requests', 'delete', null, { in: { column: 'child_id', values: childIds } });
       }
-      await executeOrQueue('reward_redemptions', 'delete', null, { eq: { 'parent_id': familyId } });
-      await executeOrQueue('gifting_requests', 'delete', null, { eq: { 'family_id': familyId } });
 
-      const updatedChildren = children.map(c => ({
-        ...c,
-        points: 0,
-        level: 1,
-        streak_days: 0,
-        monthly_points: 0,
-        lifetime_points: 0,
-        pet_food: 0,
-        weekly_points: 0,
-        savings_pot: 0,
-        savings_unlocked: false,
-        savings_unlock_seen: false,
-        food_pot_unlocked: false,
-        food_pot_unlock_seen: false,
-        savings_goal_name: null,
-        savings_goal_amount: null,
-        savings_goal_reward_id: null,
-        pet_fed_today: false,
-        pet_unhappy: false,
-        last_fed_date: null,
-        last_saved_date: null
-      }));
+      const updatedChildren = children.map(c => {
+        if (targetChildId !== 'all' && c.id !== targetChildId) return c;
+        return {
+          ...c,
+          points: 0,
+          level: 1,
+          streak_days: 0,
+          monthly_points: 0,
+          lifetime_points: 0,
+          pet_food: 0,
+          weekly_points: 0,
+          savings_pot: 0,
+          savings_unlocked: false,
+          savings_unlock_seen: false,
+          food_pot_unlocked: false,
+          food_pot_unlock_seen: false,
+          savings_goal_name: null,
+          savings_goal_amount: null,
+          savings_goal_reward_id: null,
+          pet_fed_today: false,
+          pet_unhappy: false,
+          last_fed_date: null,
+          last_saved_date: null,
+          gifting_unlocked: false,
+          gifting_unlock_seen: false,
+          last_gifting_date: null,
+          gold_pot_broken: false,
+          gold_pot_break_count_this_week: 0,
+          gold_pot_break_week: undefined,
+          gold_pot_last_leak_date: null,
+          gold_pot_last_check_date: null,
+          gold_pot_last_fix_date: null,
+          gold_pot_total_leaked: 0,
+          gold_pot_intro_seen: false,
+          gold_pot_maintenance_unlock_seen: false,
+          pet_fed_total: 0,
+          pet_happy_streak: 0,
+          savings_deposits: 0,
+          savings_goals_met: 0,
+          gifts_made: 0,
+          gold_pot_fixes: 0,
+          gold_pot_unbroken_days: 0,
+          manual_deductions: 0,
+          ...(!keepRoutines ? { routines: [], active_routine_id: null } : {})
+        };
+      });
       syncChildren(updatedChildren);
       for (const child of updatedChildren) {
-        await executeOrQueue('children', 'update', child, { eq: { 'id': child.id } });
+        if (targetChildId === 'all' || child.id === targetChildId) {
+          await executeOrQueue('children', 'update', child, { eq: { 'id': child.id } });
+        }
       }
 
-      if (keepTemplates) {
-        syncTasks(tasks.filter(t => t.is_template));
-        syncRewards(rewards.filter(r => r.is_template));
-      } else {
-        syncTasks([]);
-        syncRewards([]);
+      let newTasks = [...tasks];
+      let newRewards = [...rewards];
+
+      if (!keepTemplates && targetChildId === 'all') {
+        newTasks = newTasks.filter(t => !t.is_template);
+        newRewards = newRewards.filter(r => r.is_template === false); // wait, is_template is optional boolean
       }
-      syncCompletions([]);
-      syncRedemptions([]);
-      syncGiftingRequests([]);
+      
+      if (!keepAssignments) {
+        if (targetChildId === 'all') {
+          newTasks = newTasks.filter(t => t.is_template);
+          newRewards = newRewards.filter(r => r.is_template);
+        } else {
+          newTasks = newTasks.filter(t => t.is_template || t.child_id !== targetChildId);
+          newRewards = newRewards.filter(r => r.is_template || r.child_id !== targetChildId);
+        }
+      }
+
+      syncTasks(newTasks);
+      syncRewards(newRewards);
+      
+      syncCompletions(targetChildId === 'all' ? [] : completions.filter(c => c.child_id !== targetChildId));
+      syncRedemptions(targetChildId === 'all' ? [] : redemptions.filter(r => r.child_id !== targetChildId));
+      syncGiftingRequests(targetChildId === 'all' ? [] : giftingRequests.filter(g => g.child_id !== targetChildId));
     }
   };
 
@@ -1006,7 +1055,17 @@ export default function App() {
   };
 
   const handleRunSetup = async () => {
-    await handleResetData(false);
+    await handleResetData(false, false, false, 'all');
+    
+    const familyId = parentProfile?.family_id || parentEmail;
+    if (familyId) {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await executeOrQueue('children', 'delete', null, { eq: { 'family_id': familyId } });
+        syncChildren([]);
+      }
+    }
+
     await handleLogout();
     setHasCompletedOnboarding(false);
     localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
