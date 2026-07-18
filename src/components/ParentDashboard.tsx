@@ -215,15 +215,18 @@ export default function ParentDashboard({
     if (over && active.id !== over.id) {
       const child = children.find(c => c.id === childId);
       if (!child) return;
-      const routines = [...(child.routines || [])];
-      const rIdx = routines.findIndex(r => r.id === routineId);
-      if (rIdx === -1) return;
-      
-      const periodTasks = routines[rIdx][periodKey] || [];
-      const oldIndex = periodTasks.indexOf(active.id as string);
-      const newIndex = periodTasks.indexOf(over.id as string);
-      
-      routines[rIdx][periodKey] = arrayMove(periodTasks, oldIndex, newIndex);
+      const routines = (child.routines || []).map(r => {
+        if (r.id === routineId) {
+          const periodTasks = r[periodKey] || [];
+          const oldIndex = periodTasks.indexOf(active.id as string);
+          const newIndex = periodTasks.indexOf(over.id as string);
+          return {
+            ...r,
+            [periodKey]: arrayMove(periodTasks, oldIndex, newIndex)
+          };
+        }
+        return { ...r };
+      });
       onEditChild(child.id, { routines });
     }
   };
@@ -1727,8 +1730,16 @@ export default function ParentDashboard({
                                                           id={taskId}
                                                           task={t}
                                                           onRemove={(id) => {
-                                                            const newRoutines = [...processedRoutines];
-                                                            newRoutines[rIdx][period.key] = (newRoutines[rIdx][period.key] || []).filter(x => x !== id);
+                                                            const newRoutines = processedRoutines.map((r, idx) => {
+                                                              if (idx === rIdx) {
+                                                                const pTasks = r[period.key] || [];
+                                                                return {
+                                                                  ...r,
+                                                                  [period.key]: pTasks.filter(x => x !== id)
+                                                                };
+                                                              }
+                                                              return { ...r };
+                                                            });
                                                             onEditChild(child.id, { routines: newRoutines });
                                                           }}
                                                         />
@@ -1748,14 +1759,19 @@ export default function ParentDashboard({
                                                   value=""
                                                   onChange={(e) => {
                                                     if (!e.target.value) return;
-                                                    const newRoutines = [...processedRoutines];
-                                                    if (!newRoutines[rIdx][period.key]) {
-                                                      newRoutines[rIdx][period.key] = [];
-                                                    }
-                                                    if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
-                                                      newRoutines[rIdx][period.key].push(e.target.value);
-                                                      onEditChild(child.id, { routines: newRoutines });
-                                                    }
+                                                    const newRoutines = processedRoutines.map((r, idx) => {
+                                                      if (idx === rIdx) {
+                                                        const pTasks = r[period.key] || [];
+                                                        if (!pTasks.includes(e.target.value)) {
+                                                          return {
+                                                            ...r,
+                                                            [period.key]: [...pTasks, e.target.value]
+                                                          };
+                                                        }
+                                                      }
+                                                      return { ...r };
+                                                    });
+                                                    onEditChild(child.id, { routines: newRoutines });
                                                   }}
                                                 >
                                                   <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
