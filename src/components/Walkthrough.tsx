@@ -20,9 +20,11 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
 }) => {
   // In react-joyride v3, disableScrolling is removed from the root config.
   // Instead, each step must explicitly have skipScroll: true.
+  // We also explicitly inject 'skip' into the buttons array so users can skip the tour.
   const stepsWithSkipScroll = steps.map(step => ({
     ...step,
-    skipScroll: true
+    skipScroll: true,
+    buttons: ['skip', 'back', 'primary', 'close'] as any
   }));
 
   const { Tour, state, on, controls } = useJoyride({
@@ -30,7 +32,6 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     hideCloseButton: true,
     disableOverlayClose: true,
     showProgress: true,
-    showSkipButton: true,
     steps: stepsWithSkipScroll,
     stepIndex,
     styles: {
