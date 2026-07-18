@@ -170,13 +170,13 @@ export default function ChildDashboard({
       setActiveChildTab('home');
     } else if (nextStepIndex === 1) {
       setActiveChildTab('companion');
-    } else if (nextStepIndex === 2) {
+    } else if (nextStepIndex === 2 || nextStepIndex === 3) {
       setActiveChildTab('tasks');
-    } else if (nextStepIndex === 3) {
+    } else if (nextStepIndex === 4 || nextStepIndex === 5) {
       setActiveChildTab('rewards');
-    } else if (nextStepIndex === 4) {
+    } else if (nextStepIndex === 6) {
       setActiveChildTab('pots');
-    } else if (nextStepIndex === 5) {
+    } else if (nextStepIndex === 7) {
       setActiveChildTab('home');
     }
 
@@ -189,34 +189,44 @@ export default function ChildDashboard({
   const tourSteps: Step[] = [
     {
       target: '.joyride-target-home',
-      content: 'Welcome to your Dashboard! This is your Home base. Here you can check your daily streak, total coins, and badges—tap them to see your activity history! You\'ll also find your daily routines here to keep you on track.',
+      content: 'Welcome! This is your Home base. Check your streak, coins, and badges here!',
       placement: 'bottom',
     },
     {
       target: '.joyride-target-companion',
-      content: 'Meet your Pet! Keep your buddy fed and happy by completing tasks. Earning coins lets you evolve them into cool new forms!',
+      content: 'Meet your Pet! Complete quests to keep it happy and earn coins to evolve it!',
       placement: 'bottom',
     },
     {
       target: '.joyride-target-tasks',
-      content: 'Your Quests! Check here for your daily tasks and routines. Complete them and tap to request approval from your parents for shiny coins!',
+      content: 'Your Quests! Tap here to see your daily chores.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-first-task',
+      content: 'Tap a quest to request approval and earn coins!',
       placement: 'bottom',
     },
     {
       target: '.joyride-target-rewards',
-      content: 'The Treasure Shop! Exchange your hard-earned coins for awesome rewards, like screen time or fun outings!',
+      content: 'The Treasure Shop! Exchange your coins for awesome prizes.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-first-reward',
+      content: 'Tap a prize to claim it when you have enough coins!',
       placement: 'bottom',
     },
     {
       target: '.joyride-target-pots',
-      content: 'Your Pots! You start with the Gold Pot for your daily spending. As you level up, you\'ll unlock the Savings, Food, and Gifting pots, along with fun new lessons about money!',
+      content: 'Your Pots! Check here to see your spending, saving, and giving pots!',
       placement: 'bottom',
     },
     {
       target: 'body',
       content: (
         <div className="flex flex-col gap-4">
-          <p className="font-bold">You\'re all set! Go complete quests, feed your pet, and have fun earning rewards!</p>
+          <p className="font-bold">You\'re all set! Go crush those quests!</p>
           <div className="flex items-center gap-2 mt-2">
             <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
               if (e.target.checked && selectedChildId) {
@@ -2102,7 +2112,7 @@ export default function ChildDashboard({
                           }
                           return true;
                         }).length === 0 ? (
-                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
+                          <div className={`joyride-target-first-task col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                             <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
                             <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
@@ -2116,7 +2126,7 @@ export default function ChildDashboard({
                               return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
                             }
                             return true;
-                          }).map((task) => {
+                          }).map((task, index) => {
                             // Filter completions by recurrence type
                             let compl = null;
                             if (task.recurrence === 'daily') {
@@ -2212,7 +2222,7 @@ export default function ChildDashboard({
                                 key={task.id}
                                 onClick={() => handleTaskCheck(task.id, task.title)}
                                 id={`claim-task-${task.id}`}
-                                className={`${baseCardClasses} task-card`}
+                                className={`${baseCardClasses} task-card ${index === 0 ? 'joyride-target-first-task' : ''}`}
                                 style={taskBgStyle}
                               >
                                 {cardContent}
@@ -2220,7 +2230,7 @@ export default function ChildDashboard({
                             ) : (
                               <div
                                 key={task.id}
-                                className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
+                                className={`${baseCardClasses} shadow-md overflow-hidden opacity-60 grayscale task-card-disabled ${index === 0 ? 'joyride-target-first-task' : ''}`}
                                 style={taskBgStyle}
                               >
                                 {cardContent}
@@ -2256,13 +2266,13 @@ export default function ChildDashboard({
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                         {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
+                          <div className={`joyride-target-first-reward col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                             <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
                             <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                           </div>
                         ) : (
-                          rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
+                          rewards.filter(r => r.child_id === activeChild.id).map((rew, index) => {
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
@@ -2340,13 +2350,13 @@ export default function ChildDashboard({
                                   : handleClaimReward(rew.id, rew.cost_points)
                                 }
                                 id={`claim-reward-${rew.id}`}
-                                className={`${baseCardClasses} reward-card`}
+                                className={`${baseCardClasses} reward-card ${index === 0 ? 'joyride-target-first-reward' : ''}`}
                                 style={rewardBgStyle}
                               >
                                 {cardContent}
                               </Button>
                             ) : (
-                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
+                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving ${index === 0 ? 'joyride-target-first-reward' : ''}` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled ${index === 0 ? 'joyride-target-first-reward' : ''}`} style={rewardBgStyle}>
                                 {cardContent}
                               </div>
                             );
