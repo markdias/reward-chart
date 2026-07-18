@@ -28,6 +28,7 @@ export interface ParentProfile {
   gold_pot_maintenance_unlock_level?: number;
   gold_pot_maintenance_cost?: number;
   dashboard_style?: string;
+  tour_seen?: boolean;
 }
 
 export interface Child {
@@ -48,6 +49,7 @@ export interface Child {
   last_monthly_bonus_awarded?: string; // e.g. "2026-06"
   weekly_points?: number;
   monthly_points?: number;
+  tour_seen?: boolean;
   last_active_week?: string;
   last_active_month?: string;
   weekly_reset_date?: string; // ISO date of next reset

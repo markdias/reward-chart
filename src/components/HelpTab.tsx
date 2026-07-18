@@ -1,11 +1,12 @@
 import React from 'react';
 import { Typography } from './ui/Typography';
-import { Users, BookOpen, Star, ShieldCheck, Gamepad2, Settings } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Users, BookOpen, Star, ShieldCheck, Gamepad2, Settings, PlayCircle } from 'lucide-react';
 
-export function HelpTab() {
+export function HelpTab({ onReplayTutorial }: { onReplayTutorial?: () => void }) {
   return (
     <div className="space-y-6 animate-fade-in-up w-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
           <Typography variant="h1" className={`text-xl sm:text-2xl font-black text-stone-800 dark:text-stone-100 mb-1 tracking-tight`}>
             How to Use the App
@@ -14,6 +15,12 @@ export function HelpTab() {
             A complete guide to the chore and reward ecosystem
           </Typography>
         </div>
+        {onReplayTutorial && (
+          <Button variant="secondary" onClick={onReplayTutorial} className="flex items-center gap-2 shrink-0">
+            <PlayCircle className="w-4 h-4" />
+            Replay Parent Tutorial
+          </Button>
+        )}
       </div>
 
       <div className={`p-6 sm:p-8 rounded-3xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 shadow-sm space-y-8`}>
@@ -59,50 +66,6 @@ export function HelpTab() {
             </div>
           </div>
         </section>
-
-        <hr className="border-stone-100 dark:border-stone-700" />
-
-        {/* Child Mode */}
-        <section>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-              <Gamepad2 className="w-5 h-5" />
-            </div>
-            <Typography variant="h3" className={`text-lg font-bold text-stone-800 dark:text-stone-100`}>For Kids (Child Mode)</Typography>
-          </div>
-          <Typography variant="body" className={`text-stone-600 dark:text-stone-400 text-sm leading-relaxed mb-4`}>
-            Child Mode is a gamified, safe space where kids can see their progress, interact with their virtual pet, and earn rewards.
-          </Typography>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-stone-50 dark:bg-stone-900 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
-              <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Daily Quests (Tasks)</h4>
-              <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                <li><strong>To-Do List:</strong> See daily tasks categorized by their Pots.</li>
-                <li><strong>Completing Tasks:</strong> Tapping a task marks it as "Pending Approval." Once approved, coins rain down!</li>
-              </ul>
-            </div>
-            
-            <div className="bg-stone-50 dark:bg-stone-900 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
-              <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Claiming Rewards</h4>
-              <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                <li><strong>The Shop:</strong> Browse available rewards set up by parents.</li>
-                <li><strong>Redeeming:</strong> "Buy" a reward to deduct coins and send a request to the parent's inbox.</li>
-              </ul>
-            </div>
-            
-            <div className="bg-stone-50 dark:bg-stone-900 rounded-2xl p-4 border border-stone-100 dark:border-stone-800 sm:col-span-2">
-              <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Pet Ecosystem & Leveling Up</h4>
-              <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                <li><strong>Virtual Pet:</strong> Every child gets a virtual companion (like the Emerald Dragon) on their dashboard.</li>
-                <li><strong>Feeding & Maintenance:</strong> Completing tasks keeps the pet fed and happy. If neglected, the pet gets hungry!</li>
-                <li><strong>Leveling Up:</strong> Earning gold coins fills up the XP bar. Reaching a new level triggers an exciting evolution sequence where their pet grows!</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-        
-        <hr className="border-stone-100 dark:border-stone-700" />
 
         {/* General */}
         <section>

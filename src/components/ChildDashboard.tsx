@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -28,6 +28,8 @@ import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BottomTabBar } from './ui/BottomTabBar';
+import { Walkthrough } from './Walkthrough';
+import { Step } from 'react-joyride';
 import { PullToRefresh } from './PullToRefresh';
 import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
@@ -115,6 +117,91 @@ export default function ChildDashboard({
   onRefresh
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
+  const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
+
+  // Walkthrough State
+  const [runTour, setRunTour] = useState(false);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  }, []);
+
+  useEffect(() => {
+    setHasAutoStarted(false);
+  }, [selectedChildId]);
+
+  useEffect(() => {
+    // Only run tour if a child is selected
+    if (selectedChildId) {
+      const activeChild = children.find(c => c.id === selectedChildId);
+      if (activeChild && !activeChild.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
+        setHasAutoStarted(true);
+        setTimeout(() => setRunTour(true), 1000);
+      }
+    }
+  }, [selectedChildId, isLoading, children, runTour, hasAutoStarted]);
+
+  const handleTourFinish = () => {
+    setRunTour(false);
+  };
+
+  // Called by Walkthrough when advancing to the NEXT step index
+  const handleTourStepChange = (nextStepIndex: number) => {
+    const tabForStep: Record<number, typeof activeChildTab> = {
+      1: 'tasks',
+      2: 'rewards',
+      3: 'companion',
+    };
+    const tab = tabForStep[nextStepIndex];
+    if (tab) {
+      setActiveChildTab(tab);
+    }
+  };
+
+  const tourSteps: Step[] = [
+    {
+      target: 'body',
+      content: 'Welcome to your Dashboard! Let\'s show you around so you know how to earn coins and level up.',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'These are your Daily Quests! Tap them when you\'re done. Once approved by your parent, coins will rain down!',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'This is the Rewards Shop — spend your hard-earned gold coins on awesome rewards!',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: 'This is your Pet! Keep it fed and happy by completing tasks. If you earn enough coins, your pet will evolve!',
+      placement: 'center',
+    },
+    {
+      target: 'body',
+      content: (
+        <div className="flex flex-col gap-4">
+          <p className="font-bold">You're ready to start playing!</p>
+          <div className="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+              if (e.target.checked && selectedChildId) {
+                onUpdateChildStats(selectedChildId, { tour_seen: true });
+              }
+            }} />
+            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+          </div>
+        </div>
+      ),
+      placement: 'center',
+    }
+  ];
 
 
   // Helper to offset dates by 4 hours for a "4 AM daily reset"
@@ -129,7 +216,6 @@ export default function ChildDashboard({
     }
   }, [lockedChildId]);
 
-  const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
   // Scroll to top when switching tabs
@@ -146,6 +232,7 @@ export default function ChildDashboard({
 
   // Well Done celebration overlay
   const [showWellDone, setShowWellDone] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [wellDoneTaskName, setWellDoneTaskName] = useState<string | null>(null);
 
   // Savings Pot UI State
@@ -546,7 +633,16 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" >
+    <div className={`min-h-screen flex flex-col font-sans relative overflow-x-hidden transition-colors duration-700 ${!selectedChildId ? 'bg-transparent' : 'bg-stone-100 dark:bg-stone-950 pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]'}`} id="child-dashboard-root" >
+      
+      {selectedChildId && (
+        <Walkthrough 
+          steps={tourSteps} 
+          run={runTour} 
+          onFinish={handleTourFinish}
+          onStepChange={handleTourStepChange}
+        />
+      )}
 
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
@@ -597,6 +693,18 @@ export default function ChildDashboard({
                       </Button>
                     </Tooltip>
                   )}
+
+                  {/* Help Button */}
+                  <Tooltip content="Help & Guide" position="bottom" align="right">
+                    <Button
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); setShowHelpModal(true); }}
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
 
                   {isChildAuth && onLogout ? (
                     <Tooltip content="Log Out" position="bottom">
@@ -1488,37 +1596,40 @@ export default function ChildDashboard({
             >
 
               {/* Left Sidebar (Desktop Only) */}
-              <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
-                <nav className="flex flex-col gap-2">
-                  {[
-                    { id: 'home', label: 'Home', icon: Home },
-                    { id: 'companion', label: 'Pets', icon: FaPaw },
-                    { id: 'rewards', label: 'Rewards', icon: Gift },
-                    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-                    { id: 'pots', label: 'Pots', icon: FaJar }
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isSelected = activeChildTab === tab.id;
-                    return (
-                      <Button
-                        variant="none"
-                        size="none"
-                        key={tab.id}
-                        onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
-                          ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
-                          : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
-                          }`}
-                      >
-                        <span className="flex items-center gap-3">
-                          <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
-                          {tab.label}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </nav>
-              </aside>
+              {isDesktop && (
+                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                  <nav className="flex flex-col gap-2">
+                    {[
+                      { id: 'home', label: 'Home', icon: Home },
+                      { id: 'companion', label: 'Pets', icon: FaPaw },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
+                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'pots', label: 'Pots', icon: FaJar }
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = activeChildTab === tab.id;
+                      return (
+                        <Button
+                          variant="none"
+                          size="none"
+                          key={tab.id}
+                          id={`tour-child-desktop-tab-${tab.id}`}
+                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                          className={`joyride-target-${tab.id} w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                            ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                            : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
+                            }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
+                            {tab.label}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </nav>
+                </aside>
+              )}
 
               <main className="lg:col-span-9 space-y-6">
                 {/* Active Screen Frame */}
@@ -1841,6 +1952,81 @@ export default function ChildDashboard({
                       })()}
                     </motion.div>
                   )}
+
+          <AnimatePresence>
+            {showHelpModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  className={`w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                >
+                  <div className="flex justify-between items-center sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 border-b border-stone-100 dark:border-stone-800">
+                    <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
+                      For Kids (Child Mode) Guide
+                    </Typography>
+                    <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-6 text-left pb-4">
+                    <section>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                          <Gamepad2 className="w-5 h-5" />
+                        </div>
+                        <Typography variant="h3" className="text-lg font-bold text-stone-800 dark:text-stone-100">Welcome to your Dashboard</Typography>
+                      </div>
+                      <Typography variant="body" className="text-stone-600 dark:text-stone-400 text-sm leading-relaxed mb-4">
+                        This is your space to see your progress, interact with your virtual pet, and earn rewards!
+                      </Typography>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Daily Quests (Tasks)</h4>
+                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                            <li><strong>To-Do List:</strong> See daily tasks categorized by their Pots.</li>
+                            <li><strong>Completing Tasks:</strong> Tapping a task marks it as "Pending Approval." Once approved, coins rain down!</li>
+                          </ul>
+                        </div>
+                        
+                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Claiming Rewards</h4>
+                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                            <li><strong>The Shop:</strong> Browse available rewards.</li>
+                            <li><strong>Redeeming:</strong> "Buy" a reward to deduct coins and send a request to your parent's inbox.</li>
+                          </ul>
+                        </div>
+                        
+                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800 sm:col-span-2">
+                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Pet Ecosystem & Leveling Up</h4>
+                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                            <li><strong>Virtual Pet:</strong> You have a virtual companion (like the Emerald Dragon) to take care of.</li>
+                            <li><strong>Feeding & Maintenance:</strong> Completing tasks keeps your pet fed and happy. If neglected, the pet gets hungry!</li>
+                            <li><strong>Leveling Up:</strong> Earning gold coins fills up the XP bar. Reaching a new level triggers an exciting evolution sequence where your pet grows!</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
+                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setRunTour(true); }} className="flex items-center gap-2">
+                        <PlayCircle className="w-4 h-4" />
+                        Replay Tutorial
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
                   {/* Home Tab */}
                   {activeChildTab === 'home' && activeChild && (
@@ -2906,7 +3092,7 @@ export default function ChildDashboard({
       </div>
 
       {/* Mobile Sticky Bottom Nav for Child Dashboard */}
-      {selectedChildId && (
+      {selectedChildId && !isDesktop && (
         <BottomTabBar
           tabs={[
             { id: 'home', label: 'Home', icon: Home },
