@@ -161,10 +161,6 @@ export default function ChildDashboard({
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    // Always snap back to default layout position (top: 0) INSTANTLY on step change
-    // If this is smooth, Joyride measures target position mid-scroll and places the tooltip incorrectly
-    window.scrollTo({ top: 0, behavior: 'instant' });
-
     if (nextStepIndex === 0) {
       setActiveChildTab('home');
     } else if (nextStepIndex === 1) {

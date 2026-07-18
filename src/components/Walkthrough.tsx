@@ -54,6 +54,12 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
 
   // Listen for step changes and tour completion
   useEffect(() => {
+    // Scroll instantly to top before Joyride calculates the position for the next step!
+    // This prevents Joyride from measuring the target position while the page is still scrolled.
+    const unsubBefore = on(EVENTS.STEP_BEFORE, () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+
     const unsubAfter = on(EVENTS.STEP_AFTER, (data: any) => {
       if (onStepChange) {
         // Compute the next step index depending on whether we went back or forward
@@ -63,6 +69,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     });
 
     return () => {
+      unsubBefore();
       unsubAfter();
     };
   }, [on, onStepChange]);
