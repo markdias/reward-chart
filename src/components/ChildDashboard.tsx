@@ -140,7 +140,8 @@ export default function ChildDashboard({
     // Only run tour if a child is selected
     if (selectedChildId) {
       const activeChild = children.find(c => c.id === selectedChildId);
-      if (activeChild && !activeChild.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
+      const localSeen = localStorage.getItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`) === 'true';
+      if (activeChild && !activeChild.tour_seen && !localSeen && !isLoading && !runTour && !hasAutoStarted) {
         setHasAutoStarted(true);
         setTourStepIndex(0);
         setActiveChildTab('home');
@@ -152,6 +153,7 @@ export default function ChildDashboard({
   const handleTourFinish = () => {
     setRunTour(false);
     if (selectedChildId) {
+      localStorage.setItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`, 'true');
       const activeChild = children.find(c => c.id === selectedChildId);
       if (activeChild && !activeChild.tour_seen) {
         onUpdateChildStats(selectedChildId, { tour_seen: true });
@@ -260,6 +262,7 @@ export default function ChildDashboard({
           <div className="flex items-center gap-2 mt-2">
             <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
               if (e.target.checked && selectedChildId) {
+                localStorage.setItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`, 'true');
                 onUpdateChildStats(selectedChildId, { tour_seen: true });
               }
             }} />

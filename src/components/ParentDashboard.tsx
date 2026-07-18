@@ -169,7 +169,8 @@ export default function ParentDashboard({
   }, []);
 
   useEffect(() => {
-    if (parentProfile && !parentProfile.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
+    const localSeen = localStorage.getItem('RCH_TOUR_SEEN_PARENT') === 'true';
+    if (parentProfile && !parentProfile.tour_seen && !localSeen && !isLoading && !runTour && !hasAutoStarted) {
       setHasAutoStarted(true);
       setTourStepIndex(0);
       setActiveTab('home');
@@ -179,6 +180,7 @@ export default function ParentDashboard({
 
   const handleTourFinish = async () => {
     setRunTour(false);
+    localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
     if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
       await onUpdateParentProfile({ tour_seen: true });
     }
@@ -294,8 +296,11 @@ export default function ParentDashboard({
           <p className="font-bold">You're all set! Explore each section at your own pace.</p>
           <div className="flex items-center gap-2 mt-2">
             <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
-              if (e.target.checked && parentProfile && onUpdateParentProfile) {
-                onUpdateParentProfile({ tour_seen: true });
+              if (e.target.checked) {
+                localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
+                if (onUpdateParentProfile) {
+                  onUpdateParentProfile({ tour_seen: true });
+                }
               }
             }} />
             <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
