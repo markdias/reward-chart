@@ -34,6 +34,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     showProgress: true,
     steps: stepsWithSkipScroll,
     stepIndex,
+    locale: { last: 'Finish' },
     styles: {
       options: {
         zIndex: 10000,
