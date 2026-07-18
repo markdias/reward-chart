@@ -184,6 +184,15 @@ export default function ParentDashboard({
     }
   };
 
+  // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
+  // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
+  const handleBeforeTourStepChange = (nextStepIndex: number) => {
+    const mainTabChangeSteps = [0, 1, 2, 5, 7, 8, 9, 10, 11];
+    if (mainTabChangeSteps.includes(nextStepIndex)) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  };
+
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
     if (nextStepIndex === 0) {
@@ -848,6 +857,7 @@ export default function ParentDashboard({
         stepIndex={tourStepIndex}
         onFinish={handleTourFinish} 
         onStepChange={handleTourStepChange}
+        onBeforeStepChange={handleBeforeTourStepChange}
       />
 
       <header

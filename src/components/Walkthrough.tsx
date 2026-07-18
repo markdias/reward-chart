@@ -6,6 +6,7 @@ interface WalkthroughProps {
   run: boolean;
   onFinish: () => void;
   onStepChange?: (index: number) => void;
+  onBeforeStepChange?: (index: number) => void;
   stepIndex?: number;
 }
 
@@ -14,6 +15,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
   run, 
   onFinish,
   onStepChange,
+  onBeforeStepChange,
   stepIndex
 }) => {
   const { Tour, state, on, controls } = useJoyride({
@@ -54,10 +56,18 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
 
   // Listen for step changes and tour completion
   useEffect(() => {
-    // Scroll instantly to top before Joyride calculates the position for the next step!
-    // This prevents Joyride from measuring the target position while the page is still scrolled.
-    const unsubBefore = on(EVENTS.STEP_BEFORE, () => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
+    const unsubBefore = on(EVENTS.STEP_BEFORE, (data: any) => {
+      if (onBeforeStepChange) {
+        // The index in STEP_BEFORE is the step we are about to render.
+        // Wait, STEP_BEFORE gives data.index as the current step or the next step?
+        // Let's use the same logic as STEP_AFTER to determine the next index.
+        const nextIndex = data.action === 'prev' ? data.index - 1 : data.index + 1;
+        
+        // If this is the very first step starting (action is 'start'), nextIndex might be NaN or incorrect.
+        // Joyride passes action 'start' and index 0. 
+        const targetIndex = data.action === 'start' ? 0 : (data.action === 'prev' ? data.index - 1 : data.index + 1);
+        onBeforeStepChange(targetIndex);
+      }
     });
 
     const unsubAfter = on(EVENTS.STEP_AFTER, (data: any) => {
@@ -72,7 +82,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
       unsubBefore();
       unsubAfter();
     };
-  }, [on, onStepChange]);
+  }, [on, onStepChange, onBeforeStepChange]);
 
   // Watch for finished/skipped status
   useEffect(() => {

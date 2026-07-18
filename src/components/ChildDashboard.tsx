@@ -159,6 +159,11 @@ export default function ChildDashboard({
     }
   };
 
+  const handleBeforeTourStepChange = (nextStepIndex: number) => {
+    // All steps in the child tour change the main tab, so we always scroll to top
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
     if (nextStepIndex === 0) {
@@ -665,6 +670,7 @@ export default function ChildDashboard({
           stepIndex={tourStepIndex}
           onFinish={handleTourFinish}
           onStepChange={handleTourStepChange}
+          onBeforeStepChange={handleBeforeTourStepChange}
         />
       )}
 
