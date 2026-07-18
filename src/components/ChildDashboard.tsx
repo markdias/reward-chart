@@ -166,17 +166,17 @@ export default function ChildDashboard({
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    if (nextStepIndex === 0) {
+    if (nextStepIndex === 0 || nextStepIndex === 1) {
       setActiveChildTab('home');
-    } else if (nextStepIndex === 1) {
+    } else if (nextStepIndex === 2) {
       setActiveChildTab('companion');
-    } else if (nextStepIndex === 2 || nextStepIndex === 3) {
+    } else if (nextStepIndex === 3 || nextStepIndex === 4) {
       setActiveChildTab('tasks');
-    } else if (nextStepIndex === 4 || nextStepIndex === 5) {
+    } else if (nextStepIndex === 5 || nextStepIndex === 6) {
       setActiveChildTab('rewards');
-    } else if (nextStepIndex === 6) {
+    } else if (nextStepIndex >= 7 && nextStepIndex <= 11) {
       setActiveChildTab('pots');
-    } else if (nextStepIndex === 7) {
+    } else if (nextStepIndex === 12) {
       setActiveChildTab('home');
     }
 
@@ -190,6 +190,11 @@ export default function ChildDashboard({
     {
       target: '.joyride-target-home',
       content: 'Welcome! This is your Home base. Check your streak, coins, and badges here!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-first-routine',
+      content: 'Here are your routines! Complete them every day to earn extra coins.',
       placement: 'bottom',
     },
     {
@@ -220,6 +225,26 @@ export default function ChildDashboard({
     {
       target: '.joyride-target-pots',
       content: 'Your Pots! Check here to see your spending, saving, and giving pots!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-gold',
+      content: 'This is your Gold Pot! It holds all your spending money.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-savings',
+      content: 'Your Savings Pot! Keep your coins safe here to reach big goals.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-food',
+      content: 'Your Food Pot! Buy food here to keep your pet fed and happy.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-gifting',
+      content: 'Your Gifting Pot! Send coins to your family as a nice gift!',
       placement: 'bottom',
     },
     {
@@ -2407,7 +2432,7 @@ export default function ChildDashboard({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
 
                         {/* === MAIN GOLD POT SECTION === */}
-                        <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
+                        <div className={`joyride-target-pot-gold relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
                           <div className="relative w-full h-full pot-flip-inner">
 
                             {/* Front Side */}
@@ -2459,7 +2484,7 @@ export default function ChildDashboard({
 
                         {/* Savings Pot Unlocked Card */}
                         {isSavingsUnlocked && activeChild.savings_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
+                          <div className={`joyride-target-pot-savings relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2624,7 +2649,7 @@ export default function ChildDashboard({
                         {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
                         {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-savings relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2651,7 +2676,7 @@ export default function ChildDashboard({
 
                         {/* Food Pot Unlocked Card */}
                         {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
+                          <div className={`joyride-target-pot-food relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2744,7 +2769,7 @@ export default function ChildDashboard({
                         {/* Food Pot Locked Preview */}
                         {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-food relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2773,7 +2798,7 @@ export default function ChildDashboard({
 
                         {/* Gifting Pot Unlocked Card */}
                         {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
+                          <div className={`joyride-target-pot-gifting relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2961,7 +2986,7 @@ export default function ChildDashboard({
                         {/* Gifting Pot Locked Preview */}
                         {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-gifting relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
