@@ -1854,6 +1854,7 @@ export default function ChildDashboard({
                       potReminders={potReminders}
                       onOpenBadges={() => setShowBadgesModal(true)}
                       parentProfile={parentProfile}
+                      onEnterParentMode={onEnterParentMode}
                     />
                   )}
                   {/* Tasks Tab */}
