@@ -211,27 +211,6 @@ export default function ParentDashboard({
       setActiveTab('home');
     }
 
-    // Helper to scroll the target element into center view, retrying until it's mounted
-    const pollAndScroll = (targetId: string, retries = 12) => {
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (retries > 0) {
-        setTimeout(() => pollAndScroll(targetId, retries - 1), 50);
-      }
-    };
-
-    let targetId = '';
-    if (nextStepIndex === 2) targetId = 'tour-task-subtab-directory';
-    else if (nextStepIndex === 3) targetId = 'tour-task-subtab-active';
-    else if (nextStepIndex === 4) targetId = 'tour-task-subtab-routines';
-    else if (nextStepIndex === 5) targetId = 'tour-reward-subtab-directory';
-    else if (nextStepIndex === 6) targetId = 'tour-reward-subtab-active';
-
-    if (targetId) {
-      pollAndScroll(targetId);
-    }
-
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
@@ -324,10 +303,8 @@ export default function ParentDashboard({
 
   // Scroll to top when switching tabs
   useEffect(() => {
-    if (!runTour) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [activeTab, runTour]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
 
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
 
