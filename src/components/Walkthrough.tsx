@@ -51,10 +51,10 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
 
   // Listen for step changes and tour completion
   useEffect(() => {
-    const unsubAfter = on(EVENTS.STEP_AFTER, (data) => {
+    const unsubAfter = on(EVENTS.STEP_AFTER, (data: any) => {
       if (onStepChange) {
-        // The next step index after this one
-        const nextIndex = data.index + 1;
+        // Compute the next step index depending on whether we went back or forward
+        const nextIndex = data.action === 'prev' ? data.index - 1 : data.index + 1;
         onStepChange(nextIndex);
       }
     });

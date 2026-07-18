@@ -176,47 +176,99 @@ export default function ParentDashboard({
 
   const handleTourFinish = async () => {
     setRunTour(false);
+    if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
+      await onUpdateParentProfile({ tour_seen: true });
+    }
   };
 
-  // Called by Walkthrough when advancing to the NEXT step index
+  // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    const tabForStep: Record<number, typeof activeTab> = {
-      1: 'children',
-      2: 'tasks',
-      3: 'rewards',
-      4: 'targets',
-    };
-    const tab = tabForStep[nextStepIndex];
-    if (tab) {
-      setActiveTab(tab);
+    if (nextStepIndex === 0) {
+      setActiveTab('home');
+    } else if (nextStepIndex === 1) {
+      setActiveTab('children');
+    } else if (nextStepIndex === 2) {
+      setActiveTab('tasks');
+      setTaskSubTab('directory');
+    } else if (nextStepIndex === 3) {
+      setActiveTab('tasks');
+      setTaskSubTab('active');
+    } else if (nextStepIndex === 4) {
+      setActiveTab('tasks');
+      setTaskSubTab('routines');
+    } else if (nextStepIndex === 5) {
+      setActiveTab('rewards');
+      setRewardSubTab('directory');
+    } else if (nextStepIndex === 6) {
+      setActiveTab('rewards');
+      setRewardSubTab('active');
+    } else if (nextStepIndex === 7) {
+      setActiveTab('targets');
+    } else if (nextStepIndex === 12) {
+      setActiveTab('home');
     }
   };
 
   const tourSteps: Step[] = [
     {
-      target: 'body',
-      content: 'Welcome to the Parent Dashboard! Let\'s take a tour of your control center. Click Next to begin.',
-      placement: 'center',
+      target: '.joyride-target-home',
+      content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is the Children tab — here you can add new child profiles, customise avatars, and set level-up rewards.',
-      placement: 'center',
+      target: '.joyride-target-children',
+      content: 'This is the Children tab. Here you can add child profiles, customize avatars, and set level-up rewards.',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is the Tasks tab — create tasks or routines that your kids complete to earn coins. You can assign them to specific pots like Chores, Learning, etc.',
-      placement: 'center',
+      target: '#tour-task-subtab-directory',
+      content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is the Rewards tab — set up real-life rewards like "Trip to the Park" or "Extra Screen Time" and set a coin cost for them.',
-      placement: 'center',
+      target: '#tour-task-subtab-active',
+      content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is the Targets tab — here you review and approve pending tasks and reward redemptions from your kids.',
-      placement: 'center',
+      target: '#tour-task-subtab-routines',
+      content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-reward-subtab-directory',
+      content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-reward-subtab-active',
+      content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-targets',
+      content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-logout-btn',
+      content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-help-btn',
+      content: 'Need help? The Guide button replays this tour and explains how the system works.',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-settings-btn',
+      content: 'Under Settings, you can edit your profile details, manage family settings, and update account preferences.',
+      placement: 'bottom',
+    },
+    {
+      target: '#exit-to-child-view-btn',
+      content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
+      placement: 'bottom',
     },
     {
       target: 'body',
@@ -937,6 +989,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('help'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-help-btn"
                 >
                   <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -945,6 +998,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('settings'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-settings-btn"
                 >
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -974,8 +1028,8 @@ export default function ParentDashboard({
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
               { id: 'children', label: 'Children', icon: Users, count: children.length },
-              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
+              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'Targets', icon: Target },
               { id: 'settings', label: 'Settings', icon: Settings },
               { id: 'help', label: 'Guide', icon: HelpCircle }
@@ -1489,6 +1543,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-directory"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1498,6 +1553,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-active"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1507,6 +1563,7 @@ export default function ParentDashboard({
                       ASSIGNED
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-routines"
                       onClick={() => setTaskSubTab('routines')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -2021,6 +2078,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-directory"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -2030,6 +2088,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-active"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')

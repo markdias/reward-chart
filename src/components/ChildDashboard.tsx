@@ -141,6 +141,7 @@ export default function ChildDashboard({
       const activeChild = children.find(c => c.id === selectedChildId);
       if (activeChild && !activeChild.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
         setHasAutoStarted(true);
+        setActiveChildTab('home');
         setTimeout(() => setRunTour(true), 1000);
       }
     }
@@ -148,54 +149,69 @@ export default function ChildDashboard({
 
   const handleTourFinish = () => {
     setRunTour(false);
+    if (selectedChildId) {
+      const activeChild = children.find(c => c.id === selectedChildId);
+      if (activeChild && !activeChild.tour_seen) {
+        onUpdateChildStats(selectedChildId, { tour_seen: true });
+      }
+    }
   };
 
-  // Called by Walkthrough when advancing to the NEXT step index
+  // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    const tabForStep: Record<number, typeof activeChildTab> = {
-      1: 'tasks',
-      2: 'rewards',
-      3: 'companion',
-    };
-    const tab = tabForStep[nextStepIndex];
-    if (tab) {
-      setActiveChildTab(tab);
+    if (nextStepIndex === 0) {
+      setActiveChildTab('home');
+    } else if (nextStepIndex === 1) {
+      setActiveChildTab('companion');
+    } else if (nextStepIndex === 2) {
+      setActiveChildTab('tasks');
+    } else if (nextStepIndex === 3) {
+      setActiveChildTab('rewards');
+    } else if (nextStepIndex === 4) {
+      setActiveChildTab('pots');
+    } else if (nextStepIndex === 5) {
+      setActiveChildTab('home');
     }
   };
 
   const tourSteps: Step[] = [
     {
-      target: 'body',
-      content: 'Welcome to your Dashboard! Let\'s show you around so you know how to earn coins and level up.',
-      placement: 'center',
+      target: '.joyride-target-home',
+      content: 'Welcome to your Dashboard! This is your Home base. Here you can check your daily streak, total coins, and badges—tap them to see your activity history! You\'ll also find your daily routines here to keep you on track.',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'These are your Daily Quests! Tap them when you\'re done. Once approved by your parent, coins will rain down!',
-      placement: 'center',
+      target: '.joyride-target-companion',
+      content: 'Meet your Pet! Keep your buddy fed and happy by completing tasks. Earning coins lets you evolve them into cool new forms!',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is the Rewards Shop — spend your hard-earned gold coins on awesome rewards!',
-      placement: 'center',
+      target: '.joyride-target-tasks',
+      content: 'Your Quests! Check here for your daily tasks and routines. Complete them and tap to request approval from your parents for shiny coins!',
+      placement: 'bottom',
     },
     {
-      target: 'body',
-      content: 'This is your Pet! Keep it fed and happy by completing tasks. If you earn enough coins, your pet will evolve!',
-      placement: 'center',
+      target: '.joyride-target-rewards',
+      content: 'The Treasure Shop! Exchange your hard-earned coins for awesome rewards, like screen time or fun outings!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pots',
+      content: 'Your Pots! You start with the Gold Pot for your daily spending. As you level up, you\'ll unlock the Savings, Food, and Gifting pots, along with fun new lessons about money!',
+      placement: 'bottom',
     },
     {
       target: 'body',
       content: (
         <div className="flex flex-col gap-4">
-          <p className="font-bold">You're ready to start playing!</p>
+          <p className="font-bold">You\'re all set! Go complete quests, feed your pet, and have fun earning rewards!</p>
           <div className="flex items-center gap-2 mt-2">
             <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
               if (e.target.checked && selectedChildId) {
                 onUpdateChildStats(selectedChildId, { tour_seen: true });
               }
             }} />
-            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don\'t show this tour again</label>
           </div>
         </div>
       ),
@@ -1602,8 +1618,8 @@ export default function ChildDashboard({
                     {[
                       { id: 'home', label: 'Home', icon: Home },
                       { id: 'companion', label: 'Pets', icon: FaPaw },
-                      { id: 'rewards', label: 'Rewards', icon: Gift },
                       { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
                       { id: 'pots', label: 'Pots', icon: FaJar }
                     ].map((tab) => {
                       const Icon = tab.icon;
@@ -2017,7 +2033,7 @@ export default function ChildDashboard({
                     </section>
 
                     <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
-                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setRunTour(true); }} className="flex items-center gap-2">
+                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setRunTour(true); }} className="flex items-center gap-2">
                         <PlayCircle className="w-4 h-4" />
                         Replay Tutorial
                       </Button>
