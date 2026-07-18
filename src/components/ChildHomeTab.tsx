@@ -4,7 +4,7 @@ import { Modal } from './ui/Modal';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
-import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaCircleCheck, FaWandMagicSparkles, FaCalendarCheck } from 'react-icons/fa6';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
