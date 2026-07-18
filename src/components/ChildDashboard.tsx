@@ -161,6 +161,9 @@ export default function ChildDashboard({
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
+    // Always snap back to default layout position (top: 0) on step change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     if (nextStepIndex === 0) {
       setActiveChildTab('home');
     } else if (nextStepIndex === 1) {
