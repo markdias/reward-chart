@@ -24,6 +24,7 @@ interface ChildHomeTabProps {
   potReminders?: string[];
   onOpenBadges: () => void;
   parentProfile?: ParentProfile | null;
+  onEnterParentMode?: (targetTab?: any, targetSubTab?: any) => void;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -35,7 +36,8 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   handleTaskCheck,
   potReminders = [],
   onOpenBadges,
-  parentProfile
+  parentProfile,
+  onEnterParentMode
 }) => {
   const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
   const [badges, setBadges] = useState<any[]>([]);
@@ -423,16 +425,25 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
           );
         };
-        const currentHour = new Date().getHours();
-        const showMorning = currentHour >= 0 && currentHour < 12;
-        const showAfternoon = currentHour >= 12 && currentHour < 17;
-        const showEvening = currentHour >= 17;
+        const hasMorningTasks = (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
 
-        const hasMorningTasks = showMorning && (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-        const hasAfternoonTasks = showAfternoon && (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-        const hasEveningTasks = showEvening && (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-
-        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) return null;
+        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) {
+          return (
+            <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+              <div className="w-12 h-12 rounded-full bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-500">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <Typography variant="h3" className="text-base font-bold text-stone-850 dark:text-stone-200">No Routines</Typography>
+                <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-xs">
+                  Ask your parents to set up a daily routine for you!
+                </Typography>
+              </div>
+            </div>
+          );
+        }
 
         return (
           <div className="space-y-4 pt-2">
@@ -449,9 +460,9 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              {showMorning && renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
-              {showAfternoon && renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
-              {showEvening && renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
+              {renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
+              {renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
+              {renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
             </div>
           </div>
         );

@@ -128,6 +128,7 @@ export default function App() {
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
   const [initialParentTab, setInitialParentTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('home');
+  const [initialParentSubTab, setInitialParentSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   
   // Auto-logout parent mode after 5 minutes of inactivity
@@ -1012,7 +1013,12 @@ export default function App() {
   };
 
   // Parent Gating
-  const handleEnterParentModeRequest = () => {
+  const handleEnterParentModeRequest = (
+    targetTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets',
+    targetSubTab?: 'directory' | 'active' | 'routines'
+  ) => {
+    setInitialParentTab(targetTab || 'home');
+    setInitialParentSubTab(targetSubTab || 'directory');
     setShowLockScreen(true);
   };
 
@@ -1026,6 +1032,8 @@ export default function App() {
 
   const handleExitParentMode = () => {
     setIsParentMode(false);
+    setInitialParentTab('home');
+    setInitialParentSubTab('directory');
     localStorage.removeItem('RCH_PARENT_MODE_ACTIVE');
   };
 
@@ -2147,6 +2155,7 @@ export default function App() {
               onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
               initialTab={initialParentTab}
+              initialSubTab={initialParentSubTab}
               children={children}
               tasks={tasks}
               completions={completions}

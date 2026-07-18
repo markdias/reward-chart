@@ -104,6 +104,7 @@ interface ParentDashboardProps {
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
   initialTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
+  initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
 }
 
@@ -147,6 +148,7 @@ export default function ParentDashboard({
   onLogout,
   onUpdateParentProfile,
   initialTab = 'home',
+  initialSubTab = 'directory',
   isLoading = false
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
@@ -160,7 +162,12 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
+
+  useEffect(() => {
+    setTaskSubTab(initialSubTab);
+  }, [initialSubTab]);
+
   const [routineChildId, setRoutineChildId] = useState<string | null>(children[0]?.id || null);
 
   useEffect(() => {
