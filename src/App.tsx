@@ -12,7 +12,7 @@ import Showcase from './components/Showcase';
 import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import StepCreateAccount from './components/Onboarding/StepCreateAccount';
 import { LegalModal } from './components/LegalModal';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest } from './types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
@@ -799,6 +799,12 @@ export default function App() {
 
     // Create tasks
     const initialTasks: Task[] = [];
+    const templateToChildTaskMap: Record<string, Record<string, string>> = {};
+    
+    initialChildren.forEach(c => {
+      templateToChildTaskMap[c.id] = {};
+    });
+
     data.selectedTasks.forEach((t, index) => {
       const templateId = `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
       // Add as a template
@@ -811,15 +817,39 @@ export default function App() {
       });
       // Assign to all children immediately
       initialChildren.forEach((child, cIdx) => {
+        const newTaskId = `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`;
+        templateToChildTaskMap[child.id][t.id] = newTaskId;
         initialTasks.push({
           ...t,
-          id: `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`,
+          id: newTaskId,
           created_at: new Date().toISOString(),
           parent_id: emailToUse,
           is_template: false,
-          child_id: child.id
+          child_id: child.id,
+          template_id: templateId
         });
       });
+    });
+
+    // Assign routines to children
+    initialChildren.forEach((child, cIdx) => {
+      if (data.selectedRoutines && data.selectedRoutines.length > 0) {
+        const childRoutines: Routine[] = data.selectedRoutines.map((r, rIdx) => {
+          const mapTaskIds = (templateIds: string[]) => templateIds.map(tid => templateToChildTaskMap[child.id][tid]).filter(Boolean);
+          return {
+            id: `routine_${Date.now()}_${cIdx}_${rIdx}_${Math.random().toString(36).substring(2, 9)}`,
+            name: r.name,
+            morningTaskIds: mapTaskIds(r.morningTaskIds),
+            afternoonTaskIds: mapTaskIds(r.afternoonTaskIds),
+            eveningTaskIds: mapTaskIds(r.eveningTaskIds),
+          };
+        });
+
+        child.routines = childRoutines;
+        if (childRoutines.length > 0) {
+          child.active_routine_id = childRoutines[0].id;
+        }
+      }
     });
 
     localStorage.setItem(`RCH_CHILDREN_local_parent@rewardchart.app`, JSON.stringify(initialChildren));
@@ -2319,9 +2349,9 @@ export default function App() {
           >
             <StepCreateAccount 
               theme={activeTheme}
-              onComplete={(skipped, email) => {
+              onComplete={(email) => {
                 setShowCreateAccount(false);
-                if (!skipped && email) {
+                if (email) {
                   setParentEmail(email);
                   localStorage.setItem('RCH_PARENT_EMAIL', email);
                 }

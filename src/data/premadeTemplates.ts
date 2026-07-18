@@ -1,4 +1,4 @@
-import { Task, Reward } from '../types';
+import { Task, Reward, Routine } from '../types';
 
 export const PREMADE_TASKS: Omit<Task, 'created_at' | 'parent_id'>[] = [
   { id: 'template-1', title: 'Make your bed', points: 10, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
@@ -44,4 +44,19 @@ export const PREMADE_REWARDS: Omit<Reward, 'created_at' | 'parent_id'>[] = [
   { id: 'template-38', title: 'Build a blanket fort', cost_points: 50, icon_name: 'Castle', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true },
   { id: 'template-39', title: 'Special one-on-one time with a parent', cost_points: 100, icon_name: 'Heart', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true },
   { id: 'template-40', title: '£5 pocket money', cost_points: 500, icon_name: 'Coins', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true }
+];
+
+export const PREMADE_ROUTINES: Omit<Routine, 'id'>[] = [
+  {
+    name: 'School Day',
+    morningTaskIds: ['template-1', 'template-2', 'template-4'],
+    afternoonTaskIds: ['template-5', 'template-13', 'template-18'],
+    eveningTaskIds: ['template-8', 'template-9', 'template-3'],
+  },
+  {
+    name: 'Weekend',
+    morningTaskIds: ['template-1', 'template-2', 'template-6'],
+    afternoonTaskIds: ['template-18', 'template-14', 'template-16'],
+    eveningTaskIds: ['template-8', 'template-3'],
+  }
 ];
