@@ -213,6 +213,20 @@ export default function ParentDashboard({
 
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
+      // Scroll the target subtab into center view to avoid overlap/hiding by fixed header
+      let targetId = '';
+      if (nextStepIndex === 2) targetId = 'tour-task-subtab-directory';
+      else if (nextStepIndex === 3) targetId = 'tour-task-subtab-active';
+      else if (nextStepIndex === 4) targetId = 'tour-task-subtab-routines';
+      else if (nextStepIndex === 5) targetId = 'tour-reward-subtab-directory';
+      else if (nextStepIndex === 6) targetId = 'tour-reward-subtab-active';
+
+      if (targetId) {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       setTourStepIndex(nextStepIndex);
     }, 300);
   };
