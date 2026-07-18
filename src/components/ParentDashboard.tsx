@@ -46,6 +46,8 @@ import TargetsTab from './TargetsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
+import { Walkthrough } from './Walkthrough';
+import { Step } from 'react-joyride';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
@@ -152,6 +154,157 @@ export default function ParentDashboard({
   isLoading = false
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+
+  // Walkthrough State
+  const [runTour, setRunTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (parentProfile && !parentProfile.tour_seen && !isLoading && !runTour && !hasAutoStarted) {
+      setHasAutoStarted(true);
+      setTourStepIndex(0);
+      setActiveTab('home');
+      setTimeout(() => setRunTour(true), 1000);
+    }
+  }, [isLoading, parentProfile, runTour, hasAutoStarted]);
+
+  const handleTourFinish = async () => {
+    setRunTour(false);
+    if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
+      await onUpdateParentProfile({ tour_seen: true });
+    }
+  };
+
+  // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
+  // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
+  const handleBeforeTourStepChange = (nextStepIndex: number) => {
+    const mainTabChangeSteps = [0, 1, 2, 5, 7, 8, 9, 10, 11];
+    if (mainTabChangeSteps.includes(nextStepIndex)) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  };
+
+  // Called by Walkthrough when advancing to the NEXT or PREV step index
+  const handleTourStepChange = (nextStepIndex: number) => {
+    if (nextStepIndex === 0) {
+      setActiveTab('home');
+    } else if (nextStepIndex === 1) {
+      setActiveTab('children');
+    } else if (nextStepIndex === 2) {
+      setActiveTab('tasks');
+      setTaskSubTab('directory');
+    } else if (nextStepIndex === 3) {
+      setActiveTab('tasks');
+      setTaskSubTab('active');
+    } else if (nextStepIndex === 4) {
+      setActiveTab('tasks');
+      setTaskSubTab('routines');
+    } else if (nextStepIndex === 5) {
+      setActiveTab('rewards');
+      setRewardSubTab('directory');
+    } else if (nextStepIndex === 6) {
+      setActiveTab('rewards');
+      setRewardSubTab('active');
+    } else if (nextStepIndex === 7) {
+      setActiveTab('targets');
+    } else if (nextStepIndex === 12) {
+      setActiveTab('home');
+    }
+
+    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    setTimeout(() => {
+      setTourStepIndex(nextStepIndex);
+    }, 300);
+  };
+
+  const tourSteps: Step[] = [
+    {
+      target: '.joyride-target-home',
+      content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-children',
+      content: 'This is the Children tab. Here you can add child profiles, customize avatars, and set level-up rewards.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-task-subtab-directory',
+      content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-task-subtab-active',
+      content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-task-subtab-routines',
+      content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-reward-subtab-directory',
+      content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-reward-subtab-active',
+      content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-targets',
+      content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-logout-btn',
+      content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-help-btn',
+      content: 'Need help? The Guide button replays this tour and explains how the system works.',
+      placement: 'bottom',
+    },
+    {
+      target: '#global-settings-btn',
+      content: 'Under Settings, you can edit your profile details, manage family settings, and update account preferences.',
+      placement: 'bottom',
+    },
+    {
+      target: '#exit-to-child-view-btn',
+      content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
+      placement: 'bottom',
+    },
+    {
+      target: 'body',
+      content: (
+        <div className="flex flex-col gap-4">
+          <p className="font-bold">You're all set! Explore each section at your own pace.</p>
+          <div className="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+              if (e.target.checked && parentProfile && onUpdateParentProfile) {
+                onUpdateParentProfile({ tour_seen: true });
+              }
+            }} />
+            <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+          </div>
+        </div>
+      ),
+      placement: 'center',
+    }
+  ];
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -696,8 +849,16 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]`} id="parent-dashboard-root">
 
+      <Walkthrough 
+        steps={tourSteps} 
+        run={runTour} 
+        stepIndex={tourStepIndex}
+        onFinish={handleTourFinish} 
+        onStepChange={handleTourStepChange}
+        onBeforeStepChange={handleBeforeTourStepChange}
+      />
 
       <header
         className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
@@ -847,6 +1008,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('help'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-help-btn"
                 >
                   <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -855,6 +1017,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('settings'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-settings-btn"
                 >
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -878,13 +1041,14 @@ export default function ParentDashboard({
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-2 sm:mt-4 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
 
-        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
+        {isDesktop && (
+          <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
               { id: 'children', label: 'Children', icon: Users, count: children.length },
-              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
+              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'Targets', icon: Target },
               { id: 'settings', label: 'Settings', icon: Settings },
               { id: 'help', label: 'Guide', icon: HelpCircle }
@@ -894,8 +1058,9 @@ export default function ParentDashboard({
               return (
                 <Button variant="none" size="none"
                   key={tab.id}
+                  id={`tour-desktop-tab-${tab.id}`}
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                  className={`joyride-target-${tab.id} w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
                     ? 'bg-stone-900 text-white shadow-md shadow-md scale-[1.02]'
                     : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
                     }`}
@@ -919,6 +1084,7 @@ export default function ParentDashboard({
             })}
           </nav>
         </aside>
+        )}
 
         <main className="lg:col-span-9 min-h-[600px] z-10">
 
@@ -1396,6 +1562,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-directory"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1405,6 +1572,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-active"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1414,6 +1582,7 @@ export default function ParentDashboard({
                       ASSIGNED
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-routines"
                       onClick={() => setTaskSubTab('routines')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1928,6 +2097,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-directory"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1937,6 +2107,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-active"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -2214,7 +2385,7 @@ export default function ParentDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <HelpTab />
+                <HelpTab onReplayTutorial={() => { setTourStepIndex(0); setActiveTab('home'); setRunTour(true); }} />
               </motion.div>
             )}
 
@@ -2631,18 +2802,20 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <BottomTabBar
-          tabs={[
-            { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-            { id: 'children', label: 'Children', icon: Users },
-            { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-            { id: 'rewards', label: 'Rewards', icon: Gift },
-            { id: 'targets', label: 'Targets', icon: Target }
-          ]}
-          activeTab={activeTab}
-          onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
-          layoutId="parent-nav-pill"
-        />
+        {!isDesktop && (
+          <BottomTabBar
+            tabs={[
+              { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              { id: 'children', label: 'Children', icon: Users },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
+              { id: 'targets', label: 'Targets', icon: Target }
+            ]}
+            activeTab={activeTab}
+            onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
+            layoutId="parent-nav-pill"
+          />
+        )}
       </div>
       {/* Generate Quests Modal */}
       <AnimatePresence>

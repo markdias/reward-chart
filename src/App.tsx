@@ -1719,9 +1719,12 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  const handleUpdateParentProfile = (updates: Partial<ParentProfile>) => {
+  const handleUpdateParentProfile = async (updates: Partial<ParentProfile>) => {
     if (parentProfile) {
-      setParentProfile({ ...parentProfile, ...updates });
+      const updated = { ...parentProfile, ...updates };
+      setParentProfile(updated);
+      localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(updated));
+      await executeOrQueue('parent_profiles', 'update', updates, { eq: { 'user_id': parentProfile.user_id } });
     }
   };
 

@@ -33,8 +33,9 @@ export function BottomTabBar({
           return (
             <button
               key={tab.id}
+              id={`tour-mobile-tab-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex-1 flex flex-col items-center justify-center p-2 rounded-2xl touch-target"
+              className={`joyride-target-${tab.id} relative flex-1 flex flex-col items-center justify-center p-2 rounded-2xl touch-target`}
             >
               {isActive && (
                 <motion.div

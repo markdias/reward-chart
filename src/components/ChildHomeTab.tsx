@@ -4,7 +4,7 @@ import { Modal } from './ui/Modal';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
-import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaCircleCheck, FaWandMagicSparkles, FaCalendarCheck } from 'react-icons/fa6';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
@@ -411,12 +411,12 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                     <button
                       key={task.id}
                       onClick={() => handleTaskCheck(task.id, task.title)}
-                      className="w-full text-left group"
+                      className={`w-full text-left group ${currentTaskIndex === 0 ? 'joyride-target-first-routine' : ''}`}
                     >
                       {cardContent}
                     </button>
                   ) : (
-                    <div key={task.id} className="opacity-60 grayscale pointer-events-none">
+                    <div key={task.id} className={`opacity-60 grayscale pointer-events-none ${currentTaskIndex === 0 ? 'joyride-target-first-routine' : ''}`}>
                       {cardContent}
                     </div>
                   );
@@ -446,12 +446,10 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         if (!hasActivePeriodTasks) {
           return (
             <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
-              <div className="w-12 h-12 rounded-full bg-sky-50 dark:bg-sky-950/30 flex items-center justify-center text-sky-500">
-                <Clock className="w-6 h-6" />
-              </div>
-              <div>
-                <Typography variant="h3" className="text-base font-bold text-stone-850 dark:text-stone-200">No Routines</Typography>
-                <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-xs">
+              <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO ACTIVE ROUTINES</Typography>
+                <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
                   No routines setup for {activePeriodLabel.toLowerCase()}
                 </Typography>
               </div>

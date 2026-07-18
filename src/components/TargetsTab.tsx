@@ -101,19 +101,7 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
       const { error } = await supabase
         .from('parent_profiles')
         .update({ 
-          level_up_gold_reward: levelUpGoldReward,
-          daily_points_target: dailyPointsTarget,
-          daily_reward_points: dailyRewardPoints,
-          weekly_points_target: weeklyPointsTarget,
-          weekly_reward_points: weeklyRewardPoints,
-          monthly_points_target: monthlyPointsTarget,
-          monthly_reward_points: monthlyRewardPoints,
-          points_to_level_up: pointsToLevelUp,
-          savings_pot_unlock_level: savingsPotUnlockLevel,
-          food_pot_unlock_level: foodPotUnlockLevel,
-          gifting_pot_unlock_level: giftingPotUnlockLevel,
-          gold_pot_maintenance_unlock_level: goldPotMaintenanceUnlockLevel,
-          gold_pot_maintenance_cost: goldPotMaintenanceCost,
+
           level_up_gold_reward: Number(levelUpGoldReward) || 0,
           daily_points_target: Number(dailyPointsTarget) || 0,
           daily_reward_points: Number(dailyRewardPoints) || 0,
