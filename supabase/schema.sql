@@ -434,47 +434,6 @@ BEGIN
 END $$;
 
 
--- =============================================================================
--- TABLE: family_messages
--- =============================================================================
-CREATE TABLE IF NOT EXISTS family_messages (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  family_id   TEXT NOT NULL,
-  sender_id   UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  message     TEXT NOT NULL,
-  is_read     BOOLEAN DEFAULT false,
-  created_at  TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE family_messages ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow authenticated read family_messages" ON family_messages
-  FOR SELECT TO authenticated USING (
-    family_id = (SELECT family_id FROM parent_profiles WHERE user_id = auth.uid())
-  );
-
-CREATE POLICY "Allow authenticated insert family_messages" ON family_messages
-  FOR INSERT TO authenticated WITH CHECK (
-    sender_id = auth.uid() AND
-    family_id = (SELECT family_id FROM parent_profiles WHERE user_id = auth.uid())
-  );
-
-CREATE POLICY "Allow authenticated update family_messages" ON family_messages
-  FOR UPDATE TO authenticated USING (
-    family_id = (SELECT family_id FROM parent_profiles WHERE user_id = auth.uid())
-  );
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime' AND tablename = 'family_messages'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE family_messages;
-  END IF;
-END $$;
-
 
 -- =============================================================================
 -- TABLE: badges  (static catalogue – public read)
@@ -565,7 +524,7 @@ BEGIN
     DELETE FROM rewards            WHERE parent_id  = v_family_id;
     DELETE FROM reward_redemptions WHERE parent_id  = v_family_id;
     DELETE FROM gifting_requests   WHERE family_id  = v_family_id;
-    DELETE FROM family_messages    WHERE family_id  = v_family_id;
+
   END IF;
 
   DELETE FROM auth.users WHERE id = v_user_id;
