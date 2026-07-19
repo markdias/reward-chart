@@ -12,6 +12,7 @@ import { PasswordInput } from './PasswordInput';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import pkg from '../../package.json';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 interface AuthPageProps {
   onLoginReal: (email: string) => void;
@@ -40,6 +41,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
   const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string, isChild?: boolean } | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [isApplyingCode, setIsApplyingCode] = useState(false);
+  const { flags } = useFeatureFlags();
 
   useEffect(() => {
     if (hasShareToken && isSupabaseConfigured()) {
@@ -458,22 +460,30 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                   </div>
                 )}
 
-                <div className="flex flex-col gap-3 mb-4">
-                  <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2">
-                    <FcGoogle className="w-5 h-5" />
-                    <span>Continue with Google</span>
-                  </Button>
-                  <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('apple')} className="flex items-center justify-center gap-2">
-                    <FaApple className="w-5 h-5 text-black dark:text-white" />
-                    <span>Continue with Apple</span>
-                  </Button>
-                </div>
+                {(flags.google_login || flags.apple_login) && (
+                  <>
+                    <div className="flex flex-col gap-3 mb-4">
+                      {flags.google_login && (
+                        <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2">
+                          <FcGoogle className="w-5 h-5" />
+                          <span>Continue with Google</span>
+                        </Button>
+                      )}
+                      {flags.apple_login && (
+                        <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('apple')} className="flex items-center justify-center gap-2">
+                          <FaApple className="w-5 h-5 text-black dark:text-white" />
+                          <span>Continue with Apple</span>
+                        </Button>
+                      )}
+                    </div>
 
-                <div className="relative flex items-center py-2">
-                  <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
-                  <span className="flex-shrink-0 mx-4 text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Or</span>
-                  <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
-                </div>
+                    <div className="relative flex items-center py-2">
+                      <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+                      <span className="flex-shrink-0 mx-4 text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Or</span>
+                      <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+                    </div>
+                  </>
+                )}
 
                 <Input
                   label="Email Address"

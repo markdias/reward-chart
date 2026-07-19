@@ -648,7 +648,8 @@ export default function ChildDashboard({
       emoji: nextStage.emoji,
       model_url: nextStage.model_url,
       toImage: nextStage.model_url,
-      fromImage: activeChildStage.model_url
+      fromImage: activeChildStage.model_url,
+      model_scale: nextStage.model_scale
     });
   };
 
@@ -1029,9 +1030,17 @@ export default function ChildDashboard({
                     className={`relative h-44 w-44 rounded-full ${evolvingStage.model_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.model_url ? (
-                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover">
-                        <div slot="progress-bar"></div>
-                      </model-viewer>
+                      <div className="w-full h-full" style={{ transform: `scale(${evolvingStage.model_scale || 1.35})` }}>
+                        <model-viewer 
+                          src={evolvingStage.model_url} 
+                          alt={evolvingStage.toStage} 
+                          auto-rotate 
+                          camera-controls 
+                          class="w-full h-full object-cover"
+                        >
+                          <div slot="progress-bar"></div>
+                        </model-viewer>
+                      </div>
                     ) : (
                       <span>{evolvingStage.emoji}</span>
                     )}
@@ -1761,30 +1770,30 @@ export default function ChildDashboard({
 
                           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent rounded-[1rem]" />
 
-                          <div className="flex justify-left w-full items-start mt-1 relative z-20">
+                          <div className="flex justify-between w-full items-start mt-1 relative z-20">
+                            {/* Pet Species Pill (Top Left) */}
                             <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200/50 dark:border-stone-700/50 text-center flex flex-col items-center">
                               <span className={`text-[9px] font-sans tracking-widest uppercase text-stone-500 font-extrabold mb-0.5`}>PET SPECIES</span>
                               <Typography variant="h3" className={`font-black text-stone-900 dark:text-white text-sm uppercase tracking-wider leading-none`}>{activeChildStage.name}</Typography>
                             </div>
-                          </div>
-
-                          {isFoodPotUnlocked && (
-                            <div className="mt-4 flex items-center justify-center w-full">
+                            
+                            {/* Pet Status Pill (Top Right) */}
+                            <div className={`transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
                               {activeChild.pet_unhappy ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
-                                  <FaFaceFrown className="inline-block mr-2 text-blue-500" /> Pet Unhappy & Hungry
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-rose-50/90 backdrop-blur-md border border-rose-200 text-rose-700 rounded-full text-xs font-extrabold animate-pulse shadow-sm">
+                                  <FaFaceFrown className="inline-block text-blue-500 text-sm" /> Unhappy & Hungry
                                 </span>
                               ) : activeChild.pet_fed_today ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
-                                  <FaHeart className="inline-block mr-2 text-green-500" /> Pet Fed & Happy!
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50/90 backdrop-blur-md border border-emerald-200 text-emerald-700 rounded-full text-xs font-extrabold shadow-sm">
+                                  <FaHeart className="inline-block text-green-500 text-sm" /> Fed & Happy!
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold animate-bounce">
-                                  <FaBone className="inline-block mr-2 text-amber-700" /> Hungry! Needs Food
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50/90 backdrop-blur-md border border-amber-200 text-amber-800 rounded-full text-xs font-extrabold animate-bounce shadow-sm">
+                                  <FaBone className="inline-block text-amber-700 text-sm" /> Hungry!
                                 </span>
                               )}
                             </div>
-                          )}
+                          </div>
 
                           {/* Giant Levitating Pedestal */}
                           <div className="my-6 sm:my-10 relative flex items-center justify-center">
@@ -1792,16 +1801,23 @@ export default function ChildDashboard({
                             <motion.div
                               animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                               transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                              className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-4`}
+                              className={`h-48 w-48 sm:h-80 sm:w-80 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-10`}
                             >
                               {(() => {
                                 const modelUrl = activeChildStage.model_url_fed && activeChildStage.model_url_not_fed
                                   ? (activeChild.pet_fed_today ? activeChildStage.model_url_fed : activeChildStage.model_url_not_fed)
                                   : activeChildStage.model_url;
                                 return modelUrl ? (
-                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]">
-                                    <div slot="progress-bar"></div>
-                                  </model-viewer>
+                                  <div className="w-full h-full" style={{ transform: `scale(${activeChildStage.model_scale || 1.35})` }}>
+                                    <model-viewer 
+                                      src={modelUrl} 
+                                      alt={activeChildStage.name} 
+                                      camera-controls 
+                                      class="w-full h-full animate-float"
+                                    >
+                                      <div slot="progress-bar"></div>
+                                    </model-viewer>
+                                  </div>
                                 ) : (
                                   <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
                                     {activeChildStage.emoji}
@@ -1810,54 +1826,78 @@ export default function ChildDashboard({
                               })()}
                             </motion.div>
                           </div>
-                          {/* Level and evolution progression */}
-                          <div className={`w-full mt-6 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-stone-200/50 dark:border-stone-700/50 relative z-20`}>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-[15px] font-black text-stone-900 dark:text-white tracking-tight uppercase">Level {activeChild.level}</span>
-                              <span className="text-[13px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full border border-stone-200 dark:border-stone-700">
-                                {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
-                              </span>
-                            </div>
-                            <LinearProgressBar
-                              progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                              heightClass="h-3"
-                              className="!bg-stone-200/80 dark:!bg-stone-800/80 border-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
-                            />
-                          </div>
-
-                          {isFoodPotUnlocked && (
-                            <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2">
-                              <Button
-                                variant="none"
-                                size="none"
-                                onClick={handleFeedCompanion}
-                                disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                                className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${activeChild.pet_fed_today
-                                  ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-default border border-stone-200 dark:border-stone-700'
-                                  : (activeChild.pet_food || 0) > 0
-                                    ? 'bg-warning border-2 border-neutral-border text-dark dark:text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
-                                    : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
-                                  }`}
-                              >
-                                {isFeeding ? (
-                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Chomp Chomp...</span>
-                                ) : activeChild.pet_fed_today ? (
-                                  <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Fed for Today!</span>
-                                ) : (
-                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
+                          {/* Unified Level and Feed progression */}
+                          <div className={`w-full mt-6 relative z-30 transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
+                            <div className="w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl rounded-[2.5rem] p-4 pr-5 flex items-stretch border-2 border-white/50 dark:border-stone-700/50 shadow-2xl">
+                              
+                              {/* Left Side: Level Progress */}
+                              <div className="flex-1 pl-4 pr-6 py-3 flex flex-col justify-center border-r-2 border-stone-200 dark:border-stone-800 border-dashed">
+                                <div className="flex justify-between items-end mb-2">
+                                  <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest">Level {activeChild.level}</span>
+                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+                                    {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
+                                  </span>
+                                </div>
+                                <LinearProgressBar
+                                  progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                                  heightClass="h-3.5 sm:h-4"
+                                  className="!bg-stone-200 dark:!bg-stone-800"
+                                />
+                                
+                                {/* Show warning text inline if no food */}
+                                {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
+                                  <span className="text-[13px] sm:text-[15px] text-red-500 dark:text-red-400 font-black mt-3 leading-tight flex items-center">
+                                    <FaTriangleExclamation className="mr-1.5 shrink-0" />
+                                    No food left!
+                                  </span>
                                 )}
-                              </Button>
-                              <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
-                                <span>FOOD INVENTORY:</span>
-                                <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                               </div>
-                              {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
-                                <span className="text-[9px] text-red-500 font-bold text-center mt-1">
-                                  <FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> No food left! Buy food from your Food Pot below.
-                                </span>
-                              )}
+
+                              {/* Right Side: Feed Button */}
+                              <div className="w-[110px] shrink-0 pl-5 flex items-center">
+                                <div className="relative w-full">
+                                  {/* Inventory Badge */}
+                                  <div className={`absolute -top-3 -right-3 text-white text-[11px] sm:text-xs font-black w-8 h-8 rounded-full border-[3px] shadow-lg z-20 flex items-center justify-center
+                                    ${(activeChild.pet_food || 0) > 0 ? 'bg-orange-500 border-white dark:border-stone-900' : 'bg-stone-400 border-white dark:border-stone-900'}`}>
+                                    {activeChild.pet_food || 0}
+                                  </div>
+                                  
+                                  {/* Button */}
+                                  <Button
+                                    variant="none"
+                                    size="none"
+                                    onClick={handleFeedCompanion}
+                                    disabled={!isFoodPotUnlocked || isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
+                                    className={`w-full h-[88px] rounded-3xl font-sans text-xs sm:text-[13px] font-black uppercase flex flex-col items-center justify-center gap-1 transition-all
+                                      ${activeChild.pet_fed_today
+                                        ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 border-2 border-stone-200 dark:border-stone-700 cursor-default'
+                                        : (activeChild.pet_food || 0) > 0
+                                          ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-b-[5px] border-orange-700 hover:border-b-[3px] hover:translate-y-[2px] shadow-lg cursor-pointer'
+                                          : 'bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border-2 border-stone-300 dark:border-stone-700 shadow-sm !opacity-100 cursor-not-allowed'
+                                      }`}
+                                  >
+                                    {isFeeding ? (
+                                      <>
+                                        <FaBone className="text-3xl drop-shadow-sm mb-0.5 animate-bounce" />
+                                        Chomp...
+                                      </>
+                                    ) : activeChild.pet_fed_today ? (
+                                      <>
+                                        <FaCircleCheck className="text-3xl drop-shadow-sm mb-0.5 text-green-500" />
+                                        Fed
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FaBone className="text-3xl drop-shadow-sm mb-0.5" />
+                                        Feed
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+
                             </div>
-                          )}
+                          </div>
 
                         </div>
                       </div>

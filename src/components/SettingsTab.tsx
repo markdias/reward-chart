@@ -14,6 +14,8 @@ import { SettingsBlock, SettingsRow, SettingsSelectRow, SettingsActionRow } from
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { FlaskConical } from 'lucide-react';
 
 import { Child } from '../types';
 
@@ -64,8 +66,12 @@ export default function SettingsTab({
       setWeeklyRewardPoints(parentProfile.weekly_reward_points ?? 200);
       setMonthlyPointsTarget(parentProfile.monthly_points_target ?? 500);
       setMonthlyRewardPoints(parentProfile.monthly_reward_points ?? 1000);
+      setIsBetaTester(parentProfile.is_beta_tester || false);
     }
   }, [parentProfile]);
+  
+  const [isBetaTester, setIsBetaTester] = useState(parentProfile?.is_beta_tester || false);
+  const { flags } = useFeatureFlags(isBetaTester);
   
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState('');
@@ -117,7 +123,8 @@ export default function SettingsTab({
           level_up_gold_reward: levelUpGoldReward,
           weekly_points_target: weeklyPointsTarget,
           weekly_reward_points: weeklyRewardPoints,
-          monthly_reward_points: monthlyRewardPoints
+          monthly_reward_points: monthlyRewardPoints,
+          is_beta_tester: isBetaTester
         })
         .eq('user_id', parentProfile.user_id);
         
@@ -139,6 +146,26 @@ export default function SettingsTab({
       playSound.pinError();
     }
     setIsSavingProfile(false);
+  };
+
+  const handleToggleBeta = async () => {
+    const newValue = !isBetaTester;
+    setIsBetaTester(newValue);
+    if (!parentProfile?.user_id) return;
+    
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    
+    try {
+      await supabase
+        .from('parent_profiles')
+        .update({ is_beta_tester: newValue })
+        .eq('user_id', parentProfile.user_id);
+    } catch (e) {
+      console.error('Failed to update beta status', e);
+      // Revert if failed
+      setIsBetaTester(!newValue);
+    }
   };
 
   const handleSaveSecurity = async () => {
@@ -348,21 +375,42 @@ export default function SettingsTab({
             <SettingsRow label="Account Email" value={parentProfile?.email || ''} type="text" onChange={() => {}} />
             <SettingsRow label="Your Name" value={name} type="text" onChange={(v) => setName(v)} onBlur={handleSaveProfile} />
             <SettingsRow label="Family Name" value={familyName} type="text" onChange={(v) => setFamilyName(v)} onBlur={handleSaveProfile} isLast />
-          </SettingsBlock>
-
-          <SettingsBlock title="Appearance">
-            <SettingsSelectRow 
-              label="Appearance" 
+            <SettingsSelectRow
+              title="Theme Preference"
+              description="Choose between light, dark, or system default"
               value={themePreference}
               onChange={(val) => setThemePreference(val as 'light' | 'dark' | 'system')}
               options={[
-                { label: 'Light', value: 'light' },
-                { label: 'Dark', value: 'dark' },
-                { label: 'System', value: 'system' }
+                { value: 'system', label: 'System Default' },
+                { value: 'light', label: 'Light Mode' },
+                { value: 'dark', label: 'Dark Mode' }
               ]}
-              isLast 
             />
           </SettingsBlock>
+
+          {flags.beta_opt_in && (
+            <SettingsBlock title="Beta Program">
+              <div className={`flex items-center justify-between p-4 bg-white dark:bg-stone-900 transition-colors`}>
+                <div className="flex gap-4 items-center">
+                  <div className={`p-2 rounded-xl shrink-0 ${isBetaTester ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400'}`}>
+                    <FlaskConical className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className={`text-sm font-bold text-stone-700 dark:text-stone-200`}>Join Beta Program</h4>
+                    <p className={`text-xs text-stone-500 dark:text-stone-400 mt-0.5 pr-4`}>
+                      Get early access to experimental features before they are released to everyone.
+                    </p>
+                  </div>
+                </div>
+                <div 
+                  onClick={handleToggleBeta}
+                  className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 cursor-pointer ${isBetaTester ? 'bg-indigo-500' : 'bg-stone-200 dark:bg-stone-700'}`}
+                >
+                  <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isBetaTester ? 'translate-x-5' : 'translate-x-0'}`} />
+                </div>
+              </div>
+            </SettingsBlock>
+          )}
 
           <SettingsBlock title="Notifications">
             <SettingsRow 
