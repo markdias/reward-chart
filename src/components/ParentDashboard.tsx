@@ -218,13 +218,51 @@ export default function ParentDashboard({
       setRewardSubTab('active');
     } else if (nextStepIndex === 7) {
       setActiveTab('targets');
+    } else if (nextStepIndex === 11) {
+      setActiveTab('settings');
+      setSettingsSubTab('profile');
     } else if (nextStepIndex === 12) {
+      setActiveTab('settings');
+      setSettingsSubTab('security');
+    } else if (nextStepIndex === 13) {
+      setActiveTab('settings');
+      setSettingsSubTab('sharing');
+    } else if (nextStepIndex === 14) {
+      setActiveTab('settings');
+      setSettingsSubTab('danger');
+    } else if (nextStepIndex === 15) {
+      setActiveTab('settings');
+    } else if (nextStepIndex === 16) {
       setActiveTab('home');
     }
 
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
+      
+      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+      setTimeout(() => {
+        const step = tourSteps[nextStepIndex];
+        if (step && typeof step.target === 'string' && step.target !== 'body') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120; // Clear the top header
+            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
     }, 300);
   };
 
@@ -281,7 +319,27 @@ export default function ParentDashboard({
     },
     {
       target: '#global-settings-btn',
-      content: 'Under Settings, you can edit your profile details, manage family settings, and update account preferences.',
+      content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-profile-tab',
+      content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-security-tab',
+      content: 'The Security tab allows you to update your password securely.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-sharing-tab',
+      content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-danger-tab',
+      content: 'The Danger tab contains options to reset data or completely start over if you need a clean slate.',
       placement: 'bottom',
     },
     {
@@ -321,6 +379,7 @@ export default function ParentDashboard({
   }, [activeTab]);
 
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
+  const [settingsSubTab, setSettingsSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
   useEffect(() => {
     setTaskSubTab(initialSubTab);
@@ -2385,6 +2444,8 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                  activeSubTab={settingsSubTab}
+                  onSubTabChange={setSettingsSubTab}
                 />
               </motion.div>
             )}

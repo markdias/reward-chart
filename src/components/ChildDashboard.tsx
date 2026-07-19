@@ -185,6 +185,30 @@ export default function ChildDashboard({
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
+      
+      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+      setTimeout(() => {
+        const step = tourSteps[nextStepIndex];
+        if (step && typeof step.target === 'string') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120; // Clear the top header
+            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
     }, 300);
   };
 
@@ -193,6 +217,7 @@ export default function ChildDashboard({
       target: '.joyride-target-home',
       content: 'Welcome! This is your Home base. Check your streak, coins, and badges here!',
       placement: 'bottom',
+      skipScroll: true,
     },
     {
       target: '.joyride-target-first-routine',
@@ -1611,7 +1636,7 @@ export default function ChildDashboard({
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-40 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
 
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -3171,8 +3196,6 @@ export default function ChildDashboard({
           )}
 
         </AnimatePresence>
-
-
 
       </div>
 
