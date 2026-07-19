@@ -32,6 +32,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     hideCloseButton: true,
     disableOverlayClose: true,
     showProgress: true,
+    scrollOffset: 120,
     steps: stepsWithSkipScroll,
     stepIndex,
     locale: { last: 'Finish' },

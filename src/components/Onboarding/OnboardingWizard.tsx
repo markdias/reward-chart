@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { Typography } from '../ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
@@ -37,13 +39,13 @@ export interface OnboardingData {
 
 export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'routines' | 'tasks' | 'rewards' | 'account';
 
-export default function OnboardingWizard({ 
-  onComplete, 
-  onLoginInstead, 
+export default function OnboardingWizard({
+  onComplete,
+  onLoginInstead,
   onJoinCodeInstead,
-  initialStep = 'welcome', 
-  initialData, 
-  skipAccountStep = false 
+  initialStep = 'welcome',
+  initialData,
+  skipAccountStep = false
 }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(initialStep || 'welcome');
   const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(initialStep === 'children' ? 'parent' : null);
@@ -96,7 +98,7 @@ export default function OnboardingWizard({
       routine.afternoonTaskIds.forEach(id => routineTaskIds.add(id));
       routine.eveningTaskIds.forEach(id => routineTaskIds.add(id));
     });
-    
+
     // We update selectedTasks temporarily so the tasks step has them pre-selected
     setOnboardingData(prev => {
       const existingTaskIds = prev.selectedTasks.map(t => t.id as string);
@@ -120,7 +122,7 @@ export default function OnboardingWizard({
     const rewards = PREMADE_REWARDS.filter(r => selectedRewardIds.includes(r.id as string));
     const newOnboardingData = { ...onboardingData, selectedRewards: rewards as Reward[] };
     setOnboardingData(newOnboardingData);
-    
+
     if (skipAccountStep) {
       // They already have an account, so just complete the wizard directly
       const finalData = { ...newOnboardingData, skippedAccount: false };
@@ -140,9 +142,9 @@ export default function OnboardingWizard({
     switch (step) {
       case 'welcome':
         return (
-          <LandingPage 
-            onEnterArcade={handleWelcomeComplete} 
-             
+          <LandingPage
+            onEnterArcade={handleWelcomeComplete}
+
             onSignIn={onLoginInstead}
             onJoinCode={onJoinCodeInstead}
           />
@@ -150,7 +152,7 @@ export default function OnboardingWizard({
       case 'role':
         return (
           <StepRoleSelection
-            
+
             onSelectRole={handleRoleSelectionComplete}
             onJoinCode={onJoinCodeInstead}
             onBack={() => setStep('welcome')}
@@ -159,7 +161,7 @@ export default function OnboardingWizard({
       case 'children':
         return (
           <StepChildrenSetup
-            
+
             onNext={handleChildrenSetupComplete}
             onBack={() => setStep('welcome')}
             initialChildren={onboardingData.children}
@@ -168,8 +170,8 @@ export default function OnboardingWizard({
         );
       case 'handover':
         return (
-          <StepHandover 
-            
+          <StepHandover
+
             onNext={handleHandoverComplete}
             onBack={() => setStep('children')}
           />
@@ -177,7 +179,7 @@ export default function OnboardingWizard({
       case 'parentDetails':
         return (
           <StepParentDetails
-            
+
             onNext={handleParentDetailsComplete}
             onBack={() => startedBy === 'child' ? setStep('handover') : setStep('children')}
             initialName={onboardingData.parentName}
@@ -195,7 +197,7 @@ export default function OnboardingWizard({
       case 'tasks':
         return (
           <StepTasksSelection
-            
+
             onNext={handleTasksSelectionComplete}
             onBack={() => setStep('routines')}
             initialSelectedTaskIds={onboardingData.selectedTasks.map(t => t.id)}
@@ -204,7 +206,7 @@ export default function OnboardingWizard({
       case 'rewards':
         return (
           <StepRewardsSelection
-            
+
             onNext={handleRewardsSelectionComplete}
             onBack={() => setStep('tasks')}
             initialSelectedRewardIds={onboardingData.selectedRewards.map(r => r.id)}
@@ -213,7 +215,7 @@ export default function OnboardingWizard({
       case 'account':
         return (
           <StepCreateAccount
-            
+
             name={onboardingData.parentName}
             familyName={onboardingData.familyName}
             onComplete={handleAccountComplete}

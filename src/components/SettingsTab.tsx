@@ -26,9 +26,22 @@ interface SettingsTabProps {
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
   onRequireAccount?: () => void;
+  activeSubTab?: 'profile' | 'security' | 'sharing' | 'danger';
+  onSubTabChange?: (tab: 'profile' | 'security' | 'sharing' | 'danger') => void;
 }
 
-export default function SettingsTab({ children = [], parentProfile, linkedParents = [], onResetData, onRunSetup, onDeleteAccount, onCleanDuplicates, onRequireAccount }: SettingsTabProps) {
+export default function SettingsTab({ 
+  children = [], 
+  parentProfile, 
+  linkedParents = [], 
+  onResetData, 
+  onRunSetup, 
+  onDeleteAccount, 
+  onCleanDuplicates, 
+  onRequireAccount,
+  activeSubTab: externalSubTab,
+  onSubTabChange
+}: SettingsTabProps) {
   const [name, setName] = useState(parentProfile?.name || '');
   const [familyName, setFamilyName] = useState(parentProfile?.family_name || '');
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
@@ -72,7 +85,12 @@ export default function SettingsTab({ children = [], parentProfile, linkedParent
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+  const [internalSubTab, setInternalSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+  const activeSubTab = externalSubTab || internalSubTab;
+  const setActiveSubTab = (tab: 'profile' | 'security' | 'sharing' | 'danger') => {
+    setInternalSubTab(tab);
+    if (onSubTabChange) onSubTabChange(tab);
+  };
 
   const c = {
     text: 'text-stone-900 dark:text-stone-50',
@@ -233,6 +251,7 @@ export default function SettingsTab({ children = [], parentProfile, linkedParent
       
       <div className="flex border-b-2 border-stone-100 dark:border-stone-800 mb-8 w-full">
         <button
+          id="tour-settings-profile-tab"
           onClick={() => { playSound.click(); setActiveSubTab('profile'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'profile' 
@@ -243,6 +262,7 @@ export default function SettingsTab({ children = [], parentProfile, linkedParent
           PROFILE
         </button>
         <button
+          id="tour-settings-security-tab"
           onClick={() => { playSound.click(); setActiveSubTab('security'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'security' 
@@ -253,6 +273,7 @@ export default function SettingsTab({ children = [], parentProfile, linkedParent
           SECURITY
         </button>
         <button
+          id="tour-settings-sharing-tab"
           onClick={() => { playSound.click(); setActiveSubTab('sharing'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'sharing' 
@@ -263,6 +284,7 @@ export default function SettingsTab({ children = [], parentProfile, linkedParent
           SHARING
         </button>
         <button
+          id="tour-settings-danger-tab"
           onClick={() => { playSound.click(); setActiveSubTab('danger'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
             ${activeSubTab === 'danger' 

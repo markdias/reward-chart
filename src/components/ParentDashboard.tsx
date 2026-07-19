@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon
 } from 'lucide-react';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
@@ -218,13 +218,51 @@ export default function ParentDashboard({
       setRewardSubTab('active');
     } else if (nextStepIndex === 7) {
       setActiveTab('targets');
+    } else if (nextStepIndex === 11) {
+      setActiveTab('settings');
+      setSettingsSubTab('profile');
     } else if (nextStepIndex === 12) {
+      setActiveTab('settings');
+      setSettingsSubTab('security');
+    } else if (nextStepIndex === 13) {
+      setActiveTab('settings');
+      setSettingsSubTab('sharing');
+    } else if (nextStepIndex === 14) {
+      setActiveTab('settings');
+      setSettingsSubTab('danger');
+    } else if (nextStepIndex === 15) {
+      setActiveTab('settings');
+    } else if (nextStepIndex === 16) {
       setActiveTab('home');
     }
 
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
+      
+      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+      setTimeout(() => {
+        const step = tourSteps[nextStepIndex];
+        if (step && typeof step.target === 'string' && step.target !== 'body') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120; // Clear the top header
+            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
     }, 300);
   };
 
@@ -281,7 +319,27 @@ export default function ParentDashboard({
     },
     {
       target: '#global-settings-btn',
-      content: 'Under Settings, you can edit your profile details, manage family settings, and update account preferences.',
+      content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-profile-tab',
+      content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-security-tab',
+      content: 'The Security tab allows you to update your password securely.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-sharing-tab',
+      content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-settings-danger-tab',
+      content: 'The Danger tab contains options to reset data or completely start over if you need a clean slate.',
       placement: 'bottom',
     },
     {
@@ -321,6 +379,7 @@ export default function ParentDashboard({
   }, [activeTab]);
 
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
+  const [settingsSubTab, setSettingsSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
   useEffect(() => {
     setTaskSubTab(initialSubTab);
@@ -1349,7 +1408,9 @@ export default function ParentDashboard({
                                   <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
                                   <div className="flex-1 flex items-center justify-center relative z-10">
                                     {stage.model_url ? (
-                                      <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                      <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">
+                                        <div slot="progress-bar"></div>
+                                      </model-viewer>
                                     ) : (
                                       <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
                                     )}
@@ -1389,30 +1450,49 @@ export default function ParentDashboard({
                                       </div>
 
                                       {/* App Linked Status Row */}
-                                      <div className="flex items-center justify-between z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                        <div className="flex flex-col shrink-0 pr-2">
-                                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
-                                        </div>
-                                        {child.child_share_token?.startsWith('LINKED_') ? (
-                                          <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
-                                        ) : child.child_share_token ? (
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(child.child_share_token || ''); }}>Copy</Button>
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-600" onClick={(e) => {
-                                              e.stopPropagation();
-                                              playSound.click();
-                                              onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
-                                            }}>Link</Button>
+                                      {child.child_share_token?.startsWith('LINKED_') ? (
+                                        <div className="flex items-center justify-between z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                          <div className="flex flex-col shrink-0 pr-2">
+                                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
                                           </div>
-                                        ) : (
-                                          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => {
-                                            e.stopPropagation();
-                                            const code = generateShortCode();
-                                            onEditChild(child.id, { child_share_token: code });
-                                          }}>Generate Code</Button>
-                                        )}
-                                      </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
+                                            {onUnlinkChild && (
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-5 px-1.5 text-[9px] uppercase font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10" 
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (confirm('Are you sure you want to unlink this device connection?')) {
+                                                    onUnlinkChild(child.id);
+                                                  }
+                                                }}
+                                              >
+                                                Unlink
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-between z-10 bg-stone-50 dark:bg-stone-900/40 p-3 rounded-2xl border border-stone-100 dark:border-stone-800/50">
+                                          <div className="flex flex-col shrink-0 pr-2">
+                                            <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 flex items-center gap-1.5 uppercase tracking-widest"><LinkIcon className="w-3.5 h-3.5" /> Link Device</span>
+                                          </div>
+                                          {child.child_share_token ? (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
+                                              <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(child.child_share_token || ''); }}>Copy</Button>
+                                            </div>
+                                          ) : (
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => {
+                                              e.stopPropagation();
+                                              const code = generateShortCode();
+                                              onEditChild(child.id, { child_share_token: code });
+                                            }}>Generate Code</Button>
+                                          )}
+                                        </div>
+                                      )}
 
                                       {/* Action Buttons List */}
                                       <div className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10">
@@ -2364,6 +2444,8 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                  activeSubTab={settingsSubTab}
+                  onSubTabChange={setSettingsSubTab}
                 />
               </motion.div>
             )}
@@ -2458,7 +2540,9 @@ export default function ParentDashboard({
                               newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
                             }`}
                           >
-                            <model-viewer src={getCharacterStage(char.id, 99).model_url} alt={char.name} auto-rotate camera-controls class="w-12 h-12 mb-1" />
+                            <model-viewer src={getCharacterStage(char.id, 99).model_url} alt={char.name} auto-rotate camera-controls class="w-12 h-12 mb-1">
+                              <div slot="progress-bar"></div>
+                            </model-viewer>
                             <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
                               {char.name.split(' ')[0]}
                             </span>
@@ -2740,6 +2824,8 @@ export default function ParentDashboard({
                       playSound.purchase();
                       if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
+                      if (resetConfirmation.type === 'Level') onUpdateChildStats(resetConfirmation.childId, { level: 1 });
+                      if (resetConfirmation.type === 'Lifetime Gold') onUpdateChildStats(resetConfirmation.childId, { lifetime_points: 0 });
                       setResetConfirmation(null);
                     }}
                     className="flex-1"

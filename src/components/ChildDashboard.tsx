@@ -185,6 +185,30 @@ export default function ChildDashboard({
     // Delay updating the stepIndex to allow active tab mount / layout adjustments
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
+      
+      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+      setTimeout(() => {
+        const step = tourSteps[nextStepIndex];
+        if (step && typeof step.target === 'string') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120; // Clear the top header
+            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
     }, 300);
   };
 
@@ -193,6 +217,7 @@ export default function ChildDashboard({
       target: '.joyride-target-home',
       content: 'Welcome! This is your Home base. Check your streak, coins, and badges here!',
       placement: 'bottom',
+      skipScroll: true,
     },
     {
       target: '.joyride-target-first-routine',
@@ -1004,7 +1029,9 @@ export default function ChildDashboard({
                     className={`relative h-44 w-44 rounded-full ${evolvingStage.model_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.model_url ? (
-                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover" />
+                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover">
+                        <div slot="progress-bar"></div>
+                      </model-viewer>
                     ) : (
                       <span>{evolvingStage.emoji}</span>
                     )}
@@ -1609,7 +1636,7 @@ export default function ChildDashboard({
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-40 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
 
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1772,7 +1799,9 @@ export default function ChildDashboard({
                                   ? (activeChild.pet_fed_today ? activeChildStage.model_url_fed : activeChildStage.model_url_not_fed)
                                   : activeChildStage.model_url;
                                 return modelUrl ? (
-                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
+                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]">
+                                    <div slot="progress-bar"></div>
+                                  </model-viewer>
                                 ) : (
                                   <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
                                     {activeChildStage.emoji}
@@ -3167,8 +3196,6 @@ export default function ChildDashboard({
           )}
 
         </AnimatePresence>
-
-
 
       </div>
 
