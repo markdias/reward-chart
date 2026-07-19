@@ -251,14 +251,14 @@ export default function ChildDashboard({
     },
     {
       target: '.joyride-target-pot-maintenance',
-      content: 'The Maintenance Pot! Keep your Gold Pot repaired so it doesn\'t leak coins.',
+      content: 'The Maintenance Pot! Keep your Gold Pot repaired so it does not leak coins.',
       placement: 'bottom',
     },
     {
       target: 'body',
       content: (
         <div className="flex flex-col gap-4">
-          <p className="font-bold">You\'re all set! Go crush those quests!</p>
+          <p className="font-bold">You're all set! Go crush those quests!</p>
           <div className="flex items-center gap-2 mt-2">
             <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
               if (e.target.checked && selectedChildId) {
@@ -266,7 +266,7 @@ export default function ChildDashboard({
                 onUpdateChildStats(selectedChildId, { tour_seen: true });
               }
             }} />
-            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don\'t show this tour again</label>
+            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
           </div>
         </div>
       ),
@@ -705,11 +705,11 @@ export default function ChildDashboard({
 
   return (
     <div className={`min-h-screen flex flex-col font-sans relative overflow-x-hidden transition-colors duration-700 ${!selectedChildId ? 'bg-transparent' : 'bg-stone-100 dark:bg-stone-950 pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]'}`} id="child-dashboard-root" >
-      
+
       {selectedChildId && (
-        <Walkthrough 
-          steps={tourSteps} 
-          run={runTour} 
+        <Walkthrough
+          steps={tourSteps}
+          run={runTour}
           stepIndex={tourStepIndex}
           onFinish={handleTourFinish}
           onStepChange={handleTourStepChange}
@@ -2026,87 +2026,87 @@ export default function ChildDashboard({
                     </motion.div>
                   )}
 
-          <AnimatePresence>
-            {showHelpModal && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className={`w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 pt-2 border-b border-stone-100 dark:border-stone-800 gap-4">
-                    <div className="flex justify-between w-full sm:w-auto items-center">
-                      <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
-                        How to Use the App
-                      </Typography>
-                      <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors sm:hidden">
-                        <X className="w-5 h-5" />
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2 shrink-0">
-                        <PlayCircle className="w-4 h-4" />
-                        Replay Child Tutorial
-                      </Button>
-                      <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
-                        <X className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </div>
+                  <AnimatePresence>
+                    {showHelpModal && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                          className={`w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 pt-2 border-b border-stone-100 dark:border-stone-800 gap-4">
+                            <div className="flex justify-between w-full sm:w-auto items-center">
+                              <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
+                                How to Use the App
+                              </Typography>
+                              <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors sm:hidden">
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
 
-                  <div className="space-y-6 text-left pb-4">
-                    <section>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-                          <Gamepad2 className="w-5 h-5" />
-                        </div>
-                        <Typography variant="h3" className="text-lg font-bold text-stone-800 dark:text-stone-100">Welcome to your Dashboard</Typography>
-                      </div>
-                      <Typography variant="body" className="text-stone-600 dark:text-stone-400 text-sm leading-relaxed mb-4">
-                        This is your space to see your progress, interact with your virtual pet, and earn rewards!
-                      </Typography>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
-                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Daily Quests (Tasks)</h4>
-                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                            <li><strong>To-Do List:</strong> See daily tasks categorized by their Pots.</li>
-                            <li><strong>Completing Tasks:</strong> Tapping a task marks it as "Pending Approval." Once approved, coins rain down!</li>
-                          </ul>
-                        </div>
-                        
-                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
-                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Claiming Rewards</h4>
-                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                            <li><strong>The Shop:</strong> Browse available rewards.</li>
-                            <li><strong>Redeeming:</strong> "Buy" a reward to deduct coins and send a request to your parent's inbox.</li>
-                          </ul>
-                        </div>
-                        
-                        <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800 sm:col-span-2">
-                          <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Pet Ecosystem & Leveling Up</h4>
-                          <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
-                            <li><strong>Virtual Pet:</strong> You have a virtual companion (like the Emerald Dragon) to take care of.</li>
-                            <li><strong>Feeding & Maintenance:</strong> Completing tasks keeps your pet fed and happy. If neglected, the pet gets hungry!</li>
-                            <li><strong>Leveling Up:</strong> Earning gold coins fills up the XP bar. Reaching a new level triggers an exciting evolution sequence where your pet grows!</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </section>
+                            <div className="flex items-center gap-3">
+                              <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2 shrink-0">
+                                <PlayCircle className="w-4 h-4" />
+                                Replay Child Tutorial
+                              </Button>
+                              <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-6 text-left pb-4">
+                            <section>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                                  <Gamepad2 className="w-5 h-5" />
+                                </div>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-800 dark:text-stone-100">Welcome to your Dashboard</Typography>
+                              </div>
+                              <Typography variant="body" className="text-stone-600 dark:text-stone-400 text-sm leading-relaxed mb-4">
+                                This is your space to see your progress, interact with your virtual pet, and earn rewards!
+                              </Typography>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Daily Quests (Tasks)</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>To-Do List:</strong> See daily tasks categorized by their Pots.</li>
+                                    <li><strong>Completing Tasks:</strong> Tapping a task marks it as "Pending Approval." Once approved, coins rain down!</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Claiming Rewards</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>The Shop:</strong> Browse available rewards.</li>
+                                    <li><strong>Redeeming:</strong> "Buy" a reward to deduct coins and send a request to your parent's inbox.</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800 sm:col-span-2">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Pet Ecosystem & Leveling Up</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>Virtual Pet:</strong> You have a virtual companion (like the Emerald Dragon) to take care of.</li>
+                                    <li><strong>Feeding & Maintenance:</strong> Completing tasks keeps your pet fed and happy. If neglected, the pet gets hungry!</li>
+                                    <li><strong>Leveling Up:</strong> Earning gold coins fills up the XP bar. Reaching a new level triggers an exciting evolution sequence where your pet grows!</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </section>
 
 
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Home Tab */}
                   {activeChildTab === 'home' && activeChild && (

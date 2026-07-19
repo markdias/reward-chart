@@ -11,7 +11,8 @@ import StepRewardsSelection from './StepRewardsSelection';
 import StepCreateAccount from './StepCreateAccount';
 import StepHandover from './StepHandover';
 import StepParentDetails from './StepParentDetails';
-import { Child, Task, Reward } from '../../types';
+import StepRoutinesSelection from './StepRoutinesSelection';
+import { Child, Task, Reward, Routine } from '../../types';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../../data/premadeTemplates';
 
 interface OnboardingWizardProps {
@@ -27,13 +28,14 @@ export interface OnboardingData {
   children: Partial<Child>[];
   parentName: string;
   familyName: string;
+  selectedRoutines: Omit<Routine, 'id'>[];
   selectedTasks: Task[];
   selectedRewards: Reward[];
   skippedAccount: boolean;
   email?: string;
 }
 
-export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'tasks' | 'rewards' | 'account';
+export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'routines' | 'tasks' | 'rewards' | 'account';
 
 export default function OnboardingWizard({ 
   onComplete, 
@@ -49,6 +51,7 @@ export default function OnboardingWizard({
     children: [],
     parentName: '',
     familyName: '',
+    selectedRoutines: [],
     selectedTasks: [],
     selectedRewards: [],
     skippedAccount: false,
@@ -67,7 +70,7 @@ export default function OnboardingWizard({
   const handleChildrenSetupComplete = (childrenData: Partial<Child>[]) => {
     setOnboardingData(prev => ({ ...prev, children: childrenData }));
     if (skipAccountStep) {
-      setStep('tasks');
+      setStep('routines');
     } else if (startedBy === 'child') {
       setStep('handover');
     } else {
@@ -81,6 +84,29 @@ export default function OnboardingWizard({
 
   const handleParentDetailsComplete = (name: string, familyName: string) => {
     setOnboardingData(prev => ({ ...prev, parentName: name, familyName }));
+    setStep('routines');
+  };
+
+  const handleRoutinesSelectionComplete = (selectedRoutines: Omit<Routine, 'id'>[]) => {
+    setOnboardingData(prev => ({ ...prev, selectedRoutines }));
+    // Automatically select the tasks included in these routines
+    const routineTaskIds = new Set<string>();
+    selectedRoutines.forEach(routine => {
+      routine.morningTaskIds.forEach(id => routineTaskIds.add(id));
+      routine.afternoonTaskIds.forEach(id => routineTaskIds.add(id));
+      routine.eveningTaskIds.forEach(id => routineTaskIds.add(id));
+    });
+    
+    // We update selectedTasks temporarily so the tasks step has them pre-selected
+    setOnboardingData(prev => {
+      const existingTaskIds = prev.selectedTasks.map(t => t.id as string);
+      const newTasks = PREMADE_TASKS.filter(t => routineTaskIds.has(t.id as string) && !existingTaskIds.includes(t.id as string));
+      return {
+        ...prev,
+        selectedTasks: [...prev.selectedTasks, ...(newTasks as Task[])]
+      };
+    });
+
     setStep('tasks');
   };
 
@@ -104,8 +130,8 @@ export default function OnboardingWizard({
     }
   };
 
-  const handleAccountComplete = (skipped: boolean, email?: string) => {
-    const finalData = { ...onboardingData, skippedAccount: skipped, email };
+  const handleAccountComplete = (email?: string) => {
+    const finalData = { ...onboardingData, skippedAccount: false, email };
     setOnboardingData(finalData);
     onComplete(finalData);
   };
@@ -158,12 +184,20 @@ export default function OnboardingWizard({
             initialFamilyName={onboardingData.familyName}
           />
         );
+      case 'routines':
+        return (
+          <StepRoutinesSelection
+            onNext={handleRoutinesSelectionComplete}
+            onBack={() => startedBy === 'child' ? setStep('handover') : setStep('parentDetails')}
+            initialSelectedRoutines={onboardingData.selectedRoutines}
+          />
+        );
       case 'tasks':
         return (
           <StepTasksSelection
             
             onNext={handleTasksSelectionComplete}
-            onBack={() => setStep('parentDetails')}
+            onBack={() => setStep('routines')}
             initialSelectedTaskIds={onboardingData.selectedTasks.map(t => t.id)}
           />
         );

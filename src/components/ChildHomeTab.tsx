@@ -331,7 +331,19 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
         }
 
-        if (!activeRoutine) return null;
+        if (!activeRoutine) {
+          return (
+            <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+              <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO ACTIVE ROUTINES</Typography>
+                <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
+                  Ask your parents to set up a routine for you!
+                </Typography>
+              </div>
+            </div>
+          );
+        }
 
         let globalTaskIndex = 1;
 
@@ -411,12 +423,12 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                     <button
                       key={task.id}
                       onClick={() => handleTaskCheck(task.id, task.title)}
-                      className={`w-full text-left group ${currentTaskIndex === 0 ? 'joyride-target-first-routine' : ''}`}
+                      className={`w-full text-left group ${currentTaskIndex === 1 ? 'joyride-target-first-routine' : ''}`}
                     >
                       {cardContent}
                     </button>
                   ) : (
-                    <div key={task.id} className={`opacity-60 grayscale pointer-events-none ${currentTaskIndex === 0 ? 'joyride-target-first-routine' : ''}`}>
+                    <div key={task.id} className={`opacity-60 grayscale pointer-events-none ${currentTaskIndex === 1 ? 'joyride-target-first-routine' : ''}`}>
                       {cardContent}
                     </div>
                   );
