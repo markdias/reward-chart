@@ -147,7 +147,9 @@ export default function WellDoneOverlay({ show, taskName, companionId = 'unicorn
             className="filter drop-shadow-2xl"
             style={{ animation: 'wd-kid-bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.05s forwards, wd-kid-float 3s ease-in-out infinite 0.85s' }}
           >
-            <model-viewer src={companionImage} alt="Companion" auto-rotate camera-controls class="w-[clamp(12rem,40vw,24rem)] h-[clamp(12rem,40vw,24rem)]" />
+            <model-viewer src={companionImage} alt="Companion" auto-rotate camera-controls class="w-[clamp(12rem,40vw,24rem)] h-[clamp(12rem,40vw,24rem)]">
+              <div slot="progress-bar"></div>
+            </model-viewer>
           </div>
 
           <div className="flex flex-col items-center mt-2">

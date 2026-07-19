@@ -108,21 +108,44 @@ export const executeOrQueue = async (
       return { success: true, queued: false };
     }
 
+    let cleanPayload = { ...payload };
+    
+    // Strip local-only fields that are not yet in the Supabase schema
+    if (table === 'children') {
+      const localOnlyFields = [
+        'level_up_bonuses_received',
+        'pet_fed_total',
+        'pet_happy_streak',
+        'savings_deposits',
+        'savings_goals_met',
+        'gifts_made',
+        'gold_pot_fixes',
+        'gold_pot_unbroken_days',
+        'manual_deductions',
+        'holiday_mode'
+      ];
+      localOnlyFields.forEach(field => {
+        if (field in cleanPayload) {
+          delete cleanPayload[field];
+        }
+      });
+    }
+
     let query: any = supabase.from(table);
     
     switch (action) {
       case 'insert':
-        query = query.insert(payload);
+        query = query.insert(cleanPayload);
         break;
       case 'upsert':
         if (match && match.onConflict) {
-          query = query.upsert(payload, { onConflict: match.onConflict });
+          query = query.upsert(cleanPayload, { onConflict: match.onConflict });
         } else {
-          query = query.upsert(payload);
+          query = query.upsert(cleanPayload);
         }
         break;
       case 'update':
-        query = applyMatch(query.update(payload), match);
+        query = applyMatch(query.update(cleanPayload), match);
         break;
       case 'delete':
         query = applyMatch(query.delete(), match);

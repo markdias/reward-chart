@@ -1004,7 +1004,9 @@ export default function ChildDashboard({
                     className={`relative h-44 w-44 rounded-full ${evolvingStage.model_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.model_url ? (
-                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover" />
+                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover">
+                        <div slot="progress-bar"></div>
+                      </model-viewer>
                     ) : (
                       <span>{evolvingStage.emoji}</span>
                     )}
@@ -1772,7 +1774,9 @@ export default function ChildDashboard({
                                   ? (activeChild.pet_fed_today ? activeChildStage.model_url_fed : activeChildStage.model_url_not_fed)
                                   : activeChildStage.model_url;
                                 return modelUrl ? (
-                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
+                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]">
+                                    <div slot="progress-bar"></div>
+                                  </model-viewer>
                                 ) : (
                                   <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
                                     {activeChildStage.emoji}

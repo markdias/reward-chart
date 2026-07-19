@@ -227,7 +227,9 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                     auto-rotate
                     camera-controls
                     class="w-full h-full object-contain" 
-                  />
+                  >
+                    <div slot="progress-bar"></div>
+                  </model-viewer>
                 ) : (
                   <span className="text-6xl md:text-8xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] animate-bounce-slow">
                     {activeChar.emoji}
@@ -318,7 +320,9 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                         alt={char.name} 
                         camera-controls
                         class="w-full h-full object-contain p-1"
-                      />
+                      >
+                        <div slot="progress-bar"></div>
+                      </model-viewer>
                     ) : (
                       <span className="text-2xl sm:text-3xl">{char.emoji}</span>
                     )}

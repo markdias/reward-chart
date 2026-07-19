@@ -219,7 +219,36 @@ export default function App() {
     const savedGiftingRequests = localStorage.getItem(keyGiftingRequests);
 
     if (savedChildren) {
-      setChildren(JSON.parse(savedChildren));
+      const parsedChildren = JSON.parse(savedChildren);
+      const now = new Date();
+      let hasUpdates = false;
+      
+      const processedChildren = parsedChildren.map((child: Child) => {
+        let updated = { ...child };
+        
+        let nextWeeklyReset = updated.weekly_reset_date ? new Date(updated.weekly_reset_date) : null;
+        if (!nextWeeklyReset || now >= nextWeeklyReset) {
+          updated.weekly_points = 0;
+          updated.food_pot_weekly_contribution = 0;
+          updated.gold_pot_break_count_this_week = 0;
+          updated.weekly_reset_date = getNextWeeklyResetDate(now).toISOString();
+          hasUpdates = true;
+        }
+
+        let nextMonthlyReset = updated.monthly_reset_date ? new Date(updated.monthly_reset_date) : null;
+        if (!nextMonthlyReset || now >= nextMonthlyReset) {
+          updated.monthly_points = 0;
+          updated.monthly_reset_date = getNextMonthlyResetDate(now).toISOString();
+          hasUpdates = true;
+        }
+        
+        return updated;
+      });
+      
+      if (hasUpdates) {
+        localStorage.setItem(keyChildren, JSON.stringify(processedChildren));
+      }
+      setChildren(processedChildren);
     } else {
       const initial: any[] = [];
       setChildren(initial);
@@ -512,6 +541,23 @@ export default function App() {
               if (!updated.gifting_unlocked && updated.level >= giftingLvl) {
                 updates.gifting_unlocked = true;
                 updates.gifting_unlock_seen = false;
+                updated = { ...updated, ...updates };
+              }
+
+              // Weekly & Monthly Resets
+              let nextWeeklyReset = updated.weekly_reset_date ? new Date(updated.weekly_reset_date) : null;
+              if (!nextWeeklyReset || now >= nextWeeklyReset) {
+                updates.weekly_points = 0;
+                updates.food_pot_weekly_contribution = 0;
+                updates.gold_pot_break_count_this_week = 0;
+                updates.weekly_reset_date = getNextWeeklyResetDate(now).toISOString();
+                updated = { ...updated, ...updates };
+              }
+
+              let nextMonthlyReset = updated.monthly_reset_date ? new Date(updated.monthly_reset_date) : null;
+              if (!nextMonthlyReset || now >= nextMonthlyReset) {
+                updates.monthly_points = 0;
+                updates.monthly_reset_date = getNextMonthlyResetDate(now).toISOString();
                 updated = { ...updated, ...updates };
               }
               
@@ -1012,6 +1058,7 @@ export default function App() {
           savings_unlock_seen: false,
           food_pot_unlocked: false,
           food_pot_unlock_seen: false,
+          food_pot_weekly_contribution: 0,
           savings_goal_name: null,
           savings_goal_amount: null,
           savings_goal_reward_id: null,
@@ -1024,13 +1071,14 @@ export default function App() {
           last_gifting_date: null,
           gold_pot_broken: false,
           gold_pot_break_count_this_week: 0,
-          gold_pot_break_week: undefined,
+          gold_pot_break_week: null,
           gold_pot_last_leak_date: null,
           gold_pot_last_check_date: null,
           gold_pot_last_fix_date: null,
           gold_pot_total_leaked: 0,
           gold_pot_intro_seen: false,
           gold_pot_maintenance_unlock_seen: false,
+          level_up_bonuses_received: 0,
           pet_fed_total: 0,
           pet_happy_streak: 0,
           savings_deposits: 0,
