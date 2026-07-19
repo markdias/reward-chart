@@ -2375,6 +2375,10 @@ export default function App() {
             onSuccess={handleParentLockSuccess}
             onClose={() => setShowLockScreen(false)}
             theme={activeTheme}
+            onLogout={() => {
+              handleLogout();
+              setShowLockScreen(false);
+            }}
           />
         )}
       </AnimatePresence>
