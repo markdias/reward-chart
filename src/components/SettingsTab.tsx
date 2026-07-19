@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell } from 'lucide-react';
+import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell, ShieldCheck, FileText } from 'lucide-react';
 import OneSignal from 'react-onesignal';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -325,6 +325,25 @@ export default function SettingsTab({
         </div>
         
         <div className="max-w-4xl mx-auto">
+          <SettingsBlock title="Legal & Privacy">
+            <SettingsActionRow 
+              label="Privacy Policy" 
+              description="Read how we protect your family's data."
+              icon={ShieldCheck} 
+              onClick={() => {
+                window.location.hash = 'privacy';
+              }} 
+            />
+            <SettingsActionRow 
+              label="Terms of Service" 
+              description="Read our terms and conditions."
+              icon={FileText} 
+              onClick={() => {
+                window.location.hash = 'terms';
+              }} 
+            />
+          </SettingsBlock>
+
           <SettingsBlock title="Personal Information">
             <SettingsRow label="Account Email" value={parentProfile?.email || ''} type="text" onChange={() => {}} />
             <SettingsRow label="Your Name" value={name} type="text" onChange={(v) => setName(v)} onBlur={handleSaveProfile} />

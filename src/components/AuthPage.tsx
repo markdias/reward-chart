@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
 import { ShieldCheck, Sparkles, Gamepad2, Play, Lock, AlertCircle, Heart } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 import { playSound } from '../utils/sound';
 
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
@@ -322,6 +324,30 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setRealAuthError('Supabase client is not configured.');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) {
+        setRealAuthError(error.message);
+        playSound.pinError();
+      }
+    } catch (err: any) {
+      setRealAuthError(err.message || `An error occurred during ${provider} login`);
+      playSound.pinError();
+    }
+  };
+
   const styles = {
     text: 'text-stone-900 dark:text-stone-50',
     textMuted: 'text-stone-500 dark:text-stone-400',
@@ -431,6 +457,23 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                     </div>
                   </div>
                 )}
+
+                <div className="flex flex-col gap-3 mb-4">
+                  <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2">
+                    <FcGoogle className="w-5 h-5" />
+                    <span>Continue with Google</span>
+                  </Button>
+                  <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('apple')} className="flex items-center justify-center gap-2">
+                    <FaApple className="w-5 h-5 text-black dark:text-white" />
+                    <span>Continue with Apple</span>
+                  </Button>
+                </div>
+
+                <div className="relative flex items-center py-2">
+                  <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+                  <span className="flex-shrink-0 mx-4 text-xs font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Or</span>
+                  <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+                </div>
 
                 <Input
                   label="Email Address"
