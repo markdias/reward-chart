@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import OneSignal from 'react-onesignal';
+import { AppTrackingTransparency } from '@capgo/capacitor-app-tracking-transparency';
 import { App as CapacitorApp } from '@capacitor/app';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
@@ -70,6 +71,18 @@ export default function App() {
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
     };
+  }, []);
+
+  useEffect(() => {
+    // Request iOS App Tracking Transparency on launch
+    const requestATT = async () => {
+      try {
+        await AppTrackingTransparency.requestPermission();
+      } catch (err) {
+        // Safe to ignore, probably not running on iOS
+      }
+    };
+    requestATT();
   }, []);
 
   useEffect(() => {
@@ -938,6 +951,11 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
     setIsParentMode(true);
     setPostSignUpData(null);
+
+    // Request Push Notification Permissions after onboarding
+    if (OneSignal.Notifications && OneSignal.Notifications.isPushSupported()) {
+      OneSignal.Notifications.requestPermission().catch(err => console.warn('OneSignal permission prompt skipped/failed', err));
+    }
   };
 
   const handleSignUpReal = (email: string, name: string, familyName: string) => {

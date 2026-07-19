@@ -37,44 +37,62 @@ export const CHARACTER_PACKS: CharacterPack[] = [
         emoji: '🥚✨',
         color_theme: 'from-emerald-400 via-green-400 to-teal-500',
         animation_class: 'hover:scale-105 duration-500',
-        model_url: '/01_Emerald_Dragon_Egg.glb'
+        model_url: '/01_Emerald_Dragon_Egg.glb',
+        model_scale: 1.4
       },
       {
         stage_number: 2,
-        name: 'Emerald Dragon Baby',
-        description: 'A tiny dragon that recently hatched! Full of energy and ready to learn.',
-        min_points: 80,
-        min_level: 40,
-        emoji: '🐉👶',
-        color_theme: 'from-emerald-500 via-green-500 to-teal-400',
-        animation_class: 'hover:scale-110 duration-500',
-        model_url: '/02_Emerald_Dragon_Baby.glb'
+        name: 'Emerald Dragon Egg Baby',
+        description: 'A tiny dragon head popping out of the egg! It is starting to hatch.',
+        min_points: 40,
+        min_level: 2,
+        emoji: '🥚🐉',
+        color_theme: 'from-emerald-400 via-green-400 to-teal-500',
+        animation_class: 'hover:scale-105 duration-500',
+        model_url: '/01_01_Emerald_Dragon_Egg_Baby.glb',
+        model_scale: 1.4
       },
       {
         stage_number: 3,
+        name: 'Emerald Dragon Baby',
+        description: 'A tiny dragon that recently hatched! Full of energy and ready to learn.',
+        min_points: 80,
+        min_level: 4,
+        emoji: '🐉👶',
+        color_theme: 'from-emerald-500 via-green-500 to-teal-400',
+        animation_class: 'hover:scale-110 duration-500',
+        model_url: '/02_Emerald_Dragon_Baby_Fed.glb',
+        model_url_fed: '/02_Emerald_Dragon_Baby_Fed.glb',
+        model_url_not_fed: '/02_Emerald_Dragon_Baby_Not_Fed.glb',
+        model_scale: 1.7
+      },
+      {
+        stage_number: 4,
         name: 'Emerald Dragon Teen',
         description: 'A growing teenage dragon brimming with confidence! Growing stronger with every good deed.',
         min_points: 150,
-        min_level: 4,
+        min_level: 6,
         emoji: '🐉✨',
         color_theme: 'from-emerald-500 via-teal-400 to-cyan-500',
         animation_class: 'hover:scale-105 duration-500',
         model_url: '/03_Emerald_Dragon_Teen_Fed.glb',
         model_url_fed: '/03_Emerald_Dragon_Teen_Fed.glb',
-        model_url_not_fed: '/03_Emerald_Dragon_Teen_Not_Fed.glb'
+        model_url_not_fed: '/03_Emerald_Dragon_Teen_Not_Fed.glb',
+        model_scale: 1.6
       },
       {
-        stage_number: 4,
+        stage_number: 5,
         name: 'Emerald Dragon Adult',
         description: 'The supreme form of Sparky, boasting grand wings and wisdom. Supercharged by good behavior!',
         min_points: 300,
-        min_level: 6,
+        min_level: 8,
         emoji: '👑🐉🌌',
         color_theme: 'from-cyan-600 via-teal-600 to-emerald-500',
         animation_class: 'hover:skew-y-3 duration-500',
         model_url: '/04_Emerald_Dragon_Adult_Fed.glb',
         model_url_fed: '/04_Emerald_Dragon_Adult_Fed.glb',
-        model_url_not_fed: '/04_Emerald_Dragon_Adult_Not_Fed.glb'
+        model_url_not_fed: '/04_Emerald_Dragon_Adult_Not_Fed.glb',
+        model_scale: 2.4
       }
     ]
   }

@@ -14,6 +14,8 @@ export interface ParentProfile {
   family_name?: string | null;
   pin?: string;
   share_token: string | null;
+  is_beta_tester?: boolean;
+  has_special_logins?: boolean;
   level_up_gold_reward?: number;
   points_to_level_up?: number;
   savings_pot_unlock_level?: number;
@@ -191,6 +193,7 @@ export interface CharacterEvolutionStage {
   model_url?: string;
   model_url_fed?: string;
   model_url_not_fed?: string;
+  model_scale?: number;
 }
 
 export interface CharacterPack {

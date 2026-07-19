@@ -10,6 +10,7 @@ import { Plane, Star, Zap, Shield, Crown, Play, Trophy, Flame, ChevronRight } fr
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { ActionShowcase } from './ActionShowcase';
+import { DashboardBottomConcepts } from './DashboardBottomConcepts';
 
 const SettingsBlock = ({ children, title }: { children: React.ReactNode, title?: string }) => (
   <div className="mb-6 w-full max-w-md mx-auto">
@@ -166,6 +167,13 @@ export default function Showcase() {
             ========================================= */}
         <section className="space-y-6 pt-6">
           <ActionShowcase />
+        </section>
+
+        {/* =========================================
+            DASHBOARD BOTTOM CONCEPTS
+            ========================================= */}
+        <section id="redesigns" className="space-y-6 pt-6">
+          <DashboardBottomConcepts />
         </section>
 
         {/* =========================================
