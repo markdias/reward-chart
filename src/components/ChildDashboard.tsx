@@ -432,6 +432,7 @@ export default function ChildDashboard({
 
   // Daily hunger check & penalty check hook
   useEffect(() => {
+    if (isLoading) return;
     if (!selectedChildId) return;
     const child = children.find(c => c.id === selectedChildId);
     if (!child) return;
@@ -475,7 +476,7 @@ export default function ChildDashboard({
 
       onUpdateChildStats(child.id, updates);
     }
-  }, [selectedChildId, children, onUpdateChildStats]);
+  }, [selectedChildId, children, isLoading, onUpdateChildStats]);
 
   // Feed Reminder Check
   useEffect(() => {
@@ -497,6 +498,7 @@ export default function ChildDashboard({
 
   // Gold Pot Maintenance daily check
   useEffect(() => {
+    if (isLoading) return;
     if (!selectedChildId || !activeChild) return;
     if (!isGoldPotMaintenanceUnlocked) return;
     if (!activeChild.gold_pot_maintenance_unlock_seen) return;
@@ -545,7 +547,7 @@ export default function ChildDashboard({
 
       onUpdateChildStats(activeChild.id, updates);
     }
-  }, [selectedChildId, activeChild?.id, activeChild?.gold_pot_last_check_date, isGoldPotMaintenanceUnlocked, onUpdateChildStats]);
+  }, [selectedChildId, activeChild?.id, activeChild?.gold_pot_last_check_date, isGoldPotMaintenanceUnlocked, isLoading, onUpdateChildStats]);
 
   const isSavingsUnlocked = activeChild ? (activeChild.savings_unlocked || activeChild.level >= (parentProfile?.savings_pot_unlock_level ?? 2)) : false;
   const isFoodPotUnlocked = activeChild ? (activeChild.food_pot_unlocked || activeChild.level >= (parentProfile?.food_pot_unlock_level ?? 4)) : false;
