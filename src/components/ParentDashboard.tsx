@@ -78,6 +78,7 @@ interface ParentDashboardProps {
   onUnlinkChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onDeductCoins?: (childId: string, amount: number, reason: string) => void;
+  onAddCoins?: (childId: string, amount: number, reason: string) => void;
   onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
   onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
@@ -122,6 +123,7 @@ export default function ParentDashboard({
   onUnlinkChild,
   onUpdateChildStats,
   onDeductCoins,
+  onAddCoins,
   onAddTask,
   onAssignTask,
   onEditTask,
@@ -451,6 +453,11 @@ export default function ParentDashboard({
   const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
   const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
   const [penaltyReason, setPenaltyReason] = useState<string>('');
+
+  // Add Coins Modal State
+  const [addCoinsModalChildId, setAddCoinsModalChildId] = useState<string | null>(null);
+  const [addCoinsAmount, setAddCoinsAmount] = useState<number>(5);
+  const [addCoinsReason, setAddCoinsReason] = useState<string>('');
 
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -1514,13 +1521,22 @@ export default function ParentDashboard({
                                           </span>
                                           <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
                                         </button>
-                                        {onUpdateChildStats && (
+                                        {onUpdateChildStats && parentProfile?.has_special_logins && (
                                           <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
                                             <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
                                               <Settings className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
                                               Adjust Balance
                                             </span>
                                             <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                          </button>
+                                        )}
+                                        {onAddCoins && (
+                                          <button onClick={() => { playSound.click(); setAddCoinsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-colors group">
+                                            <span className="text-sm font-bold text-emerald-600 flex items-center gap-3">
+                                              <PlusCircle className="w-4 h-4 text-emerald-400 group-hover:text-emerald-500" />
+                                              Add Coins
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:text-emerald-400" />
                                           </button>
                                         )}
                                         {onDeductCoins && (
@@ -2804,6 +2820,118 @@ export default function ParentDashboard({
                     disabled={!penaltyReason.trim() || Number(penaltyAmount) <= 0}
                   >
                     Deduct Coins
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {addCoinsModalChildId && onAddCoins && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setAddCoinsModalChildId(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
+              >
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-4">
+                  <PlusCircle className="w-6 h-6" />
+                </div>
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
+                  Add Coins
+                </Typography>
+                <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mb-6">
+                  Add coins to {children.find(c => c.id === addCoinsModalChildId)?.name} and leave a reason in their activity log.
+                </Typography>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-2">Amount to add</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={addCoinsAmount}
+                        onChange={(e) => setAddCoinsAmount(e.target.value === '' ? '' as any : Math.max(1, parseInt(e.target.value) || 0))}
+                      />
+                      <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-3">Reason for adding coins</label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].map(reason => (
+                        <button
+                          key={reason}
+                          onClick={() => setAddCoinsReason(reason)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            addCoinsReason === reason 
+                              ? 'bg-emerald-500 text-white shadow-md' 
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                          }`}
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          if (['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason)) {
+                            setAddCoinsReason('');
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          !['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason)
+                            ? 'bg-emerald-500 text-white shadow-md' 
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                        }`}
+                      >
+                        Other...
+                      </button>
+                    </div>
+
+                    {!['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason) && (
+                      <Input
+                        type="text"
+                        placeholder="Type custom reason..."
+                        value={addCoinsReason}
+                        onChange={(e) => setAddCoinsReason(e.target.value)}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <Button
+                    variant="ghost"
+                    onClick={() => { playSound.click(); setAddCoinsModalChildId(null); setAddCoinsReason(''); setAddCoinsAmount(5); }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      playSound.click();
+                      onAddCoins(addCoinsModalChildId, Number(addCoinsAmount) || 0, addCoinsReason || 'Bonus coins applied');
+                      setAddCoinsModalChildId(null);
+                      setAddCoinsReason('');
+                      setAddCoinsAmount(5);
+                    }}
+                    className="flex-1"
+                    disabled={!addCoinsReason.trim() || Number(addCoinsAmount) <= 0}
+                  >
+                    Add Coins
                   </Button>
                 </div>
               </motion.div>

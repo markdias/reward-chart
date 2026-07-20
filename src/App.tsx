@@ -768,6 +768,7 @@ export default function App() {
           food_pot_unlocked: updatedChild.food_pot_unlocked,
           food_pot_unlock_seen: updatedChild.food_pot_unlock_seen,
           food_pot_weekly_contribution: updatedChild.food_pot_weekly_contribution,
+          tour_seen: updatedChild.tour_seen,
           pet_fed_today: updatedChild.pet_fed_today,
           pet_hunger_time: updatedChild.pet_hunger_time,
           pet_unhappy: updatedChild.pet_unhappy,
@@ -1627,25 +1628,46 @@ export default function App() {
     }
   };
 
-  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+  const handleAddCoins = async (childId: string, amount: number, reason: string) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
 
-    // Let processLifetimePoints handle lifetime points and level recalculation.
-    // It will process the negative amount.
-    let targetChild = processLifetimePoints(child, -amount);
-    
-    // Explicitly subtract the actual points
-    targetChild.points = Math.max(0, child.points - amount);
-    
-    const levelDropped = (targetChild.level || 1) < (child.level || 1);
+    let targetChild = processLifetimePoints(child, amount);
+    targetChild.points = child.points + amount;
 
     const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
     syncChildren(updatedChildren);
 
-    if (levelDropped) {
-      revokeInvalidLevelBadges(childId, targetChild.level || 1);
+    // Create a bonus completion
+    const newCompletion: TaskCompletion = {
+      id: `comp_bonus_${Date.now()}`,
+      task_id: 'bonus',
+      child_id: childId,
+      status: 'approved',
+      points_awarded: amount,
+      completed_at: new Date().toISOString(),
+      notes: reason
+    };
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      updateChildInSupabase(targetChild);
+      const { error } = await executeOrQueue('completions', 'insert', newCompletion);
+      if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
+  };
+
+  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    // Take Coins should not take off the lifetime but just the current total.
+    let targetChild = { ...child };
+    targetChild.points = Math.max(0, child.points - amount);
+
+    const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+    syncChildren(updatedChildren);
 
     // Create a penalty completion
     const newCompletion: TaskCompletion = {
@@ -2326,6 +2348,7 @@ export default function App() {
               onUnlinkChild={handleUnlinkChild}
               onUpdateChildStats={handleUpdateChildStats}
               onDeductCoins={handleDeductCoins}
+              onAddCoins={handleAddCoins}
               onAddTask={handleAddTask}
               onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
