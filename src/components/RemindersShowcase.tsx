@@ -7,9 +7,9 @@ import { getPetStripeBackground } from './ArcadeTicketCard';
 
 export const RemindersShowcase = () => {
   const mockReminders = [
-    { id: '1', type: 'food', text: 'Your pet is hungry!', urgency: 'high', icon: FaBone, color: 'bg-amber-100 text-amber-600 border-amber-200' },
-    { id: '2', type: 'maintenance', text: 'Maintenance Pot: Broken! Last fixed 14/07/2026', urgency: 'high', icon: FaWrench, color: 'bg-red-100 text-red-600 border-red-200' },
-    { id: '3', type: 'savings', text: 'Time to deposit some coins!', urgency: 'medium', icon: FaPiggyBank, color: 'bg-emerald-100 text-emerald-600 border-emerald-200' },
+    { id: '1', type: 'food', text: 'Your pet is hungry!', urgency: 'high', icon: FaBone, color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50' },
+    { id: '2', type: 'maintenance', text: 'Maintenance Pot: Broken! Last fixed 14/07/2026', urgency: 'high', icon: FaWrench, color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50' },
+    { id: '3', type: 'savings', text: 'Time to deposit some coins!', urgency: 'medium', icon: FaPiggyBank, color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50' },
   ];
 
   return (
@@ -145,13 +145,13 @@ export const RemindersShowcase = () => {
                   const Icon = reminder.icon;
                   return (
                     <div key={reminder.id} className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${reminder.color}`}>
-                      <div className="w-8 h-8 rounded-lg bg-white/50 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
-                        <Typography variant="body" className="font-bold text-xs">
+                        <p className="font-sans font-bold text-xs text-inherit">
                           {reminder.text}
-                        </Typography>
+                        </p>
                       </div>
                     </div>
                   );

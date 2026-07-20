@@ -314,27 +314,27 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                 
                 if (reminder.startsWith('Food Pot')) {
                   Icon = FaBone;
-                  colorClass = "bg-amber-100 text-amber-600 border-amber-200";
+                  colorClass = "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50";
                 } else if (reminder.startsWith('Maintenance Pot')) {
                   Icon = FaWrench;
-                  colorClass = "bg-red-100 text-red-600 border-red-200";
+                  colorClass = "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50";
                 } else if (reminder.startsWith('Savings Pot')) {
                   Icon = FaPiggyBank;
-                  colorClass = "bg-emerald-100 text-emerald-600 border-emerald-200";
+                  colorClass = "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50";
                 } else if (reminder.startsWith('Gifting Pot')) {
                   Icon = FaGift;
-                  colorClass = "bg-purple-100 text-purple-600 border-purple-200";
+                  colorClass = "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50";
                 }
 
                 return (
                   <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass}`}>
-                    <div className="w-8 h-8 rounded-lg bg-white/50 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1">
-                      <Typography variant="body" className="font-bold text-xs">
+                      <p className="font-sans font-bold text-xs text-inherit">
                         {reminder}
-                      </Typography>
+                      </p>
                     </div>
                   </div>
                 );
