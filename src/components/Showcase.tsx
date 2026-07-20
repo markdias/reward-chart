@@ -11,7 +11,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { ActionShowcase } from './ActionShowcase';
 import { DashboardBottomConcepts } from './DashboardBottomConcepts';
-
+import { RemindersShowcase } from './RemindersShowcase';
 const SettingsBlock = ({ children, title }: { children: React.ReactNode, title?: string }) => (
   <div className="mb-6 w-full max-w-md mx-auto">
     {title && <h3 className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest mb-2 px-4">{title}</h3>}
@@ -167,6 +167,13 @@ export default function Showcase() {
             ========================================= */}
         <section className="space-y-6 pt-6">
           <ActionShowcase />
+        </section>
+
+        {/* =========================================
+            REMINDERS CONCEPTS
+            ========================================= */}
+        <section id="reminders" className="space-y-6 pt-6">
+          <RemindersShowcase />
         </section>
 
         {/* =========================================

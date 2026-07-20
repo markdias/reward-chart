@@ -563,10 +563,8 @@ export default function ChildDashboard({
       }
     }
     if (isFoodPotUnlocked) {
-      const lastFed = activeChild.last_fed_date ? new Date(activeChild.last_fed_date) : null;
-      const daysSinceFed = lastFed ? Math.floor((now.getTime() - lastFed.getTime()) / (1000 * 3600 * 24)) : Infinity;
-      if (daysSinceFed >= 3 && !activeChild.pet_fed_today) {
-        potReminders.push("Food Pot: Your pet might be hungry!");
+      if (!activeChild.pet_fed_today) {
+        potReminders.push("Food Pot: Your pet is hungry! Feed it today.");
       }
     }
     if (isGiftingUnlocked) {
@@ -576,6 +574,11 @@ export default function ChildDashboard({
       if (daysSinceGifted >= 14 && !giftedToday) {
         potReminders.push("Gifting Pot: Consider gifting some coins!");
       }
+    }
+    if (isGoldPotMaintenanceUnlocked && activeChild.gold_pot_broken) {
+      const lastFixDateStr = activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never';
+      const totalLeaked = activeChild.gold_pot_total_leaked || 0;
+      potReminders.push(`Maintenance Pot: Last fixed ${lastFixDateStr} (Total leaked: ${totalLeaked})`);
     }
   }
 
@@ -3132,21 +3135,7 @@ export default function ChildDashboard({
                                         Oh no! Sometimes your pot cracks and loses coins. Fix it quick!
                                       </Typography>
 
-                                      {/* Status Info */}
-                                      <div className={`grid grid-cols-2 gap-2 bg-stone-50 dark:bg-stone-950 rounded-xl p-2 mb-2 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200 dark:border-stone-700'}`}>
-                                        <div className="text-center">
-                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                            {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
-                                          </div>
-                                        </div>
-                                        <div className="text-center border-l border-stone-200 dark:border-stone-700">
-                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                            {activeChild.gold_pot_total_leaked || 0} Coins
-                                          </div>
-                                        </div>
-                                      </div>
+
 
                                       {activeChild.gold_pot_broken && (
                                         <Typography variant="body" className="text-xs text-red-700 dark:text-red-400 mb-2 leading-tight font-bold">

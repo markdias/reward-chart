@@ -4,7 +4,8 @@ import { Modal } from './ui/Modal';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
-import { FaCircleCheck, FaWandMagicSparkles, FaCalendarCheck } from 'react-icons/fa6';
+import { FaCircleCheck, FaWandMagicSparkles, FaCalendarCheck, FaBone, FaWrench, FaPiggyBank, FaGift } from 'react-icons/fa6';
+import { getPetStripeBackground } from './ArcadeTicketCard';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
@@ -296,18 +297,49 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
-        <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 shadow-sm text-left flex gap-3 items-start dashboard-card">
-          <Bell className="w-5 h-5 text-sky-500 shrink-0 mt-0.5 animate-pulse" />
-          <div className="flex flex-col gap-2 w-full">
-            <h3 className="font-bold text-sky-900 text-sm">Don't forget your pots!</h3>
-            <ul className="flex flex-col gap-1.5 text-xs text-sky-800/80">
-              {potReminders.map((reminder, idx) => (
-                <li key={idx} className="flex gap-2 items-start">
-                  <span className="text-sky-400 mt-0.5">•</span>
-                  <span>{reminder}</span>
-                </li>
-              ))}
-            </ul>
+        <div className="w-full rounded-[1.6rem] p-[3px] shadow-md mb-2" style={{ background: getPetStripeBackground(activeChild.character_id) }}>
+          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex flex-col gap-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-3">
+              <div className="bg-stone-100 dark:bg-stone-800 p-2 rounded-xl shrink-0 shadow-inner">
+                <Bell className="w-5 h-5 text-stone-700 dark:text-stone-200 animate-pulse" />
+              </div>
+              <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 leading-tight tracking-tight">
+                Needs Attention!
+              </Typography>
+            </div>
+            <div className="flex flex-col gap-2 w-full mt-1">
+              {potReminders.map((reminder, idx) => {
+                let Icon: React.ElementType = Bell;
+                let colorClass = "bg-stone-100 text-stone-600 border-stone-200";
+                
+                if (reminder.startsWith('Food Pot')) {
+                  Icon = FaBone;
+                  colorClass = "bg-amber-100 text-amber-600 border-amber-200";
+                } else if (reminder.startsWith('Maintenance Pot')) {
+                  Icon = FaWrench;
+                  colorClass = "bg-red-100 text-red-600 border-red-200";
+                } else if (reminder.startsWith('Savings Pot')) {
+                  Icon = FaPiggyBank;
+                  colorClass = "bg-emerald-100 text-emerald-600 border-emerald-200";
+                } else if (reminder.startsWith('Gifting Pot')) {
+                  Icon = FaGift;
+                  colorClass = "bg-purple-100 text-purple-600 border-purple-200";
+                }
+
+                return (
+                  <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass}`}>
+                    <div className="w-8 h-8 rounded-lg bg-white/50 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <Typography variant="body" className="font-bold text-xs">
+                        {reminder}
+                      </Typography>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
