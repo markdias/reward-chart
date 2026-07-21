@@ -3076,7 +3076,8 @@ export default function ParentDashboard({
               { id: 'chart', label: 'Chart', icon: Calendar },
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-              { id: 'rewards', label: 'Rewards', icon: Gift }
+              { id: 'rewards', label: 'Rewards', icon: Gift },
+              { id: 'targets', label: 'Targets', icon: Target }
             ]}
             activeTab={activeTab}
             onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
