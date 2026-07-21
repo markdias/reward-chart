@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
-  Sparkles, Star, Flame, Trophy, CheckCircle2, RotateCcw, Info, Coins, Filter, Award
+  Sparkles, Star, Flame, Trophy, CheckCircle2, RotateCcw, Info, Coins, Filter, Award,
+  Sun, Moon, CheckSquare
 } from 'lucide-react';
 import { Child, Task, TaskCompletion } from '../types';
 import { playSound } from '../utils/sound';
@@ -20,6 +21,32 @@ interface WeeklyRewardChartProps {
   onRejectCompletion?: (id: string) => void;
   onDeleteCompletion?: (id: string) => void;
 }
+
+// Helper to determine if a task belongs to a routine (and which period)
+const getTaskRoutineInfo = (task: Task, child?: Child): { isRoutine: boolean; period?: 'morning' | 'afternoon' | 'evening' | 'general'; label: string } => {
+  if (child && child.routines && child.routines.length > 0) {
+    for (const routine of child.routines) {
+      if (routine.morningTaskIds?.includes(task.id) || (task.template_id && routine.morningTaskIds?.includes(task.template_id))) {
+        return { isRoutine: true, period: 'morning', label: 'Morning' };
+      }
+      if (routine.afternoonTaskIds?.includes(task.id) || (task.template_id && routine.afternoonTaskIds?.includes(task.template_id))) {
+        return { isRoutine: true, period: 'afternoon', label: 'Afternoon' };
+      }
+      if (routine.eveningTaskIds?.includes(task.id) || (task.template_id && routine.eveningTaskIds?.includes(task.template_id))) {
+        return { isRoutine: true, period: 'evening', label: 'Evening' };
+      }
+    }
+  }
+
+  // Fallback period detection by title or recurrence
+  const titleLower = task.title.toLowerCase();
+  if (titleLower.includes('morning')) return { isRoutine: true, period: 'morning', label: 'Morning' };
+  if (titleLower.includes('afternoon')) return { isRoutine: true, period: 'afternoon', label: 'Afternoon' };
+  if (titleLower.includes('evening') || titleLower.includes('bedtime')) return { isRoutine: true, period: 'evening', label: 'Evening' };
+  if (task.recurrence === 'daily' || task.recurrence === 'weekly') return { isRoutine: true, period: 'general', label: 'Routine' };
+
+  return { isRoutine: false, label: 'Extra' };
+};
 
 // Calculate unlocked badge count dynamically based on child stats & completions
 const calculateBadgeCount = (child: Child, allCompletions: TaskCompletion[]): number => {
@@ -85,6 +112,9 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   // Date range duration state: '7d' (1 week), '14d' (2 weeks), '30d' (1 month)
   const [viewRange, setViewRange] = useState<'7d' | '14d' | '30d'>('7d');
   
+  // Routine filter state: 'all', 'routines', 'extra'
+  const [routineFilter, setRoutineFilter] = useState<'all' | 'routines' | 'extra'>('all');
+
   // Week offset state (0 = current week, -1 = last week, +1 = next week)
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
@@ -172,6 +202,16 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
     if (!activeChild) return [];
     return tasks.filter(t => (t.child_id === activeChild.id || t.child_id === 'all' || t.child_id === 'directory') && t.is_active !== false);
   }, [tasks, activeChild]);
+
+  // Filtered tasks based on routine filter ('all', 'routines', 'extra')
+  const filteredChildTasks = useMemo(() => {
+    return activeChildTasks.filter(task => {
+      const routineInfo = getTaskRoutineInfo(task, activeChild);
+      if (routineFilter === 'routines') return routineInfo.isRoutine;
+      if (routineFilter === 'extra') return !routineInfo.isRoutine;
+      return true;
+    });
+  }, [activeChildTasks, activeChild, routineFilter]);
 
   // Date range label string (e.g., "20 Jul – 26 Jul")
   const dateRangeLabel = useMemo(() => {
@@ -411,10 +451,48 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
             </div>
           </div>
 
-          <div className="text-right hidden sm:block print:block">
-            <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">Total Gold</span>
-            <div className="flex items-center justify-end gap-1.5 font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">
-              <CoinBadge points={summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
+          <div className="flex items-center gap-4">
+            {/* Filter by Routine or Extra Chores */}
+            <div className="hidden md:flex items-center gap-1 bg-stone-100 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700/80 text-[11px] font-bold print:hidden">
+              <button
+                onClick={() => { playSound.click(); setRoutineFilter('all'); }}
+                className={`px-2.5 py-1 rounded-lg transition-all ${
+                  routineFilter === 'all'
+                    ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 shadow-sm font-black'
+                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
+                }`}
+              >
+                All ({activeChildTasks.length})
+              </button>
+              <button
+                onClick={() => { playSound.click(); setRoutineFilter('routines'); }}
+                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                  routineFilter === 'routines'
+                    ? 'bg-rose-500 text-white shadow-sm font-black'
+                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
+                }`}
+              >
+                <RotateCcw className="w-3 h-3" />
+                Routines
+              </button>
+              <button
+                onClick={() => { playSound.click(); setRoutineFilter('extra'); }}
+                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                  routineFilter === 'extra'
+                    ? 'bg-rose-500 text-white shadow-sm font-black'
+                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
+                }`}
+              >
+                <CheckSquare className="w-3 h-3" />
+                Extra
+              </button>
+            </div>
+
+            <div className="text-right hidden sm:block print:block">
+              <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">Total Gold</span>
+              <div className="flex items-center justify-end gap-1.5 font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">
+                <CoinBadge points={summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
+              </div>
             </div>
           </div>
         </div>
@@ -457,24 +535,57 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
             {/* Table Body: Chore Rows */}
             <tbody className="divide-y divide-stone-100 dark:divide-stone-800 text-xs font-medium">
-              {activeChildTasks.length === 0 ? (
+              {filteredChildTasks.length === 0 ? (
                 <tr>
                   <td colSpan={dateRangeDays.length + 1} className="p-8 text-center text-stone-400">
-                    No active chores found for {activeChild?.name || 'this child'}. Add chores in the Tasks tab!
+                    {routineFilter !== 'all'
+                      ? `No ${routineFilter === 'routines' ? 'routine' : 'extra'} chores found for ${activeChild?.name || 'this child'}.`
+                      : `No active chores found for ${activeChild?.name || 'this child'}. Add chores in the Tasks tab!`}
                   </td>
                 </tr>
               ) : (
-                activeChildTasks.map(task => {
+                filteredChildTasks.map(task => {
+                  const routineInfo = getTaskRoutineInfo(task, activeChild);
+
                   return (
                     <tr key={task.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
                       
-                      {/* Chore Name Column */}
+                      {/* Chore Name Column with Routine Indicator Badge */}
                       <td className="p-3 sm:p-4 sticky left-0 z-10 bg-white dark:bg-stone-900 border-r border-stone-200/60 dark:border-stone-800 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                         <div className="flex items-center gap-3">
                           <CoinBadge points={task.points} className="w-8 h-8 sm:w-9 sm:h-9 text-xs font-black shrink-0" />
-                          <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
-                            {task.title}
-                          </p>
+                          <div className="truncate flex flex-col justify-center">
+                            <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
+                              {task.title}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {routineInfo.isRoutine ? (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wide ${
+                                  routineInfo.period === 'morning'
+                                    ? 'bg-amber-100/90 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
+                                    : routineInfo.period === 'evening'
+                                    ? 'bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60'
+                                    : routineInfo.period === 'afternoon'
+                                    ? 'bg-orange-100/90 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800/60'
+                                    : 'bg-sky-100/90 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/60'
+                                }`}>
+                                  {routineInfo.period === 'morning' ? (
+                                    <Sun className="w-3 h-3 text-amber-500" />
+                                  ) : routineInfo.period === 'evening' ? (
+                                    <Moon className="w-3 h-3 text-indigo-500" />
+                                  ) : (
+                                    <RotateCcw className="w-3 h-3 text-sky-500" />
+                                  )}
+                                  <span>{routineInfo.label} Routine</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200/80 dark:border-stone-700/60">
+                                  <CheckSquare className="w-3 h-3" />
+                                  <span>Extra Chore</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </td>
 
