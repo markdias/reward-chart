@@ -438,7 +438,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
+        const activeRoutineId = isWeekend ? 'weekend' : (activeChild.holiday_mode ? 'holiday' : 'weekday');
 
         let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 
