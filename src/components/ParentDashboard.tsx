@@ -440,7 +440,7 @@ export default function ParentDashboard({
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
 
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' } | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' | 'Lifetime Gold' } | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
@@ -2473,7 +2473,7 @@ export default function ParentDashboard({
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
 
                           return (
-                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.textColor}`}>
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.text}`}>
                               <div>
                                 <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900 dark:text-stone-50'}>{reward?.title}</strong>
                                 <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
@@ -3661,7 +3661,7 @@ export default function ParentDashboard({
                               </div>
                               <span className="font-bold text-stone-700 dark:text-stone-200">Gifts Sent</span>
                             </div>
-                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_sent_total || 0}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_made || child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>

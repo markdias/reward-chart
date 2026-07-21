@@ -679,13 +679,6 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-lg bg-red-100 text-red-600 border border-red-300 flex items-center justify-center text-[10px]">
-              <X className="w-3 h-3 stroke-[3]" />
-            </span>
-            <span>try again</span>
-          </div>
-
-          <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-lg border-2 border-dashed border-stone-300 flex items-center justify-center text-stone-400 text-[10px]">
               <Plus className="w-3 h-3" />
             </span>

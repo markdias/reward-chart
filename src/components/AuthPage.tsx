@@ -570,7 +570,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
             </div>
             <div>
               <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
+              <span className={`text-[11px] font-bold ${styles.text}`}>Cross-Device Sync</span>
             </div>
           </div>
           <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex items-center gap-3">
@@ -579,7 +579,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
             </div>
             <div>
               <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>PRIVACY SAFE</span>
-              <span className={`text-[11px] font-bold ${styles.textColor}`}>Safe & Family Friendly</span>
+              <span className={`text-[11px] font-bold ${styles.text}`}>Safe & Family Friendly</span>
             </div>
           </div>
         </div>

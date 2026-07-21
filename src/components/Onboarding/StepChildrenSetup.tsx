@@ -115,7 +115,7 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className={`font-bold ${styles.textColor}`}>{child.name}</span>
+                      <span className={`font-bold ${styles.text}`}>{child.name}</span>
                       {child.age && <span className={`text-[10px] ${styles.textMuted}`}>Age {child.age}</span>}
                     </div>
                   </div>

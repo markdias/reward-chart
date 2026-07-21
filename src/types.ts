@@ -92,6 +92,7 @@ export interface Child {
   savings_deposits?: number;
   savings_goals_met?: number;
   gifts_made?: number;
+  gifts_sent_total?: number;
   gold_pot_fixes?: number;
   gold_pot_unbroken_days?: number;
   manual_deductions?: number;

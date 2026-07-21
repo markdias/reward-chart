@@ -47,7 +47,7 @@ export default function StepHandover({ onNext, onBack }: StepHandoverProps) {
         
         <Typography variant="h2" className={styles.titleColor}>Great job!</Typography>
         
-        <p className={`text-base ${styles.textColor} font-bold`}>
+        <p className={`text-base ${styles.text} font-bold`}>
           You've picked your companion! Now it's time to get your quests set up.
         </p>
         
