@@ -8,6 +8,7 @@ import { Child, Task, TaskCompletion } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
+import { CoinBadge } from './CoinBadge';
 import { getSupabaseClient } from '../utils/supabase';
 
 interface WeeklyRewardChartProps {
@@ -411,9 +412,8 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
           <div className="text-right hidden sm:block print:block">
             <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">Total Gold</span>
-            <div className="flex items-center justify-end gap-1 font-black text-rose-600 dark:text-rose-400 text-lg">
-              <Coins className="w-5 h-5 text-amber-500" />
-              <span>{summaryStats.goldEarned}</span>
+            <div className="flex items-center justify-end gap-1.5 font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">
+              <CoinBadge points={summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
             </div>
           </div>
         </div>
@@ -469,18 +469,15 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                       
                       {/* Chore Name & Gold Value Column */}
                       <td className="p-3 sm:p-4 sticky left-0 z-10 bg-white dark:bg-stone-900 border-r border-stone-200/60 dark:border-stone-800 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 font-bold">
-                            <CheckCircle2 className="w-4 h-4" />
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <CoinBadge points={task.points} className="w-8 h-8 sm:w-9 sm:h-9 text-xs font-black" />
                           <div className="truncate">
                             <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
                               {task.title}
                             </p>
-                            <div className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-extrabold mt-0.5">
-                              <Coins className="w-3 h-3 text-amber-500" />
-                              <span>{task.points} Gold</span>
-                            </div>
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
+                              {task.points} Gold
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -601,9 +598,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
         
         {/* Card 1: Gold Earned */}
         <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
-          <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Coins className="w-6 h-6" />
-          </div>
+          <CoinBadge points={summaryStats.goldEarned} className="w-11 h-11 text-xs sm:text-sm font-black shrink-0" />
           <div>
             <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
               {summaryStats.goldEarned}
