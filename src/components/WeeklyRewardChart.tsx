@@ -558,8 +558,8 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                             <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
                               {task.title}
                             </p>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              {routineInfo.isRoutine ? (
+                            {routineInfo.isRoutine && (
+                              <div className="flex items-center gap-1.5 mt-1">
                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wide ${
                                   routineInfo.period === 'morning'
                                     ? 'bg-amber-100/90 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60'
@@ -578,13 +578,8 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                                   )}
                                   <span>{routineInfo.label}</span>
                                 </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200/80 dark:border-stone-700/60">
-                                  <CheckSquare className="w-3 h-3" />
-                                  <span>Extra Chore</span>
-                                </span>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
