@@ -1942,7 +1942,7 @@ export default function ParentDashboard({
                                     type="checkbox" 
                                     className="sr-only"
                                     checked={child.holiday_mode || false}
-                                    onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked, routines: processedRoutines })}
+                                    onChange={(e) => onEditChild(child.id, { holiday_mode: e.target.checked })}
                                   />
                                   <div className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out ${child.holiday_mode ? 'bg-cyan-500' : 'bg-stone-200'}`}>
                                     <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full shadow-md absolute top-0.5 transition-transform duration-300 ease-in-out ${child.holiday_mode ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
