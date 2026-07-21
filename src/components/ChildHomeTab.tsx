@@ -10,7 +10,7 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame, X } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
@@ -43,6 +43,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   onNavigateTab
 }) => {
   const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
+  const [isGiftingBannerDismissed, setIsGiftingBannerDismissed] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [childBadges, setChildBadges] = useState<any[]>([]);
 
@@ -297,36 +298,46 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </button>
       </div>
 
-      {/* Gifting & Charity Banner */}
-      <button
-        onClick={() => onNavigateTab?.('pots')}
-        className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
-        style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
-      >
-        <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3.5 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform">
-              <FaGift className="w-5 h-5" />
-            </div>
-            <div>
+      {/* Gifting Banner */}
+      {!isGiftingBannerDismissed && (
+        <div
+          onClick={() => onNavigateTab?.('pots')}
+          className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
+          style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
+        >
+          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3 sm:p-3.5 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                <FaGift className="w-4 h-4" />
+              </div>
               <div className="flex items-center gap-2">
                 <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
-                  Gifting & Giving Pot
+                  Gifting Pot
                 </Typography>
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                  {(activeChild.gifting_pot || 0)} coins saved
+                  {(activeChild.gifts_made || 0)} coins gifted
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5">
-                Share your kindness! Gift coins to your siblings or donate to charity.
-              </p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              <div className="bg-stone-100 dark:bg-stone-800 p-1.5 rounded-lg text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                <ChevronRight className="w-4 h-4" strokeWidth={3} />
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsGiftingBannerDismissed(true);
+                }}
+                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <div className="bg-stone-100 dark:bg-stone-800 p-2 rounded-xl text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors shrink-0 ml-2">
-            <ChevronRight className="w-4 h-4" strokeWidth={3} />
-          </div>
         </div>
-      </button>
+      )}
 
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
