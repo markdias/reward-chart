@@ -192,7 +192,7 @@ export default function ParentDashboard({
   // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
   // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
   const handleBeforeTourStepChange = (nextStepIndex: number) => {
-    const mainTabChangeSteps = [0, 1, 2, 5, 7, 8, 9, 10, 11];
+    const mainTabChangeSteps = [0, 1, 2, 3, 6, 8, 9, 10, 11, 12];
     if (mainTabChangeSteps.includes(nextStepIndex)) {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -203,39 +203,41 @@ export default function ParentDashboard({
     if (nextStepIndex === 0) {
       setActiveTab('home');
     } else if (nextStepIndex === 1) {
-      setActiveTab('children');
+      setActiveTab('chart');
     } else if (nextStepIndex === 2) {
-      setActiveTab('tasks');
-      setTaskSubTab('directory');
+      setActiveTab('children');
     } else if (nextStepIndex === 3) {
       setActiveTab('tasks');
-      setTaskSubTab('active');
+      setTaskSubTab('directory');
     } else if (nextStepIndex === 4) {
       setActiveTab('tasks');
-      setTaskSubTab('routines');
+      setTaskSubTab('active');
     } else if (nextStepIndex === 5) {
-      setActiveTab('rewards');
-      setRewardSubTab('directory');
+      setActiveTab('tasks');
+      setTaskSubTab('routines');
     } else if (nextStepIndex === 6) {
       setActiveTab('rewards');
-      setRewardSubTab('active');
+      setRewardSubTab('directory');
     } else if (nextStepIndex === 7) {
+      setActiveTab('rewards');
+      setRewardSubTab('active');
+    } else if (nextStepIndex === 8) {
       setActiveTab('targets');
-    } else if (nextStepIndex === 11) {
-      setActiveTab('settings');
-      setSettingsSubTab('profile');
     } else if (nextStepIndex === 12) {
       setActiveTab('settings');
-      setSettingsSubTab('security');
+      setSettingsSubTab('profile');
     } else if (nextStepIndex === 13) {
       setActiveTab('settings');
-      setSettingsSubTab('sharing');
+      setSettingsSubTab('security');
     } else if (nextStepIndex === 14) {
       setActiveTab('settings');
-      setSettingsSubTab('danger');
+      setSettingsSubTab('sharing');
     } else if (nextStepIndex === 15) {
       setActiveTab('settings');
+      setSettingsSubTab('danger');
     } else if (nextStepIndex === 16) {
+      setActiveTab('settings');
+    } else if (nextStepIndex === 17) {
       setActiveTab('home');
     }
 
@@ -273,6 +275,11 @@ export default function ParentDashboard({
     {
       target: '.joyride-target-home',
       content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-chart',
+      content: 'This is the Chart tab! View a weekly grid layout of all assigned chores, tap any empty cell to auto-approve past or present chores, and print physical fridge charts.',
       placement: 'bottom',
     },
     {
