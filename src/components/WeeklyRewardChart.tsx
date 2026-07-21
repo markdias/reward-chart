@@ -268,7 +268,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         
         {/* Child Selector Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div id="tour-chart-child-selector" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {children.map(child => {
             const isSelected = child.id === activeChild?.id;
             return (
@@ -318,6 +318,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
           {/* Print Button */}
           <Button
+            id="tour-chart-print-btn"
             variant="outline"
             size="sm"
             onClick={handlePrint}
@@ -392,7 +393,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       </div>
 
       {/* Main Weekly Grid Card */}
-      <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-3xl shadow-sm overflow-hidden print:border print:shadow-none">
+      <div id="tour-chart-grid" className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-3xl shadow-sm overflow-hidden print:border print:shadow-none">
         
         {/* Card Header Title */}
         <div className="p-4 sm:p-6 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between bg-stone-50/50 dark:bg-stone-900/50">
@@ -589,7 +590,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       </div>
 
       {/* Footer Stats Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 print:hidden">
+      <div id="tour-chart-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 print:hidden">
         
         {/* Card 1: Gold Earned */}
         <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">

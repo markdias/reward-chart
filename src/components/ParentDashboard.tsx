@@ -192,7 +192,7 @@ export default function ParentDashboard({
   // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
   // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
   const handleBeforeTourStepChange = (nextStepIndex: number) => {
-    const mainTabChangeSteps = [0, 1, 2, 3, 6, 8, 9, 10, 11, 12];
+    const mainTabChangeSteps = [0, 1, 5, 6, 9, 11, 12, 13, 14, 15];
     if (mainTabChangeSteps.includes(nextStepIndex)) {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -202,42 +202,42 @@ export default function ParentDashboard({
   const handleTourStepChange = (nextStepIndex: number) => {
     if (nextStepIndex === 0) {
       setActiveTab('home');
-    } else if (nextStepIndex === 1) {
+    } else if (nextStepIndex >= 1 && nextStepIndex <= 4) {
       setActiveTab('chart');
-    } else if (nextStepIndex === 2) {
+    } else if (nextStepIndex === 5) {
       setActiveTab('children');
-    } else if (nextStepIndex === 3) {
+    } else if (nextStepIndex === 6) {
       setActiveTab('tasks');
       setTaskSubTab('directory');
-    } else if (nextStepIndex === 4) {
+    } else if (nextStepIndex === 7) {
       setActiveTab('tasks');
       setTaskSubTab('active');
-    } else if (nextStepIndex === 5) {
+    } else if (nextStepIndex === 8) {
       setActiveTab('tasks');
       setTaskSubTab('routines');
-    } else if (nextStepIndex === 6) {
+    } else if (nextStepIndex === 9) {
       setActiveTab('rewards');
       setRewardSubTab('directory');
-    } else if (nextStepIndex === 7) {
+    } else if (nextStepIndex === 10) {
       setActiveTab('rewards');
       setRewardSubTab('active');
-    } else if (nextStepIndex === 8) {
+    } else if (nextStepIndex === 11) {
       setActiveTab('targets');
-    } else if (nextStepIndex === 12) {
-      setActiveTab('settings');
-      setSettingsSubTab('profile');
-    } else if (nextStepIndex === 13) {
-      setActiveTab('settings');
-      setSettingsSubTab('security');
-    } else if (nextStepIndex === 14) {
-      setActiveTab('settings');
-      setSettingsSubTab('sharing');
     } else if (nextStepIndex === 15) {
       setActiveTab('settings');
-      setSettingsSubTab('danger');
+      setSettingsSubTab('profile');
     } else if (nextStepIndex === 16) {
       setActiveTab('settings');
+      setSettingsSubTab('security');
     } else if (nextStepIndex === 17) {
+      setActiveTab('settings');
+      setSettingsSubTab('sharing');
+    } else if (nextStepIndex === 18) {
+      setActiveTab('settings');
+      setSettingsSubTab('danger');
+    } else if (nextStepIndex === 19) {
+      setActiveTab('settings');
+    } else if (nextStepIndex === 20) {
       setActiveTab('home');
     }
 
@@ -279,7 +279,22 @@ export default function ParentDashboard({
     },
     {
       target: '.joyride-target-chart',
-      content: 'This is the Chart tab! View a weekly grid layout of all assigned chores, tap any empty cell to auto-approve past or present chores, and print physical fridge charts.',
+      content: 'This is the Chart tab! View a weekly grid layout of all assigned chores for your children.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-chart-child-selector',
+      content: 'Use the child selector bar to switch between your children, or toggle between 7-day, 14-day, and 30-day view ranges.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-chart-grid',
+      content: 'Tap any empty cell (+ sign) to instantly auto-approve a chore for that date! Click existing cells to change status or reset.',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-chart-print-btn',
+      content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
       placement: 'bottom',
     },
     {
