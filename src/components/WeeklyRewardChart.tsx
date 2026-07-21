@@ -27,25 +27,25 @@ const getTaskRoutineInfo = (task: Task, child?: Child): { isRoutine: boolean; pe
   if (child && child.routines && child.routines.length > 0) {
     for (const routine of child.routines) {
       if (routine.morningTaskIds?.includes(task.id) || (task.template_id && routine.morningTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'morning', label: 'Morning' };
+        return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
       }
       if (routine.afternoonTaskIds?.includes(task.id) || (task.template_id && routine.afternoonTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'afternoon', label: 'Afternoon' };
+        return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
       }
       if (routine.eveningTaskIds?.includes(task.id) || (task.template_id && routine.eveningTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'evening', label: 'Evening' };
+        return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
       }
     }
   }
 
   // Fallback period detection by title or recurrence
   const titleLower = task.title.toLowerCase();
-  if (titleLower.includes('morning')) return { isRoutine: true, period: 'morning', label: 'Morning' };
-  if (titleLower.includes('afternoon')) return { isRoutine: true, period: 'afternoon', label: 'Afternoon' };
-  if (titleLower.includes('evening') || titleLower.includes('bedtime')) return { isRoutine: true, period: 'evening', label: 'Evening' };
-  if (task.recurrence === 'daily' || task.recurrence === 'weekly') return { isRoutine: true, period: 'general', label: 'Routine' };
+  if (titleLower.includes('morning')) return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
+  if (titleLower.includes('afternoon')) return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
+  if (titleLower.includes('evening') || titleLower.includes('bedtime')) return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
+  if (task.recurrence === 'daily' || task.recurrence === 'weekly') return { isRoutine: true, period: 'general', label: 'Daily Routine' };
 
-  return { isRoutine: false, label: 'Extra' };
+  return { isRoutine: false, label: 'Extra Chore' };
 };
 
 // Calculate unlocked badge count dynamically based on child stats & completions
@@ -576,7 +576,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                                   ) : (
                                     <RotateCcw className="w-3 h-3 text-sky-500" />
                                   )}
-                                  <span>{routineInfo.label} Routine</span>
+                                  <span>{routineInfo.label}</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200/80 dark:border-stone-700/60">
