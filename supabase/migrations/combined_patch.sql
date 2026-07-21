@@ -28,7 +28,8 @@ ADD COLUMN IF NOT EXISTS gifting_unlocked boolean DEFAULT false,
 ADD COLUMN IF NOT EXISTS gifting_unlock_seen boolean DEFAULT false,
 ADD COLUMN IF NOT EXISTS maintenance_pot integer DEFAULT 0,
 ADD COLUMN IF NOT EXISTS maintenance_unlocked boolean DEFAULT false,
-ADD COLUMN IF NOT EXISTS maintenance_unlock_seen boolean DEFAULT false;
+ADD COLUMN IF NOT EXISTS maintenance_unlock_seen boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS holiday_mode boolean DEFAULT false;
 
 -- 3. Add damage tracking fields directly (instead of renaming old ones, just add the new ones)
 ALTER TABLE children
