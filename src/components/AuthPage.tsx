@@ -19,6 +19,7 @@ interface AuthPageProps {
   onSignUpReal?: (email: string, name: string, familyName: string) => void;
   onBackToLanding: () => void;
   onCreateNewAccount: () => void;
+  theme?: string;
 }
 
 export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, onCreateNewAccount, theme }: AuthPageProps) {

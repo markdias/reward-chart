@@ -110,6 +110,8 @@ interface ParentDashboardProps {
   initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help';
   initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
+  onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ParentDashboard({
@@ -154,7 +156,9 @@ export default function ParentDashboard({
   onUpdateParentProfile,
   initialTab = 'home',
   initialSubTab = 'directory',
-  isLoading = false
+  isLoading = false,
+  onRefresh,
+  theme
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
 

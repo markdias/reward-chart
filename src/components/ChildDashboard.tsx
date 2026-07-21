@@ -81,6 +81,7 @@ interface ChildDashboardProps {
   isChildAuth?: boolean;
   onLogout?: () => void;
   onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ChildDashboard({
@@ -114,7 +115,8 @@ export default function ChildDashboard({
   isLoading = false,
   isChildAuth = false,
   onLogout,
-  onRefresh
+  onRefresh,
+  theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');

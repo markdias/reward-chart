@@ -18,6 +18,7 @@ import { Child, Task, Reward, Routine } from '../../types';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../../data/premadeTemplates';
 
 interface OnboardingWizardProps {
+  theme?: string;
   onComplete: (data: OnboardingData) => void;
   onLoginInstead: () => void;
   onJoinCodeInstead?: () => void;
@@ -40,6 +41,7 @@ export interface OnboardingData {
 export type WizardStep = 'welcome' | 'role' | 'children' | 'handover' | 'parentDetails' | 'routines' | 'tasks' | 'rewards' | 'account';
 
 export default function OnboardingWizard({
+  theme,
   onComplete,
   onLoginInstead,
   onJoinCodeInstead,
