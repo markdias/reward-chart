@@ -197,7 +197,7 @@ export default function ParentDashboard({
   // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
   // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
   const handleBeforeTourStepChange = (nextStepIndex: number) => {
-    const mainTabChangeSteps = [0, 1, 5, 6, 9, 11, 12, 13, 14, 15];
+    const mainTabChangeSteps = [0, 1, 7, 8, 11, 13, 16, 22];
     if (mainTabChangeSteps.includes(nextStepIndex)) {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -209,40 +209,44 @@ export default function ParentDashboard({
       setActiveTab('home');
     } else if (nextStepIndex >= 1 && nextStepIndex <= 4) {
       setActiveTab('chart');
-    } else if (nextStepIndex === 5) {
-      setActiveTab('children');
-    } else if (nextStepIndex === 6) {
-      setActiveTab('tasks');
-      setTaskSubTab('directory');
+      setChartSubTab('weekly');
+    } else if (nextStepIndex >= 5 && nextStepIndex <= 6) {
+      setActiveTab('chart');
+      setChartSubTab('insights');
     } else if (nextStepIndex === 7) {
-      setActiveTab('tasks');
-      setTaskSubTab('active');
+      setActiveTab('children');
     } else if (nextStepIndex === 8) {
       setActiveTab('tasks');
-      setTaskSubTab('routines');
+      setTaskSubTab('directory');
     } else if (nextStepIndex === 9) {
+      setActiveTab('tasks');
+      setTaskSubTab('active');
+    } else if (nextStepIndex === 10) {
+      setActiveTab('tasks');
+      setTaskSubTab('routines');
+    } else if (nextStepIndex === 11) {
       setActiveTab('rewards');
       setRewardSubTab('directory');
-    } else if (nextStepIndex === 10) {
+    } else if (nextStepIndex === 12) {
       setActiveTab('rewards');
       setRewardSubTab('active');
-    } else if (nextStepIndex === 11) {
+    } else if (nextStepIndex === 13) {
       setActiveTab('targets');
-    } else if (nextStepIndex === 15) {
+    } else if (nextStepIndex === 16 || nextStepIndex === 17) {
       setActiveTab('settings');
       setSettingsSubTab('profile');
-    } else if (nextStepIndex === 16) {
-      setActiveTab('settings');
-      setSettingsSubTab('security');
-    } else if (nextStepIndex === 17) {
-      setActiveTab('settings');
-      setSettingsSubTab('sharing');
     } else if (nextStepIndex === 18) {
       setActiveTab('settings');
-      setSettingsSubTab('danger');
+      setSettingsSubTab('security');
     } else if (nextStepIndex === 19) {
       setActiveTab('settings');
+      setSettingsSubTab('sharing');
     } else if (nextStepIndex === 20) {
+      setActiveTab('settings');
+      setSettingsSubTab('danger');
+    } else if (nextStepIndex === 21) {
+      setActiveTab('settings');
+    } else if (nextStepIndex === 22) {
       setActiveTab('home');
     }
 
@@ -284,7 +288,7 @@ export default function ParentDashboard({
     },
     {
       target: '.joyride-target-chart',
-      content: 'This is the Chart tab! View a weekly grid layout of all assigned chores for your children.',
+      content: 'This is the Chart & Insights tab! Toggle between your weekly reward matrix and real-time child performance insights.',
       placement: 'bottom',
     },
     {
@@ -300,6 +304,16 @@ export default function ParentDashboard({
     {
       target: '#tour-chart-print-btn',
       content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-chart-subtab-insights',
+      content: 'Switch to the INSIGHTS sub-tab to explore child progress analytics, coin stats, category breakdowns, and AI parenting tips.',
+      placement: 'bottom',
+    },
+    {
+      target: '#insights-tab-view',
+      content: 'In Insights, view key statistics like total gold coins, chores done, day streak, weekly best days chart, category breakdown, and areas going well or struggling.',
       placement: 'bottom',
     },
     {
