@@ -350,13 +350,14 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
-        
-        if (activeChild.holiday_mode && !isWeekend) {
-          activeRoutineId = 'holiday';
-        }
+        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
 
-        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
+        let activeRoutine = activeChild.routines.find(r => 
+          r.id === activeRoutineId || 
+          (activeRoutineId === 'holiday' && r.name?.toLowerCase().includes('holiday')) ||
+          (activeRoutineId === 'weekend' && r.name?.toLowerCase().includes('weekend')) ||
+          (activeRoutineId === 'weekday' && r.name?.toLowerCase().includes('weekday'))
+        );
         
         // Fallback for unmigrated data
         if (!activeRoutine && activeChild.active_routine_id) {
@@ -364,6 +365,19 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         }
 
         if (!activeRoutine) {
+          const defaultNames: Record<string, string> = {
+            holiday: 'Holiday Routine',
+            weekend: 'Weekend Routine',
+            weekday: 'Weekday Routine'
+          };
+          activeRoutine = {
+            id: activeRoutineId,
+            name: defaultNames[activeRoutineId] || 'Routine',
+            morningTaskIds: [],
+            afternoonTaskIds: [],
+            eveningTaskIds: []
+          };
+        }
           return (
             <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
               <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
@@ -509,7 +523,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name.toLowerCase().includes('routine') ? activeRoutine.name : `${activeRoutine.name} Routine`}</Typography>
                   <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
