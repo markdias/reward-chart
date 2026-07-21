@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import OneSignal from 'react-onesignal';
 import { AppTrackingTransparency } from '@capgo/capacitor-app-tracking-transparency';
 import { App as CapacitorApp } from '@capacitor/app';
-import AuthPage from './components/AuthPage';
-import LandingPage from './components/LandingPage';
-import ParentDashboard from './components/ParentDashboard';
-import ChildDashboard from './components/ChildDashboard';
-import LockScreen from './components/LockScreen';
+
+const AuthPage = lazy(() => import('./components/AuthPage'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const ParentDashboard = lazy(() => import('./components/ParentDashboard'));
+const ChildDashboard = lazy(() => import('./components/ChildDashboard'));
+const LockScreen = lazy(() => import('./components/LockScreen'));
+const Showcase = lazy(() => import('./components/Showcase'));
+const OnboardingWizard = lazy(() => import('./components/Onboarding/OnboardingWizard'));
+const StepCreateAccount = lazy(() => import('./components/Onboarding/StepCreateAccount'));
+
 import Confetti from './components/Confetti';
-import Showcase from './components/Showcase';
-import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
-import StepCreateAccount from './components/Onboarding/StepCreateAccount';
+import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
+
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
@@ -24,6 +28,7 @@ import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextM
 import { revokeInvalidLevelBadges } from './utils/badgeService';
 import { generateShortCode } from './utils/security';
 import { Network } from '@capacitor/network';
+import { safeLocalStorageGet, safeJsonParse, safeLocalStorageSet } from './utils/storage';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -63,9 +68,12 @@ export default function App() {
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
   useEffect(() => {
-    // Disable right-click globally
+    // Disable right-click context menu on images and canvas/interactive components in prod, allow on inputs
     const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
+      const target = e.target as HTMLElement | null;
+      if (import.meta.env.PROD && target && !['INPUT', 'TEXTAREA'].includes(target.tagName)) {
+        e.preventDefault();
+      }
     };
     document.addEventListener('contextmenu', handleContextMenu);
     return () => {
@@ -2267,12 +2275,19 @@ export default function App() {
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
-    updateChildInSupabase(targetChild);
+updateChildInSupabase(targetChild);
   };
 
 
   return (
-    <>
+    <Suspense fallback={
+      <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm text-stone-400 font-medium">Loading Reward Chart...</p>
+        </div>
+      </div>
+    }>
     <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950`} id="app-main">
       
       {/* Immersive Confetti Layer */}
@@ -2498,6 +2513,6 @@ export default function App() {
       </AnimatePresence>
     </div>
     <LegalModal />
-    </>
+    </Suspense>
   );
 }
