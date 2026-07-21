@@ -2195,6 +2195,7 @@ export default function ChildDashboard({
                       onOpenBadges={() => setShowBadgesModal(true)}
                       parentProfile={parentProfile}
                       onEnterParentMode={onEnterParentMode}
+                      onNavigateTab={setActiveChildTab}
                     />
                   )}
                   {/* Tasks Tab */}

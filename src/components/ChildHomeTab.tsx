@@ -26,6 +26,7 @@ interface ChildHomeTabProps {
   onOpenBadges: () => void;
   parentProfile?: ParentProfile | null;
   onEnterParentMode?: (targetTab?: any, targetSubTab?: any) => void;
+  onNavigateTab?: (tab: 'home' | 'companion' | 'tasks' | 'rewards' | 'pots') => void;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -38,7 +39,8 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   potReminders = [],
   onOpenBadges,
   parentProfile,
-  onEnterParentMode
+  onEnterParentMode,
+  onNavigateTab
 }) => {
   const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
   const [badges, setBadges] = useState<any[]>([]);
@@ -295,6 +297,37 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </button>
       </div>
 
+      {/* Gifting & Charity Banner */}
+      <button
+        onClick={() => onNavigateTab?.('pots')}
+        className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
+        style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
+      >
+        <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3.5 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform">
+              <FaGift className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
+                  Gifting & Giving Pot
+                </Typography>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                  {(activeChild.gifting_pot || 0)} coins saved
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5">
+                Share your kindness! Gift coins to your siblings or donate to charity.
+              </p>
+            </div>
+          </div>
+          <div className="bg-stone-100 dark:bg-stone-800 p-2 rounded-xl text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors shrink-0 ml-2">
+            <ChevronRight className="w-4 h-4" strokeWidth={3} />
+          </div>
+        </div>
+      </button>
+
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
         <div className="w-full rounded-[1.6rem] p-[3px] shadow-md mb-2" style={{ background: getPetStripeBackground(activeChild.character_id) }}>
@@ -327,7 +360,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                 }
 
                 return (
-                  <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass}`}>
+                  <div 
+                    key={idx} 
+                    onClick={() => onNavigateTab?.('pots')}
+                    className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass} ${onNavigateTab ? 'cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all' : ''}`}
+                  >
                     <div className="w-8 h-8 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
@@ -336,6 +373,9 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                         {reminder}
                       </p>
                     </div>
+                    {onNavigateTab && (
+                      <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
+                    )}
                   </div>
                 );
               })}
