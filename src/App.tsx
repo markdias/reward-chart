@@ -2195,10 +2195,11 @@ export default function App() {
     const child = children.find(c => c.id === request.child_id);
     if (!child || child.points < request.amount) return;
 
-    // Deduct from sender's points
+    // Deduct from sender's points & accumulate total amount gifted
     let targetChild = {
       ...child,
       points: child.points - request.amount,
+      gifts_made: (child.gifts_made || 0) + request.amount,
       last_gifting_date: new Date().toISOString()
     };
     let updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
