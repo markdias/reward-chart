@@ -44,6 +44,7 @@ import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
 import { WeeklyRewardChart } from './WeeklyRewardChart';
+import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
@@ -407,6 +408,7 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
+  const [chartSubTab, setChartSubTab] = useState<'weekly' | 'insights'>('weekly');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
   const [settingsSubTab, setSettingsSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
@@ -1144,7 +1146,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: 'Chart', icon: Calendar },
+              { id: 'chart', label: 'Chart & Insights', icon: TrendingUp },
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1352,14 +1354,48 @@ export default function ParentDashboard({
                 className="space-y-6 sm:space-y-8"
                 id="chart-view"
               >
-                <WeeklyRewardChart
-                  children={children}
-                  tasks={tasks}
-                  completions={completions}
-                  onParentCompleteTask={onParentCompleteTask}
-                  onApproveCompletion={onApproveCompletion}
-                  onRejectCompletion={onRejectCompletion}
-                />
+                {/* SUB-TABS FOR CHART & INSIGHTS */}
+                <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
+                  <Button variant="none" size="none"
+                    id="tour-chart-subtab-weekly"
+                    onClick={() => setChartSubTab('weekly')}
+                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'weekly'
+                      ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                      : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                      }`}
+                  >
+                    WEEKLY CHART
+                  </Button>
+                  <Button variant="none" size="none"
+                    id="tour-chart-subtab-insights"
+                    onClick={() => setChartSubTab('insights')}
+                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'insights'
+                      ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                      : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                      }`}
+                  >
+                    INSIGHTS
+                  </Button>
+                </div>
+
+                {chartSubTab === 'weekly' && (
+                  <WeeklyRewardChart
+                    children={children}
+                    tasks={tasks}
+                    completions={completions}
+                    onParentCompleteTask={onParentCompleteTask}
+                    onApproveCompletion={onApproveCompletion}
+                    onRejectCompletion={onRejectCompletion}
+                  />
+                )}
+
+                {chartSubTab === 'insights' && (
+                  <InsightsTab
+                    children={children}
+                    tasks={tasks}
+                    completions={completions}
+                  />
+                )}
               </motion.div>
             )}
 
@@ -3099,7 +3135,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: 'Chart', icon: Calendar },
+              { id: 'chart', label: 'Chart', icon: TrendingUp },
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
