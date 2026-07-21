@@ -76,6 +76,7 @@ export interface Child {
   last_nudge_time?: string | null;
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
+  gifting_pot?: number;
   last_gifting_date?: string | null;
   gold_pot_broken?: boolean;
   gold_pot_break_count_this_week?: number;

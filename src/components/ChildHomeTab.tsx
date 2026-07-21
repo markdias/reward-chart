@@ -10,7 +10,7 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame, X } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
@@ -26,6 +26,7 @@ interface ChildHomeTabProps {
   onOpenBadges: () => void;
   parentProfile?: ParentProfile | null;
   onEnterParentMode?: (targetTab?: any, targetSubTab?: any) => void;
+  onNavigateTab?: (tab: 'home' | 'companion' | 'tasks' | 'rewards' | 'pots') => void;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -38,9 +39,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   potReminders = [],
   onOpenBadges,
   parentProfile,
-  onEnterParentMode
+  onEnterParentMode,
+  onNavigateTab
 }) => {
   const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
+  const [isGiftingBannerDismissed, setIsGiftingBannerDismissed] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [childBadges, setChildBadges] = useState<any[]>([]);
 
@@ -295,6 +298,64 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </button>
       </div>
 
+      {/* Gifting Banner */}
+      {(() => {
+        const currentGifts = activeChild.gifts_made || 0;
+        const dismissedKey = `gifting_banner_dismissed_count_${activeChild.id}`;
+        const lastDismissedCount = parseInt(localStorage.getItem(dismissedKey) || '-1', 10);
+        
+        // Show banner if child has gifted coins (> 0), it hasn't been manually closed for current gift count, and component state isn't dismissed
+        if (currentGifts === 0 || lastDismissedCount >= currentGifts || isGiftingBannerDismissed) {
+          return null;
+        }
+
+        return (
+          <div
+            onClick={() => onNavigateTab?.('pots')}
+            className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
+            style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
+          >
+            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3 sm:p-3.5 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform">
+                  <FaGift className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Typography variant="h4" className="font-black text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
+                      Well done! 🎉 Gifting Pot
+                    </Typography>
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      {currentGifts} coins gifted!
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
+                    Awesome kindness! You've given back to others.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className="bg-stone-100 dark:bg-stone-800 p-1.5 rounded-lg text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <ChevronRight className="w-4 h-4" strokeWidth={3} />
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    localStorage.setItem(dismissedKey, currentGifts.toString());
+                    setIsGiftingBannerDismissed(true);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
         <div className="w-full rounded-[1.6rem] p-[3px] shadow-md mb-2" style={{ background: getPetStripeBackground(activeChild.character_id) }}>
@@ -327,7 +388,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                 }
 
                 return (
-                  <div key={idx} className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass}`}>
+                  <div 
+                    key={idx} 
+                    onClick={() => onNavigateTab?.('pots')}
+                    className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass} ${onNavigateTab ? 'cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all' : ''}`}
+                  >
                     <div className="w-8 h-8 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
@@ -336,6 +401,9 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                         {reminder}
                       </p>
                     </div>
+                    {onNavigateTab && (
+                      <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
+                    )}
                   </div>
                 );
               })}
@@ -348,34 +416,31 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {(() => {
         if (!activeChild.routines) return null;
 
+        const DEFAULT_ROUTINES = [
+          { id: 'weekday', name: 'Weekday Routine' },
+          { id: 'weekend', name: 'Weekend Routine' },
+          { id: 'holiday', name: 'Holiday Routine' }
+        ];
+
+        const currentRoutines = activeChild.routines || [];
+        const processedRoutines = DEFAULT_ROUTINES.map(def => {
+          let existing = currentRoutines.find(r => r.id === def.id);
+          if (!existing) {
+            existing = currentRoutines.find(r => r.name?.toLowerCase().includes(def.id));
+            if (existing) existing = { ...existing, id: def.id, name: def.name };
+          }
+          if (!existing && def.id === 'weekday' && currentRoutines.length > 0) {
+            const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => d.id === r.id || r.name?.toLowerCase().includes(d.id)));
+            if (unassigned) existing = { ...unassigned, id: def.id, name: def.name };
+          }
+          return existing || { ...def, morningTaskIds: [], afternoonTaskIds: [], eveningTaskIds: [] };
+        });
+
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
-        
-        if (activeChild.holiday_mode && !isWeekend) {
-          activeRoutineId = 'holiday';
-        }
+        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
 
-        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
-        
-        // Fallback for unmigrated data
-        if (!activeRoutine && activeChild.active_routine_id) {
-          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
-        }
-
-        if (!activeRoutine) {
-          return (
-            <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
-              <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
-                <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
-                <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO ACTIVE ROUTINES</Typography>
-                <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
-                  Ask your parents to set up a routine for you!
-                </Typography>
-              </div>
-            </div>
-          );
-        }
+        let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 
         let globalTaskIndex = 1;
 
@@ -484,22 +549,20 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           activePeriodKey = 'eveningTaskIds';
         }
 
-        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
-        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const morningTaskIds = activeRoutine.morningTaskIds || [];
+        const afternoonTaskIds = activeRoutine.afternoonTaskIds || [];
+        const eveningTaskIds = activeRoutine.eveningTaskIds || [];
 
-        if (!hasActivePeriodTasks) {
-          return (
-            <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
-              <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
-                <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
-                <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO ACTIVE ROUTINES</Typography>
-                <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
-                  No routines setup for {activePeriodLabel.toLowerCase()}
-                </Typography>
-              </div>
-            </div>
-          );
-        }
+        const hasMorningTasks = morningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = afternoonTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = eveningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+
+        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
+        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+
+        const routineDisplayName = activeRoutine.name.toLowerCase().includes('routine') 
+          ? activeRoutine.name 
+          : `${activeRoutine.name} Routine`;
 
         return (
           <div className="space-y-4 pt-2">
@@ -509,14 +572,32 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{routineDisplayName}</Typography>
                   <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              {renderPeriod(activePeriodLabel, activePeriodTaskIds)}
+              {hasActivePeriodTasks ? (
+                renderPeriod(activePeriodLabel, activePeriodTaskIds)
+              ) : (hasMorningTasks || hasAfternoonTasks || hasEveningTasks) ? (
+                <>
+                  {renderPeriod("Morning", morningTaskIds)}
+                  {renderPeriod("Afternoon", afternoonTaskIds)}
+                  {renderPeriod("Evening", eveningTaskIds)}
+                </>
+              ) : (
+                <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+                  <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                    <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                    <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO TASKS IN ROUTINE</Typography>
+                    <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
+                      Ask your parents to assign tasks to this routine!
+                    </Typography>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
