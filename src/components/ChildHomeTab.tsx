@@ -348,36 +348,31 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {(() => {
         if (!activeChild.routines) return null;
 
+        const DEFAULT_ROUTINES = [
+          { id: 'weekday', name: 'Weekday Routine' },
+          { id: 'weekend', name: 'Weekend Routine' },
+          { id: 'holiday', name: 'Holiday Routine' }
+        ];
+
+        const currentRoutines = activeChild.routines || [];
+        const processedRoutines = DEFAULT_ROUTINES.map(def => {
+          let existing = currentRoutines.find(r => r.id === def.id);
+          if (!existing) {
+            existing = currentRoutines.find(r => r.name?.toLowerCase().includes(def.id));
+            if (existing) existing = { ...existing, id: def.id, name: def.name };
+          }
+          if (!existing && def.id === 'weekday' && currentRoutines.length > 0) {
+            const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => d.id === r.id || r.name?.toLowerCase().includes(d.id)));
+            if (unassigned) existing = { ...unassigned, id: def.id, name: def.name };
+          }
+          return existing || { ...def, morningTaskIds: [], afternoonTaskIds: [], eveningTaskIds: [] };
+        });
+
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
 
-        let activeRoutine = activeChild.routines.find(r => 
-          r.id === activeRoutineId || 
-          (activeRoutineId === 'holiday' && r.name?.toLowerCase().includes('holiday')) ||
-          (activeRoutineId === 'weekend' && r.name?.toLowerCase().includes('weekend')) ||
-          (activeRoutineId === 'weekday' && r.name?.toLowerCase().includes('weekday'))
-        );
-        
-        // Fallback for unmigrated data
-        if (!activeRoutine && activeChild.active_routine_id) {
-          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
-        }
-
-        if (!activeRoutine) {
-          const defaultNames: Record<string, string> = {
-            holiday: 'Holiday Routine',
-            weekend: 'Weekend Routine',
-            weekday: 'Weekday Routine'
-          };
-          activeRoutine = {
-            id: activeRoutineId,
-            name: defaultNames[activeRoutineId] || 'Routine',
-            morningTaskIds: [],
-            afternoonTaskIds: [],
-            eveningTaskIds: []
-          };
-        }
+        let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 
         let globalTaskIndex = 1;
 
