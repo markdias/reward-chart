@@ -589,68 +589,6 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
         </div>
       </div>
 
-      {/* Footer Stats Summary Cards */}
-      <div id="tour-chart-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4 print:hidden">
-        
-        {/* Card 1: Gold Earned */}
-        <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
-          <CoinBadge points={summaryStats.goldEarned} className="w-11 h-11 text-xs sm:text-sm font-black shrink-0" />
-          <div>
-            <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
-              {summaryStats.goldEarned}
-            </p>
-            <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">
-              Earned
-            </p>
-          </div>
-        </div>
-
-        {/* Card 2: Chores Completed */}
-        <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
-              {summaryStats.choresCompleted}
-            </p>
-            <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">
-              Chores
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: Day Streak */}
-        <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
-          <div className="w-11 h-11 rounded-2xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0">
-            <Flame className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
-              {summaryStats.streak}
-            </p>
-            <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">
-              Day streak
-            </p>
-          </div>
-        </div>
-
-        {/* Card 4: Badges */}
-        <div className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl flex items-center gap-3.5 shadow-sm">
-          <div className="w-11 h-11 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-            <Award className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
-              {summaryStats.badges}
-            </p>
-            <p className="text-xs font-bold text-stone-400 uppercase tracking-wider">
-              Badges
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Modal / Action Popover for editing an existing completion */}
       <AnimatePresence>
         {activeCellAction && (
