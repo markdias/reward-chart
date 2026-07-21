@@ -467,18 +467,13 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                   return (
                     <tr key={task.id} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
                       
-                      {/* Chore Name & Gold Value Column */}
+                      {/* Chore Name Column */}
                       <td className="p-3 sm:p-4 sticky left-0 z-10 bg-white dark:bg-stone-900 border-r border-stone-200/60 dark:border-stone-800 shadow-[2px_0_5px_rgba(0,0,0,0.02)]">
                         <div className="flex items-center gap-3">
-                          <CoinBadge points={task.points} className="w-8 h-8 sm:w-9 sm:h-9 text-xs font-black" />
-                          <div className="truncate">
-                            <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
-                              {task.title}
-                            </p>
-                            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
-                              {task.points} Gold
-                            </p>
-                          </div>
+                          <CoinBadge points={task.points} className="w-8 h-8 sm:w-9 sm:h-9 text-xs font-black shrink-0" />
+                          <p className="font-extrabold text-stone-800 dark:text-stone-100 truncate text-xs sm:text-sm">
+                            {task.title}
+                          </p>
                         </div>
                       </td>
 
