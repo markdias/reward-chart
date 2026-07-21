@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Child, Task, TaskCompletion } from '../types';
 import { ChildAvatar } from './ChildAvatar';
+import { CoinBadge } from './CoinBadge';
 import { Typography } from './ui/Typography';
 
 interface InsightsTabProps {
@@ -255,14 +256,12 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         {/* Total Gold Coins */}
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-1"
+          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-2"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-100 dark:bg-amber-950 flex items-center justify-center text-amber-500 mb-1">
-            <Coins className="w-5 h-5" />
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 font-display">
-            {analytics.totalCoins}
-          </div>
+          <CoinBadge 
+            points={analytics.totalCoins} 
+            className="w-12 h-12 sm:w-14 sm:h-14 text-sm sm:text-base font-black shadow-sm" 
+          />
           <div className="text-[10px] sm:text-xs font-bold text-stone-400 dark:text-stone-500 lowercase tracking-wide">
             total coins
           </div>
@@ -271,12 +270,9 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         {/* Chores Done */}
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-1"
+          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-2"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-500 mb-1">
-            <CheckCheck className="w-5 h-5" />
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 font-display">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 border-2 border-emerald-300 dark:border-emerald-600 flex items-center justify-center font-black text-base sm:text-lg shadow-sm">
             {analytics.choresDone}
           </div>
           <div className="text-[10px] sm:text-xs font-bold text-stone-400 dark:text-stone-500 lowercase tracking-wide">
@@ -287,12 +283,9 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         {/* Perfect Days */}
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-1"
+          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-2"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-500 mb-1">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 font-display">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-300 dark:border-indigo-600 flex items-center justify-center font-black text-base sm:text-lg shadow-sm">
             {analytics.perfectDays}
           </div>
           <div className="text-[10px] sm:text-xs font-bold text-stone-400 dark:text-stone-500 lowercase tracking-wide">
@@ -303,12 +296,9 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         {/* Day Streak */}
         <motion.div
           whileHover={{ scale: 1.01 }}
-          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-1"
+          className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-2"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-100 dark:bg-orange-950 flex items-center justify-center text-orange-500 mb-1">
-            <Flame className="w-5 h-5" />
-          </div>
-          <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 font-display">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-orange-50 dark:bg-orange-950/80 text-orange-600 dark:text-orange-400 border-2 border-orange-300 dark:border-orange-600 flex items-center justify-center font-black text-base sm:text-lg shadow-sm">
             {analytics.dayStreak}
           </div>
           <div className="text-[10px] sm:text-xs font-bold text-stone-400 dark:text-stone-500 lowercase tracking-wide">
