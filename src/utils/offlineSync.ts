@@ -121,8 +121,7 @@ export const executeOrQueue = async (
         'gifts_made',
         'gold_pot_fixes',
         'gold_pot_unbroken_days',
-        'manual_deductions',
-        'holiday_mode'
+        'manual_deductions'
       ];
       localOnlyFields.forEach(field => {
         if (field in cleanPayload) {

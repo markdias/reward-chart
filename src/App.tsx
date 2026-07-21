@@ -791,7 +791,8 @@ export default function App() {
           pet_fed_total: updatedChild.pet_fed_total,
           gifts_made: updatedChild.gifts_made,
           gold_pot_fixes: updatedChild.gold_pot_fixes,
-          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days
+          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days,
+          holiday_mode: updatedChild.holiday_mode
         })
         .eq('id', updatedChild.id);
       if (error) {
