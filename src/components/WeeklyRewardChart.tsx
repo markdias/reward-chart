@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
@@ -8,6 +8,7 @@ import { Child, Task, TaskCompletion } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
+import { getSupabaseClient } from '../utils/supabase';
 
 interface WeeklyRewardChartProps {
   children: Child[];
@@ -18,6 +19,55 @@ interface WeeklyRewardChartProps {
   onRejectCompletion?: (id: string) => void;
   onDeleteCompletion?: (id: string) => void;
 }
+
+// Calculate unlocked badge count dynamically based on child stats & completions
+const calculateBadgeCount = (child: Child, allCompletions: TaskCompletion[]): number => {
+  const childApprovedCompletions = allCompletions.filter(c => c.child_id === child.id && c.status === 'approved');
+  const totalTasks = childApprovedCompletions.length;
+  const level = child.level || 1;
+  const streak = child.streak_days || 0;
+  const points = child.lifetime_points || child.points || 0;
+
+  let count = 0;
+
+  // Level Progression Badges
+  if (level >= 2) count++;
+  if (level >= 3) count++;
+  if (level >= 5) count++;
+  if (level >= 10) count++;
+  if (level >= 15) count++;
+  if (level >= 20) count++;
+  if (level >= 30) count++;
+  if (level >= 50) count++;
+
+  // Coins & Wealth Badges
+  if (points > 0) count++;
+  if (points >= 50) count++;
+  if (points >= 100) count++;
+  if (points >= 250) count++;
+  if (points >= 500) count++;
+  if (points >= 1000) count++;
+  if (points >= 2500) count++;
+  if (points >= 5000) count++;
+
+  // Streak Badges
+  if (streak >= 2) count++;
+  if (streak >= 3) count++;
+  if (streak >= 7) count++;
+  if (streak >= 14) count++;
+  if (streak >= 21) count++;
+  if (streak >= 30) count++;
+  if (streak >= 100) count++;
+
+  // Task & Chore Badges
+  if (totalTasks >= 1) count++;
+  if (totalTasks >= 5) count++;
+  if (totalTasks >= 10) count++;
+  if (totalTasks >= 50) count++;
+  if (totalTasks >= 100) count++;
+
+  return count;
+};
 
 export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   children,
@@ -40,6 +90,9 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   // Tip banner visibility
   const [showTip, setShowTip] = useState<boolean>(true);
 
+  // Unlocked badges count from DB
+  const [unlockedBadgesCount, setUnlockedBadgesCount] = useState<number | null>(null);
+
   // Selected cell modal/popover state for modifying an existing completion
   const [activeCellAction, setActiveCellAction] = useState<{
     completion?: TaskCompletion;
@@ -56,6 +109,36 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   };
+
+  // Active selected child object
+  const activeChild = children.find(c => c.id === selectedChildId) || children[0];
+
+  // Fetch badges from Supabase child_badges table whenever active child or completions change
+  useEffect(() => {
+    if (!activeChild) return;
+    let isMounted = true;
+
+    const fetchBadgeCount = async () => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+
+      try {
+        const { count, error } = await supabase
+          .from('child_badges')
+          .select('*', { count: 'exact', head: true })
+          .eq('child_id', activeChild.id);
+
+        if (!error && count !== null && isMounted) {
+          setUnlockedBadgesCount(count);
+        }
+      } catch (e) {
+        console.warn('Error fetching badge count:', e);
+      }
+    };
+
+    fetchBadgeCount();
+    return () => { isMounted = false; };
+  }, [activeChild?.id, completions]);
 
   // Compute start of week (Monday) based on weekOffset
   const { startDate, dateRangeDays } = useMemo(() => {
@@ -82,9 +165,6 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
   // Today key
   const todayKey = formatDateKey(new Date());
-
-  // Active selected child object
-  const activeChild = children.find(c => c.id === selectedChildId) || children[0];
 
   // Active tasks for the selected child (or all children if activeChild is set)
   const activeChildTasks = useMemo(() => {
@@ -167,13 +247,18 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       }
     });
 
+    const localBadges = calculateBadgeCount(activeChild, completions);
+    const badgeCount = (unlockedBadgesCount !== null && unlockedBadgesCount > 0)
+      ? Math.max(unlockedBadgesCount, localBadges)
+      : localBadges;
+
     return {
       goldEarned: gold,
       choresCompleted: completedCount,
       streak: activeChild.streak_days || 0,
-      badges: (activeChild as any).unlocked_badge_ids?.length || (activeChild as any).badges?.length || 0
+      badges: badgeCount
     };
-  }, [activeChild, completions, dateRangeDays]);
+  }, [activeChild, completions, dateRangeDays, unlockedBadgesCount]);
 
   return (
     <div className="space-y-6 print:space-y-4 print:p-0">
