@@ -299,45 +299,62 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       </div>
 
       {/* Gifting Banner */}
-      {!isGiftingBannerDismissed && (
-        <div
-          onClick={() => onNavigateTab?.('pots')}
-          className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
-          style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
-        >
-          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3 sm:p-3.5 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                <FaGift className="w-4 h-4" />
+      {(() => {
+        const currentGifts = activeChild.gifts_made || 0;
+        const dismissedKey = `gifting_banner_dismissed_count_${activeChild.id}`;
+        const lastDismissedCount = parseInt(localStorage.getItem(dismissedKey) || '-1', 10);
+        
+        // Show banner if child has gifted coins (> 0), it hasn't been manually closed for current gift count, and component state isn't dismissed
+        if (currentGifts === 0 || lastDismissedCount >= currentGifts || isGiftingBannerDismissed) {
+          return null;
+        }
+
+        return (
+          <div
+            onClick={() => onNavigateTab?.('pots')}
+            className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
+            style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
+          >
+            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3 sm:p-3.5 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform">
+                  <FaGift className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Typography variant="h4" className="font-black text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
+                      Well done! 🎉 Gifting Pot
+                    </Typography>
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      {currentGifts} coins gifted!
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
+                    Awesome kindness! You've given back to others.
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
-                  Gifting Pot
-                </Typography>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                  {(activeChild.gifts_made || 0)} coins gifted
-                </span>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className="bg-stone-100 dark:bg-stone-800 p-1.5 rounded-lg text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <ChevronRight className="w-4 h-4" strokeWidth={3} />
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    localStorage.setItem(dismissedKey, currentGifts.toString());
+                    setIsGiftingBannerDismissed(true);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              <div className="bg-stone-100 dark:bg-stone-800 p-1.5 rounded-lg text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                <ChevronRight className="w-4 h-4" strokeWidth={3} />
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsGiftingBannerDismissed(true);
-                }}
-                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
-                title="Dismiss"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
