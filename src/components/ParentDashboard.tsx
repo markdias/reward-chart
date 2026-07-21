@@ -43,6 +43,7 @@ import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
+import { WeeklyRewardChart } from './WeeklyRewardChart';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
@@ -94,7 +95,7 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
-  onParentCompleteTask: (taskId: string, childId: string) => void;
+  onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
@@ -106,7 +107,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
-  initialTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
+  initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help';
   initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
 }
@@ -155,7 +156,7 @@ export default function ParentDashboard({
   initialSubTab = 'directory',
   isLoading = false
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -1117,6 +1118,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              { id: 'chart', label: 'Chart', icon: Calendar },
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1312,6 +1314,26 @@ export default function ParentDashboard({
                   />
                 </div>
 
+              </motion.div>
+            )}
+
+            {activeTab === 'chart' && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                key="chart-tab"
+                className="space-y-6 sm:space-y-8"
+                id="chart-view"
+              >
+                <WeeklyRewardChart
+                  children={children}
+                  tasks={tasks}
+                  completions={completions}
+                  onParentCompleteTask={onParentCompleteTask}
+                  onApproveCompletion={onApproveCompletion}
+                  onRejectCompletion={onRejectCompletion}
+                />
               </motion.div>
             )}
 
@@ -3051,10 +3073,10 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              { id: 'chart', label: 'Chart', icon: Calendar },
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-              { id: 'rewards', label: 'Rewards', icon: Gift },
-              { id: 'targets', label: 'Targets', icon: Target }
+              { id: 'rewards', label: 'Rewards', icon: Gift }
             ]}
             activeTab={activeTab}
             onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}

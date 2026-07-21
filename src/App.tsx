@@ -2036,18 +2036,18 @@ export default function App() {
     handleEditReward(rewardId, { is_available: true });
   };
 
-  const handleParentCompleteTask = async (taskId: string, childId: string) => {
+  const handleParentCompleteTask = async (taskId: string, childId: string, dateIso?: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     // Create a completion directly as 'approved'
     const newCompletion: TaskCompletion = {
-      id: `comp_${Date.now()}`,
+      id: `comp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       task_id: taskId,
       child_id: childId,
       points_awarded: task.points,
       status: 'approved',
-      completed_at: new Date().toISOString()
+      completed_at: dateIso || new Date().toISOString()
     };
 
     syncCompletions([...completions, newCompletion]);
