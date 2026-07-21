@@ -38,14 +38,13 @@ const getTaskRoutineInfo = (task: Task, child?: Child): { isRoutine: boolean; pe
     }
   }
 
-  // Fallback period detection by title or recurrence
+  // Fallback period detection by title keywords
   const titleLower = task.title.toLowerCase();
   if (titleLower.includes('morning')) return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
   if (titleLower.includes('afternoon')) return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
   if (titleLower.includes('evening') || titleLower.includes('bedtime')) return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
-  if (task.recurrence === 'daily' || task.recurrence === 'weekly') return { isRoutine: true, period: 'general', label: 'Daily Routine' };
 
-  return { isRoutine: false, label: 'Extra Chore' };
+  return { isRoutine: false, label: '' };
 };
 
 // Calculate unlocked badge count dynamically based on child stats & completions
