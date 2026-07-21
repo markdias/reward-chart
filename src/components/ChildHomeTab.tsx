@@ -486,22 +486,20 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           activePeriodKey = 'eveningTaskIds';
         }
 
-        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
-        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const morningTaskIds = activeRoutine.morningTaskIds || [];
+        const afternoonTaskIds = activeRoutine.afternoonTaskIds || [];
+        const eveningTaskIds = activeRoutine.eveningTaskIds || [];
 
-        if (!hasActivePeriodTasks) {
-          return (
-            <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
-              <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
-                <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
-                <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO ACTIVE ROUTINES</Typography>
-                <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
-                  No routines setup for {activePeriodLabel.toLowerCase()}
-                </Typography>
-              </div>
-            </div>
-          );
-        }
+        const hasMorningTasks = morningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = afternoonTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = eveningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+
+        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
+        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+
+        const routineDisplayName = activeRoutine.name.toLowerCase().includes('routine') 
+          ? activeRoutine.name 
+          : `${activeRoutine.name} Routine`;
 
         return (
           <div className="space-y-4 pt-2">
@@ -511,14 +509,32 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name.toLowerCase().includes('routine') ? activeRoutine.name : `${activeRoutine.name} Routine`}</Typography>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{routineDisplayName}</Typography>
                   <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              {renderPeriod(activePeriodLabel, activePeriodTaskIds)}
+              {hasActivePeriodTasks ? (
+                renderPeriod(activePeriodLabel, activePeriodTaskIds)
+              ) : (hasMorningTasks || hasAfternoonTasks || hasEveningTasks) ? (
+                <>
+                  {renderPeriod("Morning", morningTaskIds)}
+                  {renderPeriod("Afternoon", afternoonTaskIds)}
+                  {renderPeriod("Evening", eveningTaskIds)}
+                </>
+              ) : (
+                <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+                  <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                    <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                    <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO TASKS IN ROUTINE</Typography>
+                    <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
+                      Ask your parents to assign tasks to this routine!
+                    </Typography>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
