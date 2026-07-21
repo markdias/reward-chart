@@ -670,7 +670,7 @@ export default function App() {
 
       fetchSupabaseData();
 
-      // Subscribe to Realtime Postgres changes across all public tables
+      // Subscribe to Realtime Postgres changes & custom Broadcasts across public tables
       const dbChannel = supabase.channel('schema-db-changes')
         .on(
           'postgres_changes',
@@ -682,15 +682,33 @@ export default function App() {
             }, 500);
           }
         )
+        .on(
+          'broadcast',
+          { event: 'data_changed' },
+          (payload) => {
+            console.log('Realtime broadcast received! Refreshing data...', payload);
+            fetchSupabaseData();
+          }
+        )
         .subscribe();
-        
-      // Subscribe to custom Broadcasts for this specific family (bypasses RLS subquery limitations in Postgres WAL)
-      // Note: currentFamilyId might be stale here if we don't fetch it first, but we are inside the async fetchSupabaseData where it's not easily accessible.
-      // We should set up the broadcast channel *inside* fetchSupabaseData or rely on parentEmail.
-      // Let's just poll every 10 seconds as a fallback, and set up a state-dependent effect for broadcast.
+
+      // Local tab broadcast channel
+      const localBc = new BroadcastChannel('rch_data_sync');
+      localBc.onmessage = (event) => {
+        if (event.data === 'refresh') {
+          fetchSupabaseData();
+        }
+      };
+
+      // 10-second background polling fallback
+      const pollInterval = setInterval(() => {
+        fetchSupabaseData();
+      }, 10000);
 
       // Cleanup subscription on unmount or parentEmail change
       return () => {
+        clearInterval(pollInterval);
+        localBc.close();
         supabase.removeChannel(dbChannel);
       };
     } else {
@@ -705,6 +723,11 @@ export default function App() {
     setChildren(newList);
     const key = (parentProfile?.family_id || parentEmail) ? `RCH_CHILDREN_${parentProfile?.family_id || parentEmail}` : 'RCH_CHILDREN';
     localStorage.setItem(key, JSON.stringify(newList));
+    try {
+      const bc = new BroadcastChannel('rch_data_sync');
+      bc.postMessage('refresh');
+      bc.close();
+    } catch (e) {}
   };
 
   const syncTasks = (newList: Task[]) => {
