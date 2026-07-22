@@ -325,43 +325,38 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         if (approvedRedemptions.length === 0) return null;
 
         return (
-          <div className="w-full bg-white dark:bg-stone-900 border-2 border-stone-900 dark:border-stone-800 rounded-[1.6rem] p-4 sm:p-5 shadow-sm space-y-3 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
-                <Gift className="w-5 h-5 text-amber-500" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
+          <div
+            className="w-full relative p-[3px] rounded-[1.6rem] shadow-lg mb-4 text-left transition-transform duration-200"
+            style={{ background: 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #10b981 10px, #10b981 20px, #3b82f6 20px, #3b82f6 30px)' }}
+          >
+            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3.5 sm:p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
+                  <Gift className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
                   <Typography variant="h4" className="font-black text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
                     Reward Approved!
                   </Typography>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    Waiting for Parent
-                  </span>
+                  <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
+                    Your parent approved your reward! Ask them to hand it to you:
+                  </p>
                 </div>
-                <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
-                  Your parent approved your reward! Ask them to hand it to you:
-                </p>
               </div>
-            </div>
 
-            <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-stone-800">
-              {approvedRedemptions.map(r => {
-                const reward = rewards.find(rw => rw.id === r.reward_id);
-                return (
-                  <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
-                    <div className="flex items-center gap-2.5">
+              <div className="space-y-2 pt-2.5 border-t border-stone-100 dark:border-stone-800">
+                {approvedRedemptions.map(r => {
+                  const reward = rewards.find(rw => rw.id === r.reward_id);
+                  return (
+                    <div key={r.id} className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40">
                       <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                       <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-50">
                         {reward?.title || 'Reward'}
                       </span>
                     </div>
-                    <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Ready for pickup
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         );
