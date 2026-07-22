@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle, Crown
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -1721,11 +1721,11 @@ export default function ChildDashboard({
                       <ArcadeTicketCard key={`skel-${i}`} child={{ id: '', name: '', avatar_url: '', level: 0, streak_days: 0, points: 0 }} isLoading />
                     ))}
                   </>
-                ) : children.map((child) => {
+                ) : children.map((child, idx) => {
                   const stage = getCharacterStage(child.character_id, child.level, parentProfile);
                   return (
                     <ArcadeTicketCard
-                      key={child.id}
+                      key={child.id || `child-${idx}`}
                       child={child}
                       onClick={() => handleSelectChild(child.id)}
                     />

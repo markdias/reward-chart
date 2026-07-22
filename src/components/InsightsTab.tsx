@@ -256,11 +256,11 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       {/* Child Selector Pills */}
       {children.length > 1 && (
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-          {children.map(child => {
+          {children.map((child, idx) => {
             const isSelected = child.id === selectedChild.id;
             return (
               <button
-                key={child.id}
+                key={child.id || `child-insights-${idx}`}
                 onClick={() => setSelectedChildId(child.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-300 ${
                   isSelected
