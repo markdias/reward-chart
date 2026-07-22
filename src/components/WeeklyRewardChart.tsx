@@ -199,7 +199,12 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   // Active tasks for the selected child (or all children if activeChild is set)
   const activeChildTasks = useMemo(() => {
     if (!activeChild) return [];
-    return tasks.filter(t => (t.child_id === activeChild.id || t.child_id === 'all' || t.child_id === 'directory') && t.is_active !== false);
+    return tasks.filter(t => 
+      (t.child_id === activeChild.id || t.child_id === 'all') && 
+      t.child_id !== 'directory' && 
+      t.is_template !== true && 
+      t.is_active !== false
+    );
   }, [tasks, activeChild]);
 
   // Filtered tasks based on routine filter ('all', 'routines', 'extra')

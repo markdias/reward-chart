@@ -91,7 +91,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       });
     }
     // Also include active daily tasks assigned to child
-    tasks.filter(t => (t.child_id === selectedChild.id || t.child_id === 'directory') && t.recurrence === 'daily').forEach(t => routineTaskIds.add(t.id));
+    tasks.filter(t => (t.child_id === selectedChild.id || t.child_id === 'all') && t.child_id !== 'directory' && !t.is_template && t.recurrence === 'daily').forEach(t => routineTaskIds.add(t.id));
 
     // Group approved completions by YYYY-MM-DD date
     const completionsByDate: Record<string, Set<string>> = {};
@@ -143,8 +143,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       maxDayCount = 1;
     }
 
-    // Tasks assigned to child or directory
-    const childTasks = tasks.filter(t => t.child_id === selectedChild.id || t.child_id === 'directory' || t.is_template);
+    // Tasks assigned to child (excluding directory templates)
+    const childTasks = tasks.filter(t => (t.child_id === selectedChild.id || t.child_id === 'all') && t.child_id !== 'directory' && !t.is_template);
     
     // Count completions per task title
     const taskCountMap: Record<string, number> = {};
