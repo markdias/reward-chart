@@ -2648,6 +2648,7 @@ updateChildInSupabase(targetChild);
               theme={activeTheme}
               isChildAuth={isChildAuth}
               onLogout={handleLogout}
+              onEnterJoinCode={isChildAuth ? () => setShowChildJoinCodePrompt(true) : undefined}
             />
           </motion.div>
         )}
