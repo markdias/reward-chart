@@ -53,17 +53,59 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
   const { flags } = useFeatureFlags();
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'PASSWORD_RECOVERY') {
+    const handleRecoverySession = async () => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+
+      // Check URL parameters for PKCE code
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      if (code) {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data.session) {
+            setAuthMode('resetPassword');
+            return;
+          }
+        } catch (e) {
+          console.warn('PKCE code exchange error:', e);
+        }
+      }
+
+      // Check URL hash for implicit flow tokens
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (!error && data.session) {
+              setAuthMode('resetPassword');
+              return;
+            }
+          } catch (e) {
+            console.warn('Set session from hash error:', e);
+          }
+        }
+      }
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' || (session && isResetUrl)) {
           setAuthMode('resetPassword');
         }
       });
       return () => {
         subscription.unsubscribe();
       };
-    }
+    };
+
+    handleRecoverySession();
   }, []);
 
   useEffect(() => {
@@ -409,6 +451,36 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
     try {
       const supabase = getSupabaseClient();
       if (!supabase) throw new Error('Supabase client is not configured');
+
+      let { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        // Try exchanging PKCE code if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        if (code) {
+          const { data: exData } = await supabase.auth.exchangeCodeForSession(code);
+          session = exData?.session || null;
+        }
+
+        // Try setting session from URL hash if implicit flow tokens present
+        if (!session && window.location.hash.includes('access_token')) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          if (accessToken && refreshToken) {
+            const { data: setRes } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            session = setRes?.session || null;
+          }
+        }
+      }
+
+      if (!session) {
+        throw new Error('Auth session missing! Your password reset link may have expired or was opened in a different browser. Please request a new password reset link.');
+      }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
