@@ -197,6 +197,7 @@ export default function ParentDashboard({
 
   const handleTourFinish = async () => {
     setRunTour(false);
+    setTourStepIndex(0);
     localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
     if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
       await onUpdateParentProfile({ tour_seen: true });
