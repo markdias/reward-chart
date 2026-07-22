@@ -1969,29 +1969,7 @@ export default function App() {
     const hasEnoughPoints = isBadgeFreebie ? true : availablePoints >= (reward?.cost_points || 0);
     if (!reward || !child || !hasEnoughPoints || !reward.is_available) return;
 
-    // --- Limit Checks ---
     const now = new Date();
-    const childRedemptions = redemptions.filter(r => r.child_id === childId && r.reward_id === rewardId);
-    
-    if (!isBadgeFreebie) {
-      if (reward.limit_type === 'daily') {
-        const startOfDay = getStartOfDailyReset(now);
-        const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
-        if (todayRedemptions.length >= 1) return; // Limit reached
-      } 
-      else if (reward.limit_type === 'twice_daily') {
-        const startOfDay = getStartOfDailyReset(now);
-        const todayRedemptions = childRedemptions.filter(r => new Date(r.redeemed_at).getTime() >= startOfDay);
-        if (todayRedemptions.length >= 2) return; // Limit reached
-        
-        // Wait at least 6 hours between redemptions
-        if (todayRedemptions.length === 1) {
-          const lastRedeem = new Date(todayRedemptions[0].redeemed_at).getTime();
-          const hrsSinceLast = (now.getTime() - lastRedeem) / (1000 * 60 * 60);
-          if (hrsSinceLast < 6) return;
-        }
-      }
-    }
 
     // Wait to deduct points until parent delivers it!
     // Just trigger celebration here for the request.

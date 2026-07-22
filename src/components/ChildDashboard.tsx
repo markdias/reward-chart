@@ -2596,7 +2596,18 @@ export default function ChildDashboard({
                                 {cardContent}
                               </Button>
                             ) : (
-                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving ${index === 0 ? 'joyride-target-first-reward' : ''}` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled ${index === 0 ? 'joyride-target-first-reward' : ''}`} style={rewardBgStyle}>
+                              <div
+                                key={rew.id}
+                                onClick={() => {
+                                  if (hasApprovedRequest || hasPendingRequest) {
+                                    playSound.pop();
+                                  } else if (!isAffordable) {
+                                    playSound.pinError();
+                                  }
+                                }}
+                                className={isSavingFor ? `${baseCardClasses} reward-card-saving ${index === 0 ? 'joyride-target-first-reward' : ''}` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled ${index === 0 ? 'joyride-target-first-reward' : ''}`}
+                                style={rewardBgStyle}
+                              >
                                 {cardContent}
                               </div>
                             );
