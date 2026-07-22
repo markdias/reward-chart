@@ -1349,23 +1349,56 @@ export default function ParentDashboard({
                   </Typography>
                   <ActivityFeed
                     activities={[
-                      ...completions.filter(c => c.status === 'approved').map(c => ({
-                        id: c.id,
-                        type: 'task' as const,
-                        status: 'completed' as const,
-                        title: tasks.find(t => t.id === c.task_id)?.title || 'Unknown Task',
-                        points: tasks.find(t => t.id === c.task_id)?.points || 0,
-                        date: new Date(c.completed_at),
-                      })),
-                      ...redemptions.filter(r => r.status === 'delivered').map(r => ({
-                        id: r.id,
-                        type: 'reward' as const,
-                        status: 'delivered' as const,
-                        title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
-                        points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
-                        date: new Date(r.redeemed_at),
-                        iconOverride: <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400">🍦</div>
-                      }))
+                      ...completions.filter(c => c.status === 'approved').map(c => {
+                        const child = children.find(ch => ch.id === c.child_id);
+                        const isBonus = c.task_id === 'bonus';
+                        const isPenalty = c.task_id === 'penalty' || (c.points_awarded !== undefined && c.points_awarded < 0);
+                        const task = tasks.find(t => t.id === c.task_id);
+                        
+                        let title = 'Task Completed';
+                        if (isBonus) {
+                          title = c.notes && c.notes.trim() ? c.notes : 'Good Work Bonus';
+                        } else if (isPenalty) {
+                          title = c.notes && c.notes.trim() ? c.notes : 'Deduction';
+                        } else if (task?.title) {
+                          title = task.title;
+                        } else if (c.notes) {
+                          title = c.notes;
+                        }
+
+                        const points = (c.points_awarded !== undefined && c.points_awarded !== null)
+                          ? c.points_awarded
+                          : (task?.points || 0);
+
+                        return {
+                          id: c.id,
+                          type: isPenalty ? ('penalty' as const) : ('task' as const),
+                          status: 'completed' as const,
+                          title,
+                          subtitle: child?.name ? `For ${child.name}` : undefined,
+                          points,
+                          date: new Date(c.completed_at),
+                          iconOverride: child ? (
+                            <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl bg-stone-50 dark:bg-stone-950" />
+                          ) : undefined
+                        };
+                      }),
+                      ...redemptions.filter(r => r.status === 'delivered').map(r => {
+                        const child = children.find(ch => ch.id === r.child_id);
+                        const reward = rewards.find(rw => rw.id === r.reward_id);
+                        return {
+                          id: r.id,
+                          type: 'reward' as const,
+                          status: 'delivered' as const,
+                          title: reward?.title || 'Reward Claimed',
+                          subtitle: child?.name ? `Claimed by ${child.name}` : undefined,
+                          points: reward?.cost_points || 0,
+                          date: new Date(r.redeemed_at),
+                          iconOverride: child ? (
+                            <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl bg-stone-50 dark:bg-stone-950" />
+                          ) : undefined
+                        };
+                      })
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10)}
                     emptyMessage="No recent activity yet."
                   />

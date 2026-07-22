@@ -88,7 +88,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   const recentActivities: any[] = useMemo(() => {
     const acts: any[] = [];
     todayCompletions.forEach(c => {
-      if (c.points_awarded < 0) {
+      if (c.points_awarded < 0 || c.task_id === 'penalty') {
         acts.push({
           id: `comp-${c.id}`,
           title: c.notes || 'Penalty',
@@ -96,12 +96,22 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           date: new Date(c.completed_at),
           type: 'penalty'
         });
+      } else if (c.task_id === 'bonus') {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Good Work Bonus',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: 'other'
+        });
       } else {
         const task = tasks.find(t => t.id === c.task_id);
         acts.push({
           id: `comp-${c.id}`,
-          title: task?.title || 'Unknown Task',
-          points: c.points_awarded,
+          title: task?.title || c.notes || 'Task Completed',
+          points: c.points_awarded ?? (task?.points || 0),
           date: new Date(c.completed_at),
           type: 'task',
           status: 'completed',
@@ -168,7 +178,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
     const acts: any[] = [];
     const childCompletions = completions.filter(c => c.child_id === activeChild.id && c.status === 'approved');
     childCompletions.forEach(c => {
-      if (c.points_awarded < 0) {
+      if (c.points_awarded < 0 || c.task_id === 'penalty') {
         acts.push({
           id: `comp-${c.id}`,
           title: c.notes || 'Penalty',
@@ -176,12 +186,22 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           date: new Date(c.completed_at),
           type: 'penalty'
         });
+      } else if (c.task_id === 'bonus') {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Good Work Bonus',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: 'other'
+        });
       } else {
         const task = tasks.find(t => t.id === c.task_id);
         acts.push({
           id: `comp-${c.id}`,
-          title: task?.title || 'Unknown Task',
-          points: c.points_awarded,
+          title: task?.title || c.notes || 'Task Completed',
+          points: c.points_awarded ?? (task?.points || 0),
           date: new Date(c.completed_at),
           type: 'task',
           status: 'completed',

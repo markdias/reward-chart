@@ -1710,7 +1710,7 @@ export default function App() {
       status: 'approved',
       points_awarded: amount,
       completed_at: new Date().toISOString(),
-      notes: reason
+      notes: reason && reason.trim() ? reason : 'Good Work Bonus'
     };
     syncCompletions([...completions, newCompletion]);
 
@@ -1741,7 +1741,7 @@ export default function App() {
       points_awarded: -amount,
       status: 'approved',
       completed_at: new Date().toISOString(),
-      notes: reason
+      notes: reason && reason.trim() ? reason : 'Deduction'
     };
     syncCompletions([...completions, newCompletion]);
 
