@@ -59,7 +59,7 @@ export default function SettingsTab({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const { isDarkMode, themePreference, setThemePreference } = useTheme();
-  const { subscription, openPaywall } = useSubscription();
+  const { subscription, openPaywall, togglePro } = useSubscription();
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -393,6 +393,35 @@ export default function SettingsTab({
               >
                 {subscription.isPro ? 'Manage Plan' : 'UPGRADE TO PRO'}
               </Button>
+            </div>
+
+            <div className="mt-3 p-4 flex items-center justify-between bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl transition-colors ${subscription.isPro ? 'bg-amber-500/10 text-amber-500' : 'bg-stone-100 dark:bg-stone-800 text-stone-400'}`}>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-stone-800 dark:text-stone-100">Enable Pro Mode</h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    Toggle Pro features on or off for testing and evaluation.
+                  </p>
+                </div>
+              </div>
+              <div
+                onClick={() => {
+                  playSound.click();
+                  togglePro(!subscription.isPro);
+                }}
+                className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 shrink-0 ${
+                  subscription.isPro ? 'bg-amber-500 justify-end' : 'bg-stone-300 dark:bg-stone-700 justify-start'
+                }`}
+              >
+                <motion.div
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="w-4 h-4 rounded-full bg-white shadow-md"
+                />
+              </div>
             </div>
           </SettingsBlock>
 
