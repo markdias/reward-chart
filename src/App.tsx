@@ -450,119 +450,121 @@ export default function App() {
                   } else {
                     // Creating a new parent profile
                     let familyId = parentEmail;
-                  let inheritedFamilyName = null;
-                  const shareToken = urlParams.get('share');
-                  if (shareToken) {
-                    const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
-                    let inviter = pendingStr ? JSON.parse(pendingStr) : null;
-                    if (!inviter) {
-                      const { data } = await supabase
-                        .from('parent_profiles')
-                        .select('*')
-                        .eq('share_token', shareToken)
-                        .maybeSingle();
-                      inviter = data;
-                    }
+                    let inheritedFamilyName = null;
+                    const shareToken = urlParams.get('share');
+                    if (shareToken) {
+                      const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
+                      let inviter = pendingStr ? JSON.parse(pendingStr) : null;
+                      if (!inviter) {
+                        const { data } = await supabase
+                          .from('parent_profiles')
+                          .select('*')
+                          .eq('share_token', shareToken)
+                          .maybeSingle();
+                        inviter = data;
+                      }
 
-                    if (inviter) {
-                      familyId = inviter.family_id;
-                      inheritedFamilyName = inviter.family_name;
-                      localStorage.removeItem('RCH_PENDING_PARENT_LINK');
-                    }
-                  }
-
-                  const meta = sessionData.session.user.user_metadata || {};
-                  const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
-                  const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
-
-                  const newProfile = {
-                    user_id: sessionData.session.user.id,
-                    email: sessionData.session.user.email || parentEmail,
-                    family_id: familyId,
-                    family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
-                    name: meta.name || localProfileObj.name || null,
-                    share_token: generateShortCode(),
-                    savings_pot_unlock_level: 2,
-                    food_pot_unlock_level: 4,
-                    gifting_pot_unlock_level: 6,
-                    gold_pot_maintenance_unlock_level: 8,
-                    gold_pot_maintenance_cost: 2,
-                    points_to_level_up: 500,
-                    level_up_gold_reward: 500
-                  };
-                  const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
-                  
-                  if (profileError) {
-                    console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
-                    return; // Abort further inserts if profile fails
-                  }
-                  
-                  // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
-                  if (!shareToken) {
-                    const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
-                    const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
-
-                    const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
-
-                    if (!hasDbData) {
-                      const localEmail = 'local_parent@rewardchart.app';
-                      const userEmailKey = sessionData.session.user.email;
-                      const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
-                                               (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
-                                               localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
-                      const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
-                                            (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
-                                            localStorage.getItem(`RCH_TASKS_${localEmail}`);
-                      const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
-                                                  (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
-                                                  localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
-                      const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
-                                              (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
-                                              localStorage.getItem(`RCH_REWARDS_${localEmail}`);
-                      const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
-                                                  (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
-                                                  localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
-                      const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
-                                              (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
-                                              localStorage.getItem(`RCH_GIFTING_${localEmail}`);
-                      
-                      if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
-                         // Migrate all local data to this new family ID
-                         const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
-                         const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
-                         const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
-                         const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         
-                         if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
-                         if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
-                         if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
-                         if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
-                         if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
-                         if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
-                      } else {
-                         const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
-                           ...t, 
-                           id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                           created_at: new Date().toISOString(),
-                           parent_id: familyId 
-                         }));
-                         const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
-                           ...r, 
-                           id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                           created_at: new Date().toISOString(),
-                           parent_id: familyId 
-                         }));
-                         await executeOrQueue('tasks', 'insert', tasksToInsert);
-                         await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                      if (inviter) {
+                        familyId = inviter.family_id;
+                        inheritedFamilyName = inviter.family_name;
+                        localStorage.removeItem('RCH_PENDING_PARENT_LINK');
                       }
                     }
+
+                    const meta = sessionData.session.user.user_metadata || {};
+                    const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
+                    const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
+
+                    const newProfile = {
+                      user_id: sessionData.session.user.id,
+                      email: sessionData.session.user.email || parentEmail,
+                      family_id: familyId,
+                      family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
+                      name: meta.name || localProfileObj.name || null,
+                      share_token: generateShortCode(),
+                      savings_pot_unlock_level: 2,
+                      food_pot_unlock_level: 4,
+                      gifting_pot_unlock_level: 6,
+                      gold_pot_maintenance_unlock_level: 8,
+                      gold_pot_maintenance_cost: 2,
+                      points_to_level_up: 500,
+                      level_up_gold_reward: 500
+                    };
+                    const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
+                    
+                    if (profileError) {
+                      console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
+                      setIsLoadingData(false);
+                      return; // Abort further inserts if profile fails
+                    }
+                    
+                    // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
+                    if (!shareToken) {
+                      const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
+                      const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
+
+                      const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
+
+                      if (!hasDbData) {
+                        const localEmail = 'local_parent@rewardchart.app';
+                        const userEmailKey = sessionData.session.user.email;
+                        const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
+                                                 (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
+                                                 localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
+                        const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
+                                              (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
+                                              localStorage.getItem(`RCH_TASKS_${localEmail}`);
+                        const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
+                        const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_REWARDS_${localEmail}`);
+                        const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                        const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_GIFTING_${localEmail}`);
+                        
+                        if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
+                           // Migrate all local data to this new family ID
+                           const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
+                           const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
+                           const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
+                           const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           
+                           if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
+                           if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
+                           if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
+                           if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
+                           if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
+                           if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
+                        } else {
+                           const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
+                             ...t, 
+                             id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
+                             ...r, 
+                             id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           await executeOrQueue('tasks', 'insert', tasksToInsert);
+                           await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                        }
+                      }
+                    }
+                    
+                    setParentProfile(newProfile as ParentProfile);
+                    loadedParentProfile = newProfile as ParentProfile;
+                    currentFamilyId = familyId;
                   }
-                  
-                  setParentProfile(newProfile as ParentProfile);
-                  loadedParentProfile = newProfile as ParentProfile;
-                  currentFamilyId = familyId;
                 }
               }
             }
