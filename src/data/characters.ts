@@ -30,7 +30,7 @@ export const CHARACTER_PACKS: CharacterPack[] = [
     stages: [
       {
         stage_number: 1,
-        name: 'Emerald Dragon Egg',
+        name: 'Dragon Egg',
         description: 'A glowing green egg resting warmly. Keep completing tasks to hatch it!',
         min_points: 0,
         min_level: 1,
@@ -42,7 +42,7 @@ export const CHARACTER_PACKS: CharacterPack[] = [
       },
       {
         stage_number: 2,
-        name: 'Emerald Dragon Egg Baby',
+        name: 'Hatchling',
         description: 'A tiny dragon head popping out of the egg! It is starting to hatch.',
         min_points: 40,
         min_level: 2,
@@ -54,7 +54,7 @@ export const CHARACTER_PACKS: CharacterPack[] = [
       },
       {
         stage_number: 3,
-        name: 'Emerald Dragon Baby',
+        name: 'Baby Dragon',
         description: 'A tiny dragon that recently hatched! Full of energy and ready to learn.',
         min_points: 80,
         min_level: 4,
@@ -68,8 +68,8 @@ export const CHARACTER_PACKS: CharacterPack[] = [
       },
       {
         stage_number: 4,
-        name: 'Emerald Dragon Teen',
-        description: 'A growing teenage dragon brimming with confidence! Growing stronger with every good deed.',
+        name: 'Young Drake',
+        description: 'A growing young dragon brimming with confidence! Growing stronger with every good deed.',
         min_points: 150,
         min_level: 6,
         emoji: '🐉✨',
@@ -82,7 +82,7 @@ export const CHARACTER_PACKS: CharacterPack[] = [
       },
       {
         stage_number: 5,
-        name: 'Emerald Dragon Adult',
+        name: 'Emerald Dragon King',
         description: 'The supreme form of Sparky, boasting grand wings and wisdom. Supercharged by good behavior!',
         min_points: 300,
         min_level: 8,
