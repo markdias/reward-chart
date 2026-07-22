@@ -5,7 +5,7 @@ import {
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -27,8 +27,9 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical
 } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
@@ -43,6 +44,8 @@ import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
+import { WeeklyRewardChart } from './WeeklyRewardChart';
+import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
@@ -94,7 +97,7 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
-  onParentCompleteTask: (taskId: string, childId: string) => void;
+  onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
@@ -106,9 +109,11 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
-  initialTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
+  initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help';
   initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
+  onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ParentDashboard({
@@ -153,9 +158,19 @@ export default function ParentDashboard({
   onUpdateParentProfile,
   initialTab = 'home',
   initialSubTab = 'directory',
-  isLoading = false
+  isLoading = false,
+  onRefresh,
+  theme
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
+  const isBetaUser = Boolean(parentProfile?.is_beta_tester || flags.insights_tab);
+
+  useEffect(() => {
+    if (!isBetaUser && activeTab === 'chart') {
+      setActiveTab('home');
+    }
+  }, [isBetaUser, activeTab]);
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -182,6 +197,7 @@ export default function ParentDashboard({
 
   const handleTourFinish = async () => {
     setRunTour(false);
+    setTourStepIndex(0);
     localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
     if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
       await onUpdateParentProfile({ tour_seen: true });
@@ -189,68 +205,206 @@ export default function ParentDashboard({
   };
 
   // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
-  // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
-  const handleBeforeTourStepChange = (nextStepIndex: number) => {
-    const mainTabChangeSteps = [0, 1, 2, 5, 7, 8, 9, 10, 11];
-    if (mainTabChangeSteps.includes(nextStepIndex)) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
+  const handleBeforeTourStepChange = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  const tourSteps: Step[] = useMemo(() => {
+    const steps: Step[] = [
+      {
+        target: '.joyride-target-home',
+        content: 'Welcome to your Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+        placement: 'bottom',
+      },
+    ];
+
+    if (isBetaUser) {
+      steps.push(
+        {
+          target: '.joyride-target-chart',
+          content: 'This is the Chart tab! Toggle between your weekly reward matrix and real-time child performance insights.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-child-selector',
+          content: 'Use the child selector bar to switch between your children, or toggle between 7-day, 14-day, and 30-day view ranges.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-grid',
+          content: 'Tap any empty cell (+ sign) to instantly auto-approve a chore for that date! Click existing cells to change status or reset.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-print-btn',
+          content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-subtab-insights',
+          content: 'Switch to the INSIGHTS sub-tab to explore child progress analytics, coin stats, category breakdowns, and AI parenting tips.',
+          placement: 'bottom',
+        },
+        {
+          target: '#insights-tab-view',
+          content: 'In Insights, view key statistics like total gold coins, chores done, day streak, weekly best days chart, category breakdown, and areas going well or struggling.',
+          placement: 'bottom',
+        }
+      );
+    }
+
+    steps.push(
+      {
+        target: '.joyride-target-children',
+        content: 'This is the Children tab. Here you can add child profiles, customize avatars, select character archetypes, and set level-up rewards.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-directory',
+        content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-active',
+        content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-routines',
+        content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-directory',
+        content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-active',
+        content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids and manage fulfillment.',
+        placement: 'bottom',
+      },
+      {
+        target: '.joyride-target-targets',
+        content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-logout-btn',
+        content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-help-btn',
+        content: 'Need help? The Guide button replays this tour and explains how the system works.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-settings-btn',
+        content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-profile-tab',
+        content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-security-tab',
+        content: 'The Security tab allows you to update your account password securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-sharing-tab',
+        content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-danger-tab',
+        content: 'The Danger tab contains options to clean duplicates, reset sample data, or start over if you need a clean slate.',
+        placement: 'bottom',
+      },
+      {
+        target: '#exit-to-child-view-btn',
+        content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings securely.',
+        placement: 'bottom',
+      },
+      {
+        target: 'body',
+        content: (
+          <div className="flex flex-col gap-4">
+            <p className="font-bold">You're all set! Explore each section at your own pace.</p>
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+                if (e.target.checked) {
+                  localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
+                  if (onUpdateParentProfile) {
+                    onUpdateParentProfile({ tour_seen: true });
+                  }
+                }
+              }} />
+              <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+            </div>
+          </div>
+        ),
+        placement: 'center',
+      }
+    );
+
+    return steps;
+  }, [isBetaUser, onUpdateParentProfile]);
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    if (nextStepIndex === 0) {
+    const step = tourSteps[nextStepIndex];
+    if (!step || typeof step.target !== 'string') return;
+
+    const targetSelector = step.target;
+
+    if (targetSelector === '.joyride-target-home' || targetSelector === '#exit-to-child-view-btn') {
       setActiveTab('home');
-    } else if (nextStepIndex === 1) {
+    } else if (targetSelector === '.joyride-target-chart' || targetSelector.startsWith('#tour-chart-')) {
+      setActiveTab('chart');
+      if (targetSelector === '#tour-chart-subtab-insights') {
+        setChartSubTab('insights');
+      } else {
+        setChartSubTab('weekly');
+      }
+    } else if (targetSelector === '#insights-tab-view') {
+      setActiveTab('chart');
+      setChartSubTab('insights');
+    } else if (targetSelector === '.joyride-target-children') {
       setActiveTab('children');
-    } else if (nextStepIndex === 2) {
+    } else if (targetSelector.startsWith('#tour-task-')) {
       setActiveTab('tasks');
-      setTaskSubTab('directory');
-    } else if (nextStepIndex === 3) {
-      setActiveTab('tasks');
-      setTaskSubTab('active');
-    } else if (nextStepIndex === 4) {
-      setActiveTab('tasks');
-      setTaskSubTab('routines');
-    } else if (nextStepIndex === 5) {
+      if (targetSelector === '#tour-task-subtab-directory') setTaskSubTab('directory');
+      else if (targetSelector === '#tour-task-subtab-active') setTaskSubTab('active');
+      else if (targetSelector === '#tour-task-subtab-routines') setTaskSubTab('routines');
+    } else if (targetSelector.startsWith('#tour-reward-')) {
       setActiveTab('rewards');
-      setRewardSubTab('directory');
-    } else if (nextStepIndex === 6) {
-      setActiveTab('rewards');
-      setRewardSubTab('active');
-    } else if (nextStepIndex === 7) {
+      if (targetSelector === '#tour-reward-subtab-directory') setRewardSubTab('directory');
+      else if (targetSelector === '#tour-reward-subtab-active') setRewardSubTab('active');
+    } else if (targetSelector === '.joyride-target-targets') {
       setActiveTab('targets');
-    } else if (nextStepIndex === 11) {
+    } else if (targetSelector.startsWith('#tour-settings-') || targetSelector === '#global-settings-btn') {
       setActiveTab('settings');
-      setSettingsSubTab('profile');
-    } else if (nextStepIndex === 12) {
-      setActiveTab('settings');
-      setSettingsSubTab('security');
-    } else if (nextStepIndex === 13) {
-      setActiveTab('settings');
-      setSettingsSubTab('sharing');
-    } else if (nextStepIndex === 14) {
-      setActiveTab('settings');
-      setSettingsSubTab('danger');
-    } else if (nextStepIndex === 15) {
-      setActiveTab('settings');
-    } else if (nextStepIndex === 16) {
-      setActiveTab('home');
+      if (targetSelector === '#tour-settings-profile-tab') setSettingsSubTab('profile');
+      else if (targetSelector === '#tour-settings-security-tab') setSettingsSubTab('security');
+      else if (targetSelector === '#tour-settings-sharing-tab') setSettingsSubTab('sharing');
+      else if (targetSelector === '#tour-settings-danger-tab') setSettingsSubTab('danger');
     }
 
-    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    // Delay updating stepIndex to allow tab render
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
-      
-      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+
       setTimeout(() => {
-        const step = tourSteps[nextStepIndex];
-        if (step && typeof step.target === 'string' && step.target !== 'body') {
+        if (typeof step.target === 'string' && step.target !== 'body') {
           const targetEl = document.querySelector(step.target);
           if (targetEl) {
             const rect = targetEl.getBoundingClientRect();
-            const topBoundary = 120; // Clear the top header
-            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+            const topBoundary = 120;
+            const bottomBoundary = window.innerHeight - 150;
 
             let scrollDiff = 0;
             if (rect.top < topBoundary) {
@@ -268,109 +422,6 @@ export default function ParentDashboard({
     }, 300);
   };
 
-  const tourSteps: Step[] = [
-    {
-      target: '.joyride-target-home',
-      content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
-      placement: 'bottom',
-    },
-    {
-      target: '.joyride-target-children',
-      content: 'This is the Children tab. Here you can add child profiles, customize avatars, and set level-up rewards.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-directory',
-      content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-active',
-      content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-routines',
-      content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-reward-subtab-directory',
-      content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-reward-subtab-active',
-      content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids.',
-      placement: 'bottom',
-    },
-    {
-      target: '.joyride-target-targets',
-      content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-logout-btn',
-      content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-help-btn',
-      content: 'Need help? The Guide button replays this tour and explains how the system works.',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-settings-btn',
-      content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-profile-tab',
-      content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-security-tab',
-      content: 'The Security tab allows you to update your password securely.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-sharing-tab',
-      content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-danger-tab',
-      content: 'The Danger tab contains options to reset data or completely start over if you need a clean slate.',
-      placement: 'bottom',
-    },
-    {
-      target: '#exit-to-child-view-btn',
-      content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
-      placement: 'bottom',
-    },
-    {
-      target: 'body',
-      content: (
-        <div className="flex flex-col gap-4">
-          <p className="font-bold">You're all set! Explore each section at your own pace.</p>
-          <div className="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
-              if (e.target.checked) {
-                localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
-                if (onUpdateParentProfile) {
-                  onUpdateParentProfile({ tour_seen: true });
-                }
-              }
-            }} />
-            <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
-          </div>
-        </div>
-      ),
-      placement: 'center',
-    }
-  ];
-
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
@@ -380,6 +431,7 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
+  const [chartSubTab, setChartSubTab] = useState<'weekly' | 'insights'>('weekly');
   const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
   const [settingsSubTab, setSettingsSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
 
@@ -413,7 +465,7 @@ export default function ParentDashboard({
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
 
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' } | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' | 'Lifetime Gold' } | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
@@ -1117,6 +1169,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1138,7 +1191,12 @@ export default function ParentDashboard({
                 >
                   <span className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
-                    {tab.label}
+                    <span>{tab.label}</span>
+                    {(tab as any).isBeta && (
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                        BETA
+                      </span>
+                    )}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
@@ -1312,6 +1370,80 @@ export default function ParentDashboard({
                   />
                 </div>
 
+              </motion.div>
+            )}
+
+            {activeTab === 'chart' && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                key="chart-tab"
+                className="space-y-6 sm:space-y-8"
+                id="chart-view"
+              >
+                {/* SUB-TABS FOR CHART & INSIGHTS (VISIBLE FOR BETA USERS) */}
+                {(flags.insights_tab || parentProfile?.is_beta_tester) ? (
+                  <>
+                    <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-weekly"
+                        onClick={() => setChartSubTab('weekly')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'weekly'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        <span>WEEKLY CHART</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
+                      </Button>
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-insights"
+                        onClick={() => setChartSubTab('insights')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'insights'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        <span>INSIGHTS</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
+                      </Button>
+                    </div>
+
+                    {chartSubTab === 'weekly' && (
+                      <WeeklyRewardChart
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                        onParentCompleteTask={onParentCompleteTask}
+                        onApproveCompletion={onApproveCompletion}
+                        onRejectCompletion={onRejectCompletion}
+                        onDeleteCompletion={onRejectCompletion}
+                      />
+                    )}
+
+                    {chartSubTab === 'insights' && (
+                      <InsightsTab
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <WeeklyRewardChart
+                    children={children}
+                    tasks={tasks}
+                    completions={completions}
+                    onParentCompleteTask={onParentCompleteTask}
+                    onApproveCompletion={onApproveCompletion}
+                    onRejectCompletion={onRejectCompletion}
+                  />
+                )}
               </motion.div>
             )}
 
@@ -2425,7 +2557,7 @@ export default function ParentDashboard({
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
 
                           return (
-                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.textColor}`}>
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.text}`}>
                               <div>
                                 <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900 dark:text-stone-50'}>{reward?.title}</strong>
                                 <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
@@ -2471,6 +2603,7 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                  onUpdateParentProfile={onUpdateParentProfile}
                   activeSubTab={settingsSubTab}
                   onSubTabChange={setSettingsSubTab}
                 />
@@ -3051,6 +3184,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
@@ -3612,7 +3746,7 @@ export default function ParentDashboard({
                               </div>
                               <span className="font-bold text-stone-700 dark:text-stone-200">Gifts Sent</span>
                             </div>
-                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_sent_total || 0}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_made || child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>

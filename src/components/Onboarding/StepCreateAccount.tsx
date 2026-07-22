@@ -18,9 +18,10 @@ interface StepCreateAccountProps {
   onComplete: (email?: string) => void;
   onBack: () => void;
   onLoginInstead: () => void;
+  theme?: string;
 }
 
-export default function StepCreateAccount({ name = '', familyName = '', onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
+export default function StepCreateAccount({ name = '', familyName = '', onComplete, onBack, onLoginInstead, theme }: StepCreateAccountProps) {
   const styles = {
     text: 'text-stone-900 dark:text-stone-50',
     textMuted: 'text-stone-500 dark:text-stone-400',

@@ -6,6 +6,7 @@ export interface TabItem {
   label: string;
   icon: React.ComponentType<any>;
   badge?: number;
+  isBeta?: boolean;
 }
 
 export interface BottomTabBarProps {
@@ -55,8 +56,13 @@ export function BottomTabBar({
                       {tab.badge > 99 ? '99+' : tab.badge}
                     </span>
                   )}
+                  {tab.isBeta && (
+                    <span className="absolute -top-1.5 -right-3.5 bg-indigo-500 text-white text-[7px] font-black px-1 rounded-full uppercase shadow-xs">
+                      BETA
+                    </span>
+                  )}
                 </div>
-                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 flex items-center gap-0.5 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
                   {tab.label}
                 </span>
               </div>

@@ -326,7 +326,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                       Well done! 🎉 Gifting Pot
                     </Typography>
                     <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                      {currentGifts} coins gifted!
+                      {currentGifts} {currentGifts === 1 ? 'gift' : 'gifts'} made!
                     </span>
                   </div>
                   <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
@@ -438,7 +438,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
+        const activeRoutineId = isWeekend ? 'weekend' : (activeChild.holiday_mode ? 'holiday' : 'weekday');
 
         let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 

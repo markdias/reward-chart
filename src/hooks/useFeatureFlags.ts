@@ -5,13 +5,15 @@ export interface FeatureFlags {
   google_login: boolean;
   apple_login: boolean;
   beta_opt_in: boolean;
+  insights_tab: boolean;
   [key: string]: boolean;
 }
 
 const defaultFlags: FeatureFlags = {
   google_login: false,
   apple_login: false,
-  beta_opt_in: false,
+  beta_opt_in: true,
+  insights_tab: false,
 };
 
 export function useFeatureFlags(isBetaTester: boolean = false) {

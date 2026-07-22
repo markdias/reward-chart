@@ -81,6 +81,7 @@ interface ChildDashboardProps {
   isChildAuth?: boolean;
   onLogout?: () => void;
   onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ChildDashboard({
@@ -114,7 +115,8 @@ export default function ChildDashboard({
   isLoading = false,
   isChildAuth = false,
   onLogout,
-  onRefresh
+  onRefresh,
+  theme
 }: ChildDashboardProps) {
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
@@ -372,6 +374,8 @@ export default function ChildDashboard({
     model_url?: string;
     fromStageNumber?: number;
     fromImage?: string;
+    toImage?: string;
+    model_scale?: number;
   } | null>(null);
 
   // Hatching animation phase state machine
@@ -2229,7 +2233,7 @@ export default function ChildDashboard({
                         }).length === 0 ? (
                           <div className={`joyride-target-first-task col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                             <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                            <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                            <Typography variant="h4" className={`font-extrabold ${styles.text} text-base`}>ALL QUESTS CRUSHED!</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                               You have conquered all assigned chores. Ask your parent to broadcast new missions!
                             </Typography>
@@ -2383,7 +2387,7 @@ export default function ChildDashboard({
                         {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                           <div className={`joyride-target-first-reward col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                             <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                            <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                            <Typography variant="h4" className={`font-extrabold ${styles.text}`}>SHOP EMPTY</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                           </div>
                         ) : (
