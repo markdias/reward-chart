@@ -2417,7 +2417,7 @@ export default function ChildDashboard({
                       </div>
 
                       {/* Active Saving Goal Banner */}
-                      {activeChild.savings_goal_name && (
+                      {isSavingsUnlocked && activeChild.savings_goal_name && (
                         <div className="relative p-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-md mb-4">
                           <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[0.9rem] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
@@ -2469,7 +2469,7 @@ export default function ChildDashboard({
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                            const isSavingFor = activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title;
+                            const isSavingFor = isSavingsUnlocked && (activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title);
                             const canDispense = isAffordable && availability.available && !hasPendingRequest;
 
                             // Hide claimed one_time rewards entirely
@@ -2482,27 +2482,29 @@ export default function ChildDashboard({
                               statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
                             } else if (!availability.available && !isSavingFor) {
                               statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
-                            } else if (isSavingFor) {
-                              statusBadge = (
-                                <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200 shadow-sm">
-                                  <CheckCircle className="w-3 h-3" /> SAVING
-                                </div>
-                              );
-                            } else {
-                              statusBadge = (
-                                <Button
-                                  variant="none"
-                                  size="none"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSavingsGoal(activeChild.id, rew.id);
-                                    playSound.success();
-                                  }}
-                                  className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors shadow-sm"
-                                >
-                                  SET GOAL
-                                </Button>
-                              );
+                            } else if (isSavingsUnlocked) {
+                              if (isSavingFor) {
+                                statusBadge = (
+                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200 shadow-sm">
+                                    <CheckCircle className="w-3 h-3" /> SAVING
+                                  </div>
+                                );
+                              } else {
+                                statusBadge = (
+                                  <Button
+                                    variant="none"
+                                    size="none"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSavingsGoal(activeChild.id, rew.id);
+                                      playSound.success();
+                                    }}
+                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors shadow-sm"
+                                  >
+                                    SET GOAL
+                                  </Button>
+                                );
+                              }
                             }
 
                             const currentSaved = isSavingFor
