@@ -329,29 +329,34 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             className="w-full relative p-[3px] rounded-[1.6rem] shadow-lg mb-4 text-left transition-transform duration-200"
             style={{ background: 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 10px, #10b981 10px, #10b981 20px, #3b82f6 20px, #3b82f6 30px)' }}
           >
-            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3.5 sm:p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
-                  <Gift className="w-5 h-5 text-amber-500" />
+            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-4 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-300 dark:border-amber-700 flex items-center justify-center shrink-0 shadow-sm">
+                  <Gift className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <Typography variant="h4" className="font-black text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
-                    Reward Approved!
+                  <Typography variant="h4" className="font-black text-base sm:text-lg text-stone-900 dark:text-stone-50 leading-tight">
+                    Reward Ready!
                   </Typography>
-                  <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
-                    Your parent approved your reward! Ask them to hand it to you:
+                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 font-sans mt-0.5 font-bold">
+                    Ask your parent for your reward:
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2.5 border-t border-stone-100 dark:border-stone-800">
+              <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-stone-800">
                 {approvedRedemptions.map(r => {
                   const reward = rewards.find(rw => rw.id === r.reward_id);
                   return (
-                    <div key={r.id} className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40">
-                      <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-50">
-                        {reward?.title || 'Reward'}
+                    <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <Gift className="w-5 h-5 text-amber-500 shrink-0" />
+                        <span className="text-sm sm:text-base font-black text-stone-900 dark:text-stone-50">
+                          {reward?.title || 'Reward'}
+                        </span>
+                      </div>
+                      <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-800 uppercase tracking-wider">
+                        READY!
                       </span>
                     </div>
                   );
