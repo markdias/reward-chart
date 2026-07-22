@@ -81,17 +81,48 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
     const choresDone = approvedCompletions.length;
     const dayStreak = selectedChild.streak_days || 0;
 
-    // Calculate Perfect Days (Days with 1+ approved completions)
-    const uniqueDates = new Set(
-      approvedCompletions.map(c => {
-        try {
-          return new Date(c.completed_at).toISOString().split('T')[0];
-        } catch {
-          return '';
+    // Gather Routine Task IDs for selected child
+    const routineTaskIds = new Set<string>();
+    if (selectedChild.routines && selectedChild.routines.length > 0) {
+      selectedChild.routines.forEach(r => {
+        r.morningTaskIds?.forEach(id => routineTaskIds.add(id));
+        r.afternoonTaskIds?.forEach(id => routineTaskIds.add(id));
+        r.eveningTaskIds?.forEach(id => routineTaskIds.add(id));
+      });
+    }
+    // Also include active daily tasks assigned to child
+    tasks.filter(t => (t.child_id === selectedChild.id || t.child_id === 'directory') && t.recurrence === 'daily').forEach(t => routineTaskIds.add(t.id));
+
+    // Group approved completions by YYYY-MM-DD date
+    const completionsByDate: Record<string, Set<string>> = {};
+    approvedCompletions.forEach(c => {
+      try {
+        const dateStr = new Date(c.completed_at).toISOString().split('T')[0];
+        if (dateStr) {
+          if (!completionsByDate[dateStr]) completionsByDate[dateStr] = new Set();
+          completionsByDate[dateStr].add(c.task_id);
         }
-      }).filter(Boolean)
-    );
-    const perfectDays = uniqueDates.size;
+      } catch {
+        // ignore invalid date
+      }
+    });
+
+    let perfectDays = 0;
+    const targetRoutineCount = routineTaskIds.size;
+    if (targetRoutineCount > 0) {
+      Object.values(completionsByDate).forEach(completedSet => {
+        let matchCount = 0;
+        routineTaskIds.forEach(id => {
+          if (completedSet.has(id)) matchCount++;
+        });
+        if (matchCount >= targetRoutineCount) {
+          perfectDays++;
+        }
+      });
+    } else {
+      // Fallback if no routines set up: count days with completed tasks
+      perfectDays = Object.keys(completionsByDate).length;
+    }
 
     // Weekly day of week breakdown (0: Sun, 1: Mon, ... 6: Sat)
     const dayCounts = [0, 0, 0, 0, 0, 0, 0];
@@ -280,7 +311,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
           </div>
         </motion.div>
 
-        {/* Perfect Days */}
+        {/* Days Completed All Routine Tasks */}
         <motion.div
           whileHover={{ scale: 1.01 }}
           className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-3xl p-4 sm:p-5 text-center shadow-xs flex flex-col items-center justify-center space-y-2"
@@ -289,7 +320,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
             {analytics.perfectDays}
           </div>
           <div className="text-[10px] sm:text-xs font-bold text-stone-400 dark:text-stone-500 lowercase tracking-wide">
-            perfect days
+            days completed all routine tasks
           </div>
         </motion.div>
 
