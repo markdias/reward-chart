@@ -2587,6 +2587,7 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                  onUpdateParentProfile={onUpdateParentProfile}
                   activeSubTab={settingsSubTab}
                   onSubTabChange={setSettingsSubTab}
                 />

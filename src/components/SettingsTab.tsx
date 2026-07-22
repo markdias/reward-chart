@@ -28,6 +28,7 @@ interface SettingsTabProps {
   onDeleteAccount?: () => void;
   onCleanDuplicates: () => void;
   onRequireAccount?: () => void;
+  onUpdateParentProfile?: (updates: Partial<ParentProfile>) => Promise<void>;
   activeSubTab?: 'profile' | 'security' | 'sharing' | 'danger';
   onSubTabChange?: (tab: 'profile' | 'security' | 'sharing' | 'danger') => void;
 }
@@ -41,6 +42,7 @@ export default function SettingsTab({
   onDeleteAccount, 
   onCleanDuplicates, 
   onRequireAccount,
+  onUpdateParentProfile,
   activeSubTab: externalSubTab,
   onSubTabChange
 }: SettingsTabProps) {
@@ -151,20 +153,24 @@ export default function SettingsTab({
   const handleToggleBeta = async () => {
     const newValue = !isBetaTester;
     setIsBetaTester(newValue);
-    if (!parentProfile?.user_id) return;
-    
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    
-    try {
-      await supabase
-        .from('parent_profiles')
-        .update({ is_beta_tester: newValue })
-        .eq('user_id', parentProfile.user_id);
-    } catch (e) {
-      console.error('Failed to update beta status', e);
-      // Revert if failed
-      setIsBetaTester(!newValue);
+    playSound.click();
+
+    if (onUpdateParentProfile) {
+      await onUpdateParentProfile({ is_beta_tester: newValue });
+    }
+
+    if (parentProfile?.user_id) {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        try {
+          await supabase
+            .from('parent_profiles')
+            .update({ is_beta_tester: newValue })
+            .eq('user_id', parentProfile.user_id);
+        } catch (e) {
+          console.error('Failed to update beta status', e);
+        }
+      }
     }
   };
 
