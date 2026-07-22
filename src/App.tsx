@@ -2138,9 +2138,33 @@ export default function App() {
   };
 
   const handleRejectCompletion = async (completionId: string) => {
+    const comp = completions.find(c => c.id === completionId);
+
     // Delete or decline completion
     const updatedCompletions = completions.filter(c => c.id !== completionId);
     syncCompletions(updatedCompletions);
+
+    // If the completion was already approved, perform FULL POINTS REVERSAL!
+    if (comp && comp.status === 'approved') {
+      const child = children.find(c => c.id === comp.child_id);
+      if (child) {
+        const pointsDeduction = comp.points_awarded || 0;
+        const newPoints = Math.max(0, child.points - pointsDeduction);
+        const newLifetimePoints = Math.max(0, (child.lifetime_points || 0) - pointsDeduction);
+        const newLevel = Math.max(1, Math.floor(newLifetimePoints / 500) + 1);
+
+        const updatedChild: Child = {
+          ...child,
+          points: newPoints,
+          lifetime_points: newLifetimePoints,
+          level: newLevel
+        };
+
+        const updatedChildren = children.map(c => c.id === comp.child_id ? updatedChild : c);
+        syncChildren(updatedChildren);
+        updateChildInSupabase(updatedChild);
+      }
+    }
 
     const supabase = getSupabaseClient();
     if (supabase) {

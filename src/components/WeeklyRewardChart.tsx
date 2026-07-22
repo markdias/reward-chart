@@ -760,7 +760,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     }}
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Mark as Try Again
+                    {activeCellAction.completion?.status === 'approved' ? 'Revert Approval (Deduct Coins)' : 'Decline / Mark as Try Again'}
                   </Button>
                 )}
 

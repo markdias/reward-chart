@@ -1422,6 +1422,7 @@ export default function ParentDashboard({
                         onParentCompleteTask={onParentCompleteTask}
                         onApproveCompletion={onApproveCompletion}
                         onRejectCompletion={onRejectCompletion}
+                        onDeleteCompletion={onRejectCompletion}
                       />
                     )}
 
