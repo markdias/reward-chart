@@ -184,7 +184,7 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
               </div>
               <div>
                 <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
-                <span className={`text-[11px] font-bold ${styles.textColor}`}>Cross-Device Sync</span>
+                <span className={`text-[11px] font-bold ${styles.text}`}>Cross-Device Sync</span>
               </div>
             </div>
 
@@ -194,7 +194,7 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
               </div>
               <div>
                 <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
-                <span className={`text-[11px] font-bold ${styles.textColor}`}>Savings & Earning</span>
+                <span className={`text-[11px] font-bold ${styles.text}`}>Savings & Earning</span>
               </div>
             </div>
           </div>
@@ -227,7 +227,9 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                     auto-rotate
                     camera-controls
                     class="w-full h-full object-contain" 
-                  />
+                  >
+                    <div slot="progress-bar"></div>
+                  </model-viewer>
                 ) : (
                   <span className="text-6xl md:text-8xl drop-shadow-[0_8px_16px_rgba(0,0,0,0.5)] animate-bounce-slow">
                     {activeChar.emoji}
@@ -263,7 +265,7 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                     <span className={`block text-[10px] font-sans font-bold tracking-wider ${styles.textMuted} uppercase mb-1`}>
                       LEVEL UP TO EVOLVE
                     </span>
-                    <span className={`text-sm font-bold font-display ${styles.textColor}`}>
+                    <span className={`text-sm font-bold font-display ${styles.text}`}>
                       Level 4 <ArrowRight className="inline w-3 h-3 mx-1 text-stone-400" /> Level 5
                     </span>
                   </div>
@@ -318,7 +320,9 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                         alt={char.name} 
                         camera-controls
                         class="w-full h-full object-contain p-1"
-                      />
+                      >
+                        <div slot="progress-bar"></div>
+                      </model-viewer>
                     ) : (
                       <span className="text-2xl sm:text-3xl">{char.emoji}</span>
                     )}

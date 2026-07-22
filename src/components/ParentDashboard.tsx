@@ -5,7 +5,7 @@ import {
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -27,10 +27,12 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical
 } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest, TaskCategory } from '../types';
+import { TASK_CATEGORIES, CATEGORY_ICON_MAP } from '../utils/categories';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
@@ -43,9 +45,14 @@ import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
 import TargetsTab from './TargetsTab';
+import { WeeklyRewardChart } from './WeeklyRewardChart';
+import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
+import { useSubscription } from '../hooks/useSubscription';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
+import { Walkthrough } from './Walkthrough';
+import { Step } from 'react-joyride';
 import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
@@ -76,6 +83,7 @@ interface ParentDashboardProps {
   onUnlinkChild?: (id: string) => void;
   onUpdateChildStats: (id: string, updates: Partial<Child>) => void;
   onDeductCoins?: (childId: string, amount: number, reason: string) => void;
+  onAddCoins?: (childId: string, amount: number, reason: string) => void;
   onAddTask: (title: string, points: number, category: any, recurrence: any, cooldownMinutes?: number) => void;
   onAssignTask: (template: Task, childIds: string[]) => void;
   onEditTask: (id: string, updates: Partial<Task>) => void;
@@ -91,20 +99,23 @@ interface ParentDashboardProps {
   onRestoreReward: (id: string) => void;
   onExitParentMode: () => void;
   parentEmail: string;
-  onParentCompleteTask: (taskId: string, childId: string) => void;
+  onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
   parentProfile?: ParentProfile | null;
   linkedParents?: ParentProfile[];
   onRequireAccount?: () => void;
-  onResetData?: (keepTemplates: boolean) => void;
+  onResetData?: (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, childId: string) => void;
   onRunSetup?: () => void;
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
-  initialTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets';
+  initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help';
+  initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
+  onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ParentDashboard({
@@ -119,6 +130,7 @@ export default function ParentDashboard({
   onUnlinkChild,
   onUpdateChildStats,
   onDeductCoins,
+  onAddCoins,
   onAddTask,
   onAssignTask,
   onEditTask,
@@ -147,9 +159,282 @@ export default function ParentDashboard({
   onLogout,
   onUpdateParentProfile,
   initialTab = 'home',
-  isLoading = false
+  initialSubTab = 'directory',
+  isLoading = false,
+  onRefresh,
+  theme
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
+  const isBetaUser = Boolean(parentProfile?.is_beta_tester || flags.insights_tab);
+
+  useEffect(() => {
+    if (!isBetaUser && activeTab === 'chart') {
+      setActiveTab('home');
+    }
+  }, [isBetaUser, activeTab]);
+
+  const { canAddChild, openPaywall } = useSubscription();
+
+  // Walkthrough State
+  const [runTour, setRunTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleResize);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleResize);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleResize);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleResize);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const localSeen = localStorage.getItem('RCH_TOUR_SEEN_PARENT') === 'true';
+    if (parentProfile && !parentProfile.tour_seen && !localSeen && !isLoading && !runTour && !hasAutoStarted) {
+      setHasAutoStarted(true);
+      setTourStepIndex(0);
+      setActiveTab('home');
+      setTimeout(() => setRunTour(true), 1000);
+    }
+  }, [isLoading, parentProfile, runTour, hasAutoStarted]);
+
+  const handleTourFinish = async () => {
+    setRunTour(false);
+    setTourStepIndex(0);
+    localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
+    if (parentProfile && !parentProfile.tour_seen && onUpdateParentProfile) {
+      await onUpdateParentProfile({ tour_seen: true });
+    }
+  };
+
+  // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
+  const handleBeforeTourStepChange = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  const tourSteps: Step[] = useMemo(() => {
+    const steps: Step[] = [
+      {
+        target: '.joyride-target-home',
+        content: 'Welcome to your Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+        placement: 'bottom',
+      },
+    ];
+
+    if (isBetaUser) {
+      steps.push(
+        {
+          target: '.joyride-target-chart',
+          content: 'This is the Chart tab! Toggle between your weekly reward matrix and real-time child performance insights.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-child-selector',
+          content: 'Use the child selector bar to switch between your children, or toggle between 7-day, 14-day, and 30-day view ranges.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-grid',
+          content: 'Tap any empty cell (+ sign) to instantly auto-approve a chore for that date! Click existing cells to change status or reset.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-print-btn',
+          content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-subtab-insights',
+          content: 'Switch to the INSIGHTS sub-tab to explore child progress analytics, coin stats, category breakdowns, and AI parenting tips.',
+          placement: 'bottom',
+        },
+        {
+          target: '#insights-tab-view',
+          content: 'In Insights, view key statistics like total gold coins, chores done, day streak, weekly best days chart, category breakdown, and areas going well or struggling.',
+          placement: 'bottom',
+        }
+      );
+    }
+
+    steps.push(
+      {
+        target: '.joyride-target-children',
+        content: 'This is the Children tab. Here you can add child profiles, customize avatars, select character archetypes, and set level-up rewards.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-directory',
+        content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-active',
+        content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-routines',
+        content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-directory',
+        content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-active',
+        content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids and manage fulfillment.',
+        placement: 'bottom',
+      },
+      {
+        target: '.joyride-target-targets',
+        content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-logout-btn',
+        content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-help-btn',
+        content: 'Need help? The Guide button replays this tour and explains how the system works.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-settings-btn',
+        content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-profile-tab',
+        content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-security-tab',
+        content: 'The Security tab allows you to update your account password securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-sharing-tab',
+        content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-danger-tab',
+        content: 'The Danger tab contains options to clean duplicates, reset sample data, or start over if you need a clean slate.',
+        placement: 'bottom',
+      },
+      {
+        target: '#exit-to-child-view-btn',
+        content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings securely.',
+        placement: 'bottom',
+      },
+      {
+        target: 'body',
+        content: (
+          <div className="flex flex-col gap-4">
+            <p className="font-bold">You're all set! Explore each section at your own pace.</p>
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+                if (e.target.checked) {
+                  localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
+                  if (onUpdateParentProfile) {
+                    onUpdateParentProfile({ tour_seen: true });
+                  }
+                }
+              }} />
+              <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+            </div>
+          </div>
+        ),
+        placement: 'center',
+      }
+    );
+
+    return steps;
+  }, [isBetaUser, onUpdateParentProfile]);
+
+  // Called by Walkthrough when advancing to the NEXT or PREV step index
+  const handleTourStepChange = (nextStepIndex: number) => {
+    const step = tourSteps[nextStepIndex];
+    if (!step || typeof step.target !== 'string') return;
+
+    const targetSelector = step.target;
+
+    if (targetSelector === '.joyride-target-home' || targetSelector === '#exit-to-child-view-btn') {
+      setActiveTab('home');
+    } else if (targetSelector === '.joyride-target-chart' || targetSelector.startsWith('#tour-chart-')) {
+      setActiveTab('chart');
+      if (targetSelector === '#tour-chart-subtab-insights') {
+        setChartSubTab('insights');
+      } else {
+        setChartSubTab('weekly');
+      }
+    } else if (targetSelector === '#insights-tab-view') {
+      setActiveTab('chart');
+      setChartSubTab('insights');
+    } else if (targetSelector === '.joyride-target-children') {
+      setActiveTab('children');
+    } else if (targetSelector.startsWith('#tour-task-')) {
+      setActiveTab('tasks');
+      if (targetSelector === '#tour-task-subtab-directory') setTaskSubTab('directory');
+      else if (targetSelector === '#tour-task-subtab-active') setTaskSubTab('active');
+      else if (targetSelector === '#tour-task-subtab-routines') setTaskSubTab('routines');
+    } else if (targetSelector.startsWith('#tour-reward-')) {
+      setActiveTab('rewards');
+      if (targetSelector === '#tour-reward-subtab-directory') setRewardSubTab('directory');
+      else if (targetSelector === '#tour-reward-subtab-active') setRewardSubTab('active');
+    } else if (targetSelector === '.joyride-target-targets') {
+      setActiveTab('targets');
+    } else if (targetSelector.startsWith('#tour-settings-') || targetSelector === '#global-settings-btn') {
+      setActiveTab('settings');
+      if (targetSelector === '#tour-settings-profile-tab') setSettingsSubTab('profile');
+      else if (targetSelector === '#tour-settings-security-tab') setSettingsSubTab('security');
+      else if (targetSelector === '#tour-settings-sharing-tab') setSettingsSubTab('sharing');
+      else if (targetSelector === '#tour-settings-danger-tab') setSettingsSubTab('danger');
+    }
+
+    // Delay updating stepIndex to allow tab render
+    setTimeout(() => {
+      setTourStepIndex(nextStepIndex);
+
+      setTimeout(() => {
+        if (typeof step.target === 'string' && step.target !== 'body') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120;
+            const bottomBoundary = window.innerHeight - 150;
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
+    }, 300);
+  };
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -160,7 +445,14 @@ export default function ParentDashboard({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
+  const [chartSubTab, setChartSubTab] = useState<'weekly' | 'insights'>('weekly');
+  const [taskSubTab, setTaskSubTab] = useState<'directory' | 'active' | 'routines'>(initialSubTab);
+  const [settingsSubTab, setSettingsSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+
+  useEffect(() => {
+    setTaskSubTab(initialSubTab);
+  }, [initialSubTab]);
+
   const [routineChildId, setRoutineChildId] = useState<string | null>(children[0]?.id || null);
 
   useEffect(() => {
@@ -187,7 +479,7 @@ export default function ParentDashboard({
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
 
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' } | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' | 'Lifetime Gold' | 'Food' } | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
@@ -208,15 +500,18 @@ export default function ParentDashboard({
     if (over && active.id !== over.id) {
       const child = children.find(c => c.id === childId);
       if (!child) return;
-      const routines = [...(child.routines || [])];
-      const rIdx = routines.findIndex(r => r.id === routineId);
-      if (rIdx === -1) return;
-      
-      const periodTasks = routines[rIdx][periodKey] || [];
-      const oldIndex = periodTasks.indexOf(active.id as string);
-      const newIndex = periodTasks.indexOf(over.id as string);
-      
-      routines[rIdx][periodKey] = arrayMove(periodTasks, oldIndex, newIndex);
+      const routines = (child.routines || []).map(r => {
+        if (r.id === routineId) {
+          const periodTasks = r[periodKey] || [];
+          const oldIndex = periodTasks.indexOf(active.id as string);
+          const newIndex = periodTasks.indexOf(over.id as string);
+          return {
+            ...r,
+            [periodKey]: arrayMove(periodTasks, oldIndex, newIndex)
+          };
+        }
+        return { ...r };
+      });
       onEditChild(child.id, { routines });
     }
   };
@@ -224,6 +519,11 @@ export default function ParentDashboard({
   const [penaltyModalChildId, setPenaltyModalChildId] = useState<string | null>(null);
   const [penaltyAmount, setPenaltyAmount] = useState<number>(5);
   const [penaltyReason, setPenaltyReason] = useState<string>('');
+
+  // Add Coins Modal State
+  const [addCoinsModalChildId, setAddCoinsModalChildId] = useState<string | null>(null);
+  const [addCoinsAmount, setAddCoinsAmount] = useState<number>(5);
+  const [addCoinsReason, setAddCoinsReason] = useState<string>('');
 
   // Forms states
   const [showAddChild, setShowAddChild] = useState(false);
@@ -237,7 +537,7 @@ export default function ParentDashboard({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPoints, setTaskPoints] = useState(15);
-  const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
+  const [taskCategory, setTaskCategory] = useState<TaskCategory>('chores');
   const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time' | 'repeatable'>('daily');
   const [taskCooldownMinutes, setTaskCooldownMinutes] = useState<number | undefined>(undefined);
   const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
@@ -686,21 +986,29 @@ export default function ParentDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]`} id="parent-dashboard-root">
+    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-dark dark:text-white flex flex-col font-sans relative pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]`} id="parent-dashboard-root">
 
+      <Walkthrough 
+        steps={tourSteps} 
+        run={runTour} 
+        stepIndex={tourStepIndex}
+        onFinish={handleTourFinish} 
+        onStepChange={handleTourStepChange}
+        onBeforeStepChange={handleBeforeTourStepChange}
+      />
 
       <header
         className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
 
             <div className="flex flex-col justify-center flex-1 min-w-0">
-              <Typography variant="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+              <h1 className="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-50 leading-tight tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
-              </Typography>
-              <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+              </h1>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-0.5 sm:mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
               </div>
             </div>
@@ -737,7 +1045,16 @@ export default function ParentDashboard({
                           className="absolute left-0 right-0 top-full mt-2 w-full flex flex-col gap-1 bg-white dark:bg-stone-900 rounded-[2rem] shadow-xl border border-stone-100 dark:border-stone-800 p-1 sm:p-1.5 z-50 origin-top"
                         >
                           {activeTab === 'children' && (
-                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { playSound.click(); setShowAddChild(true); setShowContextActions(false); }}>
+                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { 
+                              playSound.click(); 
+                              if (!canAddChild(children.length)) {
+                                openPaywall('Add Extra Child Chart');
+                                setShowContextActions(false);
+                                return;
+                              }
+                              setShowAddChild(true); 
+                              setShowContextActions(false); 
+                            }}>
                               <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
                               </div>
@@ -837,6 +1154,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('help'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-help-btn"
                 >
                   <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -845,6 +1163,7 @@ export default function ParentDashboard({
                 <Button variant="none" size="none"
                   onClick={() => { playSound.click(); setActiveTab('settings'); }}
                   className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                  id="global-settings-btn"
                 >
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
@@ -868,13 +1187,15 @@ export default function ParentDashboard({
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 relative z-10 mt-2 sm:mt-4 px-2 sm:px-6 lg:px-8 gap-4 max-w-7xl mx-auto w-full pb-24" id="parent-workspace">
 
-        <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
+        {isDesktop && (
+          <aside className={`hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start`}>
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
               { id: 'children', label: 'Children', icon: Users, count: children.length },
-              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
+              { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
               { id: 'targets', label: 'Targets', icon: Target },
               { id: 'settings', label: 'Settings', icon: Settings },
               { id: 'help', label: 'Guide', icon: HelpCircle }
@@ -884,15 +1205,21 @@ export default function ParentDashboard({
               return (
                 <Button variant="none" size="none"
                   key={tab.id}
+                  id={`tour-desktop-tab-${tab.id}`}
                   onClick={() => { playSound.click(); setActiveTab(tab.id as any); }}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                  className={`joyride-target-${tab.id} w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
                     ? 'bg-stone-900 text-white shadow-md shadow-md scale-[1.02]'
                     : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
                     }`}
                 >
                   <span className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
-                    {tab.label}
+                    <span>{tab.label}</span>
+                    {(tab as any).isBeta && (
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                        BETA
+                      </span>
+                    )}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
@@ -909,6 +1236,7 @@ export default function ParentDashboard({
             })}
           </nav>
         </aside>
+        )}
 
         <main className="lg:col-span-9 min-h-[600px] z-10">
 
@@ -1043,28 +1371,135 @@ export default function ParentDashboard({
                   </Typography>
                   <ActivityFeed
                     activities={[
-                      ...completions.filter(c => c.status === 'approved').map(c => ({
-                        id: c.id,
-                        type: 'task' as const,
-                        status: 'completed' as const,
-                        title: tasks.find(t => t.id === c.task_id)?.title || 'Unknown Task',
-                        points: tasks.find(t => t.id === c.task_id)?.points || 0,
-                        date: new Date(c.completed_at),
-                      })),
-                      ...redemptions.filter(r => r.status === 'delivered').map(r => ({
-                        id: r.id,
-                        type: 'reward' as const,
-                        status: 'delivered' as const,
-                        title: rewards.find(rw => rw.id === r.reward_id)?.title || 'Unknown Reward',
-                        points: rewards.find(rw => rw.id === r.reward_id)?.cost_points || 0,
-                        date: new Date(r.redeemed_at),
-                        iconOverride: <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-stone-50 dark:bg-stone-950 text-stone-500 dark:text-stone-400">🍦</div>
-                      }))
+                      ...completions.filter(c => c.status === 'approved').map(c => {
+                        const child = children.find(ch => ch.id === c.child_id);
+                        const isBonus = c.task_id === 'bonus';
+                        const isPenalty = c.task_id === 'penalty' || (c.points_awarded !== undefined && c.points_awarded < 0);
+                        const task = tasks.find(t => t.id === c.task_id);
+                        
+                        let title = 'Task Completed';
+                        if (isBonus) {
+                          title = c.notes && c.notes.trim() ? c.notes : 'Good Work Bonus';
+                        } else if (isPenalty) {
+                          title = c.notes && c.notes.trim() ? c.notes : 'Deduction';
+                        } else if (task?.title) {
+                          title = task.title;
+                        } else if (c.notes) {
+                          title = c.notes;
+                        }
+
+                        const points = (c.points_awarded !== undefined && c.points_awarded !== null)
+                          ? c.points_awarded
+                          : (task?.points || 0);
+
+                        return {
+                          id: c.id,
+                          type: isPenalty ? ('penalty' as const) : ('task' as const),
+                          status: 'completed' as const,
+                          title,
+                          subtitle: child?.name ? `For ${child.name}` : undefined,
+                          points,
+                          date: new Date(c.completed_at),
+                          iconOverride: child ? (
+                            <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl bg-stone-50 dark:bg-stone-950" />
+                          ) : undefined
+                        };
+                      }),
+                      ...redemptions.filter(r => r.status === 'delivered').map(r => {
+                        const child = children.find(ch => ch.id === r.child_id);
+                        const reward = rewards.find(rw => rw.id === r.reward_id);
+                        return {
+                          id: r.id,
+                          type: 'reward' as const,
+                          status: 'delivered' as const,
+                          title: reward?.title || 'Reward Claimed',
+                          subtitle: child?.name ? `Claimed by ${child.name}` : undefined,
+                          points: reward?.cost_points || 0,
+                          date: new Date(r.redeemed_at),
+                          iconOverride: child ? (
+                            <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl bg-stone-50 dark:bg-stone-950" />
+                          ) : undefined
+                        };
+                      })
                     ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10)}
                     emptyMessage="No recent activity yet."
                   />
                 </div>
 
+              </motion.div>
+            )}
+
+            {activeTab === 'chart' && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                key="chart-tab"
+                className="space-y-6 sm:space-y-8"
+                id="chart-view"
+              >
+                {/* SUB-TABS FOR CHART & INSIGHTS (VISIBLE FOR BETA USERS) */}
+                {(flags.insights_tab || parentProfile?.is_beta_tester) ? (
+                  <>
+                    <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-weekly"
+                        onClick={() => setChartSubTab('weekly')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'weekly'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        <span>WEEKLY CHART</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
+                      </Button>
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-insights"
+                        onClick={() => setChartSubTab('insights')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'insights'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        <span>INSIGHTS</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
+                      </Button>
+                    </div>
+
+                    {chartSubTab === 'weekly' && (
+                      <WeeklyRewardChart
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                        onParentCompleteTask={onParentCompleteTask}
+                        onApproveCompletion={onApproveCompletion}
+                        onRejectCompletion={onRejectCompletion}
+                        onDeleteCompletion={onRejectCompletion}
+                      />
+                    )}
+
+                    {chartSubTab === 'insights' && (
+                      <InsightsTab
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <WeeklyRewardChart
+                    children={children}
+                    tasks={tasks}
+                    completions={completions}
+                    onParentCompleteTask={onParentCompleteTask}
+                    onApproveCompletion={onApproveCompletion}
+                    onRejectCompletion={onRejectCompletion}
+                  />
+                )}
               </motion.div>
             )}
 
@@ -1081,7 +1516,13 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+                <div className={`grid gap-6 ${
+                  sortedChildren.length === 1 
+                    ? 'grid-cols-1 w-full' 
+                    : sortedChildren.length === 2 
+                      ? 'grid-cols-1 md:grid-cols-2 w-full' 
+                      : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full'
+                }`}>
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
@@ -1137,7 +1578,7 @@ export default function ParentDashboard({
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
                         {/* Rainbow Trading Card */}
-                        <div className="w-full max-w-[440px] mx-auto md:mx-0 group perspective-1000">
+                        <div className="w-full group perspective-1000">
                           <div 
                             className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-shadow duration-500 transform-gpu"
                             style={{ background: getPetStripeBackground(child.character_id) }}
@@ -1168,7 +1609,20 @@ export default function ParentDashboard({
                                   <div className="w-px h-12 bg-stone-200 dark:bg-stone-700 relative z-10 shrink-0"></div>
                                   <div className="flex-1 flex items-center justify-center relative z-10">
                                     {stage.model_url ? (
-                                      <model-viewer src={stage.model_url} alt={stage.name} auto-rotate camera-controls class="w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl" />
+                                      <div className="relative w-14 h-14 group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl pointer-events-none">
+                                        <div className="w-full h-full" style={{ transform: `scale(${stage.model_scale || 1.0})` }}>
+                                          <model-viewer 
+                                            src={stage.model_url} 
+                                            alt={stage.name} 
+                                            auto-rotate 
+                                            camera-controls 
+                                            class="w-full h-full"
+                                          >
+                                            <div slot="progress-bar"></div>
+                                          </model-viewer>
+                                        </div>
+                                      </div>
+
                                     ) : (
                                       <span className="text-4xl group-hover/art:scale-110 transition-transform duration-500 drop-shadow-xl">{stage.emoji}</span>
                                     )}
@@ -1208,30 +1662,49 @@ export default function ParentDashboard({
                                       </div>
 
                                       {/* App Linked Status Row */}
-                                      <div className="flex items-center justify-between z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
-                                        <div className="flex flex-col shrink-0 pr-2">
-                                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
-                                        </div>
-                                        {child.child_share_token?.startsWith('LINKED_') ? (
-                                          <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
-                                        ) : child.child_share_token ? (
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(child.child_share_token || ''); }}>Copy</Button>
-                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-emerald-500 hover:text-emerald-600" onClick={(e) => {
-                                              e.stopPropagation();
-                                              playSound.click();
-                                              onEditChild(child.id, { child_share_token: `LINKED_${child.id}` });
-                                            }}>Link</Button>
+                                      {child.child_share_token?.startsWith('LINKED_') ? (
+                                        <div className="flex items-center justify-between z-10 bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30">
+                                          <div className="flex flex-col shrink-0 pr-2">
+                                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-1.5 uppercase tracking-widest"><CheckCircle2 className="w-3.5 h-3.5" /> Linked Account</span>
                                           </div>
-                                        ) : (
-                                          <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => {
-                                            e.stopPropagation();
-                                            const code = generateShortCode();
-                                            onEditChild(child.id, { child_share_token: code });
-                                          }}>Generate Code</Button>
-                                        )}
-                                      </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <span className="text-[10px] font-bold text-stone-700 dark:text-stone-300 break-all text-right" title={child.linked_email}>{child.linked_email || 'Linked'}</span>
+                                            {onUnlinkChild && (
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-5 px-1.5 text-[9px] uppercase font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10" 
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (confirm('Are you sure you want to unlink this device connection?')) {
+                                                    onUnlinkChild(child.id);
+                                                  }
+                                                }}
+                                              >
+                                                Unlink
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-between z-10 bg-stone-50 dark:bg-stone-900/40 p-3 rounded-2xl border border-stone-100 dark:border-stone-800/50">
+                                          <div className="flex flex-col shrink-0 pr-2">
+                                            <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 flex items-center gap-1.5 uppercase tracking-widest"><LinkIcon className="w-3.5 h-3.5" /> Link Device</span>
+                                          </div>
+                                          {child.child_share_token ? (
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-[12px] font-mono tracking-widest text-stone-600 dark:text-stone-300 font-bold">{child.child_share_token}</span>
+                                              <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(child.child_share_token || ''); }}>Copy</Button>
+                                            </div>
+                                          ) : (
+                                            <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] uppercase font-bold text-blue-500 hover:text-blue-600" onClick={(e) => {
+                                              e.stopPropagation();
+                                              const code = generateShortCode();
+                                              onEditChild(child.id, { child_share_token: code });
+                                            }}>Generate Code</Button>
+                                          )}
+                                        </div>
+                                      )}
 
                                       {/* Action Buttons List */}
                                       <div className="bg-stone-50 dark:bg-stone-950/50 rounded-2xl border border-stone-100 dark:border-stone-800 p-2 z-10">
@@ -1242,13 +1715,22 @@ export default function ParentDashboard({
                                           </span>
                                           <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
                                         </button>
-                                        {onUpdateChildStats && (
+                                        {onUpdateChildStats && parentProfile?.has_special_logins && (
                                           <button onClick={() => { playSound.click(); setAdjustmentsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors group">
                                             <span className="text-sm font-bold text-stone-700 dark:text-stone-200 flex items-center gap-3">
                                               <Settings className="w-4 h-4 text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300" />
                                               Adjust Balance
                                             </span>
                                             <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-stone-400" />
+                                          </button>
+                                        )}
+                                        {onAddCoins && (
+                                          <button onClick={() => { playSound.click(); setAddCoinsModalChildId(child.id); }} className="w-full flex items-center justify-between p-3 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-colors group">
+                                            <span className="text-sm font-bold text-emerald-600 flex items-center gap-3">
+                                              <PlusCircle className="w-4 h-4 text-emerald-400 group-hover:text-emerald-500" />
+                                              Add Coins
+                                            </span>
+                                            <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:text-emerald-400" />
                                           </button>
                                         )}
                                         {onDeductCoins && (
@@ -1322,7 +1804,7 @@ export default function ParentDashboard({
                       >
 
                         <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
-                          {editingTaskId ? <span><Edit2 className="inline-block mr-2" /> Edit Quest Template</span> : <span><Sparkles className="inline-block mr-2" /> Create Quest Template</span>}
+                          {editingTaskId ? 'Edit Quest Template' : 'Create Quest Template'}
                         </Typography>
                         <form onSubmit={handleTaskSubmit} className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1335,6 +1817,15 @@ export default function ParentDashboard({
                                 <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
                                 <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(e.target.value === '' ? '' as any : Number(e.target.value))} />
                               </div>
+                            </div>
+
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Category</label>
+                              <Select value={taskCategory} onChange={(e) => setTaskCategory(e.target.value as TaskCategory)}>
+                                {TASK_CATEGORIES.map(cat => (
+                                  <option key={cat.id} value={cat.id}>{cat.label}</option>
+                                ))}
+                              </Select>
                             </div>
 
                             <div>
@@ -1386,6 +1877,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-directory"
                       onClick={() => setTaskSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1395,6 +1887,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-active"
                       onClick={() => setTaskSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1404,6 +1897,7 @@ export default function ParentDashboard({
                       ASSIGNED
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-task-subtab-routines"
                       onClick={() => setTaskSubTab('routines')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${taskSubTab === 'routines'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1436,13 +1930,19 @@ export default function ParentDashboard({
                               }}
                             >
                               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
-                                  <FaStar />
-                                </div>
+                                {(() => {
+                                  const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                                  const CatIcon = catMeta.Icon;
+                                  return (
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl ${catMeta.bg} ${catMeta.iconColor} flex items-center justify-center shrink-0`}>
+                                      <CatIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="min-w-0 pr-2">
                                   <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{CATEGORY_ICON_MAP[task.category as TaskCategory]?.label || (task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
                                       {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
@@ -1538,13 +2038,19 @@ export default function ParentDashboard({
                               }}
                             >
                               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
-                                  <FaStar />
-                                </div>
+                                {(() => {
+                                  const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                                  const CatIcon = catMeta.Icon;
+                                  return (
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl ${catMeta.bg} ${catMeta.iconColor} flex items-center justify-center shrink-0`}>
+                                      <CatIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="min-w-0 pr-2">
                                   <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{CATEGORY_ICON_MAP[task.category as TaskCategory]?.label || (task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
@@ -1720,8 +2226,16 @@ export default function ParentDashboard({
                                                           id={taskId}
                                                           task={t}
                                                           onRemove={(id) => {
-                                                            const newRoutines = [...processedRoutines];
-                                                            newRoutines[rIdx][period.key] = (newRoutines[rIdx][period.key] || []).filter(x => x !== id);
+                                                            const newRoutines = processedRoutines.map((r, idx) => {
+                                                              if (idx === rIdx) {
+                                                                const pTasks = r[period.key] || [];
+                                                                return {
+                                                                  ...r,
+                                                                  [period.key]: pTasks.filter(x => x !== id)
+                                                                };
+                                                              }
+                                                              return { ...r };
+                                                            });
                                                             onEditChild(child.id, { routines: newRoutines });
                                                           }}
                                                         />
@@ -1741,14 +2255,19 @@ export default function ParentDashboard({
                                                   value=""
                                                   onChange={(e) => {
                                                     if (!e.target.value) return;
-                                                    const newRoutines = [...processedRoutines];
-                                                    if (!newRoutines[rIdx][period.key]) {
-                                                      newRoutines[rIdx][period.key] = [];
-                                                    }
-                                                    if (!newRoutines[rIdx][period.key].includes(e.target.value)) {
-                                                      newRoutines[rIdx][period.key].push(e.target.value);
-                                                      onEditChild(child.id, { routines: newRoutines });
-                                                    }
+                                                    const newRoutines = processedRoutines.map((r, idx) => {
+                                                      if (idx === rIdx) {
+                                                        const pTasks = r[period.key] || [];
+                                                        if (!pTasks.includes(e.target.value)) {
+                                                          return {
+                                                            ...r,
+                                                            [period.key]: [...pTasks, e.target.value]
+                                                          };
+                                                        }
+                                                      }
+                                                      return { ...r };
+                                                    });
+                                                    onEditChild(child.id, { routines: newRoutines });
                                                   }}
                                                 >
                                                   <option value="" disabled className="hidden">+ Add Quest to {period.label}</option>
@@ -1905,6 +2424,7 @@ export default function ParentDashboard({
                 <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3 xl:gap-0 mb-2 sm:mb-4">
                   <div className="flex w-full xl:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-sm">
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-directory"
                       onClick={() => setRewardSubTab('directory')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'directory'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -1914,6 +2434,7 @@ export default function ParentDashboard({
                       TEMPLATES
                     </Button>
                     <Button variant="none" size="none"
+                      id="tour-reward-subtab-active"
                       onClick={() => setRewardSubTab('active')}
                       className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${rewardSubTab === 'active'
                         ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
@@ -2119,7 +2640,7 @@ export default function ParentDashboard({
                           const isOneTimeUsed = reward?.limit_type === 'one_time' && !reward.is_available;
 
                           return (
-                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.textColor}`}>
+                            <div key={delivery.id} className={`flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-700 ${styles.text}`}>
                               <div>
                                 <span className="text-xs font-bold">{child?.name}</span> received <strong className={'text-stone-900 dark:text-stone-50'}>{reward?.title}</strong>
                                 <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
@@ -2157,7 +2678,7 @@ export default function ParentDashboard({
                 exit={{ opacity: 0, y: -10 }}
               >
                 <SettingsTab
-                  
+                  children={children}
                   parentProfile={parentProfile}
                   linkedParents={linkedParents}
                   onResetData={onResetData}
@@ -2165,6 +2686,9 @@ export default function ParentDashboard({
                   onDeleteAccount={onDeleteAccount}
                   onCleanDuplicates={handleCleanDuplicates}
                   onRequireAccount={onRequireAccount}
+                  onUpdateParentProfile={onUpdateParentProfile}
+                  activeSubTab={settingsSubTab}
+                  onSubTabChange={setSettingsSubTab}
                 />
               </motion.div>
             )}
@@ -2191,7 +2715,7 @@ export default function ParentDashboard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <HelpTab />
+                <HelpTab onReplayTutorial={() => { setTourStepIndex(0); setActiveTab('home'); setRunTour(true); }} />
               </motion.div>
             )}
 
@@ -2246,26 +2770,6 @@ export default function ParentDashboard({
                         min={1}
                         max={18}
                       />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className={`block text-[9px] font-bold font-sans text-center ${styles.textMuted} uppercase tracking-widest mb-2`}>Choose Companion</label>
-                      <div className="flex justify-center gap-4">
-                        {CHARACTER_PACKS.map(char => (
-                          <button
-                            key={char.id}
-                            type="button"
-                            onClick={() => setNewChildChar(char.id)}
-                            className={`aspect-square w-28 rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
-                              newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
-                            }`}
-                          >
-                            <model-viewer src={getCharacterStage(char.id, 99).model_url} alt={char.name} auto-rotate camera-controls class="w-12 h-12 mb-1" />
-                            <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
-                              {char.name.split(' ')[0]}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </div>
 
@@ -2375,6 +2879,18 @@ export default function ParentDashboard({
                         }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Level to 1"><RotateCcw className="w-4 h-4" /></Button>
                         <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: Math.max(1, child.level - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Level Down"><ArrowDownCircle className="w-4 h-4" /></Button>
                         <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black dark:text-white tracking-tight">Food Items ({child.pet_food || 0})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Food' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Food to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { pet_food: Math.max(0, (child.pet_food || 0) - 1), food_pot_weekly_contribution: Math.max(0, (child.food_pot_weekly_contribution || 0) - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Remove 1 Food"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { pet_food: (child.pet_food || 0) + 1, food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Add 1 Food"><PlusCircle className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </div>
@@ -2503,6 +3019,118 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         <AnimatePresence>
+          {addCoinsModalChildId && onAddCoins && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setAddCoinsModalChildId(null)}
+                className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden"
+              >
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-4">
+                  <PlusCircle className="w-6 h-6" />
+                </div>
+                <Typography variant="h2" className="text-xl font-black text-stone-900 dark:text-stone-50 mb-2">
+                  Add Coins
+                </Typography>
+                <Typography variant="body" className="text-sm text-stone-500 dark:text-stone-400 mb-6">
+                  Add coins to {children.find(c => c.id === addCoinsModalChildId)?.name} and leave a reason in their activity log.
+                </Typography>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-2">Amount to add</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={addCoinsAmount}
+                        onChange={(e) => setAddCoinsAmount(e.target.value === '' ? '' as any : Math.max(1, parseInt(e.target.value) || 0))}
+                      />
+                      <Coins className="w-5 h-5 text-stone-400 absolute right-4 top-1/2 -translate-y-1/2" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold font-sans text-stone-400 uppercase tracking-widest mb-3">Reason for adding coins</label>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].map(reason => (
+                        <button
+                          key={reason}
+                          onClick={() => setAddCoinsReason(reason)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            addCoinsReason === reason 
+                              ? 'bg-emerald-500 text-white shadow-md' 
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                          }`}
+                        >
+                          {reason}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          if (['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason)) {
+                            setAddCoinsReason('');
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          !['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason)
+                            ? 'bg-emerald-500 text-white shadow-md' 
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700'
+                        }`}
+                      >
+                        Other...
+                      </button>
+                    </div>
+
+                    {!['Being helpful', 'Extra chores', 'Good behavior', 'Great sharing', 'Trying hard'].includes(addCoinsReason) && (
+                      <Input
+                        type="text"
+                        placeholder="Type custom reason..."
+                        value={addCoinsReason}
+                        onChange={(e) => setAddCoinsReason(e.target.value)}
+                        autoFocus
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <Button
+                    variant="ghost"
+                    onClick={() => { playSound.click(); setAddCoinsModalChildId(null); setAddCoinsReason(''); setAddCoinsAmount(5); }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      playSound.click();
+                      onAddCoins(addCoinsModalChildId, Number(addCoinsAmount) || 0, addCoinsReason || 'Bonus coins applied');
+                      setAddCoinsModalChildId(null);
+                      setAddCoinsReason('');
+                      setAddCoinsAmount(5);
+                    }}
+                    className="flex-1"
+                    disabled={!addCoinsReason.trim() || Number(addCoinsAmount) <= 0}
+                  >
+                    Add Coins
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
           {resetConfirmation && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
               <motion.div
@@ -2541,6 +3169,9 @@ export default function ParentDashboard({
                       playSound.purchase();
                       if (resetConfirmation.type === 'Gold') onUpdateChildStats(resetConfirmation.childId, { points: 0 });
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
+                      if (resetConfirmation.type === 'Level') onUpdateChildStats(resetConfirmation.childId, { level: 1 });
+                      if (resetConfirmation.type === 'Lifetime Gold') onUpdateChildStats(resetConfirmation.childId, { lifetime_points: 0 });
+                      if (resetConfirmation.type === 'Food') onUpdateChildStats(resetConfirmation.childId, { pet_food: 0, food_pot_weekly_contribution: 0 });
                       setResetConfirmation(null);
                     }}
                     className="flex-1"
@@ -2608,18 +3239,21 @@ export default function ParentDashboard({
         </AnimatePresence>
 
         {/* Mobile Sticky Bottom Nav */}
-        <BottomTabBar
-          tabs={[
-            { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-            { id: 'children', label: 'Children', icon: Users },
-            { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-            { id: 'rewards', label: 'Rewards', icon: Gift },
-            { id: 'targets', label: 'Targets', icon: Target }
-          ]}
-          activeTab={activeTab}
-          onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
-          layoutId="parent-nav-pill"
-        />
+        {!isDesktop && (
+          <BottomTabBar
+            tabs={[
+              { id: 'home', label: 'Home', icon: Home, badge: totalPending },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
+              { id: 'children', label: 'Children', icon: Users },
+              { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+              { id: 'rewards', label: 'Rewards', icon: Gift },
+              { id: 'targets', label: 'Targets', icon: Target }
+            ]}
+            activeTab={activeTab}
+            onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
+            layoutId="parent-nav-pill"
+          />
+        )}
       </div>
       {/* Generate Quests Modal */}
       <AnimatePresence>
@@ -2691,40 +3325,52 @@ export default function ParentDashboard({
                 ) : (
                   <>
                     <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</Typography>
-                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                       {generatedTasksToPreview.map(task => {
                         const isEditing = editingPreviewId === task.id;
+                        const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                        const CatIcon = catMeta.Icon;
+                        const isSelected = selectedTaskIdsForImport.includes(task.id);
+                        const recurrenceLabel = task.recurrence === 'one_time' ? 'One-off' : task.recurrence === 'daily' ? 'Daily' : task.recurrence === 'weekly' ? 'Weekly' : 'Repeatable';
+
                         return (
-                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
+                          <div key={task.id} className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all ${isEditing ? 'border-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/30' : isSelected ? 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900' : 'border-stone-200/50 dark:border-stone-800 bg-stone-50/40 dark:bg-stone-950/40 opacity-60'}`}>
                             {isEditing ? (
-                              <div className="flex flex-col gap-2 w-full">
-                                <Input
-                                  type="text"
-                                  
-                                  value={previewEditTitle}
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
-                                />
-                                <div className="flex gap-2">
+                              <div className="flex flex-col gap-2.5 w-full">
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Quest Title</label>
                                   <Input
-                                    type="number"
-                                    
-                                    value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    type="text"
+                                    value={previewEditTitle}
+                                    onChange={(e) => setPreviewEditTitle(e.target.value)}
                                   />
-                                  <Button size="sm" variant="primary" onClick={() => {
-                                    setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: Number(previewEditPoints) || 0 } : t));
-                                    setEditingPreviewId(null);
-                                  }}>Save</Button>
-                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Gold Reward</label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={previewEditPoints}
+                                      onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button size="sm" variant="primary" onClick={() => {
+                                      setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: Number(previewEditPoints) || 0 } : t));
+                                      setEditingPreviewId(null);
+                                    }}>Save</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-start justify-between gap-3 group">
-                                <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <Input
+                              <div className="flex items-start justify-between gap-3">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0">
+                                  <input
                                     type="checkbox"
-                                    
-                                    checked={selectedTaskIdsForImport.includes(task.id)}
+                                    className="w-5 h-5 rounded-md border-stone-300 dark:border-stone-600 text-indigo-600 accent-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0 cursor-pointer"
+                                    checked={isSelected}
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         setSelectedTaskIdsForImport(prev => [...prev, task.id]);
@@ -2733,20 +3379,32 @@ export default function ParentDashboard({
                                       }
                                     }}
                                   />
-                                  <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{task.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{task.points} pts • {task.recurrence}</Typography>
+                                  <div className="flex-1 min-w-0">
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm leading-snug truncate">{task.title}</Typography>
+                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{task.points} Gold</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className="text-xs text-stone-500 dark:text-stone-400">{recurrenceLabel}</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${catMeta.bg} ${catMeta.iconColor}`}>
+                                        <CatIcon className="w-3 h-3" />
+                                        {catMeta.label}
+                                      </span>
+                                    </div>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none"
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   type="button"
-                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors shrink-0"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(task.title);
                                     setPreviewEditPoints(task.points);
                                     setEditingPreviewId(task.id);
                                   }}
+                                  title="Edit quest details"
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
                                 </Button>
@@ -2842,40 +3500,50 @@ export default function ParentDashboard({
                 ) : (
                   <>
                     <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</Typography>
-                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                       {generatedRewardsToPreview.map(reward => {
                         const isEditing = editingPreviewId === reward.id;
+                        const isSelected = selectedRewardIdsForImport.includes(reward.id);
+                        const limitLabel = reward.limit_type === 'one_time' ? 'One-time' : reward.limit_type === 'daily' ? 'Daily' : reward.limit_type === 'twice_daily' ? 'Twice Daily' : 'Unlimited';
+
                         return (
-                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all ${isEditing ? 'border-amber-400 bg-amber-50/40 dark:bg-amber-950/30' : isSelected ? 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900' : 'border-stone-200/50 dark:border-stone-800 bg-stone-50/40 dark:bg-stone-950/40 opacity-60'}`}>
                             {isEditing ? (
-                              <div className="flex flex-col gap-2 w-full">
-                                <Input
-                                  type="text"
-                                  
-                                  value={previewEditTitle}
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
-                                />
-                                <div className="flex gap-2">
+                              <div className="flex flex-col gap-2.5 w-full">
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Prize Title</label>
                                   <Input
-                                    type="number"
-                                    
-                                    value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    type="text"
+                                    value={previewEditTitle}
+                                    onChange={(e) => setPreviewEditTitle(e.target.value)}
                                   />
-                                  <Button size="sm" variant="warning" onClick={() => {
-                                    setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: Number(previewEditPoints) || 0 } : r));
-                                    setEditingPreviewId(null);
-                                  }}>Save</Button>
-                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Gold Cost</label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={previewEditPoints}
+                                      onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button size="sm" variant="warning" onClick={() => {
+                                      setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: Number(previewEditPoints) || 0 } : r));
+                                      setEditingPreviewId(null);
+                                    }}>Save</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-start justify-between gap-3 group">
-                                <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <Input
+                              <div className="flex items-start justify-between gap-3">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0">
+                                  <input
                                     type="checkbox"
-                                    
-                                    checked={selectedRewardIdsForImport.includes(reward.id)}
+                                    className="w-5 h-5 rounded-md border-stone-300 dark:border-stone-600 text-amber-600 accent-amber-600 focus:ring-amber-500 mt-0.5 shrink-0 cursor-pointer"
+                                    checked={isSelected}
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         setSelectedRewardIdsForImport(prev => [...prev, reward.id]);
@@ -2884,20 +3552,27 @@ export default function ParentDashboard({
                                       }
                                     }}
                                   />
-                                  <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{reward.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{reward.cost_points} pts • {reward.limit_type}</Typography>
+                                  <div className="flex-1 min-w-0">
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm leading-snug truncate">{reward.title}</Typography>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{reward.cost_points} Gold</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className="text-xs text-stone-500 dark:text-stone-400">{limitLabel}</span>
+                                    </div>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none"
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   type="button"
-                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors shrink-0"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(reward.title);
                                     setPreviewEditPoints(reward.cost_points);
                                     setEditingPreviewId(reward.id);
                                   }}
+                                  title="Edit prize details"
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
                                 </Button>
@@ -3171,7 +3846,7 @@ export default function ParentDashboard({
                               </div>
                               <span className="font-bold text-stone-700 dark:text-stone-200">Gifts Sent</span>
                             </div>
-                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_sent_total || 0}</span>
+                            <span className="font-black text-stone-800 dark:text-stone-100">{child.gifts_made || child.gifts_sent_total || 0}</span>
                           </div>
                         )}
                       </div>

@@ -4,12 +4,13 @@ import { Modal } from './ui/Modal';
 import { motion } from 'motion/react';
 import { Child, Task, TaskCompletion, RewardRedemption, Reward, ParentProfile } from '../types';
 import { getLogicalDateString, getCurrentWeekKey } from '../utils/date';
-import { FaCircleCheck, FaWandMagicSparkles } from 'react-icons/fa6';
+import { FaCircleCheck, FaWandMagicSparkles, FaCalendarCheck, FaBone, FaWrench, FaPiggyBank, FaGift } from 'react-icons/fa6';
+import { getPetStripeBackground } from './ArcadeTicketCard';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame, X } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
@@ -24,6 +25,8 @@ interface ChildHomeTabProps {
   potReminders?: string[];
   onOpenBadges: () => void;
   parentProfile?: ParentProfile | null;
+  onEnterParentMode?: (targetTab?: any, targetSubTab?: any) => void;
+  onNavigateTab?: (tab: 'home' | 'companion' | 'tasks' | 'rewards' | 'pots') => void;
 }
 
 export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
@@ -35,11 +38,15 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   handleTaskCheck,
   potReminders = [],
   onOpenBadges,
-  parentProfile
+  parentProfile,
+  onEnterParentMode,
+  onNavigateTab
 }) => {
   const [historyType, setHistoryType] = useState<'today' | 'full' | null>(null);
+  const [isGiftingBannerDismissed, setIsGiftingBannerDismissed] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [childBadges, setChildBadges] = useState<any[]>([]);
+  const [routinePeriodFilter, setRoutinePeriodFilter] = useState<'auto' | 'morning' | 'afternoon' | 'evening' | 'all'>('auto');
 
   useEffect(() => {
     const fetchBadges = async () => {
@@ -81,7 +88,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   const recentActivities: any[] = useMemo(() => {
     const acts: any[] = [];
     todayCompletions.forEach(c => {
-      if (c.points_awarded < 0) {
+      if (c.points_awarded < 0 || c.task_id === 'penalty') {
         acts.push({
           id: `comp-${c.id}`,
           title: c.notes || 'Penalty',
@@ -89,12 +96,22 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           date: new Date(c.completed_at),
           type: 'penalty'
         });
+      } else if (c.task_id === 'bonus') {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Good Work Bonus',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: 'other'
+        });
       } else {
         const task = tasks.find(t => t.id === c.task_id);
         acts.push({
           id: `comp-${c.id}`,
-          title: task?.title || 'Unknown Task',
-          points: c.points_awarded,
+          title: task?.title || c.notes || 'Task Completed',
+          points: c.points_awarded ?? (task?.points || 0),
           date: new Date(c.completed_at),
           type: 'task',
           status: 'completed',
@@ -161,7 +178,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
     const acts: any[] = [];
     const childCompletions = completions.filter(c => c.child_id === activeChild.id && c.status === 'approved');
     childCompletions.forEach(c => {
-      if (c.points_awarded < 0) {
+      if (c.points_awarded < 0 || c.task_id === 'penalty') {
         acts.push({
           id: `comp-${c.id}`,
           title: c.notes || 'Penalty',
@@ -169,12 +186,22 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           date: new Date(c.completed_at),
           type: 'penalty'
         });
+      } else if (c.task_id === 'bonus') {
+        acts.push({
+          id: `comp-${c.id}`,
+          title: c.notes || 'Good Work Bonus',
+          points: c.points_awarded,
+          date: new Date(c.completed_at),
+          type: 'task',
+          status: 'completed',
+          category: 'other'
+        });
       } else {
         const task = tasks.find(t => t.id === c.task_id);
         acts.push({
           id: `comp-${c.id}`,
-          title: task?.title || 'Unknown Task',
-          points: c.points_awarded,
+          title: task?.title || c.notes || 'Task Completed',
+          points: c.points_awarded ?? (task?.points || 0),
           date: new Date(c.completed_at),
           type: 'task',
           status: 'completed',
@@ -292,20 +319,116 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         </button>
       </div>
 
+      {/* Gifting Banner */}
+      {(() => {
+        const currentGifts = activeChild.gifts_made || 0;
+        const dismissedKey = `gifting_banner_dismissed_count_${activeChild.id}`;
+        const lastDismissedCount = parseInt(localStorage.getItem(dismissedKey) || '-1', 10);
+        
+        // Show banner if child has gifted coins (> 0), it hasn't been manually closed for current gift count, and component state isn't dismissed
+        if (currentGifts === 0 || lastDismissedCount >= currentGifts || isGiftingBannerDismissed) {
+          return null;
+        }
+
+        return (
+          <div
+            onClick={() => onNavigateTab?.('pots')}
+            className="w-full relative p-[3px] rounded-[1.6rem] shadow-md mb-2 group text-left cursor-pointer transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus:outline-none"
+            style={{ background: 'repeating-linear-gradient(45deg, #a855f7, #a855f7 10px, #ec4899 10px, #ec4899 20px, #f43f5e 20px, #f43f5e 30px)' }}
+          >
+            <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-3 sm:p-3.5 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-rose-500 text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-110 transition-transform">
+                  <FaGift className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Typography variant="h4" className="font-black text-sm sm:text-base text-stone-900 dark:text-stone-50 leading-tight">
+                      Well done! 🎉 Gifting Pot
+                    </Typography>
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      {currentGifts} {currentGifts === 1 ? 'gift' : 'gifts'} made!
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-sans mt-0.5 font-medium">
+                    Awesome kindness! You've given back to others.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <div className="bg-stone-100 dark:bg-stone-800 p-1.5 rounded-lg text-stone-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  <ChevronRight className="w-4 h-4" strokeWidth={3} />
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    localStorage.setItem(dismissedKey, currentGifts.toString());
+                    setIsGiftingBannerDismissed(true);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* POT REMINDERS */}
       {potReminders.length > 0 && (
-        <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 shadow-sm text-left flex gap-3 items-start dashboard-card">
-          <Bell className="w-5 h-5 text-sky-500 shrink-0 mt-0.5 animate-pulse" />
-          <div className="flex flex-col gap-2 w-full">
-            <h3 className="font-bold text-sky-900 text-sm">Don't forget your pots!</h3>
-            <ul className="flex flex-col gap-1.5 text-xs text-sky-800/80">
-              {potReminders.map((reminder, idx) => (
-                <li key={idx} className="flex gap-2 items-start">
-                  <span className="text-sky-400 mt-0.5">•</span>
-                  <span>{reminder}</span>
-                </li>
-              ))}
-            </ul>
+        <div className="w-full rounded-[1.6rem] p-[3px] shadow-md mb-2" style={{ background: getPetStripeBackground(activeChild.character_id) }}>
+          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[1.4rem] p-4 sm:p-5 flex flex-col gap-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-3">
+              <div className="bg-stone-100 dark:bg-stone-800 p-2 rounded-xl shrink-0 shadow-inner">
+                <Bell className="w-5 h-5 text-stone-700 dark:text-stone-200 animate-pulse" />
+              </div>
+              <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 leading-tight tracking-tight">
+                Needs Attention!
+              </Typography>
+            </div>
+            <div className="flex flex-col gap-2 w-full mt-1">
+              {potReminders.map((reminder, idx) => {
+                let Icon: React.ElementType = Bell;
+                let colorClass = "bg-stone-100 text-stone-600 border-stone-200";
+                
+                if (reminder.startsWith('Food Pot')) {
+                  Icon = FaBone;
+                  colorClass = "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50";
+                } else if (reminder.startsWith('Maintenance Pot')) {
+                  Icon = FaWrench;
+                  colorClass = "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50";
+                } else if (reminder.startsWith('Savings Pot')) {
+                  Icon = FaPiggyBank;
+                  colorClass = "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50";
+                } else if (reminder.startsWith('Gifting Pot')) {
+                  Icon = FaGift;
+                  colorClass = "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50";
+                }
+
+                return (
+                  <div 
+                    key={idx} 
+                    onClick={() => onNavigateTab?.('pots')}
+                    className={`flex items-center gap-2 p-2 rounded-xl border shadow-sm ${colorClass} ${onNavigateTab ? 'cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all' : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-sans font-bold text-xs text-inherit">
+                        {reminder}
+                      </p>
+                    </div>
+                    {onNavigateTab && (
+                      <ChevronRight className="w-4 h-4 opacity-60 shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -314,22 +437,31 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
       {(() => {
         if (!activeChild.routines) return null;
 
+        const DEFAULT_ROUTINES = [
+          { id: 'weekday', name: 'Weekday Routine' },
+          { id: 'weekend', name: 'Weekend Routine' },
+          { id: 'holiday', name: 'Holiday Routine' }
+        ];
+
+        const currentRoutines = activeChild.routines || [];
+        const processedRoutines = DEFAULT_ROUTINES.map(def => {
+          let existing = currentRoutines.find(r => r.id === def.id);
+          if (!existing) {
+            existing = currentRoutines.find(r => r.name?.toLowerCase().includes(def.id));
+            if (existing) existing = { ...existing, id: def.id, name: def.name };
+          }
+          if (!existing && def.id === 'weekday' && currentRoutines.length > 0) {
+            const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => d.id === r.id || r.name?.toLowerCase().includes(d.id)));
+            if (unassigned) existing = { ...unassigned, id: def.id, name: def.name };
+          }
+          return existing || { ...def, morningTaskIds: [], afternoonTaskIds: [], eveningTaskIds: [] };
+        });
+
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        let activeRoutineId = isWeekend ? 'weekend' : 'weekday';
-        
-        if (activeChild.holiday_mode && !isWeekend) {
-          activeRoutineId = 'holiday';
-        }
+        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
 
-        let activeRoutine = activeChild.routines.find(r => r.id === activeRoutineId);
-        
-        // Fallback for unmigrated data
-        if (!activeRoutine && activeChild.active_routine_id) {
-          activeRoutine = activeChild.routines.find(r => r.id === activeChild.active_routine_id);
-        }
-
-        if (!activeRoutine) return null;
+        let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 
         let globalTaskIndex = 1;
 
@@ -409,12 +541,12 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
                     <button
                       key={task.id}
                       onClick={() => handleTaskCheck(task.id, task.title)}
-                      className="w-full text-left group"
+                      className={`w-full text-left group ${currentTaskIndex === 1 ? 'joyride-target-first-routine' : ''}`}
                     >
                       {cardContent}
                     </button>
                   ) : (
-                    <div key={task.id} className="opacity-60 grayscale pointer-events-none">
+                    <div key={task.id} className={`opacity-60 grayscale pointer-events-none ${currentTaskIndex === 1 ? 'joyride-target-first-routine' : ''}`}>
                       {cardContent}
                     </div>
                   );
@@ -424,15 +556,103 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           );
         };
         const currentHour = new Date().getHours();
-        const showMorning = currentHour >= 0 && currentHour < 12;
-        const showAfternoon = currentHour >= 12 && currentHour < 17;
-        const showEvening = currentHour >= 17;
+        const timeOfDayPeriod: 'morning' | 'afternoon' | 'evening' = 
+          (currentHour >= 12 && currentHour < 17) ? 'afternoon' : 
+          (currentHour >= 17) ? 'evening' : 'morning';
 
-        const hasMorningTasks = showMorning && (activeRoutine.morningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-        const hasAfternoonTasks = showAfternoon && (activeRoutine.afternoonTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
-        const hasEveningTasks = showEvening && (activeRoutine.eveningTaskIds || []).some(id => tasks.find(t => t.id === id && t.child_id === activeChild.id));
+        const effectivePeriod = routinePeriodFilter === 'auto' ? timeOfDayPeriod : routinePeriodFilter;
 
-        if (!hasMorningTasks && !hasAfternoonTasks && !hasEveningTasks) return null;
+        const morningTaskIds = activeRoutine.morningTaskIds || [];
+        const afternoonTaskIds = activeRoutine.afternoonTaskIds || [];
+        const eveningTaskIds = activeRoutine.eveningTaskIds || [];
+
+        const hasMorningTasks = morningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasAfternoonTasks = afternoonTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasEveningTasks = eveningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasAnyTasksInRoutine = hasMorningTasks || hasAfternoonTasks || hasEveningTasks;
+
+        const routineDisplayName = activeRoutine.name.toLowerCase().includes('routine') 
+          ? activeRoutine.name 
+          : `${activeRoutine.name} Routine`;
+
+        const renderFilteredTasks = () => {
+          if (!hasAnyTasksInRoutine) {
+            return (
+              <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+                <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                  <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                  <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO TASKS IN ROUTINE</Typography>
+                  <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
+                    Ask your parents to assign tasks to this routine!
+                  </Typography>
+                </div>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'all') {
+            return (
+              <>
+                {renderPeriod("Morning", morningTaskIds)}
+                {renderPeriod("Afternoon", afternoonTaskIds)}
+                {renderPeriod("Evening", eveningTaskIds)}
+              </>
+            );
+          }
+
+          if (effectivePeriod === 'morning') {
+            if (hasMorningTasks) return renderPeriod("Morning", morningTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Morning tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'afternoon') {
+            if (hasAfternoonTasks) return renderPeriod("Afternoon", afternoonTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Afternoon tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'evening') {
+            if (hasEveningTasks) return renderPeriod("Evening", eveningTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Evening tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          return null;
+        };
 
         return (
           <div className="space-y-4 pt-2">
@@ -442,16 +662,38 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
             >
               <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-xl sm:rounded-[1.6rem] p-3 sm:p-4 flex items-center justify-between shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <div>
-                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{activeRoutine.name} Routine</Typography>
+                  <Typography variant="h3" className="text-2xl font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">{routineDisplayName}</Typography>
                   <Typography variant="body" className="text-[10px] sm:text-xs font-sans text-stone-500 dark:text-stone-400 px-1">Complete your routine tasks to earn gold coins!</Typography>
                 </div>
               </div>
             </div>
 
+            {hasAnyTasksInRoutine && (
+              <div className="flex items-center gap-1.5 p-1 bg-stone-100 dark:bg-stone-800/80 rounded-xl overflow-x-auto">
+                {[
+                  { id: 'auto', label: `Now (${timeOfDayPeriod.charAt(0).toUpperCase() + timeOfDayPeriod.slice(1)})` },
+                  { id: 'morning', label: 'Morning' },
+                  { id: 'afternoon', label: 'Afternoon' },
+                  { id: 'evening', label: 'Evening' },
+                  { id: 'all', label: 'All' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setRoutinePeriodFilter(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                      routinePeriodFilter === tab.id
+                        ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 shadow-sm'
+                        : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
-              {showMorning && renderPeriod("Morning", activeRoutine.morningTaskIds || [])}
-              {showAfternoon && renderPeriod("Afternoon", activeRoutine.afternoonTaskIds || [])}
-              {showEvening && renderPeriod("Evening", activeRoutine.eveningTaskIds || [])}
+              {renderFilteredTasks()}
             </div>
           </div>
         );

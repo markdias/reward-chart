@@ -1,9 +1,9 @@
-import { Task, Reward } from '../types';
+import { Task, Reward, Routine } from '../types';
 
 export const PREMADE_TASKS: Omit<Task, 'created_at' | 'parent_id'>[] = [
   { id: 'template-1', title: 'Make your bed', points: 10, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
-  { id: 'template-2', title: 'Brush your teeth (morning)', points: 10, category: 'health', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
-  { id: 'template-3', title: 'Brush your teeth (evening)', points: 10, category: 'health', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-2', title: 'Brush your teeth (morning)', points: 10, category: 'self_care', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-3', title: 'Brush your teeth (evening)', points: 10, category: 'self_care', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-4', title: 'Pack your school bag', points: 20, category: 'homework', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-5', title: 'Do your homework', points: 50, category: 'homework', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-6', title: 'Tidy your bedroom', points: 30, category: 'chores', recurrence: 'weekly', is_active: true, child_id: 'directory', is_template: true },
@@ -13,14 +13,19 @@ export const PREMADE_TASKS: Omit<Task, 'created_at' | 'parent_id'>[] = [
   { id: 'template-10', title: 'Load the dishwasher', points: 20, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-11', title: 'Empty the dishwasher', points: 20, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-12', title: 'Feed the pets', points: 15, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
-  { id: 'template-13', title: 'Read a book for 20 minutes', points: 40, category: 'homework', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-13', title: 'Read a book for 20 minutes', points: 40, category: 'learning', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-14', title: 'Help fold the laundry', points: 30, category: 'chores', recurrence: 'repeatable', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-15', title: 'Put your shoes away', points: 10, category: 'chores', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-16', title: 'Practice a musical instrument', points: 40, category: 'creative', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
-  { id: 'template-17', title: 'Do 15 minutes of maths practice', points: 30, category: 'homework', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-17', title: 'Do 15 minutes of maths practice', points: 30, category: 'learning', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-18', title: 'Go outside and play', points: 20, category: 'health', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
   { id: 'template-19', title: 'Put rubbish in the bin', points: 10, category: 'chores', recurrence: 'repeatable', is_active: true, child_id: 'directory', is_template: true },
-  { id: 'template-20', title: 'Help with the gardening', points: 50, category: 'chores', recurrence: 'weekly', is_active: true, child_id: 'directory', is_template: true }
+  { id: 'template-20', title: 'Help with the gardening', points: 50, category: 'chores', recurrence: 'weekly', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-41', title: 'Do something kind for a family member', points: 25, category: 'kindness', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-42', title: "Say 'please' and 'thank you'", points: 15, category: 'manners', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-43', title: 'Share or talk about your feelings today', points: 20, category: 'feelings', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-44', title: 'Learn 3 new words or fun facts', points: 25, category: 'learning', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true },
+  { id: 'template-45', title: '15 mins quiet wind-down before bed', points: 20, category: 'self_care', recurrence: 'daily', is_active: true, child_id: 'directory', is_template: true }
 ];
 
 export const PREMADE_REWARDS: Omit<Reward, 'created_at' | 'parent_id'>[] = [
@@ -44,4 +49,19 @@ export const PREMADE_REWARDS: Omit<Reward, 'created_at' | 'parent_id'>[] = [
   { id: 'template-38', title: 'Build a blanket fort', cost_points: 50, icon_name: 'Castle', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true },
   { id: 'template-39', title: 'Special one-on-one time with a parent', cost_points: 100, icon_name: 'Heart', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true },
   { id: 'template-40', title: '£5 pocket money', cost_points: 500, icon_name: 'Coins', is_available: true, limit_type: 'unlimited', child_id: 'directory', is_template: true }
+];
+
+export const PREMADE_ROUTINES: Omit<Routine, 'id'>[] = [
+  {
+    name: 'School Day',
+    morningTaskIds: ['template-1', 'template-2', 'template-4'],
+    afternoonTaskIds: ['template-5', 'template-13', 'template-18'],
+    eveningTaskIds: ['template-8', 'template-9', 'template-3'],
+  },
+  {
+    name: 'Weekend',
+    morningTaskIds: ['template-1', 'template-2', 'template-6'],
+    afternoonTaskIds: ['template-18', 'template-14', 'template-16'],
+    eveningTaskIds: ['template-8', 'template-3'],
+  }
 ];

@@ -108,21 +108,56 @@ export const executeOrQueue = async (
       return { success: true, queued: false };
     }
 
+    const sanitizeChildItem = (item: any) => {
+      if (!item || typeof item !== 'object') return item;
+      const clean = { ...item };
+      const localOnlyFields = [
+        'level_up_bonuses_received',
+        'pet_fed_total',
+        'pet_happy_streak',
+        'savings_deposits',
+        'savings_goals_met',
+        'gifts_made',
+        'gifts_sent_total',
+        'gifting_pot',
+        'gold_pot_fixes',
+        'gold_pot_unbroken_days',
+        'manual_deductions',
+        'tour_seen',
+        'level_up_preference'
+      ];
+      localOnlyFields.forEach(field => {
+        delete clean[field];
+      });
+      return clean;
+    };
+
+    let cleanPayload: any;
+    if (table === 'children') {
+      if (Array.isArray(payload)) {
+        cleanPayload = payload.map(sanitizeChildItem);
+      } else {
+        cleanPayload = sanitizeChildItem(payload);
+      }
+    } else {
+      cleanPayload = payload;
+    }
+
     let query: any = supabase.from(table);
     
     switch (action) {
       case 'insert':
-        query = query.insert(payload);
+        query = query.insert(cleanPayload);
         break;
       case 'upsert':
         if (match && match.onConflict) {
-          query = query.upsert(payload, { onConflict: match.onConflict });
+          query = query.upsert(cleanPayload, { onConflict: match.onConflict });
         } else {
-          query = query.upsert(payload);
+          query = query.upsert(cleanPayload);
         }
         break;
       case 'update':
-        query = applyMatch(query.update(payload), match);
+        query = applyMatch(query.update(cleanPayload), match);
         break;
       case 'delete':
         query = applyMatch(query.delete(), match);

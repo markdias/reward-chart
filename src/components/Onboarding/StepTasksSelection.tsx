@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Typography } from '../ui/Typography';
 
 import { PREMADE_TASKS } from '../../data/premadeTemplates';
+import { CATEGORY_ICON_MAP } from '../../utils/categories';
+import { TaskCategory } from '../../types';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '../ui/Button';
 
@@ -89,11 +91,24 @@ export default function StepTasksSelection({ initialSelectedTaskIds, onNext, onB
                     : `border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:border-stone-300`
                 }`}
               >
-                <div>
-                  <span className={`block font-bold text-sm ${isSelected ? 'text-amber-900' : 'text-stone-700 dark:text-stone-200'}`}>
+                <div className="flex-1 min-w-0">
+                  <span className={`block font-bold text-sm truncate ${isSelected ? 'text-amber-900' : 'text-stone-700 dark:text-stone-200'}`}>
                     {task.title}
                   </span>
-                  <span className="text-xs text-stone-500 dark:text-stone-400">{task.points} Gold</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs font-semibold text-amber-600">{task.points} Gold</span>
+                    <span className="text-stone-300">•</span>
+                    {(() => {
+                      const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                      const CatIcon = catMeta.Icon;
+                      return (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${catMeta.bg} ${catMeta.iconColor}`}>
+                          <CatIcon className="w-3 h-3" />
+                          {catMeta.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${
                   isSelected ? 'bg-amber-400 border-amber-400' : 'border-stone-300'

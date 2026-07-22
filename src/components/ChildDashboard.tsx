@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -28,6 +28,8 @@ import { ChildAvatar } from './ChildAvatar';
 import { LinearProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
 import { BottomTabBar } from './ui/BottomTabBar';
+import { Walkthrough } from './Walkthrough';
+import { Step } from 'react-joyride';
 import { PullToRefresh } from './PullToRefresh';
 import { ArcadeTicketCard } from './ArcadeTicketCard';
 import { BadgesModal } from './BadgesModal';
@@ -35,6 +37,7 @@ import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
+import { useSubscription } from '../hooks/useSubscription';
 
 const RECURRENCE_LABEL: Record<string, string> = {
   daily: 'Daily',
@@ -78,7 +81,9 @@ interface ChildDashboardProps {
   isLoading?: boolean;
   isChildAuth?: boolean;
   onLogout?: () => void;
+  onEnterJoinCode?: () => void;
   onRefresh?: () => Promise<void>;
+  theme?: string;
 }
 
 export default function ChildDashboard({
@@ -112,9 +117,203 @@ export default function ChildDashboard({
   isLoading = false,
   isChildAuth = false,
   onLogout,
-  onRefresh
+  onEnterJoinCode,
+  onRefresh,
+  theme
 }: ChildDashboardProps) {
+  const { subscription } = useSubscription();
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
+  const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
+
+  // Walkthrough State
+  const [runTour, setRunTour] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleResize);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleResize);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleResize);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleResize);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setHasAutoStarted(false);
+  }, [selectedChildId]);
+
+  useEffect(() => {
+    // Only run tour if a child is selected
+    if (selectedChildId) {
+      const activeChild = children.find(c => c.id === selectedChildId);
+      const localSeen = localStorage.getItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`) === 'true';
+      if (activeChild && !activeChild.tour_seen && !localSeen && !isLoading && !runTour && !hasAutoStarted) {
+        setHasAutoStarted(true);
+        setTourStepIndex(0);
+        setActiveChildTab('home');
+        setTimeout(() => setRunTour(true), 1000);
+      }
+    }
+  }, [selectedChildId, isLoading, children, runTour, hasAutoStarted]);
+
+  const handleTourFinish = () => {
+    setRunTour(false);
+    if (selectedChildId) {
+      localStorage.setItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`, 'true');
+      const activeChild = children.find(c => c.id === selectedChildId);
+      if (activeChild && !activeChild.tour_seen) {
+        onUpdateChildStats(selectedChildId, { tour_seen: true });
+      }
+    }
+  };
+
+  const handleBeforeTourStepChange = (nextStepIndex: number) => {
+    // All steps in the child tour change the main tab, so we always scroll to top
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  // Called by Walkthrough when advancing to the NEXT or PREV step index
+  const handleTourStepChange = (nextStepIndex: number) => {
+    if (nextStepIndex === 0 || nextStepIndex === 1) {
+      setActiveChildTab('home');
+    } else if (nextStepIndex === 2) {
+      setActiveChildTab('companion');
+    } else if (nextStepIndex === 3 || nextStepIndex === 4) {
+      setActiveChildTab('tasks');
+    } else if (nextStepIndex === 5 || nextStepIndex === 6) {
+      setActiveChildTab('rewards');
+    } else if (nextStepIndex >= 7 && nextStepIndex <= 12) {
+      setActiveChildTab('pots');
+    } else if (nextStepIndex === 13) {
+      setActiveChildTab('home');
+    }
+
+    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    setTimeout(() => {
+      setTourStepIndex(nextStepIndex);
+      
+      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+      setTimeout(() => {
+        const step = tourSteps[nextStepIndex];
+        if (step && typeof step.target === 'string') {
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const topBoundary = 120; // Clear the top header
+            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+
+            let scrollDiff = 0;
+            if (rect.top < topBoundary) {
+              scrollDiff = rect.top - topBoundary;
+            } else if (rect.bottom > bottomBoundary) {
+              scrollDiff = rect.bottom - bottomBoundary;
+            }
+
+            if (scrollDiff !== 0) {
+              window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
+    }, 300);
+  };
+
+  const tourSteps: Step[] = [
+    {
+      target: '.joyride-target-home',
+      content: 'Welcome! This is your Home base. Check your streak, coins, and badges here!',
+      placement: 'bottom',
+      skipScroll: true,
+    },
+    {
+      target: '.joyride-target-first-routine',
+      content: 'Here are your routines! Complete them every day to earn extra coins.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-companion',
+      content: 'Meet your Pet! Complete quests to keep it happy and earn coins to evolve it!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-tasks',
+      content: 'Your Quests! Tap here to see your daily chores.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-first-task',
+      content: 'Tap a quest to request approval and earn coins!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-rewards',
+      content: 'The Treasure Shop! Exchange your coins for awesome prizes.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-first-reward',
+      content: 'Tap a prize to claim it when you have enough coins!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pots',
+      content: 'Your Pots! Check here to see your spending, saving, and giving pots!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-gold',
+      content: 'This is your Gold Pot! It holds all your spending money.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-savings',
+      content: 'Your Savings Pot! Keep your coins safe here to reach big goals.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-food',
+      content: 'Your Food Pot! Buy food here to keep your pet fed and happy.',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-gifting',
+      content: 'Your Gifting Pot! Send coins to your family as a nice gift!',
+      placement: 'bottom',
+    },
+    {
+      target: '.joyride-target-pot-maintenance',
+      content: 'The Maintenance Pot! Keep your Gold Pot repaired so it does not leak coins.',
+      placement: 'bottom',
+    },
+    {
+      target: 'body',
+      content: (
+        <div className="flex flex-col gap-4">
+          <p className="font-bold">You're all set! Go crush those quests!</p>
+          <div className="flex items-center gap-2 mt-2">
+            <input type="checkbox" id="child-tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+              if (e.target.checked && selectedChildId) {
+                localStorage.setItem(`RCH_TOUR_SEEN_CHILD_${selectedChildId}`, 'true');
+                onUpdateChildStats(selectedChildId, { tour_seen: true });
+              }
+            }} />
+            <label htmlFor="child-tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+          </div>
+        </div>
+      ),
+      placement: 'center',
+    }
+  ];
 
 
   // Helper to offset dates by 4 hours for a "4 AM daily reset"
@@ -122,14 +321,18 @@ export default function ChildDashboard({
 
 
   useEffect(() => {
-    if (lockedChildId) {
+    if (lockedChildId && children.some(c => c.id === lockedChildId)) {
       setSelectedChildId(lockedChildId);
+    } else if (children.length > 0) {
+      // Fall back to first available child if selectedChildId is invalid
+      if (!selectedChildId || !children.some(c => c.id === selectedChildId)) {
+        setSelectedChildId(children[0].id);
+      }
     } else {
       setSelectedChildId(null);
     }
-  }, [lockedChildId]);
+  }, [lockedChildId, children]);
 
-  const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
   // Scroll to top when switching tabs
@@ -142,10 +345,44 @@ export default function ChildDashboard({
   }, [activeChildTab]);
 
   const [expandedGoal, setExpandedGoal] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
+  const expandedGoalRef = useRef<HTMLDivElement>(null);
+
+  const scrollToExpandedGoalSection = () => {
+    setTimeout(() => {
+      if (expandedGoalRef.current) {
+        const rect = expandedGoalRef.current.getBoundingClientRect();
+        const bottomBoundary = window.innerHeight - 100;
+        const topBoundary = 80;
+
+        let scrollDiff = 0;
+        if (rect.bottom > bottomBoundary) {
+          scrollDiff = rect.bottom - bottomBoundary;
+        } else if (rect.top < topBoundary) {
+          scrollDiff = rect.top - topBoundary;
+        }
+
+        if (scrollDiff !== 0) {
+          const viewport = document.getElementById('child-viewport');
+          if (viewport) {
+            viewport.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+          }
+          window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+        }
+      }
+    }, 180);
+  };
+
+  useEffect(() => {
+    if (expandedGoal) {
+      scrollToExpandedGoalSection();
+    }
+  }, [expandedGoal]);
+
   const [isFeeding, setIsFeeding] = useState(false);
 
   // Well Done celebration overlay
   const [showWellDone, setShowWellDone] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [wellDoneTaskName, setWellDoneTaskName] = useState<string | null>(null);
 
   // Savings Pot UI State
@@ -189,6 +426,8 @@ export default function ChildDashboard({
     model_url?: string;
     fromStageNumber?: number;
     fromImage?: string;
+    toImage?: string;
+    model_scale?: number;
   } | null>(null);
 
   // Hatching animation phase state machine
@@ -249,6 +488,7 @@ export default function ChildDashboard({
 
   // Daily hunger check & penalty check hook
   useEffect(() => {
+    if (isLoading) return;
     if (!selectedChildId) return;
     const child = children.find(c => c.id === selectedChildId);
     if (!child) return;
@@ -292,7 +532,7 @@ export default function ChildDashboard({
 
       onUpdateChildStats(child.id, updates);
     }
-  }, [selectedChildId, children, onUpdateChildStats]);
+  }, [selectedChildId, children, isLoading, onUpdateChildStats]);
 
   // Feed Reminder Check
   useEffect(() => {
@@ -314,6 +554,7 @@ export default function ChildDashboard({
 
   // Gold Pot Maintenance daily check
   useEffect(() => {
+    if (isLoading) return;
     if (!selectedChildId || !activeChild) return;
     if (!isGoldPotMaintenanceUnlocked) return;
     if (!activeChild.gold_pot_maintenance_unlock_seen) return;
@@ -362,11 +603,11 @@ export default function ChildDashboard({
 
       onUpdateChildStats(activeChild.id, updates);
     }
-  }, [selectedChildId, activeChild?.id, activeChild?.gold_pot_last_check_date, isGoldPotMaintenanceUnlocked, onUpdateChildStats]);
+  }, [selectedChildId, activeChild?.id, activeChild?.gold_pot_last_check_date, isGoldPotMaintenanceUnlocked, isLoading, onUpdateChildStats]);
 
   const isSavingsUnlocked = activeChild ? (activeChild.savings_unlocked || activeChild.level >= (parentProfile?.savings_pot_unlock_level ?? 2)) : false;
   const isFoodPotUnlocked = activeChild ? (activeChild.food_pot_unlocked || activeChild.level >= (parentProfile?.food_pot_unlock_level ?? 4)) : false;
-  const isGiftingUnlocked = activeChild ? (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6)) : false;
+  const isGiftingUnlocked = activeChild ? (subscription.isPro && (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6))) : false;
 
   const potReminders: string[] = [];
   const now = new Date();
@@ -380,10 +621,8 @@ export default function ChildDashboard({
       }
     }
     if (isFoodPotUnlocked) {
-      const lastFed = activeChild.last_fed_date ? new Date(activeChild.last_fed_date) : null;
-      const daysSinceFed = lastFed ? Math.floor((now.getTime() - lastFed.getTime()) / (1000 * 3600 * 24)) : Infinity;
-      if (daysSinceFed >= 3 && !activeChild.pet_fed_today) {
-        potReminders.push("Food Pot: Your pet might be hungry!");
+      if (!activeChild.pet_fed_today) {
+        potReminders.push("Food Pot: Your pet is hungry! Feed it today.");
       }
     }
     if (isGiftingUnlocked) {
@@ -393,6 +632,11 @@ export default function ChildDashboard({
       if (daysSinceGifted >= 14 && !giftedToday) {
         potReminders.push("Gifting Pot: Consider gifting some coins!");
       }
+    }
+    if (isGoldPotMaintenanceUnlocked && activeChild.gold_pot_broken) {
+      const lastFixDateStr = activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never';
+      const totalLeaked = activeChild.gold_pot_total_leaked || 0;
+      potReminders.push(`Maintenance Pot: Last fixed ${lastFixDateStr} (Total leaked: ${totalLeaked})`);
     }
   }
 
@@ -465,7 +709,8 @@ export default function ChildDashboard({
       emoji: nextStage.emoji,
       model_url: nextStage.model_url,
       toImage: nextStage.model_url,
-      fromImage: activeChildStage.model_url
+      fromImage: activeChildStage.model_url,
+      model_scale: nextStage.model_scale
     });
   };
 
@@ -546,7 +791,18 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 flex flex-col font-sans relative overflow-x-hidden ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top),0.5rem)+88px)]' : ''}`} id="child-root" >
+    <div className={`min-h-screen flex flex-col font-sans relative overflow-x-hidden transition-colors duration-700 ${!selectedChildId ? 'bg-transparent' : 'bg-stone-100 dark:bg-stone-950 pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]'}`} id="child-dashboard-root" >
+
+      {selectedChildId && (
+        <Walkthrough
+          steps={tourSteps}
+          run={runTour}
+          stepIndex={tourStepIndex}
+          onFinish={handleTourFinish}
+          onStepChange={handleTourStepChange}
+          onBeforeStepChange={handleBeforeTourStepChange}
+        />
+      )}
 
       {/* Fixed Top Bar (Dashboard Only) */}
       {selectedChildId && (
@@ -554,34 +810,34 @@ export default function ChildDashboard({
           className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="flex justify-between items-center w-full px-2.5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               {activeChild && (
                 <ChildAvatar
                   iconName={activeChild.avatar_url}
-                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0"
+                  className="w-10 h-10 sm:w-14 sm:h-14 shadow-sm shrink-0"
                 />
               )}
               <div className="flex flex-col justify-center min-w-0">
-                <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                <h1 className="text-xs xs:text-sm sm:text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-50 leading-tight tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                </Typography>
-                <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                </h1>
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-0.5 sm:mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-4 shrink-0">
               <div
-                className="flex items-center p-1 rounded-full shadow-md shrink-0"
+                className="flex items-center p-0.5 sm:p-1 rounded-full shadow-md shrink-0"
                 style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
               >
-                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-0.5 sm:p-1.5 gap-0.5 sm:gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                   {activeChildTab !== 'home' && (
                     <Tooltip content="Current Gold Coins" position="bottom">
-                      <div className="cursor-help ml-1.5 sm:ml-2.5">
-                        <CoinBadge points={activeChild?.points || 0} />
+                      <div className="cursor-help ml-0.5 sm:ml-2.5">
+                        <CoinBadge points={activeChild?.points || 0} className="w-8 h-8 sm:w-11 sm:h-11 text-xs sm:text-sm font-black" />
                       </div>
                     </Tooltip>
                   )}
@@ -591,12 +847,24 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); setSelectedChildId(null); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
                     </Tooltip>
                   )}
+
+                  {/* Help Button */}
+                  <Tooltip content="Help & Guide" position="bottom" align="right">
+                    <Button
+                      variant="none"
+                      size="none"
+                      onClick={() => { playSound.click(); setShowHelpModal(true); }}
+                      className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                    >
+                      <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </Button>
+                  </Tooltip>
 
                   {isChildAuth && onLogout ? (
                     <Tooltip content="Log Out" position="bottom">
@@ -604,7 +872,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLogout(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -615,7 +883,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onEnterParentMode(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
                         <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -628,7 +896,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                       >
                         <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -823,7 +1091,17 @@ export default function ChildDashboard({
                     className={`relative h-44 w-44 rounded-full ${evolvingStage.model_url ? 'bg-white dark:bg-stone-900' : 'bg-white dark:bg-stone-900'} border-4 border-cyan-400 flex items-center justify-center text-8xl shadow-2xl overflow-hidden z-10`}
                   >
                     {evolvingStage.model_url ? (
-                      <model-viewer src={evolvingStage.model_url} alt={evolvingStage.toStage} auto-rotate camera-controls class="w-full h-full object-cover" />
+                      <div className="w-full h-full" style={{ transform: `scale(${evolvingStage.model_scale || 1.35})` }}>
+                        <model-viewer 
+                          src={evolvingStage.model_url} 
+                          alt={evolvingStage.toStage} 
+                          auto-rotate 
+                          camera-controls 
+                          class="w-full h-full object-cover"
+                        >
+                          <div slot="progress-bar"></div>
+                        </model-viewer>
+                      </div>
                     ) : (
                       <span>{evolvingStage.emoji}</span>
                     )}
@@ -1428,7 +1706,7 @@ export default function ChildDashboard({
       )}
 
       {/* Central HUD Viewport */}
-      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-24 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
+      <div className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 flex flex-col relative z-20 overflow-y-auto mb-40 lg:mb-8 ${!selectedChildId ? 'bg-transparent mt-0 pt-0 pb-0' : 'bg-transparent mt-2 sm:mt-4 py-4 sm:py-6'}`} id="child-viewport">
         <AnimatePresence mode="wait">
 
           {/* PROFILE SELECTION GRID - Looks like an arcade game select screen */}
@@ -1460,11 +1738,11 @@ export default function ChildDashboard({
                       <ArcadeTicketCard key={`skel-${i}`} child={{ id: '', name: '', avatar_url: '', level: 0, streak_days: 0, points: 0 }} isLoading />
                     ))}
                   </>
-                ) : children.map((child) => {
+                ) : children.map((child, idx) => {
                   const stage = getCharacterStage(child.character_id, child.level, parentProfile);
                   return (
                     <ArcadeTicketCard
-                      key={child.id}
+                      key={child.id || `child-${idx}`}
                       child={child}
                       onClick={() => handleSelectChild(child.id)}
                     />
@@ -1472,7 +1750,20 @@ export default function ChildDashboard({
                 })}
               </div>
 
-
+              {/* Empty state CTA — prompt to enter a join code */}
+              {children.length === 0 && onEnterJoinCode && (
+                <div className="flex flex-col items-center gap-3 mt-4">
+                  <p className="text-xs text-stone-400 dark:text-stone-500">
+                    No profile found for this account.
+                  </p>
+                  <button
+                    onClick={onEnterJoinCode}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-sm uppercase tracking-wider shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all"
+                  >
+                    🔑 Enter Join Code
+                  </button>
+                </div>
+              )}
 
             </motion.div>
           ) : (
@@ -1488,37 +1779,40 @@ export default function ChildDashboard({
             >
 
               {/* Left Sidebar (Desktop Only) */}
-              <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
-                <nav className="flex flex-col gap-2">
-                  {[
-                    { id: 'home', label: 'Home', icon: Home },
-                    { id: 'companion', label: 'Pets', icon: FaPaw },
-                    { id: 'rewards', label: 'Rewards', icon: Gift },
-                    { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
-                    { id: 'pots', label: 'Pots', icon: FaJar }
-                  ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isSelected = activeChildTab === tab.id;
-                    return (
-                      <Button
-                        variant="none"
-                        size="none"
-                        key={tab.id}
-                        onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
-                        className={`w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
-                          ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
-                          : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
-                          }`}
-                      >
-                        <span className="flex items-center gap-3">
-                          <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
-                          {tab.label}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </nav>
-              </aside>
+              {isDesktop && (
+                <aside className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 self-start">
+                  <nav className="flex flex-col gap-2">
+                    {[
+                      { id: 'home', label: 'Home', icon: Home },
+                      { id: 'companion', label: 'Pets', icon: FaPaw },
+                      { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
+                      { id: 'rewards', label: 'Rewards', icon: Gift },
+                      { id: 'pots', label: 'Pots', icon: FaJar }
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isSelected = activeChildTab === tab.id;
+                      return (
+                        <Button
+                          variant="none"
+                          size="none"
+                          key={tab.id}
+                          id={`tour-child-desktop-tab-${tab.id}`}
+                          onClick={() => { playSound.click(); setActiveChildTab(tab.id as any); }}
+                          className={`joyride-target-${tab.id} w-full flex items-center justify-between p-4 rounded-2xl text-[11px] font-sans font-bold uppercase tracking-widest transition-all cursor-pointer duration-300 ${isSelected
+                            ? 'bg-stone-900 text-white shadow-md shadow-stone-900/10 scale-[1.02]'
+                            : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-50 hover:scale-[1.01]'
+                            }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
+                            {tab.label}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </nav>
+                </aside>
+              )}
 
               <main className="lg:col-span-9 space-y-6">
                 {/* Active Screen Frame */}
@@ -1540,7 +1834,7 @@ export default function ChildDashboard({
                       >
                         {/* Inner Cutout */}
                         <div
-                          className="relative z-10 w-full h-full rounded-[1rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
+                          className="relative z-10 w-full h-full min-h-[540px] sm:min-h-[660px] rounded-[1rem] p-5 sm:p-8 flex flex-col justify-between items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
                           style={{
                             backgroundImage: "url('/field_stand_bg.png')",
                             backgroundSize: 'cover',
@@ -1550,45 +1844,48 @@ export default function ChildDashboard({
 
                           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent rounded-[1rem]" />
 
-                          <div className="flex justify-left w-full items-start mt-1 relative z-20">
-                            <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200/50 dark:border-stone-700/50 text-center flex flex-col items-center">
-                              <span className={`text-[9px] font-sans tracking-widest uppercase text-stone-500 font-extrabold mb-0.5`}>PET SPECIES</span>
-                              <Typography variant="h3" className={`font-black text-stone-900 dark:text-white text-sm uppercase tracking-wider leading-none`}>{activeChildStage.name}</Typography>
-                            </div>
-                          </div>
-
-                          {isFoodPotUnlocked && (
-                            <div className="mt-4 flex items-center justify-center w-full">
+                          <div className="flex justify-end w-full items-start mt-1 relative z-20">
+                            {/* Pet Status Pill (Top Right) */}
+                            <div className={`transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
                               {activeChild.pet_unhappy ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 border border-rose-200 text-rose-700 rounded-full text-xs font-bold animate-pulse">
-                                  <FaFaceFrown className="inline-block mr-2 text-blue-500" /> Pet Unhappy & Hungry
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-rose-50/90 backdrop-blur-md border border-rose-200 text-rose-700 rounded-full text-xs font-extrabold animate-pulse shadow-sm">
+                                  <FaFaceFrown className="inline-block text-blue-500 text-sm" /> Unhappy & Hungry
                                 </span>
                               ) : activeChild.pet_fed_today ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
-                                  <FaHeart className="inline-block mr-2 text-green-500" /> Pet Fed & Happy!
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50/90 backdrop-blur-md border border-emerald-200 text-emerald-700 rounded-full text-xs font-extrabold shadow-sm">
+                                  <FaHeart className="inline-block text-green-500 text-sm" /> Fed & Happy!
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-bold animate-bounce">
-                                  <FaBone className="inline-block mr-2 text-amber-700" /> Hungry! Needs Food
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50/90 backdrop-blur-md border border-amber-200 text-amber-800 rounded-full text-xs font-extrabold animate-bounce shadow-sm">
+                                  <FaBone className="inline-block text-amber-700 text-sm" /> Hungry!
                                 </span>
                               )}
                             </div>
-                          )}
+                          </div>
 
                           {/* Giant Levitating Pedestal */}
-                          <div className="my-6 sm:my-10 relative flex items-center justify-center">
+                          <div className="my-8 sm:my-14 relative flex items-center justify-center flex-1">
 
                             <motion.div
                               animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
                               transition={isFeeding ? { duration: 2.2, ease: "easeInOut" } : { duration: 1.2 }}
-                              className={`h-32 w-32 sm:h-56 sm:w-56 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-4`}
+                              className={`h-48 w-48 sm:h-80 sm:w-80 flex items-center justify-center relative z-10 ${activeChildStage.animation_class} transition-colors duration-500 -translate-y-10`}
                             >
                               {(() => {
                                 const modelUrl = activeChildStage.model_url_fed && activeChildStage.model_url_not_fed
                                   ? (activeChild.pet_fed_today ? activeChildStage.model_url_fed : activeChildStage.model_url_not_fed)
                                   : activeChildStage.model_url;
                                 return modelUrl ? (
-                                  <model-viewer src={modelUrl} alt={activeChildStage.name} camera-controls class="w-full h-full animate-float scale-[1.35]" />
+                                  <div className="w-full h-full" style={{ transform: `scale(${activeChildStage.model_scale || 1.35})` }}>
+                                    <model-viewer 
+                                      src={modelUrl} 
+                                      alt={activeChildStage.name} 
+                                      camera-controls 
+                                      class="w-full h-full animate-float"
+                                    >
+                                      <div slot="progress-bar"></div>
+                                    </model-viewer>
+                                  </div>
                                 ) : (
                                   <span className="text-9xl sm:text-[16rem] leading-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] absolute">
                                     {activeChildStage.emoji}
@@ -1597,54 +1894,83 @@ export default function ChildDashboard({
                               })()}
                             </motion.div>
                           </div>
-                          {/* Level and evolution progression */}
-                          <div className={`w-full mt-6 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-stone-200/50 dark:border-stone-700/50 relative z-20`}>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-[15px] font-black text-stone-900 dark:text-white tracking-tight uppercase">Level {activeChild.level}</span>
-                              <span className="text-[13px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full border border-stone-200 dark:border-stone-700">
-                                {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
-                              </span>
-                            </div>
-                            <LinearProgressBar
-                              progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
-                              heightClass="h-3"
-                              className="!bg-stone-200/80 dark:!bg-stone-800/80 border-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
-                            />
-                          </div>
-
-                          {isFoodPotUnlocked && (
-                            <div className="w-full pt-4 mt-4 border-t border-dashed border-stone-200 dark:border-stone-700 flex flex-col gap-2">
-                              <Button
-                                variant="none"
-                                size="none"
-                                onClick={handleFeedCompanion}
-                                disabled={isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                                className={`w-full py-3 rounded-2xl font-sans text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${activeChild.pet_fed_today
-                                  ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-default border border-stone-200 dark:border-stone-700'
-                                  : (activeChild.pet_food || 0) > 0
-                                    ? 'bg-warning border-2 border-neutral-border text-dark dark:text-white shadow-sm hover:translate-y-0.5 hover:shadow-[0_2px_0_0_var(--color-dark-shadow)] active:translate-y-1 active:shadow-none'
-                                    : 'bg-stone-200 text-stone-400 border border-neutral-border cursor-not-allowed'
-                                  }`}
-                              >
-                                {isFeeding ? (
-                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Chomp Chomp...</span>
-                                ) : activeChild.pet_fed_today ? (
-                                  <span><FaCircleCheck className="inline-block mr-2 text-green-500" /> Fed for Today!</span>
-                                ) : (
-                                  <span><FaBone className="inline-block mr-2 text-amber-700" /> Feed Pet (1 Food)</span>
+                          {/* Unified Level and Feed progression */}
+                          <div className="w-full mt-6 relative z-30">
+                            <div className={`w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl rounded-[2.5rem] p-4 flex items-stretch border-2 border-white/50 dark:border-stone-700/50 shadow-2xl ${isFoodPotUnlocked ? 'pr-5' : 'px-6'}`}>
+                              
+                              {/* Left Side: Level Progress */}
+                              <div className={`flex-1 py-3 flex flex-col justify-center ${isFoodPotUnlocked ? 'pl-4 pr-6 border-r-2 border-stone-200 dark:border-stone-800 border-dashed' : 'px-2'}`}>
+                                <div className="flex justify-between items-end mb-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest leading-tight">{activeChildStage.name}</span>
+                                    <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest leading-tight">Level {activeChild.level}</span>
+                                  </div>
+                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider pb-0.5">
+                                    {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
+                                  </span>
+                                </div>
+                                <LinearProgressBar
+                                  progress={(((activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)) / (parentProfile?.points_to_level_up ?? 500)) * 100}
+                                  heightClass="h-3.5 sm:h-4"
+                                  className="!bg-stone-200 dark:!bg-stone-800"
+                                />
+                                
+                                {/* Show warning text inline if no food */}
+                                {isFoodPotUnlocked && (!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
+                                  <span className="text-[13px] sm:text-[15px] text-red-500 dark:text-red-400 font-black mt-3 leading-tight flex items-center">
+                                    <FaTriangleExclamation className="mr-1.5 shrink-0" />
+                                    No food left!
+                                  </span>
                                 )}
-                              </Button>
-                              <div className={`flex justify-between items-center text-[10px] font-sans ${styles.textMuted} font-bold`}>
-                                <span>FOOD INVENTORY:</span>
-                                <span className="text-orange-600 font-extrabold tabular-nums">{activeChild.pet_food || 0} pieces</span>
                               </div>
-                              {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
-                                <span className="text-[9px] text-red-500 font-bold text-center mt-1">
-                                  <FaTriangleExclamation className="inline-block mr-2 text-yellow-500" /> No food left! Buy food from your Food Pot below.
-                                </span>
+
+                              {/* Right Side: Feed Button */}
+                              {isFoodPotUnlocked && (
+                                <div className="w-[110px] shrink-0 pl-5 flex items-center">
+                                  <div className="relative w-full">
+                                    {/* Inventory Badge */}
+                                    <div className={`absolute -top-3 -right-3 text-white text-[11px] sm:text-xs font-black w-8 h-8 rounded-full border-[3px] shadow-lg z-20 flex items-center justify-center
+                                      ${(activeChild.pet_food || 0) > 0 ? 'bg-orange-500 border-white dark:border-stone-900' : 'bg-stone-400 border-white dark:border-stone-900'}`}>
+                                      {activeChild.pet_food || 0}
+                                    </div>
+                                    
+                                    {/* Button */}
+                                    <Button
+                                      variant="none"
+                                      size="none"
+                                      onClick={handleFeedCompanion}
+                                      disabled={!isFoodPotUnlocked || isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
+                                      className={`w-full h-[88px] rounded-3xl font-sans text-xs sm:text-[13px] font-black uppercase flex flex-col items-center justify-center gap-1 transition-all
+                                        ${activeChild.pet_fed_today
+                                          ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 border-2 border-stone-200 dark:border-stone-700 cursor-default'
+                                          : (activeChild.pet_food || 0) > 0
+                                            ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-b-[5px] border-orange-700 hover:border-b-[3px] hover:translate-y-[2px] shadow-lg cursor-pointer'
+                                            : 'bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border-2 border-stone-300 dark:border-stone-700 shadow-sm !opacity-100 cursor-not-allowed'
+                                        }`}
+                                    >
+                                      {isFeeding ? (
+                                        <>
+                                          <FaBone className="text-3xl drop-shadow-sm mb-0.5 animate-bounce" />
+                                          Chomp...
+                                        </>
+                                      ) : activeChild.pet_fed_today ? (
+                                        <>
+                                          <FaCircleCheck className="text-3xl drop-shadow-sm mb-0.5 text-green-500" />
+                                          Fed
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaBone className="text-3xl drop-shadow-sm mb-0.5" />
+                                          Feed
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
                               )}
+
                             </div>
-                          )}
+                          </div>
 
                         </div>
                       </div>
@@ -1678,7 +2004,7 @@ export default function ChildDashboard({
                             <div className="grid grid-cols-3 gap-2 sm:gap-4">
                               {/* Daily Goal Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('daily'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                               >
@@ -1694,7 +2020,7 @@ export default function ChildDashboard({
 
                               {/* Weekly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
                               >
@@ -1710,7 +2036,7 @@ export default function ChildDashboard({
 
                               {/* Monthly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
                               >
@@ -1728,6 +2054,7 @@ export default function ChildDashboard({
                             <AnimatePresence>
                               {expandedGoal && (
                                 <motion.div
+                                  ref={expandedGoalRef}
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
@@ -1842,6 +2169,88 @@ export default function ChildDashboard({
                     </motion.div>
                   )}
 
+                  <AnimatePresence>
+                    {showHelpModal && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                          className={`w-full max-w-2xl p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-white dark:bg-stone-900 z-10 pb-4 pt-2 border-b border-stone-100 dark:border-stone-800 gap-4">
+                            <div className="flex justify-between w-full sm:w-auto items-center">
+                              <Typography variant="h2" className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50">
+                                How to Use the App
+                              </Typography>
+                              <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors sm:hidden">
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <Button variant="secondary" onClick={() => { playSound.click(); setShowHelpModal(false); setActiveChildTab('home'); setTourStepIndex(0); setRunTour(true); }} className="flex items-center gap-2 shrink-0">
+                                <PlayCircle className="w-4 h-4" />
+                                Replay Child Tutorial
+                              </Button>
+                              <Button variant="none" size="none" onClick={() => { playSound.click(); setShowHelpModal(false); }} className="w-8 h-8 rounded-full hidden sm:flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 transition-colors">
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-6 text-left pb-4">
+                            <section>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                                  <Gamepad2 className="w-5 h-5" />
+                                </div>
+                                <Typography variant="h3" className="text-lg font-bold text-stone-800 dark:text-stone-100">Welcome to your Dashboard</Typography>
+                              </div>
+                              <Typography variant="body" className="text-stone-600 dark:text-stone-400 text-sm leading-relaxed mb-4">
+                                This is your space to see your progress, interact with your virtual pet, and earn rewards!
+                              </Typography>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Daily Quests (Tasks)</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>To-Do List:</strong> See daily tasks categorized by their Pots.</li>
+                                    <li><strong>Completing Tasks:</strong> Tapping a task marks it as "Pending Approval." Once approved, coins rain down!</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Claiming Rewards</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>The Shop:</strong> Browse available rewards.</li>
+                                    <li><strong>Redeeming:</strong> "Buy" a reward to deduct coins and send a request to your parent's inbox.</li>
+                                  </ul>
+                                </div>
+
+                                <div className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-800 sm:col-span-2">
+                                  <h4 className="font-bold text-stone-800 dark:text-stone-100 mb-2">Pet Ecosystem & Leveling Up</h4>
+                                  <ul className="text-sm text-stone-600 dark:text-stone-400 space-y-2 list-disc pl-4">
+                                    <li><strong>Virtual Pet:</strong> You have a virtual companion (like the Emerald Dragon) to take care of.</li>
+                                    <li><strong>Feeding & Maintenance:</strong> Completing tasks keeps your pet fed and happy. If neglected, the pet gets hungry!</li>
+                                    <li><strong>Leveling Up:</strong> Earning gold coins fills up the XP bar. Reaching a new level triggers an exciting evolution sequence where your pet grows!</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </section>
+
+
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {/* Home Tab */}
                   {activeChildTab === 'home' && activeChild && (
                     <ChildHomeTab
@@ -1854,6 +2263,8 @@ export default function ChildDashboard({
                       potReminders={potReminders}
                       onOpenBadges={() => setShowBadgesModal(true)}
                       parentProfile={parentProfile}
+                      onEnterParentMode={onEnterParentMode}
+                      onNavigateTab={setActiveChildTab}
                     />
                   )}
                   {/* Tasks Tab */}
@@ -1885,9 +2296,9 @@ export default function ChildDashboard({
                           }
                           return true;
                         }).length === 0 ? (
-                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
+                          <div className={`joyride-target-first-task col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-3`}>
                             <span className="text-5xl block animate-bounce-slow"><FaWandMagicSparkles className="text-pink-500 mx-auto" /></span>
-                            <Typography variant="h4" className={`font-extrabold ${styles.textColor} text-base`}>ALL QUESTS CRUSHED!</Typography>
+                            <Typography variant="h4" className={`font-extrabold ${styles.text} text-base`}>ALL QUESTS CRUSHED!</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted} max-w-xs mx-auto leading-relaxed`}>
                               You have conquered all assigned chores. Ask your parent to broadcast new missions!
                             </Typography>
@@ -1899,7 +2310,7 @@ export default function ChildDashboard({
                               return !completions.some(c => c.task_id === t.id && c.child_id === activeChild.id && c.status === 'approved');
                             }
                             return true;
-                          }).map((task) => {
+                          }).map((task, index) => {
                             // Filter completions by recurrence type
                             let compl = null;
                             if (task.recurrence === 'daily') {
@@ -1995,7 +2406,7 @@ export default function ChildDashboard({
                                 key={task.id}
                                 onClick={() => handleTaskCheck(task.id, task.title)}
                                 id={`claim-task-${task.id}`}
-                                className={`${baseCardClasses} task-card`}
+                                className={`${baseCardClasses} task-card ${index === 0 ? 'joyride-target-first-task' : ''}`}
                                 style={taskBgStyle}
                               >
                                 {cardContent}
@@ -2003,7 +2414,7 @@ export default function ChildDashboard({
                             ) : (
                               <div
                                 key={task.id}
-                                className={`relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale task-card`}
+                                className={`${baseCardClasses} shadow-md overflow-hidden opacity-60 grayscale task-card-disabled ${index === 0 ? 'joyride-target-first-task' : ''}`}
                                 style={taskBgStyle}
                               >
                                 {cardContent}
@@ -2037,19 +2448,60 @@ export default function ChildDashboard({
                         </div>
                       </div>
 
+                      {/* Active Saving Goal Banner */}
+                      {isSavingsUnlocked && activeChild.savings_goal_name && (
+                        <div className="relative p-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-md mb-4">
+                          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[0.9rem] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300/40 shadow-sm">
+                                <Target className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Saving Goal</div>
+                                <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50">
+                                  {activeChild.savings_goal_name}
+                                </Typography>
+                              </div>
+                            </div>
+                            {(() => {
+                              const goalReward = rewards.find(r => r.id === activeChild.savings_goal_reward_id || r.title === activeChild.savings_goal_name);
+                              const targetAmount = goalReward?.cost_points || activeChild.savings_goal_amount || 1;
+                              const currentSavedInPot = Math.max(0, activeChild.savings_pot || 0);
+                              const progressPercent = Math.min(100, Math.round((currentSavedInPot / targetAmount) * 100));
+                              const displaySaved = Math.min(currentSavedInPot, targetAmount);
+                              
+                              return (
+                                <div className="sm:w-56 space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-stone-600 dark:text-stone-300">
+                                    <span>{displaySaved} / {targetAmount} IN SAVINGS POT</span>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{progressPercent}%</span>
+                                  </div>
+                                  <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-900/10 p-0.5 shadow-inner">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full transition-all duration-500" 
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                         {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
-                          <div className={`col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
+                          <div className={`joyride-target-first-reward col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
                             <span className="text-5xl block animate-bounce-slow"><FaGift className="text-purple-500 mx-auto" /></span>
-                            <Typography variant="h4" className={`font-extrabold ${styles.textColor}`}>SHOP EMPTY</Typography>
+                            <Typography variant="h4" className={`font-extrabold ${styles.text}`}>SHOP EMPTY</Typography>
                             <Typography variant="body" className={`text-xs ${styles.textMuted}`}>Ask your parents to unlock custom prizes for you!</Typography>
                           </div>
                         ) : (
-                          rewards.filter(r => r.child_id === activeChild.id).map((rew) => {
+                          rewards.filter(r => r.child_id === activeChild.id).map((rew, index) => {
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                            const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
+                            const isSavingFor = isSavingsUnlocked && (activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title);
                             const canDispense = isAffordable && availability.available && !hasPendingRequest;
 
                             // Hide claimed one_time rewards entirely
@@ -2065,7 +2517,7 @@ export default function ChildDashboard({
                             } else if (isSavingsUnlocked) {
                               if (isSavingFor) {
                                 statusBadge = (
-                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200 shadow-sm">
                                     <CheckCircle className="w-3 h-3" /> SAVING
                                   </div>
                                 );
@@ -2079,13 +2531,22 @@ export default function ChildDashboard({
                                       onSavingsGoal(activeChild.id, rew.id);
                                       playSound.success();
                                     }}
-                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
+                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors shadow-sm"
                                   >
                                     SET GOAL
                                   </Button>
                                 );
                               }
                             }
+
+                            const currentSaved = isSavingFor
+                              ? Math.max(0, activeChild.savings_pot || 0)
+                              : Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
+                            const progressPercent = Math.min(100, Math.round((currentSaved / Math.max(1, rew.cost_points)) * 100));
+                            const displaySaved = Math.min(currentSaved, rew.cost_points);
+                            const progressLabel = isSavingFor
+                              ? `${displaySaved} / ${rew.cost_points} IN SAVINGS POT`
+                              : `${displaySaved} / ${rew.cost_points} COINS`;
 
                             const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
                             const rewardBgStyle = {
@@ -2109,6 +2570,33 @@ export default function ChildDashboard({
                                   <div className="mt-2 flex items-center justify-center">
                                     {statusBadge}
                                   </div>
+                                  
+                                  {/* Progress bar */}
+                                  <div className="w-full relative z-10 mt-2 px-0.5">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-1">
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-500 dark:text-stone-400'}>
+                                        {progressLabel}
+                                      </span>
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-400 dark:text-stone-500'}>
+                                        {progressPercent}%
+                                      </span>
+                                    </div>
+                                    <div className={`w-full h-2.5 rounded-full overflow-hidden border p-0.5 shadow-inner ${
+                                      isSavingFor 
+                                        ? 'bg-emerald-50 dark:bg-stone-800 border-emerald-300/50' 
+                                        : 'bg-stone-100 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700'
+                                    }`}>
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-500 shadow-sm ${
+                                          isSavingFor
+                                            ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500'
+                                            : 'bg-gradient-to-r from-amber-400 to-amber-500'
+                                        }`}
+                                        style={{ width: `${progressPercent}%` }}
+                                      />
+                                    </div>
+                                  </div>
+
                                 </div>
                               </div>
                             );
@@ -2123,13 +2611,13 @@ export default function ChildDashboard({
                                   : handleClaimReward(rew.id, rew.cost_points)
                                 }
                                 id={`claim-reward-${rew.id}`}
-                                className={`${baseCardClasses} reward-card`}
+                                className={`${baseCardClasses} reward-card ${index === 0 ? 'joyride-target-first-reward' : ''}`}
                                 style={rewardBgStyle}
                               >
                                 {cardContent}
                               </Button>
                             ) : (
-                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled`} style={rewardBgStyle}>
+                              <div key={rew.id} className={isSavingFor ? `${baseCardClasses} reward-card-saving ${index === 0 ? 'joyride-target-first-reward' : ''}` : `relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center shadow-md overflow-hidden opacity-60 grayscale reward-card-disabled ${index === 0 ? 'joyride-target-first-reward' : ''}`} style={rewardBgStyle}>
                                 {cardContent}
                               </div>
                             );
@@ -2180,7 +2668,7 @@ export default function ChildDashboard({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
 
                         {/* === MAIN GOLD POT SECTION === */}
-                        <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
+                        <div className={`joyride-target-pot-gold relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gold' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gold' ? null : 'gold')}>
                           <div className="relative w-full h-full pot-flip-inner">
 
                             {/* Front Side */}
@@ -2232,7 +2720,7 @@ export default function ChildDashboard({
 
                         {/* Savings Pot Unlocked Card */}
                         {isSavingsUnlocked && activeChild.savings_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
+                          <div className={`joyride-target-pot-savings relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'savings' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'savings' ? null : 'savings')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2397,7 +2885,7 @@ export default function ChildDashboard({
                         {/* Savings Pot Locked Preview (Level 1 only, before unlock) */}
                         {!isSavingsUnlocked && activeChild.level < (parentProfile?.savings_pot_unlock_level ?? 2) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-savings relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2424,7 +2912,7 @@ export default function ChildDashboard({
 
                         {/* Food Pot Unlocked Card */}
                         {isFoodPotUnlocked && activeChild.food_pot_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
+                          <div className={`joyride-target-pot-food relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'food' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'food' ? null : 'food')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2517,7 +3005,7 @@ export default function ChildDashboard({
                         {/* Food Pot Locked Preview */}
                         {!isFoodPotUnlocked && activeChild.level < (parentProfile?.food_pot_unlock_level ?? 4) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-food relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2546,7 +3034,7 @@ export default function ChildDashboard({
 
                         {/* Gifting Pot Unlocked Card */}
                         {isGiftingUnlocked && activeChild.gifting_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
+                          <div className={`joyride-target-pot-gifting relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'gifting' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'gifting' ? null : 'gifting')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2731,10 +3219,10 @@ export default function ChildDashboard({
                           </div>
                         )}
 
-                        {/* Gifting Pot Locked Preview */}
-                        {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
+                        {/* Gifting Pot — hidden on Free, shown (locked by level) on Pro */}
+                        {subscription.isPro && !isGiftingUnlocked && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-gifting relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2760,8 +3248,8 @@ export default function ChildDashboard({
                         )}
 
                         {/* === GOLD POT MAINTENANCE SECTION === */}
-                        {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
-                          <div className={`relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
+                        {subscription.isPro && isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
+                          <div className={`joyride-target-pot-maintenance relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
                               {/* Front Side */}
@@ -2796,21 +3284,7 @@ export default function ChildDashboard({
                                         Oh no! Sometimes your pot cracks and loses coins. Fix it quick!
                                       </Typography>
 
-                                      {/* Status Info */}
-                                      <div className={`grid grid-cols-2 gap-2 bg-stone-50 dark:bg-stone-950 rounded-xl p-2 mb-2 border ${activeChild.gold_pot_broken ? 'border-red-200 bg-red-50' : 'border-stone-200 dark:border-stone-700'}`}>
-                                        <div className="text-center">
-                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Last Fixed</div>
-                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                            {activeChild.gold_pot_last_fix_date ? new Date(activeChild.gold_pot_last_fix_date).toLocaleDateString() : 'Never'}
-                                          </div>
-                                        </div>
-                                        <div className="text-center border-l border-stone-200 dark:border-stone-700">
-                                          <div className={`text-[10px] font-black ${activeChild.gold_pot_broken ? 'text-red-900/60' : 'text-stone-400'} uppercase tracking-widest mb-0.5`}>Total Leaked</div>
-                                          <div className={`text-sm font-bold ${activeChild.gold_pot_broken ? 'text-red-900' : 'text-stone-700 dark:text-stone-200'}`}>
-                                            {activeChild.gold_pot_total_leaked || 0} Coins
-                                          </div>
-                                        </div>
-                                      </div>
+
 
                                       {activeChild.gold_pot_broken && (
                                         <Typography variant="body" className="text-xs text-red-700 dark:text-red-400 mb-2 leading-tight font-bold">
@@ -2863,9 +3337,9 @@ export default function ChildDashboard({
                         )}
 
                         {/* Gold Pot Maintenance Locked Preview */}
-                        {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
+                        {subscription.isPro && !isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
                           <div
-                            className="relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
+                            className="joyride-target-pot-maintenance relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
@@ -2901,12 +3375,10 @@ export default function ChildDashboard({
 
         </AnimatePresence>
 
-
-
       </div>
 
       {/* Mobile Sticky Bottom Nav for Child Dashboard */}
-      {selectedChildId && (
+      {selectedChildId && !isDesktop && (
         <BottomTabBar
           tabs={[
             { id: 'home', label: 'Home', icon: Home },

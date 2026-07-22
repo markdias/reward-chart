@@ -2,5 +2,17 @@
 	{
 		"pkg": "@capacitor/app",
 		"classpath": "com.capacitorjs.plugins.app.AppPlugin"
+	},
+	{
+		"pkg": "@capacitor/network",
+		"classpath": "com.capacitorjs.plugins.network.NetworkPlugin"
+	},
+	{
+		"pkg": "@capgo/capacitor-app-tracking-transparency",
+		"classpath": "ee.forgr.capacitor.apptrackingtransparency.AppTrackingTransparencyPlugin"
+	},
+	{
+		"pkg": "@revenuecat/purchases-capacitor",
+		"classpath": "com.revenuecat.purchases.capacitor.PurchasesPlugin"
 	}
 ]

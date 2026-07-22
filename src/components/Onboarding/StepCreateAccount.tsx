@@ -8,16 +8,20 @@ import { PasswordInput } from '../PasswordInput';
 import { evaluatePassword } from '../../utils/security';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
 interface StepCreateAccountProps {
   name?: string;
   familyName?: string;
-  onComplete: (skipped: boolean, email?: string) => void;
+  onComplete: (email?: string) => void;
   onBack: () => void;
   onLoginInstead: () => void;
+  theme?: string;
 }
 
-export default function StepCreateAccount({ name = '', familyName = '', onComplete, onBack, onLoginInstead }: StepCreateAccountProps) {
+export default function StepCreateAccount({ name = '', familyName = '', onComplete, onBack, onLoginInstead, theme }: StepCreateAccountProps) {
   const styles = {
     text: 'text-stone-900 dark:text-stone-50',
     textMuted: 'text-stone-500 dark:text-stone-400',
@@ -44,18 +48,37 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { flags } = useFeatureFlags();
 
-  const handleSkip = () => {
-    playSound.click();
-    onComplete(true);
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setError('Supabase client is not configured.');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during social login.');
+      playSound.pinError();
+    }
   };
+
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!isSupabaseConfigured()) {
-      setError('Supabase is not configured. Skip for now to use local mode.');
+      setError('Supabase is not configured. Please check your environment variables.');
       playSound.pinError();
       return;
     }
@@ -107,7 +130,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
 
           if (!signInError && signInData?.session) {
             playSound.success();
-            onComplete(false, email);
+            onComplete(email);
             return;
           }
 
@@ -118,7 +141,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
         }
 
         playSound.success();
-        onComplete(false, email);
+        onComplete(email);
       } catch (err: any) {
         setError(err.message || 'Unknown error occurred');
         playSound.pinError();
@@ -178,26 +201,41 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
           </Button>
         </form>
 
+        {(flags.google_login || flags.apple_login) && (
+          <div className="mt-6 mb-4">
+            <div className="relative flex items-center py-2 mb-4">
+              <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+              <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">Or</span>
+              <div className="flex-grow border-t border-stone-200 dark:border-stone-700"></div>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              {flags.google_login && (
+                <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('google')} className="flex items-center justify-center gap-2">
+                  <FcGoogle className="w-5 h-5" />
+                  <span>Continue with Google</span>
+                </Button>
+              )}
+              {flags.apple_login && (
+                <Button type="button" variant="secondary" size="lg" fullWidth onClick={() => handleSocialLogin('apple')} className="flex items-center justify-center gap-2">
+                  <FaApple className="w-5 h-5 text-black dark:text-white" />
+                  <span>Continue with Apple</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col items-center gap-3 pt-4 border-t border-stone-200 dark:border-stone-700">
           <p className="text-[10px] text-stone-500 dark:text-stone-400">Already have an account? <button onClick={onLoginInstead} className="font-bold underline">Sign in instead</button></p>
-          <div className="flex w-full gap-3 mt-2">
+          <div className="flex w-full justify-center mt-2">
             <Button
               variant="ghost"
-              size="icon"
               type="button"
               onClick={onBack}
+              leftIcon={<ArrowLeft className="w-4 h-4" />}
             >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              fullWidth
-              className="flex-1"
-              type="button"
-              onClick={handleSkip}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Skip for now
+              Back
             </Button>
           </div>
         </div>

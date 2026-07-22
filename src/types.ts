@@ -14,6 +14,8 @@ export interface ParentProfile {
   family_name?: string | null;
   pin?: string;
   share_token: string | null;
+  is_beta_tester?: boolean;
+  has_special_logins?: boolean;
   level_up_gold_reward?: number;
   points_to_level_up?: number;
   savings_pot_unlock_level?: number;
@@ -28,6 +30,7 @@ export interface ParentProfile {
   gold_pot_maintenance_unlock_level?: number;
   gold_pot_maintenance_cost?: number;
   dashboard_style?: string;
+  tour_seen?: boolean;
 }
 
 export interface Child {
@@ -48,6 +51,7 @@ export interface Child {
   last_monthly_bonus_awarded?: string; // e.g. "2026-06"
   weekly_points?: number;
   monthly_points?: number;
+  tour_seen?: boolean;
   last_active_week?: string;
   last_active_month?: string;
   weekly_reset_date?: string; // ISO date of next reset
@@ -72,6 +76,7 @@ export interface Child {
   last_nudge_time?: string | null;
   gifting_unlocked?: boolean;
   gifting_unlock_seen?: boolean;
+  gifting_pot?: number;
   last_gifting_date?: string | null;
   gold_pot_broken?: boolean;
   gold_pot_break_count_this_week?: number;
@@ -87,6 +92,7 @@ export interface Child {
   savings_deposits?: number;
   savings_goals_met?: number;
   gifts_made?: number;
+  gifts_sent_total?: number;
   gold_pot_fixes?: number;
   gold_pot_unbroken_days?: number;
   manual_deductions?: number;
@@ -104,13 +110,26 @@ export interface ChildProfile {
   created_at?: string;
 }
 
+export type TaskCategory = 
+  | 'chores' 
+  | 'homework' 
+  | 'behavior' 
+  | 'health' 
+  | 'creative' 
+  | 'kindness' 
+  | 'manners' 
+  | 'feelings' 
+  | 'learning' 
+  | 'self_care' 
+  | 'other';
+
 export interface Task {
   id: string;
   parent_id: string;
   child_id: string;
   title: string;
   points: number;
-  category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
+  category: TaskCategory;
   recurrence: 'daily' | 'weekly' | 'one_time' | 'repeatable';
   cooldown_minutes?: number;
   is_template?: boolean;
@@ -189,6 +208,7 @@ export interface CharacterEvolutionStage {
   model_url?: string;
   model_url_fed?: string;
   model_url_not_fed?: string;
+  model_scale?: number;
 }
 
 export interface CharacterPack {

@@ -1,21 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import OneSignal from 'react-onesignal';
+import { AppTrackingTransparency } from '@capgo/capacitor-app-tracking-transparency';
 import { App as CapacitorApp } from '@capacitor/app';
-import AuthPage from './components/AuthPage';
-import LandingPage from './components/LandingPage';
-import ParentDashboard from './components/ParentDashboard';
-import ChildDashboard from './components/ChildDashboard';
-import LockScreen from './components/LockScreen';
+
+const AuthPage = lazy(() => import('./components/AuthPage'));
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const ParentDashboard = lazy(() => import('./components/ParentDashboard'));
+const ChildDashboard = lazy(() => import('./components/ChildDashboard'));
+const LockScreen = lazy(() => import('./components/LockScreen'));
+const Showcase = lazy(() => import('./components/Showcase'));
+const OnboardingWizard = lazy(() => import('./components/Onboarding/OnboardingWizard'));
+const StepCreateAccount = lazy(() => import('./components/Onboarding/StepCreateAccount'));
+
 import Confetti from './components/Confetti';
-import Showcase from './components/Showcase';
-import OnboardingWizard, { OnboardingData } from './components/Onboarding/OnboardingWizard';
-import StepCreateAccount from './components/Onboarding/StepCreateAccount';
+import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest } from './types';
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
+import { PaywallModal } from './components/PaywallModal';
+
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
+import { inferTaskCategory } from './utils/categories';
 import { getSupabaseClient } from './utils/supabase';
 import posthog from 'posthog-js';
 import { executeOrQueue, processSyncQueue } from './utils/offlineSync';
@@ -23,6 +31,7 @@ import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextM
 import { revokeInvalidLevelBadges } from './utils/badgeService';
 import { generateShortCode } from './utils/security';
 import { Network } from '@capacitor/network';
+import { safeLocalStorageGet, safeJsonParse, safeLocalStorageSet } from './utils/storage';
 
 export default function App() {
   const activeTheme = 'sunny_toybox';
@@ -30,16 +39,16 @@ export default function App() {
   // Auth state
   // Auth state
   
-  const [parentEmail, setParentEmail] = useState<string | null>(
-    localStorage.getItem('RCH_PARENT_EMAIL')
-  );
-  const [isParentMode, setIsParentMode] = useState<boolean>(
-    localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'
-  );
+  const [parentEmail, setParentEmail] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_PARENT_EMAIL'); } catch { return null; }
+  });
+  const [isParentMode, setIsParentMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'; } catch { return false; }
+  });
   
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
-    localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
-  );
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'; } catch { return false; }
+  });
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<'welcome' | 'role' | undefined>(undefined);
 
   const [showCreateAccount, setShowCreateAccount] = useState(false);
@@ -52,24 +61,45 @@ export default function App() {
     new URLSearchParams(window.location.search).has('showcase')
   );
 
-  const [isChildAuth, setIsChildAuth] = useState<boolean>(
-    localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'
-  );
-  const [authedChildId, setAuthedChildId] = useState<string | null>(
-    localStorage.getItem('RCH_AUTHED_CHILD_ID')
-  );
+  const [isChildAuth, setIsChildAuth] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'; } catch { return false; }
+  });
+  const [authedChildId, setAuthedChildId] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_AUTHED_CHILD_ID'); } catch { return null; }
+  });
+
+  // When a child Supabase account exists but has no linked child_profiles row yet
+  const [showChildJoinCodePrompt, setShowChildJoinCodePrompt] = useState<boolean>(false);
+  const [childJoinCodeInput, setChildJoinCodeInput] = useState<string>('');
+  const [childJoinCodeError, setChildJoinCodeError] = useState<string>('');
+  const [isApplyingChildJoinCode, setIsApplyingChildJoinCode] = useState<boolean>(false);
   
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
   useEffect(() => {
-    // Disable right-click globally
+    // Disable right-click context menu on images and canvas/interactive components in prod, allow on inputs
     const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
+      const target = e.target as HTMLElement | null;
+      if (import.meta.env.PROD && target && !['INPUT', 'TEXTAREA'].includes(target.tagName)) {
+        e.preventDefault();
+      }
     };
     document.addEventListener('contextmenu', handleContextMenu);
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
     };
+  }, []);
+
+  useEffect(() => {
+    // Request iOS App Tracking Transparency on launch
+    const requestATT = async () => {
+      try {
+        await AppTrackingTransparency.requestPermission();
+      } catch (err) {
+        // Safe to ignore, probably not running on iOS
+      }
+    };
+    requestATT();
   }, []);
 
   useEffect(() => {
@@ -128,6 +158,7 @@ export default function App() {
   const [showLockScreen, setShowLockScreen] = useState<boolean>(false);
   const [celebrationActive, setCelebrationActive] = useState<boolean>(false);
   const [initialParentTab, setInitialParentTab] = useState<'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets'>('home');
+  const [initialParentSubTab, setInitialParentSubTab] = useState<'directory' | 'active' | 'routines'>('directory');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   
   // Auto-logout parent mode after 5 minutes of inactivity
@@ -218,7 +249,36 @@ export default function App() {
     const savedGiftingRequests = localStorage.getItem(keyGiftingRequests);
 
     if (savedChildren) {
-      setChildren(JSON.parse(savedChildren));
+      const parsedChildren = JSON.parse(savedChildren);
+      const now = new Date();
+      let hasUpdates = false;
+      
+      const processedChildren = parsedChildren.map((child: Child) => {
+        let updated = { ...child };
+        
+        let nextWeeklyReset = updated.weekly_reset_date ? new Date(updated.weekly_reset_date) : null;
+        if (!nextWeeklyReset || now >= nextWeeklyReset) {
+          updated.weekly_points = 0;
+          updated.food_pot_weekly_contribution = 0;
+          updated.gold_pot_break_count_this_week = 0;
+          updated.weekly_reset_date = getNextWeeklyResetDate(now).toISOString();
+          hasUpdates = true;
+        }
+
+        let nextMonthlyReset = updated.monthly_reset_date ? new Date(updated.monthly_reset_date) : null;
+        if (!nextMonthlyReset || now >= nextMonthlyReset) {
+          updated.monthly_points = 0;
+          updated.monthly_reset_date = getNextMonthlyResetDate(now).toISOString();
+          hasUpdates = true;
+        }
+        
+        return updated;
+      });
+      
+      if (hasUpdates) {
+        localStorage.setItem(keyChildren, JSON.stringify(processedChildren));
+      }
+      setChildren(processedChildren);
     } else {
       const initial: any[] = [];
       setChildren(initial);
@@ -226,7 +286,11 @@ export default function App() {
     }
 
     if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
+      const parsed = JSON.parse(savedTasks).map((t: Task) => ({
+        ...t,
+        category: inferTaskCategory(t.title, t.category)
+      }));
+      setTasks(parsed);
     } else {
       const initial: any[] = [];
       setTasks(initial);
@@ -352,104 +416,155 @@ export default function App() {
                     localStorage.removeItem('RCH_PENDING_CHILD_LINK');
                   } else {
                     console.error("Invalid child share token or RLS prevented reading target child");
+                    setIsLoadingData(false);
                     return;
                   }
                 } else {
-                  // Creating a new parent profile
-                  let familyId = parentEmail;
-                  let inheritedFamilyName = null;
-                  const shareToken = urlParams.get('share');
-                  if (shareToken) {
-                    const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
-                    let inviter = pendingStr ? JSON.parse(pendingStr) : null;
-                    if (!inviter) {
-                      const { data } = await supabase
-                        .from('parent_profiles')
-                        .select('*')
-                        .eq('share_token', shareToken)
-                        .maybeSingle();
-                      inviter = data;
-                    }
-
-                    if (inviter) {
-                      familyId = inviter.family_id;
-                      inheritedFamilyName = inviter.family_name;
-                      localStorage.removeItem('RCH_PENDING_PARENT_LINK');
-                    }
+                  // Check if a parent pre-linked this child's email address
+                  const userEmail = sessionData.session.user.email;
+                  let linkedChildData = null;
+                  if (userEmail) {
+                    const { data: matchedChild } = await supabase
+                      .from('children')
+                      .select('id, parent_id')
+                      .eq('linked_email', userEmail)
+                      .maybeSingle();
+                    linkedChildData = matchedChild;
                   }
 
-                  const meta = sessionData.session.user.user_metadata || {};
-                  const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
-                  const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
-
-                  const newProfile = {
-                    user_id: sessionData.session.user.id,
-                    email: sessionData.session.user.email || parentEmail,
-                    family_id: familyId,
-                    family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
-                    name: meta.name || localProfileObj.name || null,
-                    share_token: generateShortCode(),
-                    savings_pot_unlock_level: 2,
-                    food_pot_unlock_level: 4,
-                    gifting_pot_unlock_level: 6,
-                    gold_pot_maintenance_unlock_level: 8,
-                    gold_pot_maintenance_cost: 2,
-                    points_to_level_up: 500,
-                    level_up_gold_reward: 500
-                  };
-                  const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
-                  
-                  if (profileError) {
-                    console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
-                    return; // Abort further inserts if profile fails
-                  }
-                  
-                  // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
-                  if (!shareToken) {
-                    const localEmail = 'local_parent@rewardchart.app';
-                    const localChildren = localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
-                    const localTasks = localStorage.getItem(`RCH_TASKS_${localEmail}`);
-                    const localCompletions = localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
-                    const localRewards = localStorage.getItem(`RCH_REWARDS_${localEmail}`);
-                    const localRedemptions = localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                  if (linkedChildData) {
+                    await executeOrQueue('child_profiles', 'insert', { user_id: sessionData.session.user.id, child_id: linkedChildData.id });
+                    await executeOrQueue('children', 'update', { child_share_token: `LINKED_${linkedChildData.id}` }, { eq: { 'id': linkedChildData.id } });
                     
-                    if (localChildren && JSON.parse(localChildren).length > 0) {
-                       // Migrate all local data to this new family ID
-                       const parsedChildren = JSON.parse(localChildren).map((c: any) => ({...c, parent_id: familyId}));
-                       const parsedTasks = localTasks ? JSON.parse(localTasks).map((t: any) => ({...t, parent_id: familyId})) : [];
-                       const parsedCompletions = localCompletions ? JSON.parse(localCompletions) : [];
-                       const parsedRewards = localRewards ? JSON.parse(localRewards).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       const parsedRedemptions = localRedemptions ? JSON.parse(localRedemptions).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       const localGifting = localStorage.getItem(`RCH_GIFTING_${localEmail}`);
-                       const parsedGifting = localGifting ? JSON.parse(localGifting).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       
-                       if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
-                       if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
-                       if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
-                       if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
-                       if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
-                       if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
-                    } else {
-                       const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
-                         ...t, 
-                         id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                         created_at: new Date().toISOString(),
-                         parent_id: familyId 
-                       }));
-                       const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
-                         ...r, 
-                         id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                         created_at: new Date().toISOString(),
-                         parent_id: familyId 
-                       }));
-                       await executeOrQueue('tasks', 'insert', tasksToInsert);
-                       await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                    setIsChildAuth(true);
+                    setAuthedChildId(linkedChildData.id);
+                    localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+                    localStorage.setItem('RCH_AUTHED_CHILD_ID', linkedChildData.id);
+                    currentFamilyId = linkedChildData.parent_id;
+                  } else if (!urlParams.has('share')) {
+                    // Logged in with a child Supabase account that has no linked child record
+                    // and no join code in the URL — prompt the user to enter a join code
+                    setShowChildJoinCodePrompt(true);
+                    setIsLoadingData(false);
+                    return;
+                  } else {
+                    // Creating a new parent profile
+                    let familyId = parentEmail;
+                    let inheritedFamilyName = null;
+                    const shareToken = urlParams.get('share');
+                    if (shareToken) {
+                      const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
+                      let inviter = pendingStr ? JSON.parse(pendingStr) : null;
+                      if (!inviter) {
+                        const { data } = await supabase
+                          .from('parent_profiles')
+                          .select('*')
+                          .eq('share_token', shareToken)
+                          .maybeSingle();
+                        inviter = data;
+                      }
+
+                      if (inviter) {
+                        familyId = inviter.family_id;
+                        inheritedFamilyName = inviter.family_name;
+                        localStorage.removeItem('RCH_PENDING_PARENT_LINK');
+                      }
                     }
+
+                    const meta = sessionData.session.user.user_metadata || {};
+                    const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
+                    const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
+
+                    const newProfile = {
+                      user_id: sessionData.session.user.id,
+                      email: sessionData.session.user.email || parentEmail,
+                      family_id: familyId,
+                      family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
+                      name: meta.name || localProfileObj.name || null,
+                      share_token: generateShortCode(),
+                      savings_pot_unlock_level: 2,
+                      food_pot_unlock_level: 4,
+                      gifting_pot_unlock_level: 6,
+                      gold_pot_maintenance_unlock_level: 8,
+                      gold_pot_maintenance_cost: 2,
+                      points_to_level_up: 500,
+                      level_up_gold_reward: 500
+                    };
+                    const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
+                    
+                    if (profileError) {
+                      console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
+                      setIsLoadingData(false);
+                      return; // Abort further inserts if profile fails
+                    }
+                    
+                    // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
+                    if (!shareToken) {
+                      const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
+                      const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
+
+                      const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
+
+                      if (!hasDbData) {
+                        const localEmail = 'local_parent@rewardchart.app';
+                        const userEmailKey = sessionData.session.user.email;
+                        const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
+                                                 (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
+                                                 localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
+                        const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
+                                              (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
+                                              localStorage.getItem(`RCH_TASKS_${localEmail}`);
+                        const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
+                        const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_REWARDS_${localEmail}`);
+                        const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                        const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_GIFTING_${localEmail}`);
+                        
+                        if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
+                           // Migrate all local data to this new family ID
+                           const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
+                           const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
+                           const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
+                           const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           
+                           if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
+                           if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
+                           if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
+                           if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
+                           if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
+                           if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
+                        } else {
+                           const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
+                             ...t, 
+                             id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
+                             ...r, 
+                             id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           await executeOrQueue('tasks', 'insert', tasksToInsert);
+                           await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                        }
+                      }
+                    }
+                    
+                    setParentProfile(newProfile as ParentProfile);
+                    loadedParentProfile = newProfile as ParentProfile;
+                    currentFamilyId = familyId;
                   }
-                  
-                  setParentProfile(newProfile as ParentProfile);
-                  loadedParentProfile = newProfile as ParentProfile;
-                  currentFamilyId = familyId;
                 }
               }
             }
@@ -475,13 +590,28 @@ export default function App() {
           const keyRewards = `RCH_REWARDS_${currentFamilyId}`;
 
           // Fetch children
-          const { data: dbChildren, error: errChildren } = await supabase
+          let { data: dbChildren, error: errChildren } = await supabase
             .from('children')
             .select('*')
             .eq('parent_id', currentFamilyId);
           
           if (!errChildren) {
             let processedChildren = dbChildren || [];
+            
+            // Fallback: if logged in as child and processedChildren is empty, query by authedChildId directly
+            if (processedChildren.length === 0 && (isChildAuth || localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true')) {
+              const targetChildId = authedChildId || localStorage.getItem('RCH_AUTHED_CHILD_ID');
+              if (targetChildId) {
+                const { data: singleChild } = await supabase
+                  .from('children')
+                  .select('*')
+                  .eq('id', targetChildId)
+                  .maybeSingle();
+                if (singleChild) {
+                  processedChildren = [singleChild];
+                }
+              }
+            }
             
             // --- Main Money Daily/Monthly Logic ---
             const now = new Date();
@@ -511,6 +641,23 @@ export default function App() {
               if (!updated.gifting_unlocked && updated.level >= giftingLvl) {
                 updates.gifting_unlocked = true;
                 updates.gifting_unlock_seen = false;
+                updated = { ...updated, ...updates };
+              }
+
+              // Weekly & Monthly Resets
+              let nextWeeklyReset = updated.weekly_reset_date ? new Date(updated.weekly_reset_date) : null;
+              if (!nextWeeklyReset || now >= nextWeeklyReset) {
+                updates.weekly_points = 0;
+                updates.food_pot_weekly_contribution = 0;
+                updates.gold_pot_break_count_this_week = 0;
+                updates.weekly_reset_date = getNextWeeklyResetDate(now).toISOString();
+                updated = { ...updated, ...updates };
+              }
+
+              let nextMonthlyReset = updated.monthly_reset_date ? new Date(updated.monthly_reset_date) : null;
+              if (!nextMonthlyReset || now >= nextMonthlyReset) {
+                updates.monthly_points = 0;
+                updates.monthly_reset_date = getNextMonthlyResetDate(now).toISOString();
                 updated = { ...updated, ...updates };
               }
               
@@ -543,8 +690,12 @@ export default function App() {
             .eq('parent_id', currentFamilyId);
           
           if (!errTasks) {
-            setTasks(dbTasks || []);
-            localStorage.setItem(keyTasks, JSON.stringify(dbTasks || []));
+            const updated = (dbTasks || []).map((t: Task) => ({
+              ...t,
+              category: inferTaskCategory(t.title, t.category)
+            }));
+            setTasks(updated);
+            localStorage.setItem(keyTasks, JSON.stringify(updated));
           }
 
           // Fetch completions (filtered client-side if needed, or select all)
@@ -610,7 +761,7 @@ export default function App() {
 
       fetchSupabaseData();
 
-      // Subscribe to Realtime Postgres changes across all public tables
+      // Subscribe to Realtime Postgres changes & custom Broadcasts across public tables
       const dbChannel = supabase.channel('schema-db-changes')
         .on(
           'postgres_changes',
@@ -622,15 +773,33 @@ export default function App() {
             }, 500);
           }
         )
+        .on(
+          'broadcast',
+          { event: 'data_changed' },
+          (payload) => {
+            console.log('Realtime broadcast received! Refreshing data...', payload);
+            fetchSupabaseData();
+          }
+        )
         .subscribe();
-        
-      // Subscribe to custom Broadcasts for this specific family (bypasses RLS subquery limitations in Postgres WAL)
-      // Note: currentFamilyId might be stale here if we don't fetch it first, but we are inside the async fetchSupabaseData where it's not easily accessible.
-      // We should set up the broadcast channel *inside* fetchSupabaseData or rely on parentEmail.
-      // Let's just poll every 10 seconds as a fallback, and set up a state-dependent effect for broadcast.
+
+      // Local tab broadcast channel
+      const localBc = new BroadcastChannel('rch_data_sync');
+      localBc.onmessage = (event) => {
+        if (event.data === 'refresh') {
+          fetchSupabaseData();
+        }
+      };
+
+      // 10-second background polling fallback
+      const pollInterval = setInterval(() => {
+        fetchSupabaseData();
+      }, 10000);
 
       // Cleanup subscription on unmount or parentEmail change
       return () => {
+        clearInterval(pollInterval);
+        localBc.close();
         supabase.removeChannel(dbChannel);
       };
     } else {
@@ -645,12 +814,21 @@ export default function App() {
     setChildren(newList);
     const key = (parentProfile?.family_id || parentEmail) ? `RCH_CHILDREN_${parentProfile?.family_id || parentEmail}` : 'RCH_CHILDREN';
     localStorage.setItem(key, JSON.stringify(newList));
+    try {
+      const bc = new BroadcastChannel('rch_data_sync');
+      bc.postMessage('refresh');
+      bc.close();
+    } catch (e) {}
   };
 
   const syncTasks = (newList: Task[]) => {
-    setTasks(newList);
+    const updated = newList.map(t => ({
+      ...t,
+      category: inferTaskCategory(t.title, t.category)
+    }));
+    setTasks(updated);
     const key = (parentProfile?.family_id || parentEmail) ? `RCH_TASKS_${parentProfile?.family_id || parentEmail}` : 'RCH_TASKS';
-    localStorage.setItem(key, JSON.stringify(newList));
+    localStorage.setItem(key, JSON.stringify(updated));
   };
 
   const syncCompletions = (newList: TaskCompletion[]) => {
@@ -708,6 +886,7 @@ export default function App() {
           food_pot_unlocked: updatedChild.food_pot_unlocked,
           food_pot_unlock_seen: updatedChild.food_pot_unlock_seen,
           food_pot_weekly_contribution: updatedChild.food_pot_weekly_contribution,
+          tour_seen: updatedChild.tour_seen,
           pet_fed_today: updatedChild.pet_fed_today,
           pet_hunger_time: updatedChild.pet_hunger_time,
           pet_unhappy: updatedChild.pet_unhappy,
@@ -730,7 +909,8 @@ export default function App() {
           pet_fed_total: updatedChild.pet_fed_total,
           gifts_made: updatedChild.gifts_made,
           gold_pot_fixes: updatedChild.gold_pot_fixes,
-          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days
+          gold_pot_unbroken_days: updatedChild.gold_pot_unbroken_days,
+          holiday_mode: updatedChild.holiday_mode
         })
         .eq('id', updatedChild.id);
       if (error) {
@@ -749,7 +929,7 @@ export default function App() {
     localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
     setHasCompletedOnboarding(true);
 
-    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || 'local_parent@rewardchart.app');
+    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || parentEmail || 'local_parent@rewardchart.app');
     
     // Save parent profile locally so it persists in local mode
     const localProfile = {
@@ -798,6 +978,12 @@ export default function App() {
 
     // Create tasks
     const initialTasks: Task[] = [];
+    const templateToChildTaskMap: Record<string, Record<string, string>> = {};
+    
+    initialChildren.forEach(c => {
+      templateToChildTaskMap[c.id] = {};
+    });
+
     data.selectedTasks.forEach((t, index) => {
       const templateId = `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
       // Add as a template
@@ -810,20 +996,41 @@ export default function App() {
       });
       // Assign to all children immediately
       initialChildren.forEach((child, cIdx) => {
+        const newTaskId = `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`;
+        templateToChildTaskMap[child.id][t.id] = newTaskId;
         initialTasks.push({
           ...t,
-          id: `task_${Date.now()}_${index}_${cIdx}_${Math.random().toString(36).substring(2, 9)}`,
+          id: newTaskId,
           created_at: new Date().toISOString(),
           parent_id: emailToUse,
           is_template: false,
-          child_id: child.id
+          child_id: child.id,
+          template_id: templateId
         });
       });
     });
 
-    localStorage.setItem(`RCH_CHILDREN_local_parent@rewardchart.app`, JSON.stringify(initialChildren));
-    localStorage.setItem(`RCH_TASKS_local_parent@rewardchart.app`, JSON.stringify(initialTasks));
-    
+    // Assign routines to children
+    initialChildren.forEach((child, cIdx) => {
+      if (data.selectedRoutines && data.selectedRoutines.length > 0) {
+        const childRoutines: Routine[] = data.selectedRoutines.map((r, rIdx) => {
+          const mapTaskIds = (templateIds: string[]) => templateIds.map(tid => templateToChildTaskMap[child.id][tid]).filter(Boolean);
+          return {
+            id: `routine_${Date.now()}_${cIdx}_${rIdx}_${Math.random().toString(36).substring(2, 9)}`,
+            name: r.name,
+            morningTaskIds: mapTaskIds(r.morningTaskIds),
+            afternoonTaskIds: mapTaskIds(r.afternoonTaskIds),
+            eveningTaskIds: mapTaskIds(r.eveningTaskIds),
+          };
+        });
+
+        child.routines = childRoutines;
+        if (childRoutines.length > 0) {
+          child.active_routine_id = childRoutines[0].id;
+        }
+      }
+    });
+
     const initialRewards: Reward[] = [];
     data.selectedRewards.forEach((r, index) => {
       const templateId = `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
@@ -847,7 +1054,54 @@ export default function App() {
         });
       });
     });
-    localStorage.setItem(`RCH_REWARDS_local_parent@rewardchart.app`, JSON.stringify(initialRewards));
+
+    // Save to LocalStorage under the user's specific email key
+    localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
+    localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
+    localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+
+    // Also sync to Supabase if connected
+    const supabase = getSupabaseClient();
+    if (supabase && emailToUse !== 'local_parent@rewardchart.app') {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (userId) {
+          const dbProfile = {
+            user_id: userId,
+            email: emailToUse,
+            family_id: emailToUse,
+            family_name: data.familyName,
+            name: data.parentName,
+            share_token: generateShortCode(),
+            savings_pot_unlock_level: 2,
+            food_pot_unlock_level: 4,
+            gifting_pot_unlock_level: 6,
+            gold_pot_maintenance_unlock_level: 8,
+            gold_pot_maintenance_cost: 2,
+            points_to_level_up: 500,
+            level_up_gold_reward: 500
+          };
+          await executeOrQueue('parent_profiles', 'upsert', dbProfile, { onConflict: 'user_id' });
+          setParentProfile(dbProfile as ParentProfile);
+
+          if (initialChildren.length > 0) {
+            await executeOrQueue('children', 'insert', initialChildren);
+          }
+          if (initialTasks.length > 0) {
+            await executeOrQueue('tasks', 'insert', initialTasks);
+          }
+          if (initialRewards.length > 0) {
+            await executeOrQueue('rewards', 'insert', initialRewards);
+          }
+        }
+      } catch (syncErr) {
+        console.error("Error syncing onboarding data to Supabase:", syncErr);
+      }
+    }
+
+    // Clean up draft onboarding state
+    localStorage.removeItem('RCH_DRAFT_ONBOARDING');
 
     // Update React state immediately so it's available without waiting for useEffect
     setChildren(initialChildren);
@@ -861,6 +1115,11 @@ export default function App() {
     localStorage.setItem('RCH_PARENT_EMAIL', emailToUse);
     setIsParentMode(true);
     setPostSignUpData(null);
+
+    // Request Push Notification Permissions after onboarding
+    if (OneSignal.Notifications && OneSignal.Notifications.isPushSupported()) {
+      OneSignal.Notifications.requestPermission().catch(err => console.warn('OneSignal permission prompt skipped/failed', err));
+    }
   };
 
   const handleSignUpReal = (email: string, name: string, familyName: string) => {
@@ -934,29 +1193,107 @@ export default function App() {
   };
 
 
-  const handleResetData = async (keepTemplates: boolean) => {
+  const handleApplyChildJoinCode = async () => {
+    if (!childJoinCodeInput.trim()) return;
+    setIsApplyingChildJoinCode(true);
+    setChildJoinCodeError('');
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error('Backend not connected');
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) throw new Error('No active session');
+
+      const code = childJoinCodeInput.trim();
+      const { data: childData } = await supabase
+        .from('children')
+        .select('id, parent_id')
+        .eq('child_share_token', code)
+        .maybeSingle();
+
+      if (!childData) {
+        setChildJoinCodeError('Invalid join code. Please check and try again.');
+        playSound.pinError();
+        return;
+      }
+
+      // Link the child profile
+      await executeOrQueue('child_profiles', 'insert', {
+        user_id: sessionData.session.user.id,
+        child_id: childData.id,
+      });
+      // Mark token as linked so parent dashboard knows
+      await executeOrQueue(
+        'children',
+        'update',
+        { child_share_token: `LINKED_${childData.id}`, linked_email: sessionData.session.user.email },
+        { eq: { id: childData.id } }
+      );
+
+      setIsChildAuth(true);
+      setAuthedChildId(childData.id);
+      localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+      localStorage.setItem('RCH_AUTHED_CHILD_ID', childData.id);
+      setShowChildJoinCodePrompt(false);
+      playSound.pinSuccess();
+      // Reload to fully initialise with the newly linked child account
+      window.location.reload();
+    } catch (e: any) {
+      setChildJoinCodeError(e.message || 'Something went wrong. Please try again.');
+      playSound.pinError();
+    } finally {
+      setIsApplyingChildJoinCode(false);
+    }
+  };
+
+  const handleResetData = async (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, targetChildId: string) => {
     const familyId = parentProfile?.family_id || parentEmail;
-    if (!familyId) return;
+
+    const childrenToReset = targetChildId === 'all' ? children : children.filter(c => c.id === targetChildId);
+    const childIds = childrenToReset.map(c => c.id);
+
+    // Clean up child-specific localStorage flags (seen gift toasts & feed reminders)
+    childIds.forEach(id => {
+      localStorage.removeItem(`RCH_SEEN_GIFTS_${id}`);
+      localStorage.removeItem(`feed_reminder_${id}`);
+      localStorage.removeItem(`RCH_TOUR_SEEN_CHILD_${id}`);
+    });
 
     const supabase = getSupabaseClient();
-    if (supabase) {
-      if (keepTemplates) {
-        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
-        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
-      } else {
-        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId } });
-        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId } });
+    if (supabase && familyId) {
+      if (!keepTemplates && targetChildId === 'all') {
+        await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': true } });
+        await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': true } });
       }
-      
-      const childIds = children.map(c => c.id);
+
+      if (!keepAssignments) {
+        if (targetChildId === 'all') {
+          await executeOrQueue('tasks', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
+          await executeOrQueue('rewards', 'delete', null, { eq: { 'parent_id': familyId, 'is_template': false } });
+        } else {
+          await executeOrQueue('tasks', 'delete', null, { eq: { 'child_id': targetChildId, 'is_template': false } });
+          await executeOrQueue('rewards', 'delete', null, { eq: { 'child_id': targetChildId, 'is_template': false } });
+        }
+      }
+
       if (childIds.length > 0) {
+        // Explicit per-child deletions to guarantee clean table resets in Supabase
+        for (const id of childIds) {
+          await supabase.from('child_badges').delete().eq('child_id', id);
+          await supabase.from('completions').delete().eq('child_id', id);
+          await supabase.from('reward_redemptions').delete().eq('child_id', id);
+          await supabase.from('gifting_requests').delete().eq('child_id', id);
+        }
+
         await executeOrQueue('completions', 'delete', null, { in: { column: 'child_id', values: childIds } });
         await executeOrQueue('child_badges', 'delete', null, { in: { column: 'child_id', values: childIds } });
+        await executeOrQueue('reward_redemptions', 'delete', null, { in: { column: 'child_id', values: childIds } });
+        await executeOrQueue('gifting_requests', 'delete', null, { in: { column: 'child_id', values: childIds } });
       }
-      await executeOrQueue('reward_redemptions', 'delete', null, { eq: { 'parent_id': familyId } });
-      await executeOrQueue('gifting_requests', 'delete', null, { eq: { 'family_id': familyId } });
+    }
 
-      const updatedChildren = children.map(c => ({
+    const updatedChildren = children.map(c => {
+      if (targetChildId !== 'all' && c.id !== targetChildId) return c;
+      return {
         ...c,
         points: 0,
         level: 1,
@@ -970,30 +1307,74 @@ export default function App() {
         savings_unlock_seen: false,
         food_pot_unlocked: false,
         food_pot_unlock_seen: false,
+        food_pot_weekly_contribution: 0,
         savings_goal_name: null,
         savings_goal_amount: null,
         savings_goal_reward_id: null,
         pet_fed_today: false,
         pet_unhappy: false,
         last_fed_date: null,
-        last_saved_date: null
-      }));
-      syncChildren(updatedChildren);
-      for (const child of updatedChildren) {
-        await executeOrQueue('children', 'update', child, { eq: { 'id': child.id } });
-      }
+        last_saved_date: null,
+        gifting_unlocked: false,
+        gifting_unlock_seen: false,
+        gifting_pot: 0,
+        last_gifting_date: null,
+        gold_pot_broken: false,
+        gold_pot_break_count_this_week: 0,
+        gold_pot_break_week: null,
+        gold_pot_last_leak_date: null,
+        gold_pot_last_check_date: null,
+        gold_pot_last_fix_date: null,
+        gold_pot_total_leaked: 0,
+        gold_pot_intro_seen: false,
+        gold_pot_maintenance_unlock_seen: false,
+        level_up_bonuses_received: 0,
+        pet_fed_total: 0,
+        pet_happy_streak: 0,
+        savings_deposits: 0,
+        savings_goals_met: 0,
+        gifts_made: 0,
+        gold_pot_fixes: 0,
+        gold_pot_unbroken_days: 0,
+        manual_deductions: 0,
+        ...(!keepRoutines ? { routines: [], active_routine_id: null } : {})
+      };
+    });
 
-      if (keepTemplates) {
-        syncTasks(tasks.filter(t => t.is_template));
-        syncRewards(rewards.filter(r => r.is_template));
-      } else {
-        syncTasks([]);
-        syncRewards([]);
+    syncChildren(updatedChildren);
+
+    if (supabase) {
+      for (const child of updatedChildren) {
+        if (targetChildId === 'all' || child.id === targetChildId) {
+          await executeOrQueue('children', 'update', child, { eq: { 'id': child.id } });
+        }
       }
-      syncCompletions([]);
-      syncRedemptions([]);
-      syncGiftingRequests([]);
     }
+
+    let newTasks = [...tasks];
+    let newRewards = [...rewards];
+
+    if (!keepTemplates && targetChildId === 'all') {
+      newTasks = newTasks.filter(t => !t.is_template);
+      newRewards = newRewards.filter(r => r.is_template === false);
+    }
+
+    if (!keepAssignments) {
+      if (targetChildId === 'all') {
+        newTasks = newTasks.filter(t => t.is_template);
+        newRewards = newRewards.filter(r => r.is_template);
+      } else {
+        newTasks = newTasks.filter(t => t.is_template || t.child_id !== targetChildId);
+        newRewards = newRewards.filter(r => r.is_template || r.child_id !== targetChildId);
+      }
+    }
+
+    syncTasks(newTasks);
+    syncRewards(newRewards);
+
+    syncCompletions(targetChildId === 'all' ? [] : completions.filter(c => c.child_id !== targetChildId));
+    syncRedemptions(targetChildId === 'all' ? [] : redemptions.filter(r => r.child_id !== targetChildId));
+    syncGiftingRequests(targetChildId === 'all' ? [] : giftingRequests.filter(g => g.child_id !== targetChildId));
   };
 
   const handleDeleteAccount = async () => {
@@ -1005,14 +1386,29 @@ export default function App() {
   };
 
   const handleRunSetup = async () => {
-    await handleResetData(false);
+    await handleResetData(false, false, false, 'all');
+    
+    const familyId = parentProfile?.family_id || parentEmail;
+    if (familyId) {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await executeOrQueue('children', 'delete', null, { eq: { 'family_id': familyId } });
+        syncChildren([]);
+      }
+    }
+
     await handleLogout();
     setHasCompletedOnboarding(false);
     localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'false');
   };
 
   // Parent Gating
-  const handleEnterParentModeRequest = () => {
+  const handleEnterParentModeRequest = (
+    targetTab?: 'home' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets',
+    targetSubTab?: 'directory' | 'active' | 'routines'
+  ) => {
+    setInitialParentTab(targetTab || 'home');
+    setInitialParentSubTab(targetSubTab || 'directory');
     setShowLockScreen(true);
   };
 
@@ -1026,6 +1422,8 @@ export default function App() {
 
   const handleExitParentMode = () => {
     setIsParentMode(false);
+    setInitialParentTab('home');
+    setInitialParentSubTab('directory');
     localStorage.removeItem('RCH_PARENT_MODE_ACTIVE');
   };
 
@@ -1464,25 +1862,46 @@ export default function App() {
     }
   };
 
-  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+  const handleAddCoins = async (childId: string, amount: number, reason: string) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
 
-    // Let processLifetimePoints handle lifetime points and level recalculation.
-    // It will process the negative amount.
-    let targetChild = processLifetimePoints(child, -amount);
-    
-    // Explicitly subtract the actual points
-    targetChild.points = Math.max(0, child.points - amount);
-    
-    const levelDropped = (targetChild.level || 1) < (child.level || 1);
+    let targetChild = processLifetimePoints(child, amount);
+    targetChild.points = child.points + amount;
 
     const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
     syncChildren(updatedChildren);
 
-    if (levelDropped) {
-      revokeInvalidLevelBadges(childId, targetChild.level || 1);
+    // Create a bonus completion
+    const newCompletion: TaskCompletion = {
+      id: `comp_bonus_${Date.now()}`,
+      task_id: 'bonus',
+      child_id: childId,
+      status: 'approved',
+      points_awarded: amount,
+      completed_at: new Date().toISOString(),
+      notes: reason && reason.trim() ? reason : 'Good Work Bonus'
+    };
+    syncCompletions([...completions, newCompletion]);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      updateChildInSupabase(targetChild);
+      const { error } = await executeOrQueue('completions', 'insert', newCompletion);
+      if (error) console.warn('Failed to sync completion to Supabase:', error.message);
     }
+  };
+
+  const handleDeductCoins = async (childId: string, amount: number, reason: string) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    // Take Coins should not take off the lifetime but just the current total.
+    let targetChild = { ...child };
+    targetChild.points = Math.max(0, child.points - amount);
+
+    const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+    syncChildren(updatedChildren);
 
     // Create a penalty completion
     const newCompletion: TaskCompletion = {
@@ -1492,7 +1911,7 @@ export default function App() {
       points_awarded: -amount,
       status: 'approved',
       completed_at: new Date().toISOString(),
-      notes: reason
+      notes: reason && reason.trim() ? reason : 'Deduction'
     };
     syncCompletions([...completions, newCompletion]);
 
@@ -1711,9 +2130,12 @@ export default function App() {
     updateChildInSupabase(targetChild);
   };
 
-  const handleUpdateParentProfile = (updates: Partial<ParentProfile>) => {
+  const handleUpdateParentProfile = async (updates: Partial<ParentProfile>) => {
     if (parentProfile) {
-      setParentProfile({ ...parentProfile, ...updates });
+      const updated = { ...parentProfile, ...updates };
+      setParentProfile(updated);
+      localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(updated));
+      await executeOrQueue('parent_profiles', 'update', updates, { eq: { 'user_id': parentProfile.user_id } });
     }
   };
 
@@ -1816,18 +2238,18 @@ export default function App() {
     handleEditReward(rewardId, { is_available: true });
   };
 
-  const handleParentCompleteTask = async (taskId: string, childId: string) => {
+  const handleParentCompleteTask = async (taskId: string, childId: string, dateIso?: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     // Create a completion directly as 'approved'
     const newCompletion: TaskCompletion = {
-      id: `comp_${Date.now()}`,
+      id: `comp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       task_id: taskId,
       child_id: childId,
       points_awarded: task.points,
       status: 'approved',
-      completed_at: new Date().toISOString()
+      completed_at: dateIso || new Date().toISOString()
     };
 
     syncCompletions([...completions, newCompletion]);
@@ -1918,9 +2340,33 @@ export default function App() {
   };
 
   const handleRejectCompletion = async (completionId: string) => {
+    const comp = completions.find(c => c.id === completionId);
+
     // Delete or decline completion
     const updatedCompletions = completions.filter(c => c.id !== completionId);
     syncCompletions(updatedCompletions);
+
+    // If the completion was already approved, perform FULL POINTS REVERSAL!
+    if (comp && comp.status === 'approved') {
+      const child = children.find(c => c.id === comp.child_id);
+      if (child) {
+        const pointsDeduction = comp.points_awarded || 0;
+        const newPoints = Math.max(0, child.points - pointsDeduction);
+        const newLifetimePoints = Math.max(0, (child.lifetime_points || 0) - pointsDeduction);
+        const newLevel = Math.max(1, Math.floor(newLifetimePoints / 500) + 1);
+
+        const updatedChild: Child = {
+          ...child,
+          points: newPoints,
+          lifetime_points: newLifetimePoints,
+          level: newLevel
+        };
+
+        const updatedChildren = children.map(c => c.id === comp.child_id ? updatedChild : c);
+        syncChildren(updatedChildren);
+        updateChildInSupabase(updatedChild);
+      }
+    }
 
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -1983,10 +2429,11 @@ export default function App() {
     const child = children.find(c => c.id === request.child_id);
     if (!child || child.points < request.amount) return;
 
-    // Deduct from sender's points
+    // Deduct from sender's points & increment gift count by 1
     let targetChild = {
       ...child,
       points: child.points - request.amount,
+      gifts_made: (child.gifts_made || 0) + 1,
       last_gifting_date: new Date().toISOString()
     };
     let updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
@@ -2054,13 +2501,21 @@ export default function App() {
     };
     const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
     syncChildren(updatedChildren);
-    updateChildInSupabase(targetChild);
+updateChildInSupabase(targetChild);
   };
 
 
   return (
-    <>
-    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950`} id="app-main">
+    <SubscriptionProvider currentUserId={parentProfile?.user_id}>
+    <Suspense fallback={
+      <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm text-stone-400 font-medium">Loading Reward Chart...</p>
+        </div>
+      </div>
+    }>
+    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950 app-loaded`} id="app-main">
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
@@ -2147,6 +2602,7 @@ export default function App() {
               onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
               initialTab={initialParentTab}
+              initialSubTab={initialParentSubTab}
               children={children}
               tasks={tasks}
               completions={completions}
@@ -2159,6 +2615,7 @@ export default function App() {
               onUnlinkChild={handleUnlinkChild}
               onUpdateChildStats={handleUpdateChildStats}
               onDeductCoins={handleDeductCoins}
+              onAddCoins={handleAddCoins}
               onAddTask={handleAddTask}
               onAssignTask={handleAssignTask}
               onEditTask={handleEditTask}
@@ -2232,12 +2689,86 @@ export default function App() {
               theme={activeTheme}
               isChildAuth={isChildAuth}
               onLogout={handleLogout}
+              onEnterJoinCode={() => setShowChildJoinCodePrompt(true)}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Child Join Code Prompt — shown when a child account has no linked child profile */}
+      <AnimatePresence>
+        {showChildJoinCodePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white dark:bg-stone-950 px-6"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="w-full max-w-sm space-y-6"
+            >
+              {/* Icon + heading */}
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm">
+                  <span className="text-3xl">🔑</span>
+                </div>
+                <h2 className="text-xl font-bold font-display text-stone-900 dark:text-stone-50">
+                  Enter Your Join Code
+                </h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400">
+                  Your account isn't linked to a family yet. Ask your parent for the 6-character code from the app.
+                </p>
+              </div>
+
+              {/* Error */}
+              {childJoinCodeError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0">⚠️</span>
+                  <span>{childJoinCodeError}</span>
+                </div>
+              )}
+
+              {/* Input + button */}
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Enter 6-character code"
+                  value={childJoinCodeInput}
+                  onChange={(e) => setChildJoinCodeInput(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  autoCapitalize="characters"
+                  className="w-full px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-50 text-center text-lg font-bold tracking-[0.3em] uppercase placeholder:tracking-normal placeholder:font-normal placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleApplyChildJoinCode(); }}
+                />
+                <button
+                  onClick={handleApplyChildJoinCode}
+                  disabled={isApplyingChildJoinCode || childJoinCodeInput.trim().length < 1}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold uppercase tracking-wider shadow-md shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+                >
+                  {isApplyingChildJoinCode ? 'Verifying…' : 'Join Family'}
+                </button>
+              </div>
+
+              {/* Log out link */}
+              <div className="text-center">
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 underline underline-offset-2 transition-colors"
+                >
+                  Sign out and use a different account
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Upgrade Account Modal */}
+
       <AnimatePresence>
         {showCreateAccount && (
           <motion.div
@@ -2248,9 +2779,9 @@ export default function App() {
           >
             <StepCreateAccount 
               theme={activeTheme}
-              onComplete={(skipped, email) => {
+              onComplete={(email) => {
                 setShowCreateAccount(false);
-                if (!skipped && email) {
+                if (email) {
                   setParentEmail(email);
                   localStorage.setItem('RCH_PARENT_EMAIL', email);
                 }
@@ -2274,11 +2805,28 @@ export default function App() {
             onSuccess={handleParentLockSuccess}
             onClose={() => setShowLockScreen(false)}
             theme={activeTheme}
+            onLogout={() => {
+              handleLogout();
+              setShowLockScreen(false);
+            }}
           />
         )}
       </AnimatePresence>
     </div>
     <LegalModal />
-    </>
+    <GlobalPaywallModal />
+    </Suspense>
+    </SubscriptionProvider>
+  );
+}
+
+function GlobalPaywallModal() {
+  const { isPaywallOpen, closePaywall, paywallFeatureTrigger } = useSubscription();
+  return (
+    <PaywallModal
+      isOpen={isPaywallOpen}
+      onClose={closePaywall}
+      triggerReason={paywallFeatureTrigger}
+    />
   );
 }

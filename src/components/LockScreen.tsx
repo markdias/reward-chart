@@ -16,6 +16,8 @@ interface LockScreenProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
+  theme?: string;
+  onLogout?: () => void;
 }
 
 export default function LockScreen({
@@ -24,12 +26,43 @@ export default function LockScreen({
   onClose,
   title = "Parent Authentication",
   subtitle = "Enter your parent account password to continue",
-  theme
+  theme,
+  onLogout
 }: LockScreenProps) {
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [resetEmailSent, setResetEmailSent] = useState<boolean>(false);
+  const [resetLoading, setResetLoading] = useState<boolean>(false);
+
+  const handleResetPassword = async () => {
+    if (!parentEmail) return;
+    setResetLoading(true);
+    setError(false);
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(parentEmail);
+        if (resetError) {
+          setError(true);
+          playSound.pinError();
+        } else {
+          setResetEmailSent(true);
+          playSound.pinSuccess();
+        }
+      } else {
+        // Offline / No supabase
+        setError(true);
+        playSound.pinError();
+      }
+    } catch (err) {
+      setError(true);
+      playSound.pinError();
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,6 +214,37 @@ export default function LockScreen({
             >
               Unlock
             </Button>
+          </div>
+
+          {resetEmailSent && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-green-600 font-sans font-bold text-[10px] mt-4 flex items-center justify-center gap-1.5 uppercase tracking-wider bg-green-50 px-3 py-2 rounded-xl border border-green-100 w-full max-w-sm"
+            >
+              Reset link sent to your email
+            </motion.p>
+          )}
+
+          <div className="flex items-center justify-between w-full max-w-sm mt-6 text-sm">
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              disabled={resetLoading || resetEmailSent}
+              className="text-stone-500 hover:text-stone-800 dark:hover:text-stone-300 disabled:opacity-50 transition-colors"
+            >
+              {resetLoading ? 'Sending...' : 'Forgot Password?'}
+            </button>
+            
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors font-medium"
+              >
+                Log Out
+              </button>
+            )}
           </div>
         </form>
       </motion.div>

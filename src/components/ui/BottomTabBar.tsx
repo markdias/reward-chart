@@ -6,6 +6,7 @@ export interface TabItem {
   label: string;
   icon: React.ComponentType<any>;
   badge?: number;
+  isBeta?: boolean;
 }
 
 export interface BottomTabBarProps {
@@ -33,8 +34,9 @@ export function BottomTabBar({
           return (
             <button
               key={tab.id}
+              id={`tour-mobile-tab-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex-1 flex flex-col items-center justify-center p-2 rounded-2xl touch-target"
+              className={`joyride-target-${tab.id} relative flex-1 flex flex-col items-center justify-center p-2 rounded-2xl touch-target`}
             >
               {isActive && (
                 <motion.div
@@ -54,8 +56,13 @@ export function BottomTabBar({
                       {tab.badge > 99 ? '99+' : tab.badge}
                     </span>
                   )}
+                  {tab.isBeta && (
+                    <span className="absolute -top-1.5 -right-3.5 bg-indigo-500 text-white text-[7px] font-black px-1 rounded-full uppercase shadow-xs">
+                      BETA
+                    </span>
+                  )}
                 </div>
-                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 flex items-center gap-0.5 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
                   {tab.label}
                 </span>
               </div>
