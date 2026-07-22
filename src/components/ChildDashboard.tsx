@@ -2416,6 +2416,47 @@ export default function ChildDashboard({
                         </div>
                       </div>
 
+                      {/* Active Saving Goal Banner */}
+                      {activeChild.savings_goal_name && (
+                        <div className="relative p-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-md mb-4">
+                          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[0.9rem] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300/40 shadow-sm">
+                                <Target className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Saving Goal</div>
+                                <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50">
+                                  {activeChild.savings_goal_name}
+                                </Typography>
+                              </div>
+                            </div>
+                            {(() => {
+                              const goalReward = rewards.find(r => r.id === activeChild.savings_goal_reward_id || r.title === activeChild.savings_goal_name);
+                              const targetAmount = goalReward?.cost_points || activeChild.savings_goal_amount || 1;
+                              const currentSaved = Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
+                              const progressPercent = Math.min(100, Math.round((currentSaved / targetAmount) * 100));
+                              const displaySaved = Math.min(currentSaved, targetAmount);
+                              
+                              return (
+                                <div className="sm:w-52 space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-stone-600 dark:text-stone-300">
+                                    <span>{displaySaved} / {targetAmount} COINS</span>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{progressPercent}%</span>
+                                  </div>
+                                  <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-900/10 p-0.5 shadow-inner">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full transition-all duration-500" 
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                         {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                           <div className={`joyride-target-first-reward col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
@@ -2428,7 +2469,7 @@ export default function ChildDashboard({
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                            const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
+                            const isSavingFor = activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title;
                             const canDispense = isAffordable && availability.available && !hasPendingRequest;
 
                             // Hide claimed one_time rewards entirely
@@ -2441,30 +2482,32 @@ export default function ChildDashboard({
                               statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
                             } else if (!availability.available && !isSavingFor) {
                               statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
-                            } else if (isSavingsUnlocked) {
-                              if (isSavingFor) {
-                                statusBadge = (
-                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
-                                    <CheckCircle className="w-3 h-3" /> SAVING
-                                  </div>
-                                );
-                              } else {
-                                statusBadge = (
-                                  <Button
-                                    variant="none"
-                                    size="none"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSavingsGoal(activeChild.id, rew.id);
-                                      playSound.success();
-                                    }}
-                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
-                                  >
-                                    SET GOAL
-                                  </Button>
-                                );
-                              }
+                            } else if (isSavingFor) {
+                              statusBadge = (
+                                <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200 shadow-sm">
+                                  <CheckCircle className="w-3 h-3" /> SAVING
+                                </div>
+                              );
+                            } else {
+                              statusBadge = (
+                                <Button
+                                  variant="none"
+                                  size="none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSavingsGoal(activeChild.id, rew.id);
+                                    playSound.success();
+                                  }}
+                                  className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors shadow-sm"
+                                >
+                                  SET GOAL
+                                </Button>
+                              );
                             }
+
+                            const currentSaved = Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
+                            const progressPercent = Math.min(100, Math.round((currentSaved / Math.max(1, rew.cost_points)) * 100));
+                            const displaySaved = Math.min(currentSaved, rew.cost_points);
 
                             const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
                             const rewardBgStyle = {
@@ -2488,6 +2531,33 @@ export default function ChildDashboard({
                                   <div className="mt-2 flex items-center justify-center">
                                     {statusBadge}
                                   </div>
+                                  
+                                  {/* Progress bar */}
+                                  <div className="w-full relative z-10 mt-2 px-0.5">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-1">
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-500 dark:text-stone-400'}>
+                                        {displaySaved} / {rew.cost_points} COINS
+                                      </span>
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-400 dark:text-stone-500'}>
+                                        {progressPercent}%
+                                      </span>
+                                    </div>
+                                    <div className={`w-full h-2.5 rounded-full overflow-hidden border p-0.5 shadow-inner ${
+                                      isSavingFor 
+                                        ? 'bg-emerald-50 dark:bg-stone-800 border-emerald-300/50' 
+                                        : 'bg-stone-100 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700'
+                                    }`}>
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-500 shadow-sm ${
+                                          isSavingFor
+                                            ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500'
+                                            : 'bg-gradient-to-r from-amber-400 to-amber-500'
+                                        }`}
+                                        style={{ width: `${progressPercent}%` }}
+                                      />
+                                    </div>
+                                  </div>
+
                                 </div>
                               </div>
                             );
