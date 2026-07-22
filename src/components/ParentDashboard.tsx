@@ -1562,7 +1562,7 @@ export default function ParentDashboard({
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
                         {/* Rainbow Trading Card */}
-                        <div className="w-full max-w-[440px] mx-auto md:mx-0 group perspective-1000">
+                        <div className="w-full group perspective-1000">
                           <div 
                             className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-shadow duration-500 transform-gpu"
                             style={{ background: getPetStripeBackground(child.character_id) }}
