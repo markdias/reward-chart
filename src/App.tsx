@@ -21,6 +21,7 @@ import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, G
 import { playSound } from './utils/sound';
 import { ThemeId, THEME_PRESETS } from './utils/theme';
 import { PREMADE_TASKS, PREMADE_REWARDS } from './data/premadeTemplates';
+import { inferTaskCategory } from './utils/categories';
 import { getSupabaseClient } from './utils/supabase';
 import posthog from 'posthog-js';
 import { executeOrQueue, processSyncQueue } from './utils/offlineSync';
@@ -277,7 +278,11 @@ export default function App() {
     }
 
     if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
+      const parsed = JSON.parse(savedTasks).map((t: Task) => ({
+        ...t,
+        category: inferTaskCategory(t.title, t.category)
+      }));
+      setTasks(parsed);
     } else {
       const initial: any[] = [];
       setTasks(initial);
@@ -611,8 +616,12 @@ export default function App() {
             .eq('parent_id', currentFamilyId);
           
           if (!errTasks) {
-            setTasks(dbTasks || []);
-            localStorage.setItem(keyTasks, JSON.stringify(dbTasks || []));
+            const updated = (dbTasks || []).map((t: Task) => ({
+              ...t,
+              category: inferTaskCategory(t.title, t.category)
+            }));
+            setTasks(updated);
+            localStorage.setItem(keyTasks, JSON.stringify(updated));
           }
 
           // Fetch completions (filtered client-side if needed, or select all)
@@ -739,9 +748,13 @@ export default function App() {
   };
 
   const syncTasks = (newList: Task[]) => {
-    setTasks(newList);
+    const updated = newList.map(t => ({
+      ...t,
+      category: inferTaskCategory(t.title, t.category)
+    }));
+    setTasks(updated);
     const key = (parentProfile?.family_id || parentEmail) ? `RCH_TASKS_${parentProfile?.family_id || parentEmail}` : 'RCH_TASKS';
-    localStorage.setItem(key, JSON.stringify(newList));
+    localStorage.setItem(key, JSON.stringify(updated));
   };
 
   const syncCompletions = (newList: TaskCompletion[]) => {

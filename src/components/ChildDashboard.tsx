@@ -791,34 +791,34 @@ export default function ChildDashboard({
           className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="flex justify-between items-center w-full px-2.5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               {activeChild && (
                 <ChildAvatar
                   iconName={activeChild.avatar_url}
-                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0"
+                  className="w-9 h-9 sm:w-14 sm:h-14 shadow-sm shrink-0"
                 />
               )}
               <div className="flex flex-col justify-center min-w-0">
-                <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                <h1 className="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-50 leading-tight tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                </Typography>
-                <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                </h1>
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-0.5 sm:mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
               <div
-                className="flex items-center p-1 rounded-full shadow-md shrink-0"
+                className="flex items-center p-0.5 sm:p-1 rounded-full shadow-md shrink-0"
                 style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
               >
-                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-0.5 sm:p-1.5 gap-0.5 sm:gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                   {activeChildTab !== 'home' && (
                     <Tooltip content="Current Gold Coins" position="bottom">
-                      <div className="cursor-help ml-1.5 sm:ml-2.5">
-                        <CoinBadge points={activeChild?.points || 0} />
+                      <div className="cursor-help ml-0.5 sm:ml-2.5">
+                        <CoinBadge points={activeChild?.points || 0} className="w-7 h-7 sm:w-11 sm:h-11 text-2xs sm:text-sm font-black" />
                       </div>
                     </Tooltip>
                   )}
@@ -828,9 +828,9 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); setSelectedChildId(null); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
-                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <ArrowLeft className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                       </Button>
                     </Tooltip>
                   )}
@@ -841,9 +841,9 @@ export default function ChildDashboard({
                       variant="none"
                       size="none"
                       onClick={() => { playSound.click(); setShowHelpModal(true); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                      className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                     >
-                      <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <HelpCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                     </Button>
                   </Tooltip>
 
@@ -853,9 +853,9 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLogout(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                        className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                       >
-                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <ArrowLeft className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                       </Button>
                     </Tooltip>
                   ) : (
@@ -864,9 +864,9 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onEnterParentMode(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
-                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Lock className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                       </Button>
                     </Tooltip>
                   )}
@@ -877,9 +877,9 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                        className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                       >
-                        <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <Smartphone className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                       </Button>
                     </Tooltip>
                   )}

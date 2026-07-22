@@ -110,13 +110,26 @@ export interface ChildProfile {
   created_at?: string;
 }
 
+export type TaskCategory = 
+  | 'chores' 
+  | 'homework' 
+  | 'behavior' 
+  | 'health' 
+  | 'creative' 
+  | 'kindness' 
+  | 'manners' 
+  | 'feelings' 
+  | 'learning' 
+  | 'self_care' 
+  | 'other';
+
 export interface Task {
   id: string;
   parent_id: string;
   child_id: string;
   title: string;
   points: number;
-  category: 'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other';
+  category: TaskCategory;
   recurrence: 'daily' | 'weekly' | 'one_time' | 'repeatable';
   cooldown_minutes?: number;
   is_template?: boolean;

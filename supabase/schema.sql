@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   title            TEXT NOT NULL,
   points           INTEGER NOT NULL DEFAULT 1,
   category         TEXT NOT NULL DEFAULT 'chores'
-                     CHECK (category IN ('chores','homework','behavior','health','creative','other')),
+                     CHECK (category IN ('chores','homework','behavior','health','creative','kindness','manners','feelings','learning','self_care','other')),
   recurrence       TEXT NOT NULL DEFAULT 'daily'
                      CHECK (recurrence IN ('daily','weekly','one_time','repeatable')),
   cooldown_minutes INTEGER,

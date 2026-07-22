@@ -175,7 +175,12 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       manners: 0,
       feelings: 0,
       learning: 0,
-      self_care: 0
+      self_care: 0,
+      homework: 0,
+      health: 0,
+      creative: 0,
+      behavior: 0,
+      other: 0
     };
 
     approvedCompletions.forEach(c => {

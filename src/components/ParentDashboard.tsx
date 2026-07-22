@@ -31,7 +31,8 @@ import {
 } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
-import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
+import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest, TaskCategory } from '../types';
+import { TASK_CATEGORIES, CATEGORY_ICON_MAP } from '../utils/categories';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
 import { playSound } from '../utils/sound';
 import { PREMADE_TASKS, PREMADE_REWARDS } from '../data/premadeTemplates';
@@ -523,7 +524,7 @@ export default function ParentDashboard({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskPoints, setTaskPoints] = useState(15);
-  const [taskCategory, setTaskCategory] = useState<'chores' | 'homework' | 'behavior' | 'health' | 'creative' | 'other'>('chores');
+  const [taskCategory, setTaskCategory] = useState<TaskCategory>('chores');
   const [taskRecurrence, setTaskRecurrence] = useState<'daily' | 'weekly' | 'one_time' | 'repeatable'>('daily');
   const [taskCooldownMinutes, setTaskCooldownMinutes] = useState<number | undefined>(undefined);
   const [taskChildIds, setTaskChildIds] = useState<string[]>([]);
@@ -987,14 +988,14 @@ export default function ParentDashboard({
         className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
       >
-        <div className="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
 
             <div className="flex flex-col justify-center flex-1 min-w-0">
-              <Typography variant="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+              <h1 className="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-50 leading-tight tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.name ? `${parentProfile.name}'s Dashboard` : 'Dashboard'}
-              </Typography>
-              <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+              </h1>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-0.5 sm:mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                 {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
               </div>
             </div>
@@ -1742,7 +1743,7 @@ export default function ParentDashboard({
                       >
 
                         <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
-                          {editingTaskId ? <span><Edit2 className="inline-block mr-2" /> Edit Quest Template</span> : <span><Sparkles className="inline-block mr-2" /> Create Quest Template</span>}
+                          {editingTaskId ? 'Edit Quest Template' : 'Create Quest Template'}
                         </Typography>
                         <form onSubmit={handleTaskSubmit} className="space-y-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1755,6 +1756,15 @@ export default function ParentDashboard({
                                 <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Gold Reward</label>
                                 <Input type="number" min="0" value={taskPoints} onChange={e => setTaskPoints(e.target.value === '' ? '' as any : Number(e.target.value))} />
                               </div>
+                            </div>
+
+                            <div>
+                              <label className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase tracking-widest mb-1`}>Category</label>
+                              <Select value={taskCategory} onChange={(e) => setTaskCategory(e.target.value as TaskCategory)}>
+                                {TASK_CATEGORIES.map(cat => (
+                                  <option key={cat.id} value={cat.id}>{cat.label}</option>
+                                ))}
+                              </Select>
                             </div>
 
                             <div>
@@ -1859,13 +1869,19 @@ export default function ParentDashboard({
                               }}
                             >
                               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
-                                  <FaStar />
-                                </div>
+                                {(() => {
+                                  const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                                  const CatIcon = catMeta.Icon;
+                                  return (
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl ${catMeta.bg} ${catMeta.iconColor} flex items-center justify-center shrink-0`}>
+                                      <CatIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="min-w-0 pr-2">
                                   <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{CATEGORY_ICON_MAP[task.category as TaskCategory]?.label || (task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className={assignedChildren.length > 0 ? 'text-cyan-600 font-bold' : ''}>
                                       {assignedChildren.length > 0 ? `${assignedChildren.length} Assigned` : 'Unassigned'}
@@ -1961,13 +1977,19 @@ export default function ParentDashboard({
                               }}
                             >
                               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-lg sm:text-xl shrink-0 border border-amber-100/50">
-                                  <FaStar />
-                                </div>
+                                {(() => {
+                                  const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                                  const CatIcon = catMeta.Icon;
+                                  return (
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl ${catMeta.bg} ${catMeta.iconColor} flex items-center justify-center shrink-0`}>
+                                      <CatIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="min-w-0 pr-2">
                                   <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-50 text-sm truncate">{task.title}</Typography>
                                   <Typography variant="body" className="text-xs text-stone-400 mt-0.5 truncate">
-                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{(task.category || 'general').replace('_', ' ')}</span>
+                                    <span className="font-bold text-stone-700 dark:text-stone-200 capitalize">{CATEGORY_ICON_MAP[task.category as TaskCategory]?.label || (task.category || 'general').replace('_', ' ')}</span>
                                     <span className="mx-2">•</span>
                                     <span className="text-cyan-600 font-bold">Assigned to {assignedName || 'None'}</span>
                                   </Typography>
@@ -3279,40 +3301,52 @@ export default function ParentDashboard({
                 ) : (
                   <>
                     <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedTasksToPreview.length} new quests. Uncheck any you don't want to import.</Typography>
-                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                       {generatedTasksToPreview.map(task => {
                         const isEditing = editingPreviewId === task.id;
+                        const catMeta = CATEGORY_ICON_MAP[task.category as TaskCategory] || CATEGORY_ICON_MAP.other;
+                        const CatIcon = catMeta.Icon;
+                        const isSelected = selectedTaskIdsForImport.includes(task.id);
+                        const recurrenceLabel = task.recurrence === 'one_time' ? 'One-off' : task.recurrence === 'daily' ? 'Daily' : task.recurrence === 'weekly' ? 'Weekly' : 'Repeatable';
+
                         return (
-                          <div key={task.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-indigo-400 bg-indigo-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
+                          <div key={task.id} className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all ${isEditing ? 'border-indigo-400 bg-indigo-50/40 dark:bg-indigo-950/30' : isSelected ? 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900' : 'border-stone-200/50 dark:border-stone-800 bg-stone-50/40 dark:bg-stone-950/40 opacity-60'}`}>
                             {isEditing ? (
-                              <div className="flex flex-col gap-2 w-full">
-                                <Input
-                                  type="text"
-                                  
-                                  value={previewEditTitle}
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
-                                />
-                                <div className="flex gap-2">
+                              <div className="flex flex-col gap-2.5 w-full">
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Quest Title</label>
                                   <Input
-                                    type="number"
-                                    
-                                    value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    type="text"
+                                    value={previewEditTitle}
+                                    onChange={(e) => setPreviewEditTitle(e.target.value)}
                                   />
-                                  <Button size="sm" variant="primary" onClick={() => {
-                                    setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: Number(previewEditPoints) || 0 } : t));
-                                    setEditingPreviewId(null);
-                                  }}>Save</Button>
-                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Gold Reward</label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={previewEditPoints}
+                                      onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button size="sm" variant="primary" onClick={() => {
+                                      setGeneratedTasksToPreview(prev => prev!.map(t => t.id === task.id ? { ...t, title: previewEditTitle, points: Number(previewEditPoints) || 0 } : t));
+                                      setEditingPreviewId(null);
+                                    }}>Save</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-start justify-between gap-3 group">
-                                <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <Input
+                              <div className="flex items-start justify-between gap-3">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0">
+                                  <input
                                     type="checkbox"
-                                    
-                                    checked={selectedTaskIdsForImport.includes(task.id)}
+                                    className="w-5 h-5 rounded-md border-stone-300 dark:border-stone-600 text-indigo-600 accent-indigo-600 focus:ring-indigo-500 mt-0.5 shrink-0 cursor-pointer"
+                                    checked={isSelected}
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         setSelectedTaskIdsForImport(prev => [...prev, task.id]);
@@ -3321,20 +3355,32 @@ export default function ParentDashboard({
                                       }
                                     }}
                                   />
-                                  <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{task.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{task.points} pts • {task.recurrence}</Typography>
+                                  <div className="flex-1 min-w-0">
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm leading-snug truncate">{task.title}</Typography>
+                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{task.points} Gold</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className="text-xs text-stone-500 dark:text-stone-400">{recurrenceLabel}</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${catMeta.bg} ${catMeta.iconColor}`}>
+                                        <CatIcon className="w-3 h-3" />
+                                        {catMeta.label}
+                                      </span>
+                                    </div>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none"
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   type="button"
-                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition-colors shrink-0"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(task.title);
                                     setPreviewEditPoints(task.points);
                                     setEditingPreviewId(task.id);
                                   }}
+                                  title="Edit quest details"
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
                                 </Button>
@@ -3430,40 +3476,50 @@ export default function ParentDashboard({
                 ) : (
                   <>
                     <Typography variant="body" className="text-stone-500 dark:text-stone-400 text-sm mb-6">We found {generatedRewardsToPreview.length} new prizes. Uncheck any you don't want to import.</Typography>
-                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                    <div className="space-y-3 mb-8 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
                       {generatedRewardsToPreview.map(reward => {
                         const isEditing = editingPreviewId === reward.id;
+                        const isSelected = selectedRewardIdsForImport.includes(reward.id);
+                        const limitLabel = reward.limit_type === 'one_time' ? 'One-time' : reward.limit_type === 'daily' ? 'Daily' : reward.limit_type === 'twice_daily' ? 'Twice Daily' : 'Unlimited';
+
                         return (
-                          <div key={reward.id} className={`flex flex-col gap-2 p-3 rounded-xl border ${isEditing ? 'border-amber-400 bg-amber-50/30' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-950'} transition-colors`}>
+                          <div key={reward.id} className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all ${isEditing ? 'border-amber-400 bg-amber-50/40 dark:bg-amber-950/30' : isSelected ? 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900' : 'border-stone-200/50 dark:border-stone-800 bg-stone-50/40 dark:bg-stone-950/40 opacity-60'}`}>
                             {isEditing ? (
-                              <div className="flex flex-col gap-2 w-full">
-                                <Input
-                                  type="text"
-                                  
-                                  value={previewEditTitle}
-                                  onChange={(e) => setPreviewEditTitle(e.target.value)}
-                                />
-                                <div className="flex gap-2">
+                              <div className="flex flex-col gap-2.5 w-full">
+                                <div>
+                                  <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Prize Title</label>
                                   <Input
-                                    type="number"
-                                    
-                                    value={previewEditPoints}
-                                    onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    type="text"
+                                    value={previewEditTitle}
+                                    onChange={(e) => setPreviewEditTitle(e.target.value)}
                                   />
-                                  <Button size="sm" variant="warning" onClick={() => {
-                                    setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: Number(previewEditPoints) || 0 } : r));
-                                    setEditingPreviewId(null);
-                                  }}>Save</Button>
-                                  <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">Gold Cost</label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={previewEditPoints}
+                                      onChange={(e) => setPreviewEditPoints(e.target.value === '' ? '' as any : parseInt(e.target.value) || 0)}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button size="sm" variant="warning" onClick={() => {
+                                      setGeneratedRewardsToPreview(prev => prev!.map(r => r.id === reward.id ? { ...r, title: previewEditTitle, cost_points: Number(previewEditPoints) || 0 } : r));
+                                      setEditingPreviewId(null);
+                                    }}>Save</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingPreviewId(null)}>Cancel</Button>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-start justify-between gap-3 group">
-                                <label className="flex items-start gap-3 cursor-pointer flex-1">
-                                  <Input
+                              <div className="flex items-start justify-between gap-3">
+                                <label className="flex items-start gap-3 cursor-pointer flex-1 min-w-0">
+                                  <input
                                     type="checkbox"
-                                    
-                                    checked={selectedRewardIdsForImport.includes(reward.id)}
+                                    className="w-5 h-5 rounded-md border-stone-300 dark:border-stone-600 text-amber-600 accent-amber-600 focus:ring-amber-500 mt-0.5 shrink-0 cursor-pointer"
+                                    checked={isSelected}
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         setSelectedRewardIdsForImport(prev => [...prev, reward.id]);
@@ -3472,20 +3528,27 @@ export default function ParentDashboard({
                                       }
                                     }}
                                   />
-                                  <div className="flex-1">
-                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm">{reward.title}</Typography>
-                                    <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">{reward.cost_points} pts • {reward.limit_type}</Typography>
+                                  <div className="flex-1 min-w-0">
+                                    <Typography variant="body" className="font-bold text-stone-900 dark:text-stone-50 text-sm leading-snug truncate">{reward.title}</Typography>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{reward.cost_points} Gold</span>
+                                      <span className="text-stone-300 dark:text-stone-700">•</span>
+                                      <span className="text-xs text-stone-500 dark:text-stone-400">{limitLabel}</span>
+                                    </div>
                                   </div>
                                 </label>
-                                <Button variant="none" size="none"
+                                <Button
+                                  variant="none"
+                                  size="none"
                                   type="button"
-                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded opacity-0 group-hover:opacity-100 transition-all"
+                                  className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50 rounded-lg transition-colors shrink-0"
                                   onClick={(e) => {
                                     e.preventDefault();
                                     setPreviewEditTitle(reward.title);
                                     setPreviewEditPoints(reward.cost_points);
                                     setEditingPreviewId(reward.id);
                                   }}
+                                  title="Edit prize details"
                                 >
                                   <FaPen className="w-3.5 h-3.5" />
                                 </Button>
