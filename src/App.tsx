@@ -205,6 +205,22 @@ export default function App() {
     };
   }, []);
 
+  // Listen for Supabase Auth changes (such as email confirmation links clicked)
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user?.email && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION')) {
+          setParentEmail(session.user.email);
+          localStorage.setItem('RCH_PARENT_EMAIL', session.user.email);
+        }
+      });
+      return () => {
+        authListener?.subscription?.unsubscribe();
+      };
+    }
+  }, []);
+
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const triggerDataRefresh = async () => {
     setRefreshTrigger(prev => prev + 1);

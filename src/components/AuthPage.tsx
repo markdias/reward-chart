@@ -335,6 +335,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
             email,
             password,
             options: {
+              emailRedirectTo: window.location.origin,
               data: {
                 name,
                 family_name: familyName
@@ -343,7 +344,12 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
           });
           if (error) {
             console.warn('Supabase signup error:', error);
-            setRealAuthError(getErrorMessage(error));
+            const msg = getErrorMessage(error);
+            if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already in use')) {
+              setRealAuthError('An account with this email already exists. Please sign in instead!');
+            } else {
+              setRealAuthError(msg);
+            }
             playSound.pinError();
             return;
           }
@@ -353,8 +359,9 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
 
           const session = data?.session;
           if (!session) {
-            setResetSuccessMsg('🎉 Account created! Please check your email inbox and click the confirmation link to activate your account.');
+            setResetSuccessMsg(`🎉 Account created! We sent a confirmation link to ${email}. Please check your inbox and click the link to activate your account.`);
             setAuthMode('login');
+            setEmailForResend(email);
             playSound.success();
             return;
           }
@@ -365,7 +372,13 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
           });
           if (error) {
             console.warn('Supabase signin error:', error);
-            setRealAuthError(getErrorMessage(error));
+            const msg = getErrorMessage(error);
+            if (msg.toLowerCase().includes('email not confirmed')) {
+              setRealAuthError(`Your email address (${email}) has not been confirmed yet. Please check your inbox for the confirmation link.`);
+              setEmailForResend(email);
+            } else {
+              setRealAuthError(msg);
+            }
             playSound.pinError();
             return;
           }

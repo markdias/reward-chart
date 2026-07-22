@@ -12,6 +12,8 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 
+import { sendWelcomeEmail, resendConfirmationEmail } from '../../utils/email';
+
 interface StepCreateAccountProps {
   name?: string;
   familyName?: string;
@@ -48,6 +50,24 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
+  const [resendMsg, setResendMsg] = useState('');
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendConfirmationInStep = async () => {
+    if (!email) return;
+    setIsResending(true);
+    setResendMsg('');
+    const res = await resendConfirmationEmail(email);
+    setIsResending(false);
+    if (res.success) {
+      setResendMsg(`Confirmation email re-sent to ${email}! Check your inbox.`);
+      playSound.pinSuccess();
+    } else {
+      setError(res.error || 'Failed to resend confirmation email.');
+      playSound.pinError();
+    }
+  };
   const { flags } = useFeatureFlags();
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
@@ -122,7 +142,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
 
         const session = data?.session;
         if (!session) {
-          // If auto-confirm is off, we need to sign in manually if possible, or they need to verify email
+          // If auto-confirm is off, try signing in manually if possible
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -134,7 +154,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
             return;
           }
 
-          setError('Sign up succeeded, but could not log in automatically. Check your email or try logging in.');
+          setEmailConfirmationPending(true);
           setIsSubmitting(false);
           playSound.success();
           return;
@@ -143,23 +163,81 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
         playSound.success();
         onComplete(email);
       } catch (err: any) {
-        setError(err.message || 'Unknown error occurred');
+        setError(err.message || 'An unexpected error occurred during account creation.');
         playSound.pinError();
         setIsSubmitting(false);
       }
+    } else {
+      playSound.success();
+      onComplete(email);
     }
   };
 
   return (
     <div className={`w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto px-4 sm:px-6 pt-[8vh] sm:pt-[12vh] pb-10 flex flex-col min-h-[100dvh]`}>
-      <div className={`p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm space-y-6 shadow-xl relative z-10`}>
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto shadow-sm">
-            <Cloud className="w-8 h-8 text-cyan-500" />
+      <div className={`p-6 sm:p-8 rounded-3xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 space-y-6 shadow-xl relative z-10`}>
+        {emailConfirmationPending ? (
+          <div className="text-center space-y-4 py-2">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto text-3xl shadow-sm">
+              ✉️
+            </div>
+            <div>
+              <Typography variant="h2" className={styles.titleColor}>Check your email!</Typography>
+              <p className={`text-xs sm:text-sm ${styles.textMuted} mt-1.5`}>
+                We sent a confirmation link to <strong className="text-stone-900 dark:text-stone-50 font-bold">{email}</strong>. Please click the link in your email to activate your account.
+              </p>
+            </div>
+
+            {resendMsg && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-bold">
+                {resendMsg}
+              </div>
+            )}
+
+            {error && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-medium">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2.5 pt-2">
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                className="font-black"
+                onClick={handleSignUp}
+              >
+                I'VE CONFIRMED MY EMAIL
+              </Button>
+              <Button
+                variant="secondary"
+                fullWidth
+                size="md"
+                className="text-xs font-bold"
+                disabled={isResending}
+                onClick={handleResendConfirmationInStep}
+              >
+                {isResending ? 'RESENDING...' : 'RESEND CONFIRMATION EMAIL'}
+              </Button>
+              <button
+                type="button"
+                onClick={onLoginInstead}
+                className="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 font-bold underline mt-2 block mx-auto"
+              >
+                Back to Sign In
+              </button>
+            </div>
           </div>
-          <Typography variant="h2" className={styles.titleColor}>Save & Sync</Typography>
-          <p className={`text-xs ${styles.textMuted}`}>Create a free account to back up your family's data and share the dashboard with another parent's device.</p>
-        </div>
+        ) : (
+          <>
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-100 flex items-center justify-center mx-auto shadow-sm">
+                <Cloud className="w-8 h-8 text-cyan-500" />
+              </div>
+              <Typography variant="h2" className={styles.titleColor}>Save & Sync</Typography>
+              <p className={`text-xs ${styles.textMuted}`}>Create a free account to back up your family's data and share the dashboard with another parent's device.</p>
+            </div>
 
         <form onSubmit={handleSignUp} className="space-y-4">
           {error && (
@@ -224,6 +302,8 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
               )}
             </div>
           </div>
+        )}
+        </>
         )}
 
         <div className="flex flex-col items-center gap-3 pt-4 border-t border-stone-200 dark:border-stone-700">

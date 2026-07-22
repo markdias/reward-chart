@@ -37,6 +37,34 @@ export async function sendWelcomeEmail(email: string, name?: string): Promise<{ 
 }
 
 /**
+ * Resends signup email confirmation link via Supabase Auth.
+ */
+export async function resendConfirmationEmail(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return { success: false, error: 'Supabase client is not configured' };
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to resend confirmation email' };
+  }
+}
+
+/**
  * Initiates a password reset flow using Supabase Auth.
  * Supabase Auth routes the reset email through Resend SMTP.
  */
