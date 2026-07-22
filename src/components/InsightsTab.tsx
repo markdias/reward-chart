@@ -139,8 +139,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
     let maxDayCount = Math.max(...dayCounts);
     let peakDayIndex = dayCounts.indexOf(maxDayCount);
     if (peakDayIndex === -1 || maxDayCount === 0) {
-      peakDayIndex = 2; // Default Tue display if empty
-      maxDayCount = 1;
+      peakDayIndex = -1; // No peak day when there are no completions
+      maxDayCount = 0;
     }
 
     // Tasks assigned to child (excluding directory templates)
@@ -351,14 +351,14 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
           <div className="flex items-end justify-between gap-2 h-36 border-b border-stone-100 dark:border-stone-800 px-2 relative">
             {DAY_LABELS.map((dayName, idx) => {
               const count = analytics.dayCounts[idx];
-              const isPeak = idx === analytics.peakDayIndex;
+              const isPeak = analytics.peakDayIndex >= 0 && idx === analytics.peakDayIndex;
               const maxCount = analytics.maxDayCount || 1;
               const heightPercent = count > 0 ? Math.max(15, Math.round((count / maxCount) * 100)) : 10;
 
               return (
                 <div key={dayName} className="flex-1 flex flex-col items-center h-full justify-end group">
-                  {/* Floating Number Label for Peak or non-zero */}
-                  {(isPeak || count > 0) && (
+                  {/* Floating Number Label for non-zero count */}
+                  {count > 0 && (
                     <motion.div
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -366,7 +366,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
                         isPeak ? 'bg-rose-500 text-white shadow-xs' : 'text-stone-400'
                       }`}
                     >
-                      {count > 0 ? count : (isPeak ? analytics.choresDone || 32 : 0)}
+                      {count}
                     </motion.div>
                   )}
 
