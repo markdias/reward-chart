@@ -1769,7 +1769,7 @@ export default function ChildDashboard({
                       >
                         {/* Inner Cutout */}
                         <div
-                          className="relative z-10 w-full h-full rounded-[1rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
+                          className="relative z-10 w-full h-full min-h-[540px] sm:min-h-[660px] rounded-[1rem] p-5 sm:p-8 flex flex-col justify-between items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
                           style={{
                             backgroundImage: "url('/field_stand_bg.png')",
                             backgroundSize: 'cover',
@@ -1799,7 +1799,7 @@ export default function ChildDashboard({
                           </div>
 
                           {/* Giant Levitating Pedestal */}
-                          <div className="my-6 sm:my-10 relative flex items-center justify-center">
+                          <div className="my-8 sm:my-14 relative flex items-center justify-center flex-1">
 
                             <motion.div
                               animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
