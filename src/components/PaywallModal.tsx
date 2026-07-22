@@ -223,9 +223,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                         <span className="text-xs font-bold text-stone-800 dark:text-stone-100 truncate">
                           {feature.title}
                         </span>
-                        <span className="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 shrink-0">
-                          {feature.proLimit}
-                        </span>
                       </div>
                       <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
                         {feature.description}
