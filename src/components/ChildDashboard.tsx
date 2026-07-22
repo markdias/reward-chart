@@ -1779,13 +1779,7 @@ export default function ChildDashboard({
 
                           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent rounded-[1rem]" />
 
-                          <div className="flex justify-between w-full items-start mt-1 relative z-20">
-                            {/* Pet Species Pill (Top Left) */}
-                            <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200/50 dark:border-stone-700/50 text-center flex flex-col items-center">
-                              <span className={`text-[9px] font-sans tracking-widest uppercase text-stone-500 font-extrabold mb-0.5`}>PET SPECIES</span>
-                              <Typography variant="h3" className={`font-black text-stone-900 dark:text-white text-sm uppercase tracking-wider leading-none`}>{activeChildStage.name}</Typography>
-                            </div>
-                            
+                          <div className="flex justify-end w-full items-start mt-1 relative z-20">
                             {/* Pet Status Pill (Top Right) */}
                             <div className={`transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
                               {activeChild.pet_unhappy ? (
@@ -1842,8 +1836,11 @@ export default function ChildDashboard({
                               {/* Left Side: Level Progress */}
                               <div className={`flex-1 py-3 flex flex-col justify-center ${isFoodPotUnlocked ? 'pl-4 pr-6 border-r-2 border-stone-200 dark:border-stone-800 border-dashed' : 'px-2'}`}>
                                 <div className="flex justify-between items-end mb-2">
-                                  <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest">Level {activeChild.level}</span>
-                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest leading-tight">{activeChildStage.name}</span>
+                                    <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest leading-tight">Level {activeChild.level}</span>
+                                  </div>
+                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider pb-0.5">
                                     {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
                                   </span>
                                 </div>
