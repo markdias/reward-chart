@@ -185,8 +185,18 @@ export default function ParentDashboard({
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
     const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleResize);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleResize);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleResize);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleResize);
+      }
+    };
   }, []);
 
   useEffect(() => {

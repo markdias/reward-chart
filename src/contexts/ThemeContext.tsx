@@ -56,8 +56,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       }
     };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleChange);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleChange);
+      }
+    };
   }, [themePreference]);
 
   return (

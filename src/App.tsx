@@ -39,16 +39,16 @@ export default function App() {
   // Auth state
   // Auth state
   
-  const [parentEmail, setParentEmail] = useState<string | null>(
-    localStorage.getItem('RCH_PARENT_EMAIL')
-  );
-  const [isParentMode, setIsParentMode] = useState<boolean>(
-    localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'
-  );
+  const [parentEmail, setParentEmail] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_PARENT_EMAIL'); } catch { return null; }
+  });
+  const [isParentMode, setIsParentMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'; } catch { return false; }
+  });
   
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
-    localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
-  );
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'; } catch { return false; }
+  });
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<'welcome' | 'role' | undefined>(undefined);
 
   const [showCreateAccount, setShowCreateAccount] = useState(false);
@@ -61,12 +61,12 @@ export default function App() {
     new URLSearchParams(window.location.search).has('showcase')
   );
 
-  const [isChildAuth, setIsChildAuth] = useState<boolean>(
-    localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'
-  );
-  const [authedChildId, setAuthedChildId] = useState<string | null>(
-    localStorage.getItem('RCH_AUTHED_CHILD_ID')
-  );
+  const [isChildAuth, setIsChildAuth] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'; } catch { return false; }
+  });
+  const [authedChildId, setAuthedChildId] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_AUTHED_CHILD_ID'); } catch { return null; }
+  });
 
   // When a child Supabase account exists but has no linked child_profiles row yet
   const [showChildJoinCodePrompt, setShowChildJoinCodePrompt] = useState<boolean>(false);
