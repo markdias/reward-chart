@@ -224,6 +224,11 @@ CREATE POLICY "Enable read for linked child" ON children
     auth.uid() IN (SELECT user_id FROM child_profiles WHERE child_id = children.id)
   );
 
+CREATE POLICY "Enable select by child share token" ON children
+  FOR SELECT USING (
+    child_share_token IS NOT NULL
+  );
+
 CREATE POLICY "Enable update for linked child" ON children
   FOR UPDATE USING (
     auth.uid() IN (SELECT user_id FROM child_profiles WHERE child_id = children.id)

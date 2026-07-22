@@ -311,12 +311,17 @@ export default function ChildDashboard({
 
 
   useEffect(() => {
-    if (lockedChildId) {
+    if (lockedChildId && children.some(c => c.id === lockedChildId)) {
       setSelectedChildId(lockedChildId);
+    } else if (children.length > 0) {
+      // Fall back to first available child if selectedChildId is invalid
+      if (!selectedChildId || !children.some(c => c.id === selectedChildId)) {
+        setSelectedChildId(children[0].id);
+      }
     } else {
       setSelectedChildId(null);
     }
-  }, [lockedChildId]);
+  }, [lockedChildId, children]);
 
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 

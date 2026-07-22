@@ -419,15 +419,37 @@ export default function App() {
                     setIsLoadingData(false);
                     return;
                   }
-                } else if (!urlParams.has('share')) {
-                  // Logged in with a child Supabase account that has no linked child record
-                  // and no join code in the URL — prompt the user to enter a join code
-                  setShowChildJoinCodePrompt(true);
-                  setIsLoadingData(false);
-                  return;
                 } else {
-                  // Creating a new parent profile
-                  let familyId = parentEmail;
+                  // Check if a parent pre-linked this child's email address
+                  const userEmail = sessionData.session.user.email;
+                  let linkedChildData = null;
+                  if (userEmail) {
+                    const { data: matchedChild } = await supabase
+                      .from('children')
+                      .select('id, parent_id')
+                      .eq('linked_email', userEmail)
+                      .maybeSingle();
+                    linkedChildData = matchedChild;
+                  }
+
+                  if (linkedChildData) {
+                    await executeOrQueue('child_profiles', 'insert', { user_id: sessionData.session.user.id, child_id: linkedChildData.id });
+                    await executeOrQueue('children', 'update', { child_share_token: `LINKED_${linkedChildData.id}` }, { eq: { 'id': linkedChildData.id } });
+                    
+                    setIsChildAuth(true);
+                    setAuthedChildId(linkedChildData.id);
+                    localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+                    localStorage.setItem('RCH_AUTHED_CHILD_ID', linkedChildData.id);
+                    currentFamilyId = linkedChildData.parent_id;
+                  } else if (!urlParams.has('share')) {
+                    // Logged in with a child Supabase account that has no linked child record
+                    // and no join code in the URL — prompt the user to enter a join code
+                    setShowChildJoinCodePrompt(true);
+                    setIsLoadingData(false);
+                    return;
+                  } else {
+                    // Creating a new parent profile
+                    let familyId = parentEmail;
                   let inheritedFamilyName = null;
                   const shareToken = urlParams.get('share');
                   if (shareToken) {
@@ -566,13 +588,28 @@ export default function App() {
           const keyRewards = `RCH_REWARDS_${currentFamilyId}`;
 
           // Fetch children
-          const { data: dbChildren, error: errChildren } = await supabase
+          let { data: dbChildren, error: errChildren } = await supabase
             .from('children')
             .select('*')
             .eq('parent_id', currentFamilyId);
           
           if (!errChildren) {
             let processedChildren = dbChildren || [];
+            
+            // Fallback: if logged in as child and processedChildren is empty, query by authedChildId directly
+            if (processedChildren.length === 0 && (isChildAuth || localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true')) {
+              const targetChildId = authedChildId || localStorage.getItem('RCH_AUTHED_CHILD_ID');
+              if (targetChildId) {
+                const { data: singleChild } = await supabase
+                  .from('children')
+                  .select('*')
+                  .eq('id', targetChildId)
+                  .maybeSingle();
+                if (singleChild) {
+                  processedChildren = [singleChild];
+                }
+              }
+            }
             
             // --- Main Money Daily/Monthly Logic ---
             const now = new Date();
