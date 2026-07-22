@@ -311,7 +311,7 @@ export default function ParentDashboard({
       },
       {
         target: '#tour-settings-security-tab',
-        content: 'The Security tab allows you to update your password and security PIN securely.',
+        content: 'The Security tab allows you to update your account password securely.',
         placement: 'bottom',
       },
       {
@@ -326,7 +326,7 @@ export default function ParentDashboard({
       },
       {
         target: '#exit-to-child-view-btn',
-        content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
+        content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings securely.',
         placement: 'bottom',
       },
       {
