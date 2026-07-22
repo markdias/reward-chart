@@ -164,6 +164,13 @@ export default function ParentDashboard({
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
   const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
+  const isBetaUser = Boolean(parentProfile?.is_beta_tester || flags.insights_tab);
+
+  useEffect(() => {
+    if (!isBetaUser && activeTab === 'chart') {
+      setActiveTab('home');
+    }
+  }, [isBetaUser, activeTab]);
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -1162,7 +1169,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: (flags.insights_tab || parentProfile?.is_beta_tester) ? 'Chart & Insights' : 'Chart', icon: (flags.insights_tab || parentProfile?.is_beta_tester) ? TrendingUp : Calendar },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart & Insights', icon: TrendingUp }] : []),
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -3168,7 +3175,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: 'Chart', icon: (flags.insights_tab || parentProfile?.is_beta_tester) ? TrendingUp : Calendar },
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp }] : []),
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
