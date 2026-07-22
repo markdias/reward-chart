@@ -14,12 +14,18 @@ import {
   BookOpen,
   Palette,
   Target,
-  Sun
+  Sun,
+  Crown,
+  Lock,
+  Sparkles
 } from 'lucide-react';
 import { Child, Task, TaskCompletion } from '../types';
 import { ChildAvatar } from './ChildAvatar';
 import { CoinBadge } from './CoinBadge';
 import { Typography } from './ui/Typography';
+import { Button } from './ui/Button';
+import { useSubscription } from '../hooks/useSubscription';
+import { playSound } from '../utils/sound';
 
 interface InsightsTabProps {
   children: Child[];
@@ -48,6 +54,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
   completions,
   initialChildId
 }) => {
+  const { subscription, openPaywall } = useSubscription();
   const [selectedChildId, setSelectedChildId] = useState<string>(
     initialChildId || (children.length > 0 ? children[0].id : '')
   );
@@ -206,15 +213,24 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
     });
 
     // Construct Insight Tip
+    let insightTitle = `Progress tip for ${selectedChild.name}`;
     let insightMessage = '';
+    let insightType: 'struggling' | 'going_well' | 'general' = 'general';
+
     if (strugglingTasks.length > 0) {
       const targetTask = strugglingTasks[0].title;
-      insightMessage = `"${targetTask}" is struggling (0 in 30 days). Try a smaller version or add it earlier in the day.`;
+      insightTitle = `Focus area for ${selectedChild.name}`;
+      insightMessage = `"${targetTask}" needs attention (0 completions in 30 days). Try breaking it down or moving it earlier in the day.`;
+      insightType = 'struggling';
     } else if (goingWellTasks.length > 0) {
       const topTask = goingWellTasks[0].title;
+      insightTitle = `What's working for ${selectedChild.name}`;
       insightMessage = `"${topTask}" is going great (${goingWellTasks[0].count} completions)! Keep up the fantastic routine!`;
+      insightType = 'going_well';
     } else {
+      insightTitle = `Progress tip for ${selectedChild.name}`;
       insightMessage = `Assign daily chores and routines to start tracking ${selectedChild.name}'s progress insights!`;
+      insightType = 'general';
     }
 
     return {
@@ -228,7 +244,9 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       categoryCounts,
       goingWellTasks,
       strugglingTasks,
-      insightMessage
+      insightTitle,
+      insightMessage,
+      insightType
     };
   }, [selectedChild, tasks, completions]);
 
@@ -249,11 +267,11 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
       {/* Child Selector Pills */}
       {children.length > 1 && (
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-          {children.map(child => {
+          {children.map((child, idx) => {
             const isSelected = child.id === selectedChild.id;
             return (
               <button
-                key={child.id}
+                key={child.id || `child-insights-${idx}`}
                 onClick={() => setSelectedChildId(child.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-300 ${
                   isSelected
@@ -269,22 +287,54 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         </div>
       )}
 
-      {/* What's working for [Child] */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/50 rounded-3xl p-5 sm:p-6 space-y-3 shadow-xs backdrop-blur-sm"
-      >
-        <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-sm sm:text-base">
-          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0" />
-          <span>What's working for {selectedChild.name}</span>
-        </div>
+      {/* What's working for [Child] - AI Insights */}
+      {!subscription.isPro ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 text-center space-y-3 shadow-sm relative overflow-hidden"
+        >
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 dark:bg-orange-950/40 border border-orange-100 dark:border-orange-900/40 shadow-sm">
+            <Sparkles className="w-6 h-6 text-orange-500" />
+          </div>
+          <div>
+            <Typography variant="h3" className="text-stone-900 dark:text-stone-50 font-bold">
+              Progress Insights
+            </Typography>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto font-medium">
+              Upgrade to Pro to unlock personalized progress recommendations, completion bottleneck analysis, and trend forecasts for {selectedChild?.name || 'your kids'}.
+            </p>
+          </div>
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={() => { playSound.click(); openPaywall('Progress Insights'); }}
+            className="font-bold uppercase tracking-wider px-6"
+          >
+            <Crown className="w-4 h-4 mr-2 inline-block" />
+            Unlock Progress Insights
+          </Button>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`border rounded-3xl p-5 sm:p-6 space-y-3 shadow-xs backdrop-blur-sm ${
+            analytics.insightType === 'struggling'
+              ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-200/70 dark:border-orange-800/50'
+              : 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200/70 dark:border-amber-800/50'
+          }`}
+        >
+          <div className="flex items-center gap-2 text-stone-900 dark:text-stone-100 font-bold text-sm sm:text-base">
+            <Lightbulb className={`w-5 h-5 shrink-0 ${analytics.insightType === 'struggling' ? 'text-orange-500' : 'text-amber-500'}`} />
+            <span>{analytics.insightTitle}</span>
+          </div>
 
-        <div className="bg-white/80 dark:bg-stone-900/80 rounded-2xl p-4 border border-amber-100 dark:border-amber-900/40 text-stone-800 dark:text-stone-200 text-xs sm:text-sm leading-relaxed flex items-start gap-2.5 shadow-xs">
-          <span className="text-amber-500 text-base leading-none">💡</span>
-          <span>{analytics.insightMessage}</span>
-        </div>
-      </motion.div>
+          <div className="bg-white/90 dark:bg-stone-900/90 rounded-2xl p-4 border border-stone-200/60 dark:border-stone-800/60 text-stone-700 dark:text-stone-200 text-xs sm:text-sm leading-relaxed shadow-xs">
+            {analytics.insightMessage}
+          </div>
+        </motion.div>
+      )}
 
       {/* 2x2 Metric Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -415,13 +465,13 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         </div>
 
         <div className="space-y-3.5">
-          {analytics.categoryCounts.map(cat => {
+          {analytics.categoryCounts.map((cat, catIdx) => {
             const Icon = cat.icon;
             const maxCat = Math.max(...analytics.categoryCounts.map(c => c.count)) || 1;
             const widthPercent = cat.count > 0 ? Math.max(8, Math.round((cat.count / maxCat) * 100)) : 0;
 
             return (
-              <div key={cat.category} className="space-y-1.5">
+              <div key={cat.category || `cat-${catIdx}`} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
@@ -454,8 +504,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
 
         <div className="space-y-2">
           {analytics.goingWellTasks.length > 0 ? (
-            analytics.goingWellTasks.slice(0, 4).map(item => (
-              <div key={item.title} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
+            analytics.goingWellTasks.slice(0, 4).map((item, idx) => (
+              <div key={item.title ? `going-${item.title}` : `going-${idx}`} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
                 <span>{item.title}</span>
                 <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-lg text-xs font-mono">
                   {item.count}x
@@ -479,8 +529,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
 
         <div className="space-y-2">
           {analytics.strugglingTasks.length > 0 ? (
-            analytics.strugglingTasks.slice(0, 4).map(item => (
-              <div key={item.title} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
+            analytics.strugglingTasks.slice(0, 4).map((item, idx) => (
+              <div key={item.title ? `struggling-${item.title}` : `struggling-${idx}`} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
                 <span>{item.title}</span>
                 <span className="text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/60 px-2 py-0.5 rounded-lg text-xs font-mono">
                   0x

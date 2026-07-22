@@ -37,6 +37,7 @@ import { getSupabaseClient } from '../utils/supabase';
 import { checkAndUnlockBadges } from '../utils/badgeService';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
+import { useSubscription } from '../hooks/useSubscription';
 
 const RECURRENCE_LABEL: Record<string, string> = {
   daily: 'Daily',
@@ -80,6 +81,7 @@ interface ChildDashboardProps {
   isLoading?: boolean;
   isChildAuth?: boolean;
   onLogout?: () => void;
+  onEnterJoinCode?: () => void;
   onRefresh?: () => Promise<void>;
   theme?: string;
 }
@@ -115,9 +117,11 @@ export default function ChildDashboard({
   isLoading = false,
   isChildAuth = false,
   onLogout,
+  onEnterJoinCode,
   onRefresh,
   theme
 }: ChildDashboardProps) {
+  const { subscription } = useSubscription();
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
 
@@ -130,8 +134,18 @@ export default function ChildDashboard({
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
     const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleResize);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleResize);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleResize);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleResize);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -307,12 +321,17 @@ export default function ChildDashboard({
 
 
   useEffect(() => {
-    if (lockedChildId) {
+    if (lockedChildId && children.some(c => c.id === lockedChildId)) {
       setSelectedChildId(lockedChildId);
+    } else if (children.length > 0) {
+      // Fall back to first available child if selectedChildId is invalid
+      if (!selectedChildId || !children.some(c => c.id === selectedChildId)) {
+        setSelectedChildId(children[0].id);
+      }
     } else {
       setSelectedChildId(null);
     }
-  }, [lockedChildId]);
+  }, [lockedChildId, children]);
 
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
@@ -588,7 +607,7 @@ export default function ChildDashboard({
 
   const isSavingsUnlocked = activeChild ? (activeChild.savings_unlocked || activeChild.level >= (parentProfile?.savings_pot_unlock_level ?? 2)) : false;
   const isFoodPotUnlocked = activeChild ? (activeChild.food_pot_unlocked || activeChild.level >= (parentProfile?.food_pot_unlock_level ?? 4)) : false;
-  const isGiftingUnlocked = activeChild ? (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6)) : false;
+  const isGiftingUnlocked = activeChild ? (subscription.isPro && (activeChild.gifting_unlocked || activeChild.level >= (parentProfile?.gifting_pot_unlock_level ?? 6))) : false;
 
   const potReminders: string[] = [];
   const now = new Date();
@@ -1719,11 +1738,11 @@ export default function ChildDashboard({
                       <ArcadeTicketCard key={`skel-${i}`} child={{ id: '', name: '', avatar_url: '', level: 0, streak_days: 0, points: 0 }} isLoading />
                     ))}
                   </>
-                ) : children.map((child) => {
+                ) : children.map((child, idx) => {
                   const stage = getCharacterStage(child.character_id, child.level, parentProfile);
                   return (
                     <ArcadeTicketCard
-                      key={child.id}
+                      key={child.id || `child-${idx}`}
                       child={child}
                       onClick={() => handleSelectChild(child.id)}
                     />
@@ -1731,7 +1750,20 @@ export default function ChildDashboard({
                 })}
               </div>
 
-
+              {/* Empty state CTA — prompt to enter a join code */}
+              {children.length === 0 && onEnterJoinCode && (
+                <div className="flex flex-col items-center gap-3 mt-4">
+                  <p className="text-xs text-stone-400 dark:text-stone-500">
+                    No profile found for this account.
+                  </p>
+                  <button
+                    onClick={onEnterJoinCode}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-sm uppercase tracking-wider shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all"
+                  >
+                    🔑 Enter Join Code
+                  </button>
+                </div>
+              )}
 
             </motion.div>
           ) : (
@@ -3187,8 +3219,8 @@ export default function ChildDashboard({
                           </div>
                         )}
 
-                        {/* Gifting Pot Locked Preview */}
-                        {!isGiftingUnlocked && activeChild.level < (parentProfile?.gifting_pot_unlock_level ?? 6) && (
+                        {/* Gifting Pot — hidden on Free, shown (locked by level) on Pro */}
+                        {subscription.isPro && !isGiftingUnlocked && (
                           <div
                             className="joyride-target-pot-gifting relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
@@ -3216,7 +3248,7 @@ export default function ChildDashboard({
                         )}
 
                         {/* === GOLD POT MAINTENANCE SECTION === */}
-                        {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
+                        {subscription.isPro && isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
                           <div className={`joyride-target-pot-maintenance relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
@@ -3305,7 +3337,7 @@ export default function ChildDashboard({
                         )}
 
                         {/* Gold Pot Maintenance Locked Preview */}
-                        {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
+                        {subscription.isPro && !isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
                           <div
                             className="joyride-target-pot-maintenance relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}

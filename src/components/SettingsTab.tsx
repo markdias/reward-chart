@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell, ShieldCheck, FileText } from 'lucide-react';
+import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell, ShieldCheck, FileText, Crown, Sparkles } from 'lucide-react';
 import OneSignal from 'react-onesignal';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -15,6 +15,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useSubscription } from '../hooks/useSubscription';
 import { FlaskConical } from 'lucide-react';
 
 import { Child } from '../types';
@@ -58,6 +59,7 @@ export default function SettingsTab({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const { isDarkMode, themePreference, setThemePreference } = useTheme();
+  const { subscription, openPaywall, togglePro } = useSubscription();
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -358,6 +360,71 @@ export default function SettingsTab({
         </div>
         
         <div className="max-w-4xl mx-auto">
+          <SettingsBlock title="Subscription & Plan">
+            <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-2xl border border-amber-500/20">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500 text-white shadow-md">
+                  <Crown className="w-5 h-5 fill-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-stone-900 dark:text-stone-100">
+                      {subscription.isPro ? 'Reward Chart Pro' : 'Free Tier'}
+                    </span>
+                    {subscription.isPro && (
+                      <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                        {subscription.tier === 'annual' ? 'Annual Plan' : 'Monthly Plan'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    {subscription.isPro
+                      ? 'You have unlimited access to all Pro features and children charts.'
+                      : 'Free tier limits you to 1 child chart. Upgrade to unlock unlimited kids and progress insights.'}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant={subscription.isPro ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => { playSound.click(); openPaywall('Settings'); }}
+                className="shrink-0 font-bold"
+              >
+                {subscription.isPro ? 'Manage Plan' : 'UPGRADE TO PRO'}
+              </Button>
+            </div>
+
+            <div className="mt-3 p-4 flex items-center justify-between bg-white dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl transition-colors ${subscription.isPro ? 'bg-amber-500/10 text-amber-500' : 'bg-stone-100 dark:bg-stone-800 text-stone-400'}`}>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-stone-800 dark:text-stone-100">Enable Pro Mode</h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    Toggle Pro features on or off for testing and evaluation.
+                  </p>
+                </div>
+              </div>
+              <div
+                onClick={() => {
+                  playSound.click();
+                  togglePro(!subscription.isPro);
+                }}
+                className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 shrink-0 ${
+                  subscription.isPro ? 'bg-amber-500 justify-end' : 'bg-stone-300 dark:bg-stone-700 justify-start'
+                }`}
+              >
+                <motion.div
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="w-4 h-4 rounded-full bg-white shadow-md"
+                />
+              </div>
+            </div>
+          </SettingsBlock>
+
           <SettingsBlock title="Legal & Privacy">
             <SettingsActionRow 
               label="Privacy Policy" 
@@ -425,7 +492,7 @@ export default function SettingsTab({
               toggleActive={!!OneSignal?.Notifications?.permission}
               onToggle={async () => {
                 playSound.click();
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !(window as any).MSStream;
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
                 
                 if (isIOS && !isStandalone) {
@@ -534,6 +601,28 @@ export default function SettingsTab({
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         
         <div className="max-w-4xl mx-auto space-y-6">
+          {!subscription.isPro && (
+            <div className="p-5 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-orange-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-orange-500 text-white shrink-0 shadow-sm">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-stone-900 dark:text-stone-100">Co-Parent & Family Real-Time Sync</h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Upgrade to Pro to link partner accounts and sync reward charts across all family devices in real time.</p>
+                </div>
+              </div>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => { playSound.click(); openPaywall('Family & Co-Parent Sync'); }}
+                className="shrink-0 font-bold uppercase tracking-wider"
+              >
+                Unlock Family Sync
+              </Button>
+            </div>
+          )}
+
           {!parentProfile?.user_id ? (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-3">
               <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>

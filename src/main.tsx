@@ -8,19 +8,25 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import '@google/model-viewer';
 import posthog from 'posthog-js';
 
-posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-  person_profiles: 'identified_only',
-});
+try {
+  if (import.meta.env.VITE_POSTHOG_PROJECT_TOKEN) {
+    posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
+      api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com',
+      person_profiles: 'identified_only',
+    });
+  }
+} catch (e) {
+  console.warn('PostHog initialization skipped or failed:', e);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <ErrorBoundary name="RootApp">
+    <ErrorBoundary name="RootApp">
+      <ThemeProvider>
         <App />
-      </ErrorBoundary>
-      <Analytics />
-    </ThemeProvider>
+        <Analytics />
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
 

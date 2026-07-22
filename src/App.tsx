@@ -16,6 +16,8 @@ const StepCreateAccount = lazy(() => import('./components/Onboarding/StepCreateA
 import Confetti from './components/Confetti';
 import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
+import { PaywallModal } from './components/PaywallModal';
 
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
@@ -37,16 +39,16 @@ export default function App() {
   // Auth state
   // Auth state
   
-  const [parentEmail, setParentEmail] = useState<string | null>(
-    localStorage.getItem('RCH_PARENT_EMAIL')
-  );
-  const [isParentMode, setIsParentMode] = useState<boolean>(
-    localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'
-  );
+  const [parentEmail, setParentEmail] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_PARENT_EMAIL'); } catch { return null; }
+  });
+  const [isParentMode, setIsParentMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_PARENT_MODE_ACTIVE') === 'true'; } catch { return false; }
+  });
   
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(
-    localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'
-  );
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_ONBOARDING_COMPLETE') === 'true'; } catch { return false; }
+  });
   const [onboardingInitialStep, setOnboardingInitialStep] = useState<'welcome' | 'role' | undefined>(undefined);
 
   const [showCreateAccount, setShowCreateAccount] = useState(false);
@@ -59,12 +61,18 @@ export default function App() {
     new URLSearchParams(window.location.search).has('showcase')
   );
 
-  const [isChildAuth, setIsChildAuth] = useState<boolean>(
-    localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'
-  );
-  const [authedChildId, setAuthedChildId] = useState<string | null>(
-    localStorage.getItem('RCH_AUTHED_CHILD_ID')
-  );
+  const [isChildAuth, setIsChildAuth] = useState<boolean>(() => {
+    try { return localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true'; } catch { return false; }
+  });
+  const [authedChildId, setAuthedChildId] = useState<string | null>(() => {
+    try { return localStorage.getItem('RCH_AUTHED_CHILD_ID'); } catch { return null; }
+  });
+
+  // When a child Supabase account exists but has no linked child_profiles row yet
+  const [showChildJoinCodePrompt, setShowChildJoinCodePrompt] = useState<boolean>(false);
+  const [childJoinCodeInput, setChildJoinCodeInput] = useState<string>('');
+  const [childJoinCodeError, setChildJoinCodeError] = useState<string>('');
+  const [isApplyingChildJoinCode, setIsApplyingChildJoinCode] = useState<boolean>(false);
   
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
@@ -408,124 +416,155 @@ export default function App() {
                     localStorage.removeItem('RCH_PENDING_CHILD_LINK');
                   } else {
                     console.error("Invalid child share token or RLS prevented reading target child");
+                    setIsLoadingData(false);
                     return;
                   }
                 } else {
-                  // Creating a new parent profile
-                  let familyId = parentEmail;
-                  let inheritedFamilyName = null;
-                  const shareToken = urlParams.get('share');
-                  if (shareToken) {
-                    const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
-                    let inviter = pendingStr ? JSON.parse(pendingStr) : null;
-                    if (!inviter) {
-                      const { data } = await supabase
-                        .from('parent_profiles')
-                        .select('*')
-                        .eq('share_token', shareToken)
-                        .maybeSingle();
-                      inviter = data;
-                    }
-
-                    if (inviter) {
-                      familyId = inviter.family_id;
-                      inheritedFamilyName = inviter.family_name;
-                      localStorage.removeItem('RCH_PENDING_PARENT_LINK');
-                    }
+                  // Check if a parent pre-linked this child's email address
+                  const userEmail = sessionData.session.user.email;
+                  let linkedChildData = null;
+                  if (userEmail) {
+                    const { data: matchedChild } = await supabase
+                      .from('children')
+                      .select('id, parent_id')
+                      .eq('linked_email', userEmail)
+                      .maybeSingle();
+                    linkedChildData = matchedChild;
                   }
 
-                  const meta = sessionData.session.user.user_metadata || {};
-                  const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
-                  const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
+                  if (linkedChildData) {
+                    await executeOrQueue('child_profiles', 'insert', { user_id: sessionData.session.user.id, child_id: linkedChildData.id });
+                    await executeOrQueue('children', 'update', { child_share_token: `LINKED_${linkedChildData.id}` }, { eq: { 'id': linkedChildData.id } });
+                    
+                    setIsChildAuth(true);
+                    setAuthedChildId(linkedChildData.id);
+                    localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+                    localStorage.setItem('RCH_AUTHED_CHILD_ID', linkedChildData.id);
+                    currentFamilyId = linkedChildData.parent_id;
+                  } else if (!urlParams.has('share')) {
+                    // Logged in with a child Supabase account that has no linked child record
+                    // and no join code in the URL — prompt the user to enter a join code
+                    setShowChildJoinCodePrompt(true);
+                    setIsLoadingData(false);
+                    return;
+                  } else {
+                    // Creating a new parent profile
+                    let familyId = parentEmail;
+                    let inheritedFamilyName = null;
+                    const shareToken = urlParams.get('share');
+                    if (shareToken) {
+                      const pendingStr = localStorage.getItem('RCH_PENDING_PARENT_LINK');
+                      let inviter = pendingStr ? JSON.parse(pendingStr) : null;
+                      if (!inviter) {
+                        const { data } = await supabase
+                          .from('parent_profiles')
+                          .select('*')
+                          .eq('share_token', shareToken)
+                          .maybeSingle();
+                        inviter = data;
+                      }
 
-                  const newProfile = {
-                    user_id: sessionData.session.user.id,
-                    email: sessionData.session.user.email || parentEmail,
-                    family_id: familyId,
-                    family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
-                    name: meta.name || localProfileObj.name || null,
-                    share_token: generateShortCode(),
-                    savings_pot_unlock_level: 2,
-                    food_pot_unlock_level: 4,
-                    gifting_pot_unlock_level: 6,
-                    gold_pot_maintenance_unlock_level: 8,
-                    gold_pot_maintenance_cost: 2,
-                    points_to_level_up: 500,
-                    level_up_gold_reward: 500
-                  };
-                  const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
-                  
-                  if (profileError) {
-                    console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
-                    return; // Abort further inserts if profile fails
-                  }
-                  
-                  // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
-                  if (!shareToken) {
-                    const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
-                    const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
-
-                    const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
-
-                    if (!hasDbData) {
-                      const localEmail = 'local_parent@rewardchart.app';
-                      const userEmailKey = sessionData.session.user.email;
-                      const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
-                                               (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
-                                               localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
-                      const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
-                                            (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
-                                            localStorage.getItem(`RCH_TASKS_${localEmail}`);
-                      const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
-                                                  (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
-                                                  localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
-                      const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
-                                              (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
-                                              localStorage.getItem(`RCH_REWARDS_${localEmail}`);
-                      const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
-                                                  (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
-                                                  localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
-                      const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
-                                              (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
-                                              localStorage.getItem(`RCH_GIFTING_${localEmail}`);
-                      
-                      if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
-                         // Migrate all local data to this new family ID
-                         const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
-                         const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
-                         const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
-                         const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
-                         
-                         if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
-                         if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
-                         if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
-                         if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
-                         if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
-                         if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
-                      } else {
-                         const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
-                           ...t, 
-                           id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                           created_at: new Date().toISOString(),
-                           parent_id: familyId 
-                         }));
-                         const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
-                           ...r, 
-                           id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                           created_at: new Date().toISOString(),
-                           parent_id: familyId 
-                         }));
-                         await executeOrQueue('tasks', 'insert', tasksToInsert);
-                         await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                      if (inviter) {
+                        familyId = inviter.family_id;
+                        inheritedFamilyName = inviter.family_name;
+                        localStorage.removeItem('RCH_PENDING_PARENT_LINK');
                       }
                     }
+
+                    const meta = sessionData.session.user.user_metadata || {};
+                    const localProfileRaw = localStorage.getItem('RCH_PARENT_PROFILE');
+                    const localProfileObj = localProfileRaw ? JSON.parse(localProfileRaw) : {};
+
+                    const newProfile = {
+                      user_id: sessionData.session.user.id,
+                      email: sessionData.session.user.email || parentEmail,
+                      family_id: familyId,
+                      family_name: inheritedFamilyName || meta.family_name || localProfileObj.family_name || null,
+                      name: meta.name || localProfileObj.name || null,
+                      share_token: generateShortCode(),
+                      savings_pot_unlock_level: 2,
+                      food_pot_unlock_level: 4,
+                      gifting_pot_unlock_level: 6,
+                      gold_pot_maintenance_unlock_level: 8,
+                      gold_pot_maintenance_cost: 2,
+                      points_to_level_up: 500,
+                      level_up_gold_reward: 500
+                    };
+                    const { error: profileError } = await executeOrQueue('parent_profiles', 'upsert', newProfile, { onConflict: 'user_id' });
+                    
+                    if (profileError) {
+                      console.error("Failed to create parent profile. Aborting init to prevent infinite loops.", profileError);
+                      setIsLoadingData(false);
+                      return; // Abort further inserts if profile fails
+                    }
+                    
+                    // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
+                    if (!shareToken) {
+                      const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
+                      const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
+
+                      const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
+
+                      if (!hasDbData) {
+                        const localEmail = 'local_parent@rewardchart.app';
+                        const userEmailKey = sessionData.session.user.email;
+                        const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
+                                                 (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
+                                                 localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
+                        const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
+                                              (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
+                                              localStorage.getItem(`RCH_TASKS_${localEmail}`);
+                        const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
+                        const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_REWARDS_${localEmail}`);
+                        const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
+                                                    (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
+                                                    localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                        const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
+                                                (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
+                                                localStorage.getItem(`RCH_GIFTING_${localEmail}`);
+                        
+                        if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
+                           // Migrate all local data to this new family ID
+                           const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
+                           const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
+                           const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
+                           const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                           
+                           if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
+                           if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
+                           if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
+                           if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
+                           if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
+                           if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
+                        } else {
+                           const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
+                             ...t, 
+                             id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
+                             ...r, 
+                             id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                             created_at: new Date().toISOString(),
+                             parent_id: familyId 
+                           }));
+                           await executeOrQueue('tasks', 'insert', tasksToInsert);
+                           await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                        }
+                      }
+                    }
+                    
+                    setParentProfile(newProfile as ParentProfile);
+                    loadedParentProfile = newProfile as ParentProfile;
+                    currentFamilyId = familyId;
                   }
-                  
-                  setParentProfile(newProfile as ParentProfile);
-                  loadedParentProfile = newProfile as ParentProfile;
-                  currentFamilyId = familyId;
                 }
               }
             }
@@ -551,13 +590,28 @@ export default function App() {
           const keyRewards = `RCH_REWARDS_${currentFamilyId}`;
 
           // Fetch children
-          const { data: dbChildren, error: errChildren } = await supabase
+          let { data: dbChildren, error: errChildren } = await supabase
             .from('children')
             .select('*')
             .eq('parent_id', currentFamilyId);
           
           if (!errChildren) {
             let processedChildren = dbChildren || [];
+            
+            // Fallback: if logged in as child and processedChildren is empty, query by authedChildId directly
+            if (processedChildren.length === 0 && (isChildAuth || localStorage.getItem('RCH_CHILD_AUTH_ACTIVE') === 'true')) {
+              const targetChildId = authedChildId || localStorage.getItem('RCH_AUTHED_CHILD_ID');
+              if (targetChildId) {
+                const { data: singleChild } = await supabase
+                  .from('children')
+                  .select('*')
+                  .eq('id', targetChildId)
+                  .maybeSingle();
+                if (singleChild) {
+                  processedChildren = [singleChild];
+                }
+              }
+            }
             
             // --- Main Money Daily/Monthly Logic ---
             const now = new Date();
@@ -1138,6 +1192,58 @@ export default function App() {
     window.location.reload();
   };
 
+
+  const handleApplyChildJoinCode = async () => {
+    if (!childJoinCodeInput.trim()) return;
+    setIsApplyingChildJoinCode(true);
+    setChildJoinCodeError('');
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error('Backend not connected');
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) throw new Error('No active session');
+
+      const code = childJoinCodeInput.trim();
+      const { data: childData } = await supabase
+        .from('children')
+        .select('id, parent_id')
+        .eq('child_share_token', code)
+        .maybeSingle();
+
+      if (!childData) {
+        setChildJoinCodeError('Invalid join code. Please check and try again.');
+        playSound.pinError();
+        return;
+      }
+
+      // Link the child profile
+      await executeOrQueue('child_profiles', 'insert', {
+        user_id: sessionData.session.user.id,
+        child_id: childData.id,
+      });
+      // Mark token as linked so parent dashboard knows
+      await executeOrQueue(
+        'children',
+        'update',
+        { child_share_token: `LINKED_${childData.id}`, linked_email: sessionData.session.user.email },
+        { eq: { id: childData.id } }
+      );
+
+      setIsChildAuth(true);
+      setAuthedChildId(childData.id);
+      localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+      localStorage.setItem('RCH_AUTHED_CHILD_ID', childData.id);
+      setShowChildJoinCodePrompt(false);
+      playSound.pinSuccess();
+      // Reload to fully initialise with the newly linked child account
+      window.location.reload();
+    } catch (e: any) {
+      setChildJoinCodeError(e.message || 'Something went wrong. Please try again.');
+      playSound.pinError();
+    } finally {
+      setIsApplyingChildJoinCode(false);
+    }
+  };
 
   const handleResetData = async (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, targetChildId: string) => {
     const familyId = parentProfile?.family_id || parentEmail;
@@ -2400,6 +2506,7 @@ updateChildInSupabase(targetChild);
 
 
   return (
+    <SubscriptionProvider currentUserId={parentProfile?.user_id}>
     <Suspense fallback={
       <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 text-white">
         <div className="flex flex-col items-center gap-3">
@@ -2408,7 +2515,7 @@ updateChildInSupabase(targetChild);
         </div>
       </div>
     }>
-    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950`} id="app-main">
+    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950 app-loaded`} id="app-main">
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
@@ -2582,12 +2689,86 @@ updateChildInSupabase(targetChild);
               theme={activeTheme}
               isChildAuth={isChildAuth}
               onLogout={handleLogout}
+              onEnterJoinCode={() => setShowChildJoinCodePrompt(true)}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Child Join Code Prompt — shown when a child account has no linked child profile */}
+      <AnimatePresence>
+        {showChildJoinCodePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white dark:bg-stone-950 px-6"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="w-full max-w-sm space-y-6"
+            >
+              {/* Icon + heading */}
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm">
+                  <span className="text-3xl">🔑</span>
+                </div>
+                <h2 className="text-xl font-bold font-display text-stone-900 dark:text-stone-50">
+                  Enter Your Join Code
+                </h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400">
+                  Your account isn't linked to a family yet. Ask your parent for the 6-character code from the app.
+                </p>
+              </div>
+
+              {/* Error */}
+              {childJoinCodeError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0">⚠️</span>
+                  <span>{childJoinCodeError}</span>
+                </div>
+              )}
+
+              {/* Input + button */}
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Enter 6-character code"
+                  value={childJoinCodeInput}
+                  onChange={(e) => setChildJoinCodeInput(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  autoCapitalize="characters"
+                  className="w-full px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-50 text-center text-lg font-bold tracking-[0.3em] uppercase placeholder:tracking-normal placeholder:font-normal placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleApplyChildJoinCode(); }}
+                />
+                <button
+                  onClick={handleApplyChildJoinCode}
+                  disabled={isApplyingChildJoinCode || childJoinCodeInput.trim().length < 1}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold uppercase tracking-wider shadow-md shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+                >
+                  {isApplyingChildJoinCode ? 'Verifying…' : 'Join Family'}
+                </button>
+              </div>
+
+              {/* Log out link */}
+              <div className="text-center">
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 underline underline-offset-2 transition-colors"
+                >
+                  Sign out and use a different account
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Upgrade Account Modal */}
+
       <AnimatePresence>
         {showCreateAccount && (
           <motion.div
@@ -2633,6 +2814,19 @@ updateChildInSupabase(targetChild);
       </AnimatePresence>
     </div>
     <LegalModal />
+    <GlobalPaywallModal />
     </Suspense>
+    </SubscriptionProvider>
+  );
+}
+
+function GlobalPaywallModal() {
+  const { isPaywallOpen, closePaywall, paywallFeatureTrigger } = useSubscription();
+  return (
+    <PaywallModal
+      isOpen={isPaywallOpen}
+      onClose={closePaywall}
+      triggerReason={paywallFeatureTrigger}
+    />
   );
 }

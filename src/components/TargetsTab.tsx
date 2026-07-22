@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { Save, Target, CalendarDays, Calendar, Trophy, PiggyBank, Bone, Gift, Wrench, ShieldAlert, Zap, Star, IceCream, Heart } from 'lucide-react';
+import { Save, Target, CalendarDays, Calendar, Trophy, PiggyBank, Bone, Gift, Wrench, ShieldAlert, Zap, Star, IceCream, Heart, Crown } from 'lucide-react';
 
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
 import { playSound } from '../utils/sound';
 import { Button } from './ui/Button';
+import { useSubscription } from '../hooks/useSubscription';
 
 interface TargetsTabProps {
   parentProfile?: ParentProfile | null;
@@ -55,6 +56,7 @@ const NumberInputCard = ({
 );
 
 export default function TargetsTab({ parentProfile, onUpdateParentProfile }: TargetsTabProps) {
+  const { subscription, openPaywall } = useSubscription();
   const [levelUpGoldReward, setLevelUpGoldReward] = useState(parentProfile?.level_up_gold_reward ?? 500);
   const [dailyPointsTarget, setDailyPointsTarget] = useState(parentProfile?.daily_points_target ?? 50);
   const [dailyRewardPoints, setDailyRewardPoints] = useState(parentProfile?.daily_reward_points ?? 50);
@@ -296,24 +298,49 @@ export default function TargetsTab({ parentProfile, onUpdateParentProfile }: Tar
                 onBlur={handleSave}
                 colorClass="bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400"
               />
-              <NumberInputCard
-                icon={Wrench}
-                title="Gold Maintenance Level"
-                description="Level where the Gold Pot starts breaking randomly."
-                value={goldPotMaintenanceUnlockLevel}
-                onChange={setGoldPotMaintenanceUnlockLevel}
-                onBlur={handleSave}
-                colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
-              />
-              <NumberInputCard
-                icon={Wrench}
-                title="Maintenance Cost"
-                description="How much gold it costs to fix the broken Gold Pot."
-                value={goldPotMaintenanceCost}
-                onChange={setGoldPotMaintenanceCost}
-                onBlur={handleSave}
-                colorClass="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
-              />
+              <div className="relative">
+                {!subscription.isPro && (
+                  <div 
+                    onClick={() => { playSound.click(); openPaywall('Custom Rewards & Gold Pot Auto-Care'); }}
+                    className="absolute inset-0 bg-stone-900/5 backdrop-blur-[1px] dark:bg-stone-900/40 z-10 rounded-2xl flex items-center justify-center p-2 cursor-pointer group"
+                  >
+                    <span className="px-3 py-1 rounded-full bg-orange-500 text-white font-bold text-[10px] uppercase tracking-wider shadow-sm flex items-center gap-1 group-hover:scale-105 transition-transform">
+                      <Crown className="w-3 h-3" /> Pro Gold Care
+                    </span>
+                  </div>
+                )}
+                <NumberInputCard
+                  icon={Wrench}
+                  title="Gold Maintenance Level"
+                  description="Level where the Gold Pot starts breaking randomly."
+                  value={goldPotMaintenanceUnlockLevel}
+                  onChange={setGoldPotMaintenanceUnlockLevel}
+                  onBlur={handleSave}
+                  colorClass="bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
+                />
+              </div>
+
+              <div className="relative">
+                {!subscription.isPro && (
+                  <div 
+                    onClick={() => { playSound.click(); openPaywall('Custom Rewards & Gold Pot Auto-Care'); }}
+                    className="absolute inset-0 bg-stone-900/5 backdrop-blur-[1px] dark:bg-stone-900/40 z-10 rounded-2xl flex items-center justify-center p-2 cursor-pointer group"
+                  >
+                    <span className="px-3 py-1 rounded-full bg-orange-500 text-white font-bold text-[10px] uppercase tracking-wider shadow-sm flex items-center gap-1 group-hover:scale-105 transition-transform">
+                      <Crown className="w-3 h-3" /> Pro Gold Care
+                    </span>
+                  </div>
+                )}
+                <NumberInputCard
+                  icon={Wrench}
+                  title="Maintenance Cost"
+                  description="How much gold it costs to fix the broken Gold Pot."
+                  value={goldPotMaintenanceCost}
+                  onChange={setGoldPotMaintenanceCost}
+                  onBlur={handleSave}
+                  colorClass="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+                />
+              </div>
             </div>
           </section>
 

@@ -8,6 +8,7 @@ import { Tooltip } from '../ui/Tooltip';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ChildAvatar } from '../ChildAvatar';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface StepChildrenSetupProps {
   onNext: (children: Partial<Child>[]) => void;
@@ -17,6 +18,7 @@ interface StepChildrenSetupProps {
 }
 
 export default function StepChildrenSetup({ onNext, onBack, initialChildren = [], startedBy }: StepChildrenSetupProps) {
+  const { canAddChild, openPaywall } = useSubscription();
   const styles = {
     text: 'text-stone-900 dark:text-stone-50',
     textMuted: 'text-stone-500 dark:text-stone-400',
@@ -58,6 +60,11 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
   const handleAddChild = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    if (!editingChildId && !canAddChild(children.length)) {
+      openPaywall('Unlimited Children');
+      return;
+    }
 
     if (editingChildId) {
       setChildren(prev => prev.map(child => 

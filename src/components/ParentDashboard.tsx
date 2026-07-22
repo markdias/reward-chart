@@ -48,6 +48,7 @@ import TargetsTab from './TargetsTab';
 import { WeeklyRewardChart } from './WeeklyRewardChart';
 import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
+import { useSubscription } from '../hooks/useSubscription';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { Walkthrough } from './Walkthrough';
@@ -173,6 +174,8 @@ export default function ParentDashboard({
     }
   }, [isBetaUser, activeTab]);
 
+  const { canAddChild, openPaywall } = useSubscription();
+
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
   const [tourStepIndex, setTourStepIndex] = useState(0);
@@ -182,8 +185,18 @@ export default function ParentDashboard({
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
     const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    mediaQuery.addEventListener('change', handleResize);
-    return () => mediaQuery.removeEventListener('change', handleResize);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleResize);
+    } else if ((mediaQuery as any).addListener) {
+      (mediaQuery as any).addListener(handleResize);
+    }
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleResize);
+      } else if ((mediaQuery as any).removeListener) {
+        (mediaQuery as any).removeListener(handleResize);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -1032,7 +1045,16 @@ export default function ParentDashboard({
                           className="absolute left-0 right-0 top-full mt-2 w-full flex flex-col gap-1 bg-white dark:bg-stone-900 rounded-[2rem] shadow-xl border border-stone-100 dark:border-stone-800 p-1 sm:p-1.5 z-50 origin-top"
                         >
                           {activeTab === 'children' && (
-                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { playSound.click(); setShowAddChild(true); setShowContextActions(false); }}>
+                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { 
+                              playSound.click(); 
+                              if (!canAddChild(children.length)) {
+                                openPaywall('Add Extra Child Chart');
+                                setShowContextActions(false);
+                                return;
+                              }
+                              setShowAddChild(true); 
+                              setShowContextActions(false); 
+                            }}>
                               <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
                               </div>
@@ -1494,7 +1516,13 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+                <div className={`grid gap-6 ${
+                  sortedChildren.length === 1 
+                    ? 'grid-cols-1 w-full' 
+                    : sortedChildren.length === 2 
+                      ? 'grid-cols-1 md:grid-cols-2 w-full' 
+                      : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full'
+                }`}>
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
@@ -1550,7 +1578,7 @@ export default function ParentDashboard({
                         style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif' }}
                       >
                         {/* Rainbow Trading Card */}
-                        <div className="w-full max-w-[440px] mx-auto md:mx-0 group perspective-1000">
+                        <div className="w-full group perspective-1000">
                           <div 
                             className="relative w-full rounded-[2rem] p-2 shadow-xl hover:shadow-2xl transition-shadow duration-500 transform-gpu"
                             style={{ background: getPetStripeBackground(child.character_id) }}
@@ -2742,43 +2770,6 @@ export default function ParentDashboard({
                         min={1}
                         max={18}
                       />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className={`block text-[9px] font-bold font-sans text-center ${styles.textMuted} uppercase tracking-widest mb-2`}>Choose Companion</label>
-                      <div className="flex justify-center gap-4">
-                        {CHARACTER_PACKS.map(char => (
-                          <button
-                            key={char.id}
-                            type="button"
-                            onClick={() => setNewChildChar(char.id)}
-                            className={`aspect-square w-28 rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
-                              newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
-                            }`}
-                          >
-                            {(() => {
-                              const stage = getCharacterStage(char.id, 99);
-                              return (
-                                <div className="relative w-12 h-12 mb-1 pointer-events-none">
-                                  <div className="w-full h-full" style={{ transform: `scale(${stage.model_scale || 1.0})` }}>
-                                    <model-viewer 
-                                      src={stage.model_url} 
-                                      alt={char.name} 
-                                      auto-rotate 
-                                      camera-controls 
-                                      class="w-full h-full"
-                                    >
-                                      <div slot="progress-bar"></div>
-                                    </model-viewer>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                            <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
-                              {char.name.split(' ')[0]}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </div>
 
