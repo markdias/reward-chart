@@ -1990,11 +1990,11 @@ export default function App() {
     }
   };
 
-  const handleDeliverReward = async (redemptionId: string) => {
+  const handleApproveReward = async (redemptionId: string) => {
     const redemption = redemptions.find(r => r.id === redemptionId);
     if (!redemption) return;
     
-    // Look up reward cost to deduct it now
+    // Look up reward cost to deduct it now upon approval
     const reward = rewards.find(r => r.id === redemption.reward_id);
     const child = children.find(c => c.id === redemption.child_id);
 
@@ -2012,7 +2012,6 @@ export default function App() {
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
       syncChildren(updatedChildren);
       
-      // Explicitly wait for child to update in DB before updating the redemption
       const supabase = getSupabaseClient();
       if (supabase) {
         const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
@@ -2024,6 +2023,50 @@ export default function App() {
     } else {
       console.error("Child not found for redemption:", redemption);
       alert("Error: Could not find the child profile to give pet food to!");
+    }
+
+    const approvedAt = new Date().toISOString();
+    const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'approved' as const, approved_at: approvedAt } : r);
+    syncRedemptions(updated);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'approved', approved_at: approvedAt }, { eq: { 'id': redemptionId } });
+      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+    }
+  };
+
+  const handleDeliverReward = async (redemptionId: string) => {
+    const redemption = redemptions.find(r => r.id === redemptionId);
+    if (!redemption) return;
+    
+    // If reward was not approved previously, deduct points as fallback
+    if (redemption.status === 'requested') {
+      const reward = rewards.find(r => r.id === redemption.reward_id);
+      const child = children.find(c => c.id === redemption.child_id);
+
+      if (child) {
+        const isBadgeFreebie = redemption.payment_source?.startsWith('badge_freebie');
+        const cost = (reward && !isBadgeFreebie) ? reward.cost_points : 0;
+        const isSavingsPurchase = redemption.payment_source === 'savings';
+        const targetChild = {
+          ...child,
+          points: isSavingsPurchase ? child.points : Math.max(0, child.points - cost),
+          savings_pot: isSavingsPurchase ? Math.max(0, (child.savings_pot || 0) - cost) : child.savings_pot,
+          pet_food: (child.pet_food || 0) + (cost > 0 || isBadgeFreebie ? 1 : 0),
+        };
+
+        const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
+        syncChildren(updatedChildren);
+        
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
+          if (error) {
+            console.error("Failed to update child:", error);
+          }
+        }
+      }
     }
 
     const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
@@ -2627,6 +2670,7 @@ updateChildInSupabase(targetChild);
               onDeleteReward={handleDeleteReward}
               onApproveCompletion={handleApproveCompletion}
               onRejectCompletion={handleRejectCompletion}
+              onApproveReward={handleApproveReward}
               onDeliverReward={handleDeliverReward}
               onRejectReward={handleRejectReward}
               onRestoreReward={handleRestoreReward}

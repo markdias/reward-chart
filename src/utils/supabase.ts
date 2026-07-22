@@ -156,7 +156,8 @@ CREATE TABLE IF NOT EXISTS reward_redemptions (
   child_id TEXT NOT NULL,
   parent_id TEXT NOT NULL,
   redeemed_at TIMESTAMPTZ DEFAULT NOW(),
-  status TEXT NOT NULL -- requested, delivered
+  approved_at TIMESTAMPTZ,
+  status TEXT NOT NULL -- requested, approved, delivered, rejected
 );
 
 -- 3. Enable Row Level Security (RLS)

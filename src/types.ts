@@ -171,7 +171,8 @@ export interface RewardRedemption {
   child_id: string;
   parent_id: string;
   redeemed_at: string;
-  status: 'requested' | 'delivered' | 'rejected';
+  approved_at?: string;
+  status: 'requested' | 'approved' | 'delivered' | 'rejected';
   payment_source?: string; // allow 'badge_freebie:badge-id'
 }
 

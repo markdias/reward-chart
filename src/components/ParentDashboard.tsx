@@ -94,6 +94,7 @@ interface ParentDashboardProps {
   onDeleteReward: (id: string) => void;
   onApproveCompletion: (id: string) => void;
   onRejectCompletion: (id: string) => void;
+  onApproveReward?: (id: string) => void;
   onDeliverReward: (id: string) => void;
   onRejectReward: (id: string) => void;
   onRestoreReward: (id: string) => void;
@@ -141,6 +142,7 @@ export default function ParentDashboard({
   onDeleteReward,
   onApproveCompletion,
   onRejectCompletion,
+  onApproveReward,
   onDeliverReward,
   onRejectReward,
   onRestoreReward,
@@ -574,6 +576,7 @@ export default function ParentDashboard({
 
   const pendingApprovals = completions.filter(c => c.status === 'pending');
   const pendingRedemptions = redemptions.filter(r => r.status === 'requested');
+  const approvedRedemptions = redemptions.filter(r => r.status === 'approved');
   const pendingGiftingRequests = giftingRequests.filter(g => g.status === 'pending');
   const totalPending = pendingApprovals.length + pendingRedemptions.length + pendingGiftingRequests.length;
 
@@ -1292,6 +1295,59 @@ export default function ParentDashboard({
                   </div>
                 )}
 
+                {/* Approved Rewards Waiting to be Given */}
+                {approvedRedemptions.length > 0 && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-200 dark:border-amber-900/50 space-y-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center text-lg shadow-md font-bold">
+                          🎁
+                        </div>
+                        <div>
+                          <Typography variant="h3" className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-50">
+                            Rewards Ready to Give ({approvedRedemptions.length})
+                          </Typography>
+                          <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">
+                            Approved rewards waiting to be handed out to your children
+                          </Typography>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {approvedRedemptions.map(req => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const reward = rewards.find(r => r.id === req.reward_id);
+                        return (
+                          <div key={req.id} className="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              {child && <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl" />}
+                              <div>
+                                <div className="text-xs font-bold text-stone-900 dark:text-stone-50">
+                                  {child?.name} &bull; <span className="text-amber-600 dark:text-amber-400 font-extrabold">{reward?.title || 'Reward'}</span>
+                                </div>
+                                <div className="text-[10px] text-stone-400 font-sans mt-0.5">
+                                  Approved {req.approved_at ? new Date(req.approved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently'}
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => {
+                                playSound.success();
+                                onDeliverReward(req.id);
+                              }}
+                              className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm text-xs font-bold px-3 py-1.5 rounded-xl"
+                            >
+                              Confirm Given ✓
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Needs Approval */}
                 <div className="space-y-3">
                   <Typography variant="h3" className="text-lg font-bold text-stone-900 dark:text-stone-50 px-1 mb-1">
@@ -1333,7 +1389,7 @@ export default function ParentDashboard({
                           actions: (
                             <>
                               <Button variant="secondary" size="sm" onClick={() => onRejectReward(req.id)}>Deny</Button>
-                              <Button variant="primary" size="sm" onClick={() => onDeliverReward(req.id)}>Approve</Button>
+                              <Button variant="primary" size="sm" onClick={() => (onApproveReward ? onApproveReward(req.id) : onDeliverReward(req.id))}>Approve</Button>
                             </>
                           )
                         };
@@ -2615,6 +2671,47 @@ export default function ParentDashboard({
                                 </motion.div>
                               )}
                             </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Approved Rewards Waiting to be Given */}
+                {approvedRedemptions.length > 0 && (
+                  <div className="pt-8 border-t border-stone-200 dark:border-stone-800">
+                    <Typography variant="h3" className="font-bold font-sans text-sm text-amber-600 dark:text-amber-400 uppercase pb-4 flex items-center gap-2">
+                      <Gift className="w-4 h-4" /> Approved Rewards (Waiting to be Given)
+                    </Typography>
+                    <div className="space-y-3">
+                      {approvedRedemptions.map(req => {
+                        const child = children.find(c => c.id === req.child_id);
+                        const reward = rewards.find(r => r.id === req.reward_id);
+                        return (
+                          <div key={req.id} className="flex items-center justify-between p-4 rounded-xl border bg-amber-500/5 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50">
+                            <div className="flex items-center gap-3">
+                              {child && <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl" />}
+                              <div>
+                                <div className="text-xs font-bold text-stone-900 dark:text-stone-50">
+                                  {child?.name} claimed <strong className="text-amber-600 dark:text-amber-400">{reward?.title}</strong>
+                                </div>
+                                <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
+                                  Approved {req.approved_at ? new Date(req.approved_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                                </Typography>
+                              </div>
+                            </div>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => {
+                                playSound.success();
+                                onDeliverReward(req.id);
+                              }}
+                              className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-md text-xs font-bold px-4 py-2 rounded-xl"
+                            >
+                              Confirm Given ✓
+                            </Button>
                           </div>
                         );
                       })}

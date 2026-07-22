@@ -2501,8 +2501,9 @@ export default function ChildDashboard({
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
+                            const hasApprovedRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'approved');
                             const isSavingFor = isSavingsUnlocked && (activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title);
-                            const canDispense = isAffordable && availability.available && !hasPendingRequest;
+                            const canDispense = isAffordable && availability.available && !hasPendingRequest && !hasApprovedRequest;
 
                             // Hide claimed one_time rewards entirely
                             if (!rew.is_available && rew.limit_type === 'one_time') {
@@ -2510,7 +2511,9 @@ export default function ChildDashboard({
                             }
 
                             let statusBadge = null;
-                            if (hasPendingRequest) {
+                            if (hasApprovedRequest) {
+                              statusBadge = <div className="inline-flex px-3 py-1 bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-black uppercase tracking-widest rounded-full border border-amber-300">APPROVED</div>;
+                            } else if (hasPendingRequest) {
                               statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
                             } else if (!availability.available && !isSavingFor) {
                               statusBadge = <span className="text-[9px] font-black uppercase tracking-wider text-stone-400 truncate px-2">{availability.reason}</span>;
