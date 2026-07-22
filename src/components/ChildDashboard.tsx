@@ -2434,14 +2434,14 @@ export default function ChildDashboard({
                             {(() => {
                               const goalReward = rewards.find(r => r.id === activeChild.savings_goal_reward_id || r.title === activeChild.savings_goal_name);
                               const targetAmount = goalReward?.cost_points || activeChild.savings_goal_amount || 1;
-                              const currentSaved = Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
-                              const progressPercent = Math.min(100, Math.round((currentSaved / targetAmount) * 100));
-                              const displaySaved = Math.min(currentSaved, targetAmount);
+                              const currentSavedInPot = Math.max(0, activeChild.savings_pot || 0);
+                              const progressPercent = Math.min(100, Math.round((currentSavedInPot / targetAmount) * 100));
+                              const displaySaved = Math.min(currentSavedInPot, targetAmount);
                               
                               return (
-                                <div className="sm:w-52 space-y-1">
+                                <div className="sm:w-56 space-y-1">
                                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-stone-600 dark:text-stone-300">
-                                    <span>{displaySaved} / {targetAmount} COINS</span>
+                                    <span>{displaySaved} / {targetAmount} IN SAVINGS POT</span>
                                     <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{progressPercent}%</span>
                                   </div>
                                   <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-900/10 p-0.5 shadow-inner">
@@ -2505,9 +2505,9 @@ export default function ChildDashboard({
                               );
                             }
 
-                            const currentSaved = Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
-                            const progressPercent = Math.min(100, Math.round((currentSaved / Math.max(1, rew.cost_points)) * 100));
-                            const displaySaved = Math.min(currentSaved, rew.cost_points);
+                            const currentSavedInPot = Math.max(0, activeChild.savings_pot || 0);
+                            const progressPercent = Math.min(100, Math.round((currentSavedInPot / Math.max(1, rew.cost_points)) * 100));
+                            const displaySaved = Math.min(currentSavedInPot, rew.cost_points);
 
                             const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
                             const rewardBgStyle = {
@@ -2536,7 +2536,7 @@ export default function ChildDashboard({
                                   <div className="w-full relative z-10 mt-2 px-0.5">
                                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-1">
                                       <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-500 dark:text-stone-400'}>
-                                        {displaySaved} / {rew.cost_points} COINS
+                                        {displaySaved} / {rew.cost_points} IN SAVINGS
                                       </span>
                                       <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-400 dark:text-stone-500'}>
                                         {progressPercent}%
