@@ -2505,9 +2505,14 @@ export default function ChildDashboard({
                               );
                             }
 
-                            const currentSavedInPot = Math.max(0, activeChild.savings_pot || 0);
-                            const progressPercent = Math.min(100, Math.round((currentSavedInPot / Math.max(1, rew.cost_points)) * 100));
-                            const displaySaved = Math.min(currentSavedInPot, rew.cost_points);
+                            const currentSaved = isSavingFor
+                              ? Math.max(0, activeChild.savings_pot || 0)
+                              : Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
+                            const progressPercent = Math.min(100, Math.round((currentSaved / Math.max(1, rew.cost_points)) * 100));
+                            const displaySaved = Math.min(currentSaved, rew.cost_points);
+                            const progressLabel = isSavingFor
+                              ? `${displaySaved} / ${rew.cost_points} IN SAVINGS POT`
+                              : `${displaySaved} / ${rew.cost_points} COINS`;
 
                             const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
                             const rewardBgStyle = {
@@ -2536,7 +2541,7 @@ export default function ChildDashboard({
                                   <div className="w-full relative z-10 mt-2 px-0.5">
                                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-1">
                                       <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-500 dark:text-stone-400'}>
-                                        {displaySaved} / {rew.cost_points} IN SAVINGS
+                                        {progressLabel}
                                       </span>
                                       <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-400 dark:text-stone-500'}>
                                         {progressPercent}%
