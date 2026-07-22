@@ -2004,18 +2004,19 @@ export default function App() {
     if (!redemption) return;
     
     const approvedAt = new Date().toISOString();
+    const targetRedemption = { ...redemption, status: 'approved' as const, approved_at: approvedAt };
     
     // 1. Immediately update redemption status in local state & storage
     const updatedRedemptions = redemptions.map(r => 
-      r.id === redemptionId ? { ...r, status: 'approved' as const, approved_at: approvedAt } : r
+      r.id === redemptionId ? targetRedemption : r
     );
     syncRedemptions(updatedRedemptions);
 
-    // 2. Immediately sync redemption status update to Supabase FIRST
+    // 2. Immediately upsert full redemption object to Supabase FIRST
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'approved' }, { eq: { 'id': redemptionId } });
-      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+      const { error } = await executeOrQueue('reward_redemptions', 'upsert', targetRedemption, { onConflict: 'id' });
+      if (error) console.warn('Failed to upsert redemption in Supabase:', error.message);
     }
 
     // 3. Deduct points and grant pet food, then sync children (which triggers broadcast refetch)
@@ -2037,7 +2038,7 @@ export default function App() {
       syncChildren(updatedChildren);
       
       if (supabase) {
-        const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
+        const { error } = await executeOrQueue('children', 'upsert', targetChild, { onConflict: 'id' });
         if (error) {
           console.error("Failed to update child:", error);
         }
@@ -2049,15 +2050,17 @@ export default function App() {
     const redemption = redemptions.find(r => r.id === redemptionId);
     if (!redemption) return;
 
+    const targetRedemption = { ...redemption, status: 'delivered' as const };
+
     // 1. Immediately update redemption status in local state & storage
-    const updatedRedemptions = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
+    const updatedRedemptions = redemptions.map(r => r.id === redemptionId ? targetRedemption : r);
     syncRedemptions(updatedRedemptions);
 
-    // 2. Sync redemption status to Supabase FIRST
+    // 2. Sync full redemption status to Supabase FIRST
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'delivered' }, { eq: { 'id': redemptionId } });
-      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+      const { error } = await executeOrQueue('reward_redemptions', 'upsert', targetRedemption, { onConflict: 'id' });
+      if (error) console.warn('Failed to upsert redemption in Supabase:', error.message);
     }
 
     // 3. If reward was not approved previously, deduct points as fallback
@@ -2280,7 +2283,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await executeOrQueue('reward_redemptions', 'update', targetRedemption, { eq: { 'id': redemption.id } });
+      const { error } = await executeOrQueue('reward_redemptions', 'upsert', targetRedemption, { onConflict: 'id' });
       if (error) {
         console.error("Failed to update redemption:", error);
       }
