@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical, Globe
 } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
@@ -1385,7 +1385,11 @@ export default function ParentDashboard({
                           points: reward?.cost_points || 0,
                           type: 'reward' as const,
                           status: 'pending' as const,
-                          iconOverride: <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎁</div>,
+                          iconOverride: (
+                            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-100 dark:border-purple-900/40">
+                              <Gift className="w-5 h-5" />
+                            </div>
+                          ),
                           actions: (
                             <>
                               <Button variant="secondary" size="sm" onClick={() => onRejectReward(req.id)}>Deny</Button>
@@ -1396,8 +1400,8 @@ export default function ParentDashboard({
                       }),
                       ...pendingGiftingRequests.map(req => {
                         const child = children.find(c => c.id === req.child_id);
-                        const typeIcon = req.type === 'charity' ? '🌍' : '💝';
                         const title = req.type === 'charity' ? `Donate to ${req.charity_name}` : `Gift to ${children.find(c => c.id === req.sibling_id)?.name}`;
+                        const isCharity = req.type === 'charity';
                         return {
                           id: req.id,
                           title: `${child?.name} wants to give!`,
@@ -1406,7 +1410,15 @@ export default function ParentDashboard({
                           points: req.amount,
                           type: req.type as any,
                           status: 'pending' as const,
-                          iconOverride: <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${req.type === 'charity' ? 'bg-emerald-50 text-emerald-500' : 'bg-pink-50 text-pink-500'}`}>{typeIcon}</div>,
+                          iconOverride: (
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                              isCharity
+                                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40'
+                                : 'bg-pink-50 dark:bg-pink-950/60 text-pink-600 dark:text-pink-400 border-pink-100 dark:border-pink-900/40'
+                            }`}>
+                              {isCharity ? <Globe className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+                            </div>
+                          ),
                           actions: (
                             <>
                               <Button variant="secondary" size="sm" onClick={() => onRejectGiftingRequest && onRejectGiftingRequest(req.id)}>Deny</Button>
