@@ -1389,12 +1389,15 @@ export default function ParentDashboard({
                       <Button variant="none" size="none"
                         id="tour-chart-subtab-weekly"
                         onClick={() => setChartSubTab('weekly')}
-                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'weekly'
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'weekly'
                           ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                           : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                           }`}
                       >
-                        WEEKLY CHART
+                        <span>WEEKLY CHART</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
                       </Button>
                       <Button variant="none" size="none"
                         id="tour-chart-subtab-insights"
