@@ -8,6 +8,7 @@ import { playSound } from '../utils/sound';
 
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
 import { hashPassword, evaluatePassword } from '../utils/security';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email';
 import { PasswordInput } from './PasswordInput';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
@@ -25,24 +26,45 @@ interface AuthPageProps {
 export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, onCreateNewAccount, theme }: AuthPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const searchParams = new URLSearchParams(window.location.search);
   
   const hasShareToken = searchParams.has('share');
   const hasChildShareToken = searchParams.has('child_share');
-  const initialMode = hasShareToken ? 'parentSignup' 
-                    : hasChildShareToken ? 'childSignup' 
-                    : (searchParams.get('mode') as 'login' | 'joinCode' | 'parentSignup' | 'childSignup') || 'login';
+  const isResetUrl = searchParams.get('mode') === 'reset_password' || window.location.hash.includes('type=recovery');
 
-  const [authMode, setAuthMode] = useState<'login' | 'joinCode' | 'parentSignup' | 'childSignup'>(initialMode);
+  const initialMode = isResetUrl ? 'resetPassword'
+                    : hasShareToken ? 'parentSignup' 
+                    : hasChildShareToken ? 'childSignup' 
+                    : (searchParams.get('mode') as any) || 'login';
+
+  const [authMode, setAuthMode] = useState<'login' | 'joinCode' | 'parentSignup' | 'childSignup' | 'forgotPassword' | 'resetPassword'>(initialMode);
   const isSignUp = authMode === 'parentSignup' || authMode === 'childSignup';
 
   const [realAuthError, setRealAuthError] = useState('');
+  const [resetSuccessMsg, setResetSuccessMsg] = useState('');
+  const [isSubmittingReset, setIsSubmittingReset] = useState(false);
   const [inviterInfo, setInviterInfo] = useState<{ name: string, familyName: string, isChild?: boolean } | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [isApplyingCode, setIsApplyingCode] = useState(false);
   const { flags } = useFeatureFlags();
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setAuthMode('resetPassword');
+        }
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, []);
 
   useEffect(() => {
     if (hasShareToken && isSupabaseConfigured()) {
@@ -276,6 +298,10 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
             playSound.pinError();
             return;
           }
+
+          // Trigger Welcome Email via Resend Edge Function
+          sendWelcomeEmail(email, name).catch(err => console.warn('Welcome email error:', err));
+
           const session = data?.session;
           if (!session) {
             const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -290,7 +316,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
               return;
             }
 
-            setRealAuthError('Sign up processed! If you still cannot log in, please try signing up with a NEW email (your first attempt might have gotten stuck in Supabase).');
+            setRealAuthError('Sign up processed! Check your email inbox for welcome instructions.');
             setAuthMode('login');
             playSound.success();
             return;
@@ -324,6 +350,80 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
       onSignUpReal(email, name, familyName);
     } else {
       onLoginReal(email);
+    }
+  };
+
+  const handleSendForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRealAuthError('');
+    setResetSuccessMsg('');
+
+    if (!email) {
+      setRealAuthError('Please enter your email address to receive password reset instructions.');
+      playSound.pinError();
+      return;
+    }
+
+    setIsSubmittingReset(true);
+    try {
+      const res = await sendPasswordResetEmail(email);
+      if (res.success) {
+        setResetSuccessMsg(`Password reset email sent to ${email}! Please check your inbox and follow the link to reset your password.`);
+        playSound.pinSuccess();
+      } else {
+        setRealAuthError(res.error || 'Failed to send password reset email. Please try again.');
+        playSound.pinError();
+      }
+    } catch (err: any) {
+      setRealAuthError(err.message || 'Failed to send reset link.');
+      playSound.pinError();
+    } finally {
+      setIsSubmittingReset(false);
+    }
+  };
+
+  const handleUpdateNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRealAuthError('');
+    setResetSuccessMsg('');
+
+    if (!newPassword || !confirmPassword) {
+      setRealAuthError('Please enter and confirm your new password.');
+      playSound.pinError();
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setRealAuthError('Passwords do not match. Please verify both fields.');
+      playSound.pinError();
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setRealAuthError('Password must be at least 6 characters.');
+      playSound.pinError();
+      return;
+    }
+
+    setIsSubmittingReset(true);
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error('Supabase client is not configured');
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setRealAuthError(error.message);
+        playSound.pinError();
+      } else {
+        setResetSuccessMsg('Your password has been successfully reset! You can now log in with your new password.');
+        setAuthMode('login');
+        playSound.pinSuccess();
+      }
+    } catch (err: any) {
+      setRealAuthError(err.message || 'Failed to update password.');
+      playSound.pinError();
+    } finally {
+      setIsSubmittingReset(false);
     }
   };
 
@@ -418,16 +518,27 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                 {authMode === 'login' ? 'Welcome Back' : 
                  authMode === 'joinCode' ? 'Enter Your Invite Code' :
                  authMode === 'childSignup' ? 'Set Up Child Account' :
+                 authMode === 'forgotPassword' ? 'Reset Password' :
+                 authMode === 'resetPassword' ? 'Choose New Password' :
                  hasShareToken ? 'Join Family' : 'Set Up Your Account'}
               </h3>
               <p className={`text-xs ${styles.textMuted} mb-3`}>
                 {authMode === 'login' ? 'Sign in to manage quests and rewards' :
                  authMode === 'joinCode' ? 'Paste the 6-character code given to you' :
                  authMode === 'childSignup' ? (inviterInfo ? `Hi ${inviterInfo.name}! Let's create your account.` : 'Create your secure account.') :
+                 authMode === 'forgotPassword' ? 'Enter your registered email address to receive password reset instructions' :
+                 authMode === 'resetPassword' ? 'Enter your new password below' :
                  (inviterInfo ? `You've been invited by ${inviterInfo.name} to join ${inviterInfo.familyName}` : 'Create your family account to get started')
                 }
               </p>
             </div>
+
+            {resetSuccessMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{resetSuccessMsg}</span>
+              </div>
+            )}
 
             {authMode === 'joinCode' ? (
               <div className="space-y-3">
@@ -450,6 +561,75 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                   </Button>
                 </div>
               </div>
+            ) : authMode === 'forgotPassword' ? (
+              <form onSubmit={handleSendForgotPassword} className="space-y-3">
+                {realAuthError && (
+                  <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{realAuthError}</span>
+                  </div>
+                )}
+
+                <Input
+                  label="Email Address"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+
+                <Button
+                  type="submit"
+                  variant="dark"
+                  fullWidth
+                  className="mt-4"
+                  disabled={isSubmittingReset}
+                >
+                  {isSubmittingReset ? 'SENDING EMAIL...' : 'SEND RESET LINK'}
+                </Button>
+              </form>
+            ) : authMode === 'resetPassword' ? (
+              <form onSubmit={handleUpdateNewPassword} className="space-y-3">
+                {realAuthError && (
+                  <div className="p-3 bg-danger/10 border border-danger/30 text-danger rounded-xl text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{realAuthError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className={`block text-[9px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                    New Password
+                  </label>
+                  <PasswordInput
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    showPolicy={true}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-[9px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
+                    Confirm Password
+                  </label>
+                  <PasswordInput
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    showPolicy={false}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="dark"
+                  fullWidth
+                  className="mt-4"
+                  disabled={isSubmittingReset}
+                >
+                  {isSubmittingReset ? 'SAVING...' : 'UPDATE PASSWORD'}
+                </Button>
+              </form>
             ) : (
               <form onSubmit={handleRealAuthSubmit} className="space-y-3">
                 {realAuthError && (
@@ -519,9 +699,25 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                 )}
 
                 <div>
-                  <label className={`block text-[9px] font-sans font-bold uppercase tracking-widest ${styles.textMuted} mb-1`}>
-                    Password
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className={`block text-[9px] font-sans font-bold uppercase tracking-widest ${styles.textMuted}`}>
+                      Password
+                    </label>
+                    {!isSignUp && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playSound.click();
+                          setRealAuthError('');
+                          setResetSuccessMsg('');
+                          setAuthMode('forgotPassword');
+                        }}
+                        className="text-[11px] font-bold text-orange-500 hover:text-orange-600 transition-colors"
+                      >
+                        Forgot Password?
+                      </button>
+                    )}
+                  </div>
                   <PasswordInput
                     value={password}
                     onChange={setPassword}
@@ -548,6 +744,8 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                 fullWidth
                 onClick={() => {
                   playSound.click();
+                  setRealAuthError('');
+                  setResetSuccessMsg('');
                   if (authMode === 'login') {
                     onCreateNewAccount();
                   } else {
@@ -556,7 +754,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
                 }}
                 id="toggle-sign-up"
               >
-                {authMode === 'login' ? 'CREATE A NEW ACCOUNT' : '← USE EXISTING ACCOUNT'}
+                {authMode === 'login' ? 'CREATE A NEW ACCOUNT' : '← BACK TO SIGN IN'}
               </Button>
             </div>
           </motion.div>
