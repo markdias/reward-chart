@@ -5,7 +5,7 @@ import {
   FaChildDress, FaChild, FaCrown, FaFire, FaShield, FaBullhorn, FaBroom, FaPen, FaBaby, FaBolt,
   FaPizzaSlice, FaPalette, FaBookOpen, FaInfinity, FaCalendar, FaHandPeace, FaScroll, FaRocket
 } from 'react-icons/fa6';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -204,74 +204,206 @@ export default function ParentDashboard({
   };
 
   // Called BEFORE the step changes, so we can scroll to top ONLY when the main tab changes!
-  // This prevents the page from "slightly scrolling" or jumping when navigating sub-tabs on mobile.
-  const handleBeforeTourStepChange = (nextStepIndex: number) => {
-    const mainTabChangeSteps = [0, 1, 7, 8, 11, 13, 16, 22];
-    if (mainTabChangeSteps.includes(nextStepIndex)) {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
+  const handleBeforeTourStepChange = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  const tourSteps: Step[] = useMemo(() => {
+    const steps: Step[] = [
+      {
+        target: '.joyride-target-home',
+        content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
+        placement: 'bottom',
+      },
+    ];
+
+    if (isBetaUser) {
+      steps.push(
+        {
+          target: '.joyride-target-chart',
+          content: 'This is the Chart tab! Toggle between your weekly reward matrix and real-time child performance insights.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-child-selector',
+          content: 'Use the child selector bar to switch between your children, or toggle between 7-day, 14-day, and 30-day view ranges.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-grid',
+          content: 'Tap any empty cell (+ sign) to instantly auto-approve a chore for that date! Click existing cells to change status or reset.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-print-btn',
+          content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-chart-subtab-insights',
+          content: 'Switch to the INSIGHTS sub-tab to explore child progress analytics, coin stats, category breakdowns, and AI parenting tips.',
+          placement: 'bottom',
+        },
+        {
+          target: '#insights-tab-view',
+          content: 'In Insights, view key statistics like total gold coins, chores done, day streak, weekly best days chart, category breakdown, and areas going well or struggling.',
+          placement: 'bottom',
+        }
+      );
+    }
+
+    steps.push(
+      {
+        target: '.joyride-target-children',
+        content: 'This is the Children tab. Here you can add child profiles, customize avatars, and set level-up rewards.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-directory',
+        content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-active',
+        content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-task-subtab-routines',
+        content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-directory',
+        content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-reward-subtab-active',
+        content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids.',
+        placement: 'bottom',
+      },
+      {
+        target: '.joyride-target-targets',
+        content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-logout-btn',
+        content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-help-btn',
+        content: 'Need help? The Guide button replays this tour and explains how the system works.',
+        placement: 'bottom',
+      },
+      {
+        target: '#global-settings-btn',
+        content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-profile-tab',
+        content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-security-tab',
+        content: 'The Security tab allows you to update your password securely.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-sharing-tab',
+        content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-danger-tab',
+        content: 'The Danger tab contains options to reset data or completely start over if you need a clean slate.',
+        placement: 'bottom',
+      },
+      {
+        target: '#exit-to-child-view-btn',
+        content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
+        placement: 'bottom',
+      },
+      {
+        target: 'body',
+        content: (
+          <div className="flex flex-col gap-4">
+            <p className="font-bold">You're all set! Explore each section at your own pace.</p>
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
+                if (e.target.checked) {
+                  localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
+                  if (onUpdateParentProfile) {
+                    onUpdateParentProfile({ tour_seen: true });
+                  }
+                }
+              }} />
+              <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
+            </div>
+          </div>
+        ),
+        placement: 'center',
+      }
+    );
+
+    return steps;
+  }, [isBetaUser, onUpdateParentProfile]);
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
-    if (nextStepIndex === 0) {
+    const step = tourSteps[nextStepIndex];
+    if (!step || typeof step.target !== 'string') return;
+
+    const targetSelector = step.target;
+
+    if (targetSelector === '.joyride-target-home' || targetSelector === '#exit-to-child-view-btn') {
       setActiveTab('home');
-    } else if (nextStepIndex >= 1 && nextStepIndex <= 4) {
+    } else if (targetSelector === '.joyride-target-chart' || targetSelector.startsWith('#tour-chart-')) {
       setActiveTab('chart');
-      setChartSubTab('weekly');
-    } else if (nextStepIndex >= 5 && nextStepIndex <= 6) {
+      if (targetSelector === '#tour-chart-subtab-insights') {
+        setChartSubTab('insights');
+      } else {
+        setChartSubTab('weekly');
+      }
+    } else if (targetSelector === '#insights-tab-view') {
       setActiveTab('chart');
       setChartSubTab('insights');
-    } else if (nextStepIndex === 7) {
+    } else if (targetSelector === '.joyride-target-children') {
       setActiveTab('children');
-    } else if (nextStepIndex === 8) {
+    } else if (targetSelector.startsWith('#tour-task-')) {
       setActiveTab('tasks');
-      setTaskSubTab('directory');
-    } else if (nextStepIndex === 9) {
-      setActiveTab('tasks');
-      setTaskSubTab('active');
-    } else if (nextStepIndex === 10) {
-      setActiveTab('tasks');
-      setTaskSubTab('routines');
-    } else if (nextStepIndex === 11) {
+      if (targetSelector === '#tour-task-subtab-directory') setTaskSubTab('directory');
+      else if (targetSelector === '#tour-task-subtab-active') setTaskSubTab('active');
+      else if (targetSelector === '#tour-task-subtab-routines') setTaskSubTab('routines');
+    } else if (targetSelector.startsWith('#tour-reward-')) {
       setActiveTab('rewards');
-      setRewardSubTab('directory');
-    } else if (nextStepIndex === 12) {
-      setActiveTab('rewards');
-      setRewardSubTab('active');
-    } else if (nextStepIndex === 13) {
+      if (targetSelector === '#tour-reward-subtab-directory') setRewardSubTab('directory');
+      else if (targetSelector === '#tour-reward-subtab-active') setRewardSubTab('active');
+    } else if (targetSelector === '.joyride-target-targets') {
       setActiveTab('targets');
-    } else if (nextStepIndex === 16 || nextStepIndex === 17) {
+    } else if (targetSelector.startsWith('#tour-settings-') || targetSelector === '#global-settings-btn') {
       setActiveTab('settings');
-      setSettingsSubTab('profile');
-    } else if (nextStepIndex === 18) {
-      setActiveTab('settings');
-      setSettingsSubTab('security');
-    } else if (nextStepIndex === 19) {
-      setActiveTab('settings');
-      setSettingsSubTab('sharing');
-    } else if (nextStepIndex === 20) {
-      setActiveTab('settings');
-      setSettingsSubTab('danger');
-    } else if (nextStepIndex === 21) {
-      setActiveTab('settings');
-    } else if (nextStepIndex === 22) {
-      setActiveTab('home');
+      if (targetSelector === '#tour-settings-profile-tab') setSettingsSubTab('profile');
+      else if (targetSelector === '#tour-settings-security-tab') setSettingsSubTab('security');
+      else if (targetSelector === '#tour-settings-sharing-tab') setSettingsSubTab('sharing');
+      else if (targetSelector === '#tour-settings-danger-tab') setSettingsSubTab('danger');
     }
 
-    // Delay updating the stepIndex to allow active tab mount / layout adjustments
+    // Delay updating stepIndex to allow tab render
     setTimeout(() => {
       setTourStepIndex(nextStepIndex);
-      
-      // Smart manual scroll: only scroll enough to push the target into the safe viewing area
+
       setTimeout(() => {
-        const step = tourSteps[nextStepIndex];
-        if (step && typeof step.target === 'string' && step.target !== 'body') {
+        if (typeof step.target === 'string' && step.target !== 'body') {
           const targetEl = document.querySelector(step.target);
           if (targetEl) {
             const rect = targetEl.getBoundingClientRect();
-            const topBoundary = 120; // Clear the top header
-            const bottomBoundary = window.innerHeight - 150; // Clear bottom tab bar + tooltip
+            const topBoundary = 120;
+            const bottomBoundary = window.innerHeight - 150;
 
             let scrollDiff = 0;
             if (rect.top < topBoundary) {
@@ -288,139 +420,6 @@ export default function ParentDashboard({
       }, 50);
     }, 300);
   };
-
-  const tourSteps: Step[] = [
-    {
-      target: '.joyride-target-home',
-      content: 'Welcome to the Parent Dashboard! This is your Home tab where you get quick summaries of your children\'s progress, pending approvals, and daily reminders.',
-      placement: 'bottom',
-    },
-    {
-      target: '.joyride-target-chart',
-      content: 'This is the Chart & Insights tab! Toggle between your weekly reward matrix and real-time child performance insights.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-chart-child-selector',
-      content: 'Use the child selector bar to switch between your children, or toggle between 7-day, 14-day, and 30-day view ranges.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-chart-grid',
-      content: 'Tap any empty cell (+ sign) to instantly auto-approve a chore for that date! Click existing cells to change status or reset.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-chart-print-btn',
-      content: 'Click the Print button anytime to generate a clean physical chart layout for hanging on the wall or fridge!',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-chart-subtab-insights',
-      content: 'Switch to the INSIGHTS sub-tab to explore child progress analytics, coin stats, category breakdowns, and AI parenting tips.',
-      placement: 'bottom',
-    },
-    {
-      target: '#insights-tab-view',
-      content: 'In Insights, view key statistics like total gold coins, chores done, day streak, weekly best days chart, category breakdown, and areas going well or struggling.',
-      placement: 'bottom',
-    },
-    {
-      target: '.joyride-target-children',
-      content: 'This is the Children tab. Here you can add child profiles, customize avatars, and set level-up rewards.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-directory',
-      content: 'In the Tasks tab under TEMPLATES, you can create reusable task templates (like chores or learning) that kids can complete to earn coins.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-active',
-      content: 'Under ASSIGNED, you can see all active tasks assigned to specific kids and track their completion status.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-task-subtab-routines',
-      content: 'Under ROUTINES, you can set up recurring daily or weekly task schedules to build strong habits.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-reward-subtab-directory',
-      content: 'In the Rewards tab under TEMPLATES, you can create real-life reward options (like extra screen time or a special treat) and set their coin prices.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-reward-subtab-active',
-      content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids.',
-      placement: 'bottom',
-    },
-    {
-      target: '.joyride-target-targets',
-      content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-logout-btn',
-      content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-help-btn',
-      content: 'Need help? The Guide button replays this tour and explains how the system works.',
-      placement: 'bottom',
-    },
-    {
-      target: '#global-settings-btn',
-      content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-profile-tab',
-      content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-security-tab',
-      content: 'The Security tab allows you to update your password securely.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-sharing-tab',
-      content: 'The Sharing tab lets you invite a partner or co-parent to manage the same dashboard.',
-      placement: 'bottom',
-    },
-    {
-      target: '#tour-settings-danger-tab',
-      content: 'The Danger tab contains options to reset data or completely start over if you need a clean slate.',
-      placement: 'bottom',
-    },
-    {
-      target: '#exit-to-child-view-btn',
-      content: 'Use the Switch to Child View button to let your children access their dashboard and claim tasks. This locks parent settings with your passcode.',
-      placement: 'bottom',
-    },
-    {
-      target: 'body',
-      content: (
-        <div className="flex flex-col gap-4">
-          <p className="font-bold">You're all set! Explore each section at your own pace.</p>
-          <div className="flex items-center gap-2 mt-2">
-            <input type="checkbox" id="tour-dont-show" className="rounded text-indigo-600 w-5 h-5" onChange={(e) => {
-              if (e.target.checked) {
-                localStorage.setItem('RCH_TOUR_SEEN_PARENT', 'true');
-                if (onUpdateParentProfile) {
-                  onUpdateParentProfile({ tour_seen: true });
-                }
-              }
-            }} />
-            <label htmlFor="tour-dont-show" className="text-sm cursor-pointer">Don't show this tour again</label>
-          </div>
-        </div>
-      ),
-      placement: 'center',
-    }
-  ];
 
   useEffect(() => {
     setActiveTab(initialTab);
