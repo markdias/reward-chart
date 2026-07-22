@@ -10,7 +10,7 @@ import { CATEGORY_ICON_MAP } from '../utils/categories';
 import { CoinBadge } from './CoinBadge';
 import { CircularProgressBar } from './ProgressBar';
 import { Button } from './ui/Button';
-import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame, X } from 'lucide-react';
+import { Bell, Trophy, Sparkles, AlertTriangle, Coins, Award, Star, Zap, Droplets, Target, BookOpen, Heart, Activity, Palette, CheckCircle, Shield, Clock, TrendingUp, Anchor, Coffee, Compass, Sun, Moon, Map, Camera, Music, Play, Flag, Crown, Gem, Medal, ChevronRight, Flame, X, Gift } from 'lucide-react';
 import { getSupabaseClient } from '../utils/supabase';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { ActivityCard, ActivityType, ActivityStatus } from './ui/ActivityCard';
