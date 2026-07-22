@@ -59,6 +59,14 @@ export const PRO_FEATURES: ProFeature[] = [
     proLimit: 'Unlimited Children',
   },
   {
+    id: 'pots',
+    title: 'Unlock All 4 Pots & Mechanics',
+    description: 'Access Main, Savings, Food, and Gifting pots for complete habit building.',
+    iconName: 'Gift',
+    freeLimit: '3 Pots Max',
+    proLimit: 'All 4 Pots Unlocked',
+  },
+  {
     id: 'ai_insights',
     title: 'Progress Insights',
     description: 'Personalized progress recommendations based on completion patterns and pet care.',
