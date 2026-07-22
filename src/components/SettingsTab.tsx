@@ -398,7 +398,7 @@ export default function SettingsTab({
                   <div>
                     <h4 className={`text-sm font-bold text-stone-700 dark:text-stone-200`}>Join Beta Program</h4>
                     <p className={`text-xs text-stone-500 dark:text-stone-400 mt-0.5 pr-4`}>
-                      Get early access to experimental features before they are released to everyone.
+                      Get early access to experimental features like Chart Performance Insights before they are released to everyone.
                     </p>
                   </div>
                 </div>

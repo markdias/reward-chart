@@ -27,8 +27,9 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical
 } from 'lucide-react';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, GiftingRequest } from '../types';
 import { CHARACTER_PACKS, getCharacterStage, PRECANNED_AVATARS } from '../data/characters';
@@ -162,6 +163,7 @@ export default function ParentDashboard({
   theme
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -1383,12 +1385,15 @@ export default function ParentDashboard({
                   <Button variant="none" size="none"
                     id="tour-chart-subtab-insights"
                     onClick={() => setChartSubTab('insights')}
-                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'insights'
+                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'insights'
                       ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
                       : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
                       }`}
                   >
-                    INSIGHTS
+                    <span>INSIGHTS</span>
+                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                      BETA
+                    </span>
                   </Button>
                 </div>
 
@@ -1404,11 +1409,37 @@ export default function ParentDashboard({
                 )}
 
                 {chartSubTab === 'insights' && (
-                  <InsightsTab
-                    children={children}
-                    tasks={tasks}
-                    completions={completions}
-                  />
+                  (flags.insights_tab || parentProfile?.is_beta_tester) ? (
+                    <InsightsTab
+                      children={children}
+                      tasks={tasks}
+                      completions={completions}
+                    />
+                  ) : (
+                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+                        <FlaskConical className="w-7 h-7" />
+                      </div>
+                      <div className="space-y-1 max-w-md mx-auto">
+                        <Typography variant="h2" className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
+                          Insights is a Beta Feature
+                        </Typography>
+                        <Typography variant="body" className="text-xs sm:text-sm text-stone-500 dark:text-stone-400">
+                          Join our Beta Program in Settings to get early access to child performance analytics, best days charts, category breakdowns, and AI parenting tips!
+                        </Typography>
+                      </div>
+                      <Button
+                        variant="primary"
+                        onClick={() => {
+                          setActiveTab('settings');
+                          setSettingsSubTab('profile');
+                        }}
+                        className="px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
+                      >
+                        Join Beta Program
+                      </Button>
+                    </div>
+                  )
                 )}
               </motion.div>
             )}
