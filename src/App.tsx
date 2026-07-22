@@ -1994,7 +1994,22 @@ export default function App() {
     const redemption = redemptions.find(r => r.id === redemptionId);
     if (!redemption) return;
     
-    // Look up reward cost to deduct it now upon approval
+    const approvedAt = new Date().toISOString();
+    
+    // 1. Immediately update redemption status in local state & storage
+    const updatedRedemptions = redemptions.map(r => 
+      r.id === redemptionId ? { ...r, status: 'approved' as const, approved_at: approvedAt } : r
+    );
+    syncRedemptions(updatedRedemptions);
+
+    // 2. Immediately sync redemption status update to Supabase FIRST
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'approved' }, { eq: { 'id': redemptionId } });
+      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+    }
+
+    // 3. Deduct points and grant pet food, then sync children (which triggers broadcast refetch)
     const reward = rewards.find(r => r.id === redemption.reward_id);
     const child = children.find(c => c.id === redemption.child_id);
 
@@ -2012,35 +2027,31 @@ export default function App() {
       const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
       syncChildren(updatedChildren);
       
-      const supabase = getSupabaseClient();
       if (supabase) {
         const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
         if (error) {
           console.error("Failed to update child:", error);
-          alert("Database Error: Could not update child's points and pet food. " + error.message);
         }
       }
-    } else {
-      console.error("Child not found for redemption:", redemption);
-      alert("Error: Could not find the child profile to give pet food to!");
-    }
-
-    const approvedAt = new Date().toISOString();
-    const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'approved' as const, approved_at: approvedAt } : r);
-    syncRedemptions(updated);
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'approved', approved_at: approvedAt }, { eq: { 'id': redemptionId } });
-      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
     }
   };
 
   const handleDeliverReward = async (redemptionId: string) => {
     const redemption = redemptions.find(r => r.id === redemptionId);
     if (!redemption) return;
-    
-    // If reward was not approved previously, deduct points as fallback
+
+    // 1. Immediately update redemption status in local state & storage
+    const updatedRedemptions = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
+    syncRedemptions(updatedRedemptions);
+
+    // 2. Sync redemption status to Supabase FIRST
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'delivered' }, { eq: { 'id': redemptionId } });
+      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
+    }
+
+    // 3. If reward was not approved previously, deduct points as fallback
     if (redemption.status === 'requested') {
       const reward = rewards.find(r => r.id === redemption.reward_id);
       const child = children.find(c => c.id === redemption.child_id);
@@ -2059,7 +2070,6 @@ export default function App() {
         const updatedChildren = children.map(c => c.id === child.id ? targetChild : c);
         syncChildren(updatedChildren);
         
-        const supabase = getSupabaseClient();
         if (supabase) {
           const { error } = await executeOrQueue('children', 'update', targetChild, { eq: { 'id': targetChild.id } });
           if (error) {
@@ -2067,15 +2077,6 @@ export default function App() {
           }
         }
       }
-    }
-
-    const updated = redemptions.map(r => r.id === redemptionId ? { ...r, status: 'delivered' as const } : r);
-    syncRedemptions(updated);
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await executeOrQueue('reward_redemptions', 'update', { status: 'delivered' }, { eq: { 'id': redemptionId } });
-      if (error) console.warn('Failed to update redemption in Supabase:', error.message);
     }
   };
 
