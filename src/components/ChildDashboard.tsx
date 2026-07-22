@@ -1735,20 +1735,18 @@ export default function ChildDashboard({
                 })}
               </div>
 
-              {/* Empty state CTA for child auth accounts with no linked children */}
-              {!isLoading && children.length === 0 && isChildAuth && (
+              {/* Empty state CTA — prompt to enter a join code */}
+              {children.length === 0 && onEnterJoinCode && (
                 <div className="flex flex-col items-center gap-3 mt-4">
                   <p className="text-xs text-stone-400 dark:text-stone-500">
                     No profile found for this account.
                   </p>
-                  {onEnterJoinCode && (
-                    <button
-                      onClick={onEnterJoinCode}
-                      className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-sm uppercase tracking-wider shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all"
-                    >
-                      🔑 Enter Join Code
-                    </button>
-                  )}
+                  <button
+                    onClick={onEnterJoinCode}
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-sm uppercase tracking-wider shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all"
+                  >
+                    🔑 Enter Join Code
+                  </button>
                 </div>
               )}
 

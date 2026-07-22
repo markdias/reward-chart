@@ -416,12 +416,14 @@ export default function App() {
                     localStorage.removeItem('RCH_PENDING_CHILD_LINK');
                   } else {
                     console.error("Invalid child share token or RLS prevented reading target child");
+                    setIsLoadingData(false);
                     return;
                   }
                 } else if (!urlParams.has('share')) {
                   // Logged in with a child Supabase account that has no linked child record
                   // and no join code in the URL — prompt the user to enter a join code
                   setShowChildJoinCodePrompt(true);
+                  setIsLoadingData(false);
                   return;
                 } else {
                   // Creating a new parent profile
@@ -2648,7 +2650,7 @@ updateChildInSupabase(targetChild);
               theme={activeTheme}
               isChildAuth={isChildAuth}
               onLogout={handleLogout}
-              onEnterJoinCode={isChildAuth ? () => setShowChildJoinCodePrompt(true) : undefined}
+              onEnterJoinCode={() => setShowChildJoinCodePrompt(true)}
             />
           </motion.div>
         )}
