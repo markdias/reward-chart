@@ -3307,7 +3307,7 @@ export default function ChildDashboard({
                         )}
 
                         {/* Gold Pot Maintenance Locked Preview */}
-                        {!isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
+                        {subscription.isPro && !isGoldPotMaintenanceUnlocked && activeChild.level < (parentProfile?.gold_pot_maintenance_unlock_level ?? 8) && (
                           <div
                             className="joyride-target-pot-maintenance relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
