@@ -40,10 +40,7 @@ export async function revokeInvalidLevelBadges(childId: string, currentLevel: nu
 
 export async function checkAndUnlockBadges(child: Child) {
   const supabase = getSupabaseClient();
-  if (!supabase) return;
-
-  // Clean up any level badges that the child no longer qualifies for
-  await revokeInvalidLevelBadges(child.id, child.level || 1);
+  if (!supabase) return [];
 
   // 1. Fetch all badges
   const { data: allBadges, error: badgesError } = await supabase
@@ -51,7 +48,7 @@ export async function checkAndUnlockBadges(child: Child) {
     .select('*');
   if (badgesError || !allBadges) {
     console.error('Error fetching badges', badgesError);
-    return;
+    return [];
   }
 
   // 2. Fetch already unlocked child_badges
@@ -61,13 +58,8 @@ export async function checkAndUnlockBadges(child: Child) {
     .eq('child_id', child.id);
   if (unlockedError || !unlockedBadges) {
     console.error('Error fetching unlocked badges', unlockedError);
-    return;
+    return [];
   }
-
-  const unlockedBadgeIds = new Set(unlockedBadges.map(b => b.badge_id));
-  const lockedBadges = allBadges.filter(b => !unlockedBadgeIds.has(b.id));
-
-  if (lockedBadges.length === 0) return; // All unlocked!
 
   // 3. Compute dynamic stats (Tasks breakdown)
   const { data: completions } = await supabase
@@ -114,7 +106,7 @@ export async function checkAndUnlockBadges(child: Child) {
 
   let all_categories_count = 0;
   for (const count of Object.values(categories)) {
-    if (count >= 5) { // The 'Well-Rounded' badge asks for at least 5 in ALL 5 main categories
+    if (count >= 5) {
       all_categories_count++;
     }
   }
@@ -126,7 +118,7 @@ export async function checkAndUnlockBadges(child: Child) {
     level: child.level || 1,
     streak_days: child.streak_days || 0,
     total_tasks,
-    all_categories: all_categories_count, // How many categories have 5+ completions
+    all_categories: all_categories_count,
     chores: categories.chores,
     homework: categories.homework,
     behavior: categories.behavior,
@@ -141,9 +133,36 @@ export async function checkAndUnlockBadges(child: Child) {
     gold_pot_unbroken_days: child.gold_pot_unbroken_days || 0,
   };
 
+  // Revoke any unlocked badges that NO LONGER satisfy conditions (e.g. after data reset or score drop)
+  const badgesToRevoke = unlockedBadges
+    .filter(b => !evaluateCondition(b.badge_id, ctx))
+    .map(b => b.badge_id);
+
+  if (badgesToRevoke.length > 0) {
+    const { error: revokeError } = await supabase
+      .from('child_badges')
+      .delete()
+      .eq('child_id', child.id)
+      .in('badge_id', badgesToRevoke);
+
+    if (revokeError) {
+      console.error('Failed to revoke invalid badges', revokeError);
+    }
+  }
+
+  const validUnlockedBadgeIds = new Set(
+    unlockedBadges
+      .filter(b => evaluateCondition(b.badge_id, ctx))
+      .map(b => b.badge_id)
+  );
+
+  const lockedBadges = allBadges.filter(b => !validUnlockedBadgeIds.has(b.id));
+
+  if (lockedBadges.length === 0) return []; // All unlocked!
+
   const newUnlocks: string[] = [];
 
-  // 5. Evaluate conditions
+  // 5. Evaluate conditions for locked badges
   for (const badge of lockedBadges) {
     if (evaluateCondition(badge.id, ctx)) {
       newUnlocks.push(badge.id);
@@ -165,7 +184,6 @@ export async function checkAndUnlockBadges(child: Child) {
     if (insertError) {
       console.error('Error inserting new badges', insertError);
     } else {
-      // Optional: We could trigger an event or just return the newly unlocked badge IDs to display an alert
       return newUnlocks;
     }
   }
