@@ -1162,7 +1162,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: 'Chart & Insights', icon: TrendingUp },
+              { id: 'chart', label: (flags.insights_tab || parentProfile?.is_beta_tester) ? 'Chart & Insights' : 'Chart', icon: (flags.insights_tab || parentProfile?.is_beta_tester) ? TrendingUp : Calendar },
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1370,34 +1370,55 @@ export default function ParentDashboard({
                 className="space-y-6 sm:space-y-8"
                 id="chart-view"
               >
-                {/* SUB-TABS FOR CHART & INSIGHTS */}
-                <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
-                  <Button variant="none" size="none"
-                    id="tour-chart-subtab-weekly"
-                    onClick={() => setChartSubTab('weekly')}
-                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'weekly'
-                      ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                      : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
-                      }`}
-                  >
-                    WEEKLY CHART
-                  </Button>
-                  <Button variant="none" size="none"
-                    id="tour-chart-subtab-insights"
-                    onClick={() => setChartSubTab('insights')}
-                    className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'insights'
-                      ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
-                      : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
-                      }`}
-                  >
-                    <span>INSIGHTS</span>
-                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
-                      BETA
-                    </span>
-                  </Button>
-                </div>
+                {/* SUB-TABS FOR CHART & INSIGHTS (VISIBLE FOR BETA USERS) */}
+                {(flags.insights_tab || parentProfile?.is_beta_tester) ? (
+                  <>
+                    <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-weekly"
+                        onClick={() => setChartSubTab('weekly')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 ${chartSubTab === 'weekly'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        WEEKLY CHART
+                      </Button>
+                      <Button variant="none" size="none"
+                        id="tour-chart-subtab-insights"
+                        onClick={() => setChartSubTab('insights')}
+                        className={`flex-1 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-widest transition-all duration-300 flex items-center justify-center gap-1.5 ${chartSubTab === 'insights'
+                          ? ('bg-white dark:bg-stone-900 text-cyan-600 shadow-md border border-cyan-100/50 scale-[1.02]')
+                          : ('text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 hover:bg-white dark:hover:bg-stone-800/60 border border-transparent')
+                          }`}
+                      >
+                        <span>INSIGHTS</span>
+                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                          BETA
+                        </span>
+                      </Button>
+                    </div>
 
-                {chartSubTab === 'weekly' && (
+                    {chartSubTab === 'weekly' && (
+                      <WeeklyRewardChart
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                        onParentCompleteTask={onParentCompleteTask}
+                        onApproveCompletion={onApproveCompletion}
+                        onRejectCompletion={onRejectCompletion}
+                      />
+                    )}
+
+                    {chartSubTab === 'insights' && (
+                      <InsightsTab
+                        children={children}
+                        tasks={tasks}
+                        completions={completions}
+                      />
+                    )}
+                  </>
+                ) : (
                   <WeeklyRewardChart
                     children={children}
                     tasks={tasks}
@@ -1406,40 +1427,6 @@ export default function ParentDashboard({
                     onApproveCompletion={onApproveCompletion}
                     onRejectCompletion={onRejectCompletion}
                   />
-                )}
-
-                {chartSubTab === 'insights' && (
-                  (flags.insights_tab || parentProfile?.is_beta_tester) ? (
-                    <InsightsTab
-                      children={children}
-                      tasks={tasks}
-                      completions={completions}
-                    />
-                  ) : (
-                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
-                      <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
-                        <FlaskConical className="w-7 h-7" />
-                      </div>
-                      <div className="space-y-1 max-w-md mx-auto">
-                        <Typography variant="h2" className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50">
-                          Insights is a Beta Feature
-                        </Typography>
-                        <Typography variant="body" className="text-xs sm:text-sm text-stone-500 dark:text-stone-400">
-                          Join our Beta Program in Settings to get early access to child performance analytics, best days charts, category breakdowns, and AI parenting tips!
-                        </Typography>
-                      </div>
-                      <Button
-                        variant="primary"
-                        onClick={() => {
-                          setActiveTab('settings');
-                          setSettingsSubTab('profile');
-                        }}
-                        className="px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
-                      >
-                        Join Beta Program
-                      </Button>
-                    </div>
-                  )
                 )}
               </motion.div>
             )}
@@ -3180,7 +3167,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              { id: 'chart', label: 'Chart', icon: TrendingUp },
+              { id: 'chart', label: 'Chart', icon: (flags.insights_tab || parentProfile?.is_beta_tester) ? TrendingUp : Calendar },
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
