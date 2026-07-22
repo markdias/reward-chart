@@ -57,19 +57,6 @@ export async function sendPasswordResetEmail(email: string): Promise<{ success: 
       return { success: false, error: error.message };
     }
 
-    // Also trigger Edge Function for custom styled password reset email if needed
-    try {
-      await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'password_reset',
-          to: email,
-          resetUrl: redirectUrl,
-        },
-      });
-    } catch (edgeErr) {
-      // Ignored if standard Supabase reset email handled it
-    }
-
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Failed to request password reset' };
