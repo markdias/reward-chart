@@ -736,32 +736,8 @@ export default function ChildDashboard({
     borderStyle: 'border-stone-100 dark:border-stone-800'
   };
 
-  const getRewardAvailability = (reward: Reward, childRedemptions: RewardRedemption[]) => {
+  const getRewardAvailability = (reward: Reward, _childRedemptions: RewardRedemption[]) => {
     if (!reward.is_available) return { available: false, reason: 'CLAIMED' };
-    if (!reward.limit_type || reward.limit_type === 'unlimited') return { available: true };
-
-    const now = new Date();
-    const startOfDay = getStartOfDailyReset(now);
-
-    if (reward.limit_type === 'daily') {
-      const todayClaims = childRedemptions.filter(r =>
-        r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
-      );
-      if (todayClaims.length >= 1) return { available: false, reason: 'TOMORROW' };
-    }
-
-    if (reward.limit_type === 'twice_daily') {
-      const todayClaims = childRedemptions.filter(r =>
-        r.reward_id === reward.id && new Date(r.redeemed_at).getTime() >= startOfDay
-      );
-      if (todayClaims.length >= 2) return { available: false, reason: 'TOMORROW' };
-      if (todayClaims.length === 1) {
-        const lastClaimTime = new Date(todayClaims[0].redeemed_at).getTime();
-        const hoursSinceLast = (now.getTime() - lastClaimTime) / (1000 * 60 * 60);
-        if (hoursSinceLast < 6) return { available: false, reason: 'COOLDOWN' };
-      }
-    }
-
     return { available: true };
   };
 
@@ -2512,7 +2488,7 @@ export default function ChildDashboard({
 
                             let statusBadge = null;
                             if (hasApprovedRequest) {
-                              statusBadge = <div className="inline-flex px-3 py-1 bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-black uppercase tracking-widest rounded-full border border-amber-300">APPROVED</div>;
+                              statusBadge = <div className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 text-xs font-black uppercase tracking-widest rounded-full border border-amber-300 dark:border-amber-700"><CheckCircle className="w-3 h-3" /> APPROVED</div>;
                             } else if (hasPendingRequest) {
                               statusBadge = <div className="inline-flex px-3 py-1 bg-stone-200 text-stone-600 dark:text-stone-300 text-xs font-black uppercase tracking-widest rounded-full">PENDING</div>;
                             } else if (!availability.available && !isSavingFor) {
