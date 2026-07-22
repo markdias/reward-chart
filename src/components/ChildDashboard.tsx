@@ -326,6 +326,39 @@ export default function ChildDashboard({
   }, [activeChildTab]);
 
   const [expandedGoal, setExpandedGoal] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
+  const expandedGoalRef = useRef<HTMLDivElement>(null);
+
+  const scrollToExpandedGoalSection = () => {
+    setTimeout(() => {
+      if (expandedGoalRef.current) {
+        const rect = expandedGoalRef.current.getBoundingClientRect();
+        const bottomBoundary = window.innerHeight - 100;
+        const topBoundary = 80;
+
+        let scrollDiff = 0;
+        if (rect.bottom > bottomBoundary) {
+          scrollDiff = rect.bottom - bottomBoundary;
+        } else if (rect.top < topBoundary) {
+          scrollDiff = rect.top - topBoundary;
+        }
+
+        if (scrollDiff !== 0) {
+          const viewport = document.getElementById('child-viewport');
+          if (viewport) {
+            viewport.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+          }
+          window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+        }
+      }
+    }, 180);
+  };
+
+  useEffect(() => {
+    if (expandedGoal) {
+      scrollToExpandedGoalSection();
+    }
+  }, [expandedGoal]);
+
   const [isFeeding, setIsFeeding] = useState(false);
 
   // Well Done celebration overlay
@@ -758,34 +791,34 @@ export default function ChildDashboard({
           className="fixed top-0 left-0 right-0 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 z-50 pb-2 sm:pb-3"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="flex justify-between items-center w-full px-2.5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               {activeChild && (
                 <ChildAvatar
                   iconName={activeChild.avatar_url}
-                  className="w-11 h-11 sm:w-14 sm:h-14 shadow-sm shrink-0"
+                  className="w-10 h-10 sm:w-14 sm:h-14 shadow-sm shrink-0"
                 />
               )}
               <div className="flex flex-col justify-center min-w-0">
-                <Typography variant="h1" as="h1" className="text-xl sm:text-3xl font-black text-stone-900 dark:text-stone-50 leading-none tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                <h1 className="text-xs xs:text-sm sm:text-2xl md:text-3xl font-black text-stone-900 dark:text-stone-50 leading-tight tracking-tight font-display whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {activeChild?.name ? `${activeChild.name}'s Dashboard` : 'Dashboard'}
-                </Typography>
-                <div className="flex items-center gap-1.5 text-xs sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                </h1>
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-base text-stone-500 dark:text-stone-400 font-semibold mt-0.5 sm:mt-1.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
                   {parentProfile?.family_name ? `${parentProfile.family_name} Family` : parentProfile?.email}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-4 shrink-0">
               <div
-                className="flex items-center p-1 rounded-full shadow-md shrink-0"
+                className="flex items-center p-0.5 sm:p-1 rounded-full shadow-md shrink-0"
                 style={{ background: 'repeating-linear-gradient(45deg, #fbbf24, #fbbf24 10px, #f59e0b 10px, #f59e0b 20px, #d97706 20px, #d97706 30px)' }}
               >
-                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-1 sm:p-1.5 gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                <div className="flex items-center bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-full p-0.5 sm:p-1.5 gap-0.5 sm:gap-1 w-full h-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                   {activeChildTab !== 'home' && (
                     <Tooltip content="Current Gold Coins" position="bottom">
-                      <div className="cursor-help ml-1.5 sm:ml-2.5">
-                        <CoinBadge points={activeChild?.points || 0} />
+                      <div className="cursor-help ml-0.5 sm:ml-2.5">
+                        <CoinBadge points={activeChild?.points || 0} className="w-8 h-8 sm:w-11 sm:h-11 text-xs sm:text-sm font-black" />
                       </div>
                     </Tooltip>
                   )}
@@ -795,7 +828,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); setSelectedChildId(null); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -808,7 +841,7 @@ export default function ChildDashboard({
                       variant="none"
                       size="none"
                       onClick={() => { playSound.click(); setShowHelpModal(true); }}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                      className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                     >
                       <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
@@ -820,7 +853,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLogout(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
                       >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -831,7 +864,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onEnterParentMode(); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200 transition-colors shrink-0"
                       >
                         <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -844,7 +877,7 @@ export default function ChildDashboard({
                         variant="none"
                         size="none"
                         onClick={() => { playSound.click(); onLockChild(activeChild.id); }}
-                        className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full flex items-center justify-center text-stone-400 hover:text-sky-600 hover:bg-sky-100 transition-colors shrink-0"
                       >
                         <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
                       </Button>
@@ -1939,7 +1972,7 @@ export default function ChildDashboard({
                             <div className="grid grid-cols-3 gap-2 sm:gap-4">
                               {/* Daily Goal Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('daily'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                               >
@@ -1955,7 +1988,7 @@ export default function ChildDashboard({
 
                               {/* Weekly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
                               >
@@ -1971,7 +2004,7 @@ export default function ChildDashboard({
 
                               {/* Monthly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
                               >
@@ -1989,6 +2022,7 @@ export default function ChildDashboard({
                             <AnimatePresence>
                               {expandedGoal && (
                                 <motion.div
+                                  ref={expandedGoalRef}
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
@@ -2382,6 +2416,47 @@ export default function ChildDashboard({
                         </div>
                       </div>
 
+                      {/* Active Saving Goal Banner */}
+                      {isSavingsUnlocked && activeChild.savings_goal_name && (
+                        <div className="relative p-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 shadow-md mb-4">
+                          <div className="bg-white dark:bg-stone-900 border-2 border-stone-900 rounded-[0.9rem] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300/40 shadow-sm">
+                                <Target className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Saving Goal</div>
+                                <Typography variant="h4" className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-50">
+                                  {activeChild.savings_goal_name}
+                                </Typography>
+                              </div>
+                            </div>
+                            {(() => {
+                              const goalReward = rewards.find(r => r.id === activeChild.savings_goal_reward_id || r.title === activeChild.savings_goal_name);
+                              const targetAmount = goalReward?.cost_points || activeChild.savings_goal_amount || 1;
+                              const currentSavedInPot = Math.max(0, activeChild.savings_pot || 0);
+                              const progressPercent = Math.min(100, Math.round((currentSavedInPot / targetAmount) * 100));
+                              const displaySaved = Math.min(currentSavedInPot, targetAmount);
+                              
+                              return (
+                                <div className="sm:w-56 space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-stone-600 dark:text-stone-300">
+                                    <span>{displaySaved} / {targetAmount} IN SAVINGS POT</span>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{progressPercent}%</span>
+                                  </div>
+                                  <div className="w-full h-2.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden border border-stone-900/10 p-0.5 shadow-inner">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full transition-all duration-500" 
+                                      style={{ width: `${progressPercent}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4" id="child-rewards-deck">
                         {rewards.filter(r => r.child_id === activeChild.id).length === 0 ? (
                           <div className={`joyride-target-first-reward col-span-2 sm:col-span-3 md:col-span-4 p-10 text-center ${styles.cardBg} border-2 border-dashed border-stone-300 rounded-3xl space-y-2`}>
@@ -2394,7 +2469,7 @@ export default function ChildDashboard({
                             const availability = getRewardAvailability(rew, redemptions.filter(r => r.child_id === activeChild.id));
                             const isAffordable = availablePoints >= rew.cost_points;
                             const hasPendingRequest = redemptions.some(r => r.child_id === activeChild.id && r.reward_id === rew.id && r.status === 'requested');
-                            const isSavingFor = isSavingsUnlocked && activeChild.savings_goal_reward_id === rew.id;
+                            const isSavingFor = isSavingsUnlocked && (activeChild.savings_goal_reward_id === rew.id || activeChild.savings_goal_name === rew.title);
                             const canDispense = isAffordable && availability.available && !hasPendingRequest;
 
                             // Hide claimed one_time rewards entirely
@@ -2410,7 +2485,7 @@ export default function ChildDashboard({
                             } else if (isSavingsUnlocked) {
                               if (isSavingFor) {
                                 statusBadge = (
-                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200">
+                                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-emerald-200 shadow-sm">
                                     <CheckCircle className="w-3 h-3" /> SAVING
                                   </div>
                                 );
@@ -2424,13 +2499,22 @@ export default function ChildDashboard({
                                       onSavingsGoal(activeChild.id, rew.id);
                                       playSound.success();
                                     }}
-                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors"
+                                    className="inline-flex px-3 py-1 bg-stone-900 text-white text-xs font-black uppercase tracking-widest rounded-full hover:bg-stone-700 transition-colors shadow-sm"
                                   >
                                     SET GOAL
                                   </Button>
                                 );
                               }
                             }
+
+                            const currentSaved = isSavingFor
+                              ? Math.max(0, activeChild.savings_pot || 0)
+                              : Math.max(0, (activeChild.points || 0) + (activeChild.savings_pot || 0));
+                            const progressPercent = Math.min(100, Math.round((currentSaved / Math.max(1, rew.cost_points)) * 100));
+                            const displaySaved = Math.min(currentSaved, rew.cost_points);
+                            const progressLabel = isSavingFor
+                              ? `${displaySaved} / ${rew.cost_points} IN SAVINGS POT`
+                              : `${displaySaved} / ${rew.cost_points} COINS`;
 
                             const baseCardClasses = "relative p-2 rounded-3xl transition-transform duration-200 flex flex-col items-center justify-center text-center group cursor-pointer active:scale-95 hover:scale-105 shadow-xl overflow-hidden";
                             const rewardBgStyle = {
@@ -2454,6 +2538,33 @@ export default function ChildDashboard({
                                   <div className="mt-2 flex items-center justify-center">
                                     {statusBadge}
                                   </div>
+                                  
+                                  {/* Progress bar */}
+                                  <div className="w-full relative z-10 mt-2 px-0.5">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-1">
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-500 dark:text-stone-400'}>
+                                        {progressLabel}
+                                      </span>
+                                      <span className={isSavingFor ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-stone-400 dark:text-stone-500'}>
+                                        {progressPercent}%
+                                      </span>
+                                    </div>
+                                    <div className={`w-full h-2.5 rounded-full overflow-hidden border p-0.5 shadow-inner ${
+                                      isSavingFor 
+                                        ? 'bg-emerald-50 dark:bg-stone-800 border-emerald-300/50' 
+                                        : 'bg-stone-100 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700'
+                                    }`}>
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-500 shadow-sm ${
+                                          isSavingFor
+                                            ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500'
+                                            : 'bg-gradient-to-r from-amber-400 to-amber-500'
+                                        }`}
+                                        style={{ width: `${progressPercent}%` }}
+                                      />
+                                    </div>
+                                  </div>
+
                                 </div>
                               </div>
                             );
