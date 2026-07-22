@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Trophy, Flame, Play, ChevronRight, Lock, Star, Check, ThumbsUp,
   ArrowLeft, CheckCircle, CheckCircle2, Gift, Sparkles, Smile, Target, Zap, RotateCcw, AlertTriangle, HelpCircle, TrendingUp,
-  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle, Crown
+  PiggyBank, X, Plus, Minus, Utensils, ShieldAlert, BookOpen, Dumbbell, Palette, Heart, Home, ChevronDown, Bell, Coins, Plane, Smartphone, Gamepad2, PlayCircle
 } from 'lucide-react';
 import { ChildHomeTab } from './ChildHomeTab';
 import { CATEGORY_ICON_MAP } from '../utils/categories';
@@ -119,7 +119,7 @@ export default function ChildDashboard({
   onRefresh,
   theme
 }: ChildDashboardProps) {
-  const { subscription, openPaywall } = useSubscription();
+  const { subscription } = useSubscription();
   const [selectedChildId, setSelectedChildId] = useState<string | null>(lockedChildId || null);
   const [activeChildTab, setActiveChildTab] = useState<'home' | 'companion' | 'tasks' | 'rewards' | 'pots'>('home');
 
@@ -3189,58 +3189,36 @@ export default function ChildDashboard({
                           </div>
                         )}
 
-                        {/* Gifting Pot Pro Lock or Level Lock Preview */}
-                        {!isGiftingUnlocked && (
+                        {/* Gifting Pot — hidden on Free, shown (locked by level) on Pro */}
+                        {subscription.isPro && !isGiftingUnlocked && (
                           <div
-                            onClick={() => {
-                              if (!subscription.isPro) {
-                                playSound.click();
-                                openPaywall('Unlock All 4 Pots & Mechanics');
-                              }
-                            }}
-                            className={`joyride-target-pot-gifting relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full ${!subscription.isPro ? 'cursor-pointer group' : 'grayscale opacity-70'}`}
+                            className="joyride-target-pot-gifting relative p-2 rounded-[2.5rem] flex flex-col shadow-xl overflow-hidden h-full grayscale opacity-70"
                             style={{ background: 'repeating-linear-gradient(45deg, #e7e5e4, #e7e5e4 10px, #d6d3d1 10px, #d6d3d1 20px)' }}
                           >
                             <div className="relative z-10 w-full h-full bg-stone-50 dark:bg-stone-950 rounded-[2rem] p-4 sm:p-5 flex flex-col items-center justify-center text-center gap-2 text-stone-500 dark:text-stone-400">
-                              {!subscription.isPro ? (
-                                <>
-                                  <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-bold">
-                                    <Crown className="w-5 h-5 text-orange-500" />
-                                    <Typography variant="label" className="!text-orange-600 dark:!text-orange-400 font-bold">
-                                      <FaHeart className="inline-block mr-1.5 text-pink-500" /> 4th Pot (Gifting Pot)
-                                    </Typography>
-                                  </div>
-                                  <span className="px-3 py-1 rounded-full bg-orange-500 text-white font-extrabold text-[10px] uppercase tracking-wider shadow-sm group-hover:scale-105 transition-transform">
-                                    Unlock with Pro Pass (Max 3 Pots on Free)
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
-                                    <Lock className="w-4 h-4" />
-                                    <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
-                                  </div>
-                                  <LinearProgressBar
-                                    progress={(() => {
-                                      const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100);
-                                    })()}
-                                    className="max-w-[200px]"
-                                  />
-                                  <span className="text-[10px] font-sans text-stone-400 font-bold">
-                                    {(() => {
-                                      const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
-                                      return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
-                                    })()}
-                                  </span>
-                                </>
-                              )}
+                              <div className="flex items-center gap-2 text-stone-500 dark:text-stone-400">
+                                <Lock className="w-4 h-4" />
+                                <Typography variant="label"><FaHeart className="inline-block mr-2 text-pink-500" /> Gifting Pot — Unlock at Level {parentProfile?.gifting_pot_unlock_level ?? 6}!</Typography>
+                              </div>
+                              <LinearProgressBar
+                                progress={(() => {
+                                  const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return Math.round(((activeChild.lifetime_points || 0) / Math.max(1, goldReq)) * 100);
+                                })()}
+                                className="max-w-[200px]"
+                              />
+                              <span className="text-[10px] font-sans text-stone-400 font-bold">
+                                {(() => {
+                                  const goldReq = ((parentProfile?.gifting_pot_unlock_level ?? 6) - 1) * (parentProfile?.points_to_level_up ?? 500);
+                                  return `${(activeChild.lifetime_points || 0)} / ${goldReq} GOLD`;
+                                })()}
+                              </span>
                             </div>
                           </div>
                         )}
 
                         {/* === GOLD POT MAINTENANCE SECTION === */}
-                        {isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
+                        {subscription.isPro && isGoldPotMaintenanceUnlocked && activeChild.gold_pot_maintenance_unlock_seen && (
                           <div className={`joyride-target-pot-maintenance relative h-[210px] pot-flip-card cursor-pointer group ${flippedPot === 'maintenance' ? 'flipped' : ''}`} style={{ perspective: '1000px' }} onClick={() => setFlippedPot(flippedPot === 'maintenance' ? null : 'maintenance')}>
                             <div className="relative w-full h-full pot-flip-inner">
 
