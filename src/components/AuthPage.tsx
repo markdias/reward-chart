@@ -346,6 +346,14 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
             console.warn('Supabase signup error:', error);
             const msg = getErrorMessage(error);
             if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already in use')) {
+              const { data: checkData, error: checkError } = await supabase.auth.signInWithPassword({ email, password });
+              if (checkError && checkError.message?.toLowerCase().includes('email not confirmed')) {
+                setResetSuccessMsg(`🎉 We sent a confirmation link to ${email}. Please check your inbox and click the link to activate your account.`);
+                setAuthMode('login');
+                setEmailForResend(email);
+                playSound.success();
+                return;
+              }
               setRealAuthError('An account with this email already exists. Please sign in instead!');
             } else {
               setRealAuthError(msg);

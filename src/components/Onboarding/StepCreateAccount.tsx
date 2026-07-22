@@ -153,6 +153,21 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
         });
 
         if (signUpError) {
+          const msg = signUpError.message || '';
+          if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already in use') || msg.toLowerCase().includes('user_already_exists')) {
+            const { data: checkData, error: checkError } = await supabase.auth.signInWithPassword({ email, password });
+            if (!checkError && checkData?.session) {
+              playSound.success();
+              onComplete(email);
+              return;
+            }
+            if (checkError && checkError.message?.toLowerCase().includes('email not confirmed')) {
+              setEmailConfirmationPending(true);
+              setIsSubmitting(false);
+              playSound.success();
+              return;
+            }
+          }
           setError(formatAuthError(signUpError));
           playSound.pinError();
           setIsSubmitting(false);
@@ -161,18 +176,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
 
         const session = data?.session;
         if (!session) {
-          // If auto-confirm is off, try signing in manually if possible
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (!signInError && signInData?.session) {
-            playSound.success();
-            onComplete(email);
-            return;
-          }
-
+          sendWelcomeEmail(email, name).catch(err => console.warn('Welcome email error:', err));
           setEmailConfirmationPending(true);
           setIsSubmitting(false);
           playSound.success();
