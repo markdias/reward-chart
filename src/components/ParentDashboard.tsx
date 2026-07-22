@@ -1169,7 +1169,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              ...(isBetaUser ? [{ id: 'chart', label: 'Chart & Insights', icon: TrendingUp }] : []),
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1191,7 +1191,12 @@ export default function ParentDashboard({
                 >
                   <span className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
-                    {tab.label}
+                    <span>{tab.label}</span>
+                    {(tab as any).isBeta && (
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
+                        BETA
+                      </span>
+                    )}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
@@ -3175,7 +3180,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp }] : []),
+              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
