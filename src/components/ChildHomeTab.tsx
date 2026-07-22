@@ -46,6 +46,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
   const [isGiftingBannerDismissed, setIsGiftingBannerDismissed] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [childBadges, setChildBadges] = useState<any[]>([]);
+  const [routinePeriodFilter, setRoutinePeriodFilter] = useState<'auto' | 'morning' | 'afternoon' | 'evening' | 'all'>('auto');
 
   useEffect(() => {
     const fetchBadges = async () => {
@@ -438,7 +439,7 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
 
         const dayOfWeek = new Date().getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const activeRoutineId = isWeekend ? 'weekend' : (activeChild.holiday_mode ? 'holiday' : 'weekday');
+        const activeRoutineId = activeChild.holiday_mode ? 'holiday' : (isWeekend ? 'weekend' : 'weekday');
 
         let activeRoutine = processedRoutines.find(r => r.id === activeRoutineId);
 
@@ -535,19 +536,11 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
           );
         };
         const currentHour = new Date().getHours();
-        const isMorning = currentHour >= 0 && currentHour < 12;
-        const isAfternoon = currentHour >= 12 && currentHour < 17;
-        const isEvening = currentHour >= 17;
+        const timeOfDayPeriod: 'morning' | 'afternoon' | 'evening' = 
+          (currentHour >= 12 && currentHour < 17) ? 'afternoon' : 
+          (currentHour >= 17) ? 'evening' : 'morning';
 
-        let activePeriodLabel = "Morning";
-        let activePeriodKey: 'morningTaskIds' | 'afternoonTaskIds' | 'eveningTaskIds' = 'morningTaskIds';
-        if (isAfternoon) {
-          activePeriodLabel = "Afternoon";
-          activePeriodKey = 'afternoonTaskIds';
-        } else if (isEvening) {
-          activePeriodLabel = "Evening";
-          activePeriodKey = 'eveningTaskIds';
-        }
+        const effectivePeriod = routinePeriodFilter === 'auto' ? timeOfDayPeriod : routinePeriodFilter;
 
         const morningTaskIds = activeRoutine.morningTaskIds || [];
         const afternoonTaskIds = activeRoutine.afternoonTaskIds || [];
@@ -556,13 +549,90 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
         const hasMorningTasks = morningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
         const hasAfternoonTasks = afternoonTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
         const hasEveningTasks = eveningTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
-
-        const activePeriodTaskIds = activeRoutine[activePeriodKey] || [];
-        const hasActivePeriodTasks = activePeriodTaskIds.some(id => tasks.some(t => t.id === id && t.child_id === activeChild.id));
+        const hasAnyTasksInRoutine = hasMorningTasks || hasAfternoonTasks || hasEveningTasks;
 
         const routineDisplayName = activeRoutine.name.toLowerCase().includes('routine') 
           ? activeRoutine.name 
           : `${activeRoutine.name} Routine`;
+
+        const renderFilteredTasks = () => {
+          if (!hasAnyTasksInRoutine) {
+            return (
+              <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
+                <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
+                  <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
+                  <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO TASKS IN ROUTINE</Typography>
+                  <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
+                    Ask your parents to assign tasks to this routine!
+                  </Typography>
+                </div>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'all') {
+            return (
+              <>
+                {renderPeriod("Morning", morningTaskIds)}
+                {renderPeriod("Afternoon", afternoonTaskIds)}
+                {renderPeriod("Evening", eveningTaskIds)}
+              </>
+            );
+          }
+
+          if (effectivePeriod === 'morning') {
+            if (hasMorningTasks) return renderPeriod("Morning", morningTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Morning tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'afternoon') {
+            if (hasAfternoonTasks) return renderPeriod("Afternoon", afternoonTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Afternoon tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          if (effectivePeriod === 'evening') {
+            if (hasEveningTasks) return renderPeriod("Evening", eveningTaskIds);
+            return (
+              <div className="p-6 text-center bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-200 dark:border-stone-700 my-2">
+                <Typography variant="body" className="text-sm font-semibold text-stone-500 dark:text-stone-400">
+                  No Evening tasks in this routine.
+                </Typography>
+                <button
+                  onClick={() => setRoutinePeriodFilter('all')}
+                  className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-bold hover:underline"
+                >
+                  View All Routine Tasks
+                </button>
+              </div>
+            );
+          }
+
+          return null;
+        };
 
         return (
           <div className="space-y-4 pt-2">
@@ -578,26 +648,32 @@ export const ChildHomeTab: React.FC<ChildHomeTabProps> = ({
               </div>
             </div>
 
+            {hasAnyTasksInRoutine && (
+              <div className="flex items-center gap-1.5 p-1 bg-stone-100 dark:bg-stone-800/80 rounded-xl overflow-x-auto">
+                {[
+                  { id: 'auto', label: `Now (${timeOfDayPeriod.charAt(0).toUpperCase() + timeOfDayPeriod.slice(1)})` },
+                  { id: 'morning', label: 'Morning' },
+                  { id: 'afternoon', label: 'Afternoon' },
+                  { id: 'evening', label: 'Evening' },
+                  { id: 'all', label: 'All' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setRoutinePeriodFilter(tab.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                      routinePeriodFilter === tab.id
+                        ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-50 shadow-sm'
+                        : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
-              {hasActivePeriodTasks ? (
-                renderPeriod(activePeriodLabel, activePeriodTaskIds)
-              ) : (hasMorningTasks || hasAfternoonTasks || hasEveningTasks) ? (
-                <>
-                  {renderPeriod("Morning", morningTaskIds)}
-                  {renderPeriod("Afternoon", afternoonTaskIds)}
-                  {renderPeriod("Evening", eveningTaskIds)}
-                </>
-              ) : (
-                <div className="relative p-6 rounded-2xl sm:rounded-3xl border-2 border-dashed border-stone-300 dark:border-stone-700 bg-white/50 dark:bg-stone-900/50 flex flex-col items-center justify-center text-center space-y-3 mt-4">
-                  <div className={`joyride-target-first-routine p-8 text-center bg-stone-50 dark:bg-stone-800/50 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-3xl space-y-2`}>
-                    <FaCalendarCheck className="w-8 h-8 text-stone-300 dark:text-stone-600 mx-auto mb-2" />
-                    <Typography variant="h4" className="font-bold text-stone-400 dark:text-stone-500 text-sm">NO TASKS IN ROUTINE</Typography>
-                    <Typography variant="body" className="text-xs text-stone-400 dark:text-stone-500 max-w-xs mx-auto">
-                      Ask your parents to assign tasks to this routine!
-                    </Typography>
-                  </div>
-                </div>
-              )}
+              {renderFilteredTasks()}
             </div>
           </div>
         );
