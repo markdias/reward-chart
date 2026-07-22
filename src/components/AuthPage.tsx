@@ -52,6 +52,8 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
   const [isApplyingCode, setIsApplyingCode] = useState(false);
   const { flags } = useFeatureFlags();
 
+  const recoverySessionRef = React.useRef<any>(null);
+
   useEffect(() => {
     const handleRecoverySession = async () => {
       const supabase = getSupabaseClient();
@@ -64,6 +66,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
         try {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (!error && data.session) {
+            recoverySessionRef.current = data.session;
             setAuthMode('resetPassword');
             return;
           }
@@ -86,6 +89,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
               refresh_token: refreshToken,
             });
             if (!error && data.session) {
+              recoverySessionRef.current = data.session;
               setAuthMode('resetPassword');
               return;
             }
@@ -96,6 +100,9 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
       }
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          recoverySessionRef.current = session;
+        }
         if (event === 'PASSWORD_RECOVERY' || (session && isResetUrl)) {
           setAuthMode('resetPassword');
         }
@@ -453,6 +460,16 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
       if (!supabase) throw new Error('Supabase client is not configured');
 
       let { data: { session } } = await supabase.auth.getSession();
+
+      if (!session && recoverySessionRef.current) {
+        session = recoverySessionRef.current;
+        if (session?.access_token && session?.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          });
+        }
+      }
 
       if (!session) {
         // Try exchanging PKCE code if present
