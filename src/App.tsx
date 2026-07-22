@@ -735,6 +735,12 @@ export default function App() {
 
           // Fetch redemptions with status-hierarchy preserving merge
           const keyRedemptions = `RCH_REDEMPTIONS_${currentFamilyId}`;
+          const savedLocalStr = localStorage.getItem(keyRedemptions);
+          let savedLocalList: RewardRedemption[] = [];
+          try {
+            if (savedLocalStr) savedLocalList = JSON.parse(savedLocalStr);
+          } catch (e) {}
+
           const { data: dbRedemptions, error: errRedemptions } = await supabase
             .from('reward_redemptions')
             .select('*')
@@ -743,12 +749,15 @@ export default function App() {
           if (!errRedemptions) {
             setRedemptions(prev => {
               const statusOrder: Record<string, number> = { delivered: 3, approved: 2, requested: 1, rejected: 3 };
+              const itemsToResync: RewardRedemption[] = [];
+
               const merged = (dbRedemptions || []).map(dbR => {
-                const localR = prev.find(p => p.id === dbR.id);
+                const localR = prev.find(p => p.id === dbR.id) || savedLocalList.find(p => p.id === dbR.id);
                 if (localR) {
                   const localRank = statusOrder[localR.status] || 1;
                   const dbRank = statusOrder[dbR.status] || 1;
                   if (localRank > dbRank) {
+                    itemsToResync.push(localR);
                     return { ...dbR, ...localR };
                   }
                 }
@@ -756,10 +765,18 @@ export default function App() {
               });
 
               const dbIds = new Set((dbRedemptions || []).map(r => r.id));
-              const localOnly = prev.filter(r => !dbIds.has(r.id));
-              const finalList = [...merged, ...localOnly];
+              const localOnlyPrev = prev.filter(r => !dbIds.has(r.id));
+              const localOnlySaved = savedLocalList.filter(r => !dbIds.has(r.id) && !prev.some(p => p.id === r.id));
+              const finalList = [...merged, ...localOnlyPrev, ...localOnlySaved];
               
               localStorage.setItem(keyRedemptions, JSON.stringify(finalList));
+
+              if (itemsToResync.length > 0) {
+                itemsToResync.forEach(item => {
+                  executeOrQueue('reward_redemptions', 'upsert', item, { onConflict: 'id' }).then();
+                });
+              }
+
               return finalList;
             });
           }
