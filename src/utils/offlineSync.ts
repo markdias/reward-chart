@@ -108,10 +108,9 @@ export const executeOrQueue = async (
       return { success: true, queued: false };
     }
 
-    let cleanPayload = { ...payload };
-    
-    // Strip local-only fields that are not yet in the Supabase schema
-    if (table === 'children') {
+    const sanitizeChildItem = (item: any) => {
+      if (!item || typeof item !== 'object') return item;
+      const clean = { ...item };
       const localOnlyFields = [
         'level_up_bonuses_received',
         'pet_fed_total',
@@ -119,15 +118,29 @@ export const executeOrQueue = async (
         'savings_deposits',
         'savings_goals_met',
         'gifts_made',
+        'gifts_sent_total',
+        'gifting_pot',
         'gold_pot_fixes',
         'gold_pot_unbroken_days',
-        'manual_deductions'
+        'manual_deductions',
+        'tour_seen',
+        'level_up_preference'
       ];
       localOnlyFields.forEach(field => {
-        if (field in cleanPayload) {
-          delete cleanPayload[field];
-        }
+        delete clean[field];
       });
+      return clean;
+    };
+
+    let cleanPayload: any;
+    if (table === 'children') {
+      if (Array.isArray(payload)) {
+        cleanPayload = payload.map(sanitizeChildItem);
+      } else {
+        cleanPayload = sanitizeChildItem(payload);
+      }
+    } else {
+      cleanPayload = payload;
     }
 
     let query: any = supabase.from(table);

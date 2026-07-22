@@ -51,16 +51,44 @@ export default function OnboardingWizard({
 }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(initialStep || 'welcome');
   const [startedBy, setStartedBy] = useState<'parent' | 'child' | null>(initialStep === 'children' ? 'parent' : null);
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>({
-    children: [],
-    parentName: '',
-    familyName: '',
-    selectedRoutines: [],
-    selectedTasks: [],
-    selectedRewards: [],
-    skippedAccount: false,
-    ...initialData
-  });
+  const getInitialDraftData = (): OnboardingData => {
+    try {
+      const saved = localStorage.getItem('RCH_DRAFT_ONBOARDING');
+      if (saved) {
+        return {
+          children: [],
+          parentName: '',
+          familyName: '',
+          selectedRoutines: [],
+          selectedTasks: [],
+          selectedRewards: [],
+          skippedAccount: false,
+          ...JSON.parse(saved),
+          ...initialData
+        };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {
+      children: [],
+      parentName: '',
+      familyName: '',
+      selectedRoutines: [],
+      selectedTasks: [],
+      selectedRewards: [],
+      skippedAccount: false,
+      ...initialData
+    };
+  };
+
+  const [onboardingData, setOnboardingData] = useState<OnboardingData>(getInitialDraftData);
+
+  React.useEffect(() => {
+    if (onboardingData.children.length > 0 || onboardingData.parentName || onboardingData.selectedTasks.length > 0) {
+      localStorage.setItem('RCH_DRAFT_ONBOARDING', JSON.stringify(onboardingData));
+    }
+  }, [onboardingData]);
 
   const handleWelcomeComplete = () => {
     setStep('role');

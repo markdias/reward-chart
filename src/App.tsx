@@ -462,44 +462,64 @@ export default function App() {
                   
                   // If this is a brand new family (no share token), seed the predefined templates OR migrate local data
                   if (!shareToken) {
-                    const localEmail = 'local_parent@rewardchart.app';
-                    const localChildren = localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
-                    const localTasks = localStorage.getItem(`RCH_TASKS_${localEmail}`);
-                    const localCompletions = localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
-                    const localRewards = localStorage.getItem(`RCH_REWARDS_${localEmail}`);
-                    const localRedemptions = localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
-                    
-                    if (localChildren && JSON.parse(localChildren).length > 0) {
-                       // Migrate all local data to this new family ID
-                       const parsedChildren = JSON.parse(localChildren).map((c: any) => ({...c, parent_id: familyId}));
-                       const parsedTasks = localTasks ? JSON.parse(localTasks).map((t: any) => ({...t, parent_id: familyId})) : [];
-                       const parsedCompletions = localCompletions ? JSON.parse(localCompletions) : [];
-                       const parsedRewards = localRewards ? JSON.parse(localRewards).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       const parsedRedemptions = localRedemptions ? JSON.parse(localRedemptions).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       const localGifting = localStorage.getItem(`RCH_GIFTING_${localEmail}`);
-                       const parsedGifting = localGifting ? JSON.parse(localGifting).map((r: any) => ({...r, parent_id: familyId})) : [];
-                       
-                       if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
-                       if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
-                       if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
-                       if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
-                       if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
-                       if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
-                    } else {
-                       const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
-                         ...t, 
-                         id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                         created_at: new Date().toISOString(),
-                         parent_id: familyId 
-                       }));
-                       const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
-                         ...r, 
-                         id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
-                         created_at: new Date().toISOString(),
-                         parent_id: familyId 
-                       }));
-                       await executeOrQueue('tasks', 'insert', tasksToInsert);
-                       await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                    const { data: dbChildCheck } = await supabase.from('children').select('id').eq('parent_id', familyId).limit(1);
+                    const { data: dbTaskCheck } = await supabase.from('tasks').select('id').eq('parent_id', familyId).limit(1);
+
+                    const hasDbData = (dbChildCheck && dbChildCheck.length > 0) || (dbTaskCheck && dbTaskCheck.length > 0);
+
+                    if (!hasDbData) {
+                      const localEmail = 'local_parent@rewardchart.app';
+                      const userEmailKey = sessionData.session.user.email;
+                      const localChildrenRaw = localStorage.getItem(`RCH_CHILDREN_${familyId}`) ||
+                                               (userEmailKey ? localStorage.getItem(`RCH_CHILDREN_${userEmailKey}`) : null) ||
+                                               localStorage.getItem(`RCH_CHILDREN_${localEmail}`);
+                      const localTasksRaw = localStorage.getItem(`RCH_TASKS_${familyId}`) ||
+                                            (userEmailKey ? localStorage.getItem(`RCH_TASKS_${userEmailKey}`) : null) ||
+                                            localStorage.getItem(`RCH_TASKS_${localEmail}`);
+                      const localCompletionsRaw = localStorage.getItem(`RCH_COMPLETIONS_${familyId}`) ||
+                                                  (userEmailKey ? localStorage.getItem(`RCH_COMPLETIONS_${userEmailKey}`) : null) ||
+                                                  localStorage.getItem(`RCH_COMPLETIONS_${localEmail}`);
+                      const localRewardsRaw = localStorage.getItem(`RCH_REWARDS_${familyId}`) ||
+                                              (userEmailKey ? localStorage.getItem(`RCH_REWARDS_${userEmailKey}`) : null) ||
+                                              localStorage.getItem(`RCH_REWARDS_${localEmail}`);
+                      const localRedemptionsRaw = localStorage.getItem(`RCH_REDEMPTIONS_${familyId}`) ||
+                                                  (userEmailKey ? localStorage.getItem(`RCH_REDEMPTIONS_${userEmailKey}`) : null) ||
+                                                  localStorage.getItem(`RCH_REDEMPTIONS_${localEmail}`);
+                      const localGiftingRaw = localStorage.getItem(`RCH_GIFTING_${familyId}`) ||
+                                              (userEmailKey ? localStorage.getItem(`RCH_GIFTING_${userEmailKey}`) : null) ||
+                                              localStorage.getItem(`RCH_GIFTING_${localEmail}`);
+                      
+                      if (localChildrenRaw && JSON.parse(localChildrenRaw).length > 0) {
+                         // Migrate all local data to this new family ID
+                         const parsedChildren = JSON.parse(localChildrenRaw).map((c: any) => ({...c, parent_id: familyId}));
+                         const parsedTasks = localTasksRaw ? JSON.parse(localTasksRaw).map((t: any) => ({...t, parent_id: familyId})) : [];
+                         const parsedCompletions = localCompletionsRaw ? JSON.parse(localCompletionsRaw) : [];
+                         const parsedRewards = localRewardsRaw ? JSON.parse(localRewardsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                         const parsedRedemptions = localRedemptionsRaw ? JSON.parse(localRedemptionsRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                         const parsedGifting = localGiftingRaw ? JSON.parse(localGiftingRaw).map((r: any) => ({...r, parent_id: familyId})) : [];
+                         
+                         if (parsedChildren.length) await executeOrQueue('children', 'insert', parsedChildren);
+                         if (parsedTasks.length) await executeOrQueue('tasks', 'insert', parsedTasks);
+                         if (parsedCompletions.length) await executeOrQueue('completions', 'insert', parsedCompletions);
+                         if (parsedRewards.length) await executeOrQueue('rewards', 'insert', parsedRewards);
+                         if (parsedRedemptions.length) await executeOrQueue('reward_redemptions', 'insert', parsedRedemptions);
+                         if (parsedGifting.length) await executeOrQueue('gifting_requests', 'insert', parsedGifting);
+                      } else {
+                         const tasksToInsert = PREMADE_TASKS.map((t, index) => ({ 
+                           ...t, 
+                           id: `task_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                           created_at: new Date().toISOString(),
+                           parent_id: familyId 
+                         }));
+                         const rewardsToInsert = PREMADE_REWARDS.map((r, index) => ({ 
+                           ...r, 
+                           id: `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`,
+                           created_at: new Date().toISOString(),
+                           parent_id: familyId 
+                         }));
+                         await executeOrQueue('tasks', 'insert', tasksToInsert);
+                         await executeOrQueue('rewards', 'insert', rewardsToInsert);
+                      }
                     }
                   }
                   
@@ -855,7 +875,7 @@ export default function App() {
     localStorage.setItem('RCH_ONBOARDING_COMPLETE', 'true');
     setHasCompletedOnboarding(true);
 
-    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || 'local_parent@rewardchart.app');
+    const emailToUse = data.skippedAccount ? 'local_parent@rewardchart.app' : (data.email || parentEmail || 'local_parent@rewardchart.app');
     
     // Save parent profile locally so it persists in local mode
     const localProfile = {
@@ -957,9 +977,6 @@ export default function App() {
       }
     });
 
-    localStorage.setItem(`RCH_CHILDREN_local_parent@rewardchart.app`, JSON.stringify(initialChildren));
-    localStorage.setItem(`RCH_TASKS_local_parent@rewardchart.app`, JSON.stringify(initialTasks));
-    
     const initialRewards: Reward[] = [];
     data.selectedRewards.forEach((r, index) => {
       const templateId = `reward_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 9)}`;
@@ -983,7 +1000,54 @@ export default function App() {
         });
       });
     });
-    localStorage.setItem(`RCH_REWARDS_local_parent@rewardchart.app`, JSON.stringify(initialRewards));
+
+    // Save to LocalStorage under the user's specific email key
+    localStorage.setItem(`RCH_CHILDREN_${emailToUse}`, JSON.stringify(initialChildren));
+    localStorage.setItem(`RCH_TASKS_${emailToUse}`, JSON.stringify(initialTasks));
+    localStorage.setItem(`RCH_REWARDS_${emailToUse}`, JSON.stringify(initialRewards));
+
+    // Also sync to Supabase if connected
+    const supabase = getSupabaseClient();
+    if (supabase && emailToUse !== 'local_parent@rewardchart.app') {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (userId) {
+          const dbProfile = {
+            user_id: userId,
+            email: emailToUse,
+            family_id: emailToUse,
+            family_name: data.familyName,
+            name: data.parentName,
+            share_token: generateShortCode(),
+            savings_pot_unlock_level: 2,
+            food_pot_unlock_level: 4,
+            gifting_pot_unlock_level: 6,
+            gold_pot_maintenance_unlock_level: 8,
+            gold_pot_maintenance_cost: 2,
+            points_to_level_up: 500,
+            level_up_gold_reward: 500
+          };
+          await executeOrQueue('parent_profiles', 'upsert', dbProfile, { onConflict: 'user_id' });
+          setParentProfile(dbProfile as ParentProfile);
+
+          if (initialChildren.length > 0) {
+            await executeOrQueue('children', 'insert', initialChildren);
+          }
+          if (initialTasks.length > 0) {
+            await executeOrQueue('tasks', 'insert', initialTasks);
+          }
+          if (initialRewards.length > 0) {
+            await executeOrQueue('rewards', 'insert', initialRewards);
+          }
+        }
+      } catch (syncErr) {
+        console.error("Error syncing onboarding data to Supabase:", syncErr);
+      }
+    }
+
+    // Clean up draft onboarding state
+    localStorage.removeItem('RCH_DRAFT_ONBOARDING');
 
     // Update React state immediately so it's available without waiting for useEffect
     setChildren(initialChildren);
