@@ -62,52 +62,52 @@ export function ArcadeTicketCard({ child, onClick, isLoading = false }: ArcadeTi
     >
       {/* Rainbow Striped Outer Ticket */}
       <div 
-        className="w-full rounded-2xl p-2 sm:p-2.5 relative overflow-hidden flex"
+        className="w-full rounded-2xl p-1.5 sm:p-2.5 relative flex min-w-0"
         style={{ background: gradient }}
       >
         
         {/* Left Notch (Hole punch effect) */}
-        <div className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-8 h-8 bg-stone-100 dark:bg-stone-800 rounded-full z-20 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
+        <div className="absolute left-[-8px] sm:left-[-10px] top-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 bg-stone-100 dark:bg-stone-800 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
         
         {/* Right Notch */}
-        <div className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-8 h-8 bg-stone-100 dark:bg-stone-800 rounded-full z-20 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
+        <div className="absolute right-[-8px] sm:right-[-10px] top-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 bg-stone-100 dark:bg-stone-800 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
 
         {/* Inner White Body with thick dark border */}
-        <div className="flex-1 bg-white dark:bg-stone-900 rounded-xl flex relative border-[3px] border-stone-800 transition-colors group-hover:bg-stone-50 dark:group-hover:bg-stone-950">
+        <div className="flex-1 bg-white dark:bg-stone-900 rounded-xl flex relative border-[3px] border-stone-800 transition-colors group-hover:bg-stone-50 dark:group-hover:bg-stone-950 min-w-0 overflow-hidden">
           
           {/* Main Content Area */}
-          <div className="flex-1 p-3 sm:p-4 flex items-center gap-4 sm:gap-6 z-10 pl-6 sm:pl-8">
+          <div className="flex-1 p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-6 z-10 pl-4 sm:pl-8 min-w-0">
             {/* Avatar */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-800 shadow-sm flex items-center justify-center">
-              <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 sm:w-12 sm:h-12 !border-none !rounded-none scale-90" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-800 border-2 border-stone-800 shadow-sm flex items-center justify-center">
+              <ChildAvatar iconName={child.avatar_url} className="w-9 h-9 sm:w-12 sm:h-12 !border-none !rounded-none scale-90" />
             </div>
             
             {/* Name & Stats */}
             <div className="flex-1 flex flex-col items-start justify-center gap-1 sm:gap-2 min-w-0">
-              <h3 className="text-2xl sm:text-3xl md:text-4xl font-black font-display tracking-tight text-stone-800 dark:text-stone-100 uppercase leading-none truncate w-full">
+              <h3 className="text-lg xs:text-xl sm:text-3xl md:text-4xl font-black font-display tracking-tight text-stone-800 dark:text-stone-100 uppercase leading-none truncate w-full">
                 {child.name}
               </h3>
-              <div className="flex flex-row items-center gap-1.5 sm:gap-3">
-                <span className="text-[10px] sm:text-xs font-bold text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800 px-2 sm:px-3 py-0.5 rounded-md border-2 border-stone-800 whitespace-nowrap shadow-sm">
+              <div className="flex flex-row items-center gap-1 sm:gap-3 flex-wrap">
+                <span className="text-[10px] sm:text-xs font-bold text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800 px-1.5 sm:px-3 py-0.5 rounded-md border-2 border-stone-800 whitespace-nowrap shadow-sm">
                   LVL {child.level}
                 </span>
                 <CoinBadge points={child.points} size="sm" />
               </div>
             </div>
 
-            {/* Barcode Section */}
-            <div className="flex flex-col items-center justify-center shrink-0 pr-2 sm:pr-6 border-l-2 border-transparent sm:border-stone-100 dark:border-stone-800 sm:pl-6">
+            {/* Barcode Section (Hidden on small mobile to give plenty of room for ticket stub & name) */}
+            <div className="hidden xs:flex flex-col items-center justify-center shrink-0 pr-2 sm:pr-6 border-l-2 border-transparent sm:border-stone-100 dark:border-stone-800 sm:pl-6">
               <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-stone-800 dark:text-stone-100 mb-1">ADMIT ONE</span>
               
               {/* Fake Barcode */}
-              <div className="flex gap-[1px] sm:gap-[2px] h-8 sm:h-10 w-[80px] sm:w-[100px] items-end mb-1 opacity-80">
+              <div className="flex gap-[1px] sm:gap-[2px] h-7 sm:h-10 w-[60px] sm:w-[100px] items-end mb-1 opacity-80">
                 {[...Array(20)].map((_, i) => {
                   const seed = (i * 17) % 5;
                   const isWide = seed > 2;
                   const isTall = seed !== 1;
                   return (
                     <div key={i} className="bg-stone-800 rounded-sm" style={{ 
-                      width: isWide ? '4px' : '2px', 
+                      width: isWide ? '3px' : '1.5px', 
                       height: isTall ? '100%' : '80%' 
                     }} />
                   );
@@ -119,8 +119,8 @@ export function ArcadeTicketCard({ child, onClick, isLoading = false }: ArcadeTi
           </div>
 
           {/* Sideways Serial Number */}
-          <div className="w-10 sm:w-12 shrink-0 border-l-[3px] border-stone-800 flex items-center justify-center bg-stone-50 dark:bg-stone-950 z-10 pr-3 sm:pr-4">
-            <span className="text-red-500 font-mono font-black tracking-widest rotate-90 whitespace-nowrap text-sm sm:text-lg">
+          <div className="w-9 sm:w-12 shrink-0 border-l-[3px] border-stone-800 flex items-center justify-center bg-stone-50 dark:bg-stone-950 z-10 p-1 sm:px-2">
+            <span className="text-red-500 font-mono font-black tracking-widest rotate-90 whitespace-nowrap text-xs sm:text-lg">
               {serialNumber}
             </span>
           </div>
