@@ -706,8 +706,20 @@ export default function App() {
           if (!errCompletions) {
             const childIds = (dbChildren || []).map(c => c.id);
             const filteredCompletions = (dbCompletions || []).filter(c => childIds.includes(c.child_id));
-            setCompletions(filteredCompletions || []);
-            localStorage.setItem(keyCompletions, JSON.stringify(filteredCompletions || []));
+            setCompletions(prev => {
+              const merged = (filteredCompletions || []).map(dbC => {
+                const localC = prev.find(p => p.id === dbC.id);
+                if (localC && localC.status === 'approved' && dbC.status === 'pending') {
+                  return { ...dbC, ...localC };
+                }
+                return dbC;
+              });
+              const dbIds = new Set((filteredCompletions || []).map(c => c.id));
+              const localOnly = prev.filter(c => !dbIds.has(c.id));
+              const finalList = [...merged, ...localOnly];
+              localStorage.setItem(keyCompletions, JSON.stringify(finalList));
+              return finalList;
+            });
           }
 
           // Fetch rewards
@@ -721,7 +733,7 @@ export default function App() {
             localStorage.setItem(keyRewards, JSON.stringify(dbRewards || []));
           }
 
-          // Fetch redemptions
+          // Fetch redemptions with status-hierarchy preserving merge
           const keyRedemptions = `RCH_REDEMPTIONS_${currentFamilyId}`;
           const { data: dbRedemptions, error: errRedemptions } = await supabase
             .from('reward_redemptions')
@@ -729,8 +741,27 @@ export default function App() {
             .eq('parent_id', currentFamilyId);
             
           if (!errRedemptions) {
-            setRedemptions(dbRedemptions || []);
-            localStorage.setItem(keyRedemptions, JSON.stringify(dbRedemptions || []));
+            setRedemptions(prev => {
+              const statusOrder: Record<string, number> = { delivered: 3, approved: 2, requested: 1, rejected: 3 };
+              const merged = (dbRedemptions || []).map(dbR => {
+                const localR = prev.find(p => p.id === dbR.id);
+                if (localR) {
+                  const localRank = statusOrder[localR.status] || 1;
+                  const dbRank = statusOrder[dbR.status] || 1;
+                  if (localRank > dbRank) {
+                    return { ...dbR, ...localR };
+                  }
+                }
+                return dbR;
+              });
+
+              const dbIds = new Set((dbRedemptions || []).map(r => r.id));
+              const localOnly = prev.filter(r => !dbIds.has(r.id));
+              const finalList = [...merged, ...localOnly];
+              
+              localStorage.setItem(keyRedemptions, JSON.stringify(finalList));
+              return finalList;
+            });
           }
 
           // Fetch gifting requests
