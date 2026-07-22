@@ -111,6 +111,14 @@ export async function checkAndUnlockBadges(child: Child) {
     }
   }
 
+  // Fetch actual gifting requests from DB to verify gifts count
+  const { data: giftingReqs } = await supabase
+    .from('gifting_requests')
+    .select('id')
+    .eq('child_id', child.id);
+
+  const actualGiftsMade = giftingReqs ? giftingReqs.length : (child.gifts_made || 0);
+
   // 4. Create an evaluation context object
   const ctx = {
     points: child.points || 0,
@@ -128,7 +136,7 @@ export async function checkAndUnlockBadges(child: Child) {
     pet_happy_streak: child.pet_happy_streak || 0,
     savings_deposits: child.savings_deposits || 0,
     savings_goals_met: child.savings_goals_met || 0,
-    gifts_made: child.gifts_made || 0,
+    gifts_made: actualGiftsMade,
     gold_pot_fixes: child.gold_pot_fixes || 0,
     gold_pot_unbroken_days: child.gold_pot_unbroken_days || 0,
   };

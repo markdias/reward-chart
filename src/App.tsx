@@ -1093,11 +1093,13 @@ export default function App() {
       }
 
       if (childIds.length > 0) {
-        // Delete ALL completions, badges, redemptions, and gifting requests for target child(ren)!
-        await supabase.from('completions').delete().in('child_id', childIds);
-        await supabase.from('child_badges').delete().in('child_id', childIds);
-        await supabase.from('reward_redemptions').delete().in('child_id', childIds);
-        await supabase.from('gifting_requests').delete().in('child_id', childIds);
+        // Explicit per-child deletions to guarantee clean table resets in Supabase
+        for (const id of childIds) {
+          await supabase.from('child_badges').delete().eq('child_id', id);
+          await supabase.from('completions').delete().eq('child_id', id);
+          await supabase.from('reward_redemptions').delete().eq('child_id', id);
+          await supabase.from('gifting_requests').delete().eq('child_id', id);
+        }
 
         await executeOrQueue('completions', 'delete', null, { in: { column: 'child_id', values: childIds } });
         await executeOrQueue('child_badges', 'delete', null, { in: { column: 'child_id', values: childIds } });
