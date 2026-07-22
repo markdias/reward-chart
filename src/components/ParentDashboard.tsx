@@ -2761,43 +2761,6 @@ export default function ParentDashboard({
                         max={18}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className={`block text-[9px] font-bold font-sans text-center ${styles.textMuted} uppercase tracking-widest mb-2`}>Choose Companion</label>
-                      <div className="flex justify-center gap-4">
-                        {CHARACTER_PACKS.map(char => (
-                          <button
-                            key={char.id}
-                            type="button"
-                            onClick={() => setNewChildChar(char.id)}
-                            className={`aspect-square w-28 rounded-xl p-2 flex flex-col items-center justify-center border-2 transition-colors ${
-                              newChildChar === char.id ? 'border-amber-400 bg-amber-50' : 'border-stone-200 bg-white dark:bg-stone-900 hover:border-stone-300 dark:hover:border-stone-700'
-                            }`}
-                          >
-                            {(() => {
-                              const stage = getCharacterStage(char.id, 99);
-                              return (
-                                <div className="relative w-12 h-12 mb-1 pointer-events-none">
-                                  <div className="w-full h-full" style={{ transform: `scale(${stage.model_scale || 1.0})` }}>
-                                    <model-viewer 
-                                      src={stage.model_url} 
-                                      alt={char.name} 
-                                      auto-rotate 
-                                      camera-controls 
-                                      class="w-full h-full"
-                                    >
-                                      <div slot="progress-bar"></div>
-                                    </model-viewer>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                            <span className={`text-[9px] font-bold uppercase tracking-wider ${newChildChar === char.id ? 'text-amber-700' : 'text-stone-500 dark:text-stone-400'}`}>
-                              {char.name.split(' ')[0]}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
 
                   <div>
