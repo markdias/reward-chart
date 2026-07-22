@@ -16,6 +16,8 @@ const StepCreateAccount = lazy(() => import('./components/Onboarding/StepCreateA
 import Confetti from './components/Confetti';
 import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
+import { PaywallModal } from './components/PaywallModal';
 
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
@@ -2400,6 +2402,7 @@ updateChildInSupabase(targetChild);
 
 
   return (
+    <SubscriptionProvider currentUserId={parentProfile?.user_id}>
     <Suspense fallback={
       <div className="min-h-screen w-full flex items-center justify-center bg-stone-900 text-white">
         <div className="flex flex-col items-center gap-3">
@@ -2633,6 +2636,19 @@ updateChildInSupabase(targetChild);
       </AnimatePresence>
     </div>
     <LegalModal />
+    <GlobalPaywallModal />
     </Suspense>
+    </SubscriptionProvider>
+  );
+}
+
+function GlobalPaywallModal() {
+  const { isPaywallOpen, closePaywall, paywallFeatureTrigger } = useSubscription();
+  return (
+    <PaywallModal
+      isOpen={isPaywallOpen}
+      onClose={closePaywall}
+      triggerReason={paywallFeatureTrigger}
+    />
   );
 }

@@ -48,6 +48,7 @@ import TargetsTab from './TargetsTab';
 import { WeeklyRewardChart } from './WeeklyRewardChart';
 import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
+import { useSubscription } from '../hooks/useSubscription';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { Walkthrough } from './Walkthrough';
@@ -172,6 +173,8 @@ export default function ParentDashboard({
       setActiveTab('home');
     }
   }, [isBetaUser, activeTab]);
+
+  const { canAddChild, openPaywall } = useSubscription();
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -1032,7 +1035,16 @@ export default function ParentDashboard({
                           className="absolute left-0 right-0 top-full mt-2 w-full flex flex-col gap-1 bg-white dark:bg-stone-900 rounded-[2rem] shadow-xl border border-stone-100 dark:border-stone-800 p-1 sm:p-1.5 z-50 origin-top"
                         >
                           {activeTab === 'children' && (
-                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { playSound.click(); setShowAddChild(true); setShowContextActions(false); }}>
+                            <button className="flex flex-row items-center gap-2 sm:gap-3 w-full justify-start p-0 rounded-full cursor-pointer group outline-none hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors" onClick={() => { 
+                              playSound.click(); 
+                              if (!canAddChild(children.length)) {
+                                openPaywall('Add Extra Child Chart');
+                                setShowContextActions(false);
+                                return;
+                              }
+                              setShowAddChild(true); 
+                              setShowContextActions(false); 
+                            }}>
                               <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
                               </div>

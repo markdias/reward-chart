@@ -47,7 +47,13 @@ CREATE TABLE IF NOT EXISTS parent_profiles (
   gold_pot_maintenance_cost         INTEGER DEFAULT 2,
 
   -- UI preference
-  dashboard_style                   TEXT NOT NULL DEFAULT 'modern'
+  dashboard_style                   TEXT NOT NULL DEFAULT 'modern',
+
+  -- Subscription / Paywall
+  is_pro                            BOOLEAN DEFAULT false,
+  subscription_tier                 TEXT DEFAULT 'free',
+  subscription_status               TEXT DEFAULT 'inactive',
+  subscription_end                  TIMESTAMPTZ
 );
 
 ALTER TABLE parent_profiles ENABLE ROW LEVEL SECURITY;

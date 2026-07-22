@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Typography } from './ui/Typography';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell, ShieldCheck, FileText } from 'lucide-react';
+import { Settings, Save, AlertTriangle, RefreshCw, Trash2, Shield, User, Link as LinkIcon, KeyRound, Bell, ShieldCheck, FileText, Crown, Sparkles } from 'lucide-react';
 import OneSignal from 'react-onesignal';
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
@@ -15,6 +15,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useSubscription } from '../hooks/useSubscription';
 import { FlaskConical } from 'lucide-react';
 
 import { Child } from '../types';
@@ -58,6 +59,7 @@ export default function SettingsTab({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const { isDarkMode, themePreference, setThemePreference } = useTheme();
+  const { subscription, openPaywall } = useSubscription();
 
   React.useEffect(() => {
     if (parentProfile) {
@@ -358,6 +360,42 @@ export default function SettingsTab({
         </div>
         
         <div className="max-w-4xl mx-auto">
+          <SettingsBlock title="Subscription & Plan">
+            <div className="p-4 flex items-center justify-between bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-2xl border border-amber-500/20">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500 text-white shadow-md">
+                  <Crown className="w-5 h-5 fill-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-stone-900 dark:text-stone-100">
+                      {subscription.isPro ? 'Reward Chart Pro' : 'Free Tier'}
+                    </span>
+                    {subscription.isPro && (
+                      <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                        {subscription.tier === 'annual' ? 'Annual Plan' : 'Monthly Plan'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    {subscription.isPro
+                      ? 'You have unlimited access to all Pro features and children charts.'
+                      : 'Free tier limits you to 1 child chart. Upgrade to unlock unlimited kids and AI features.'}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant={subscription.isPro ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => { playSound.click(); openPaywall('Settings'); }}
+                className="shrink-0 font-bold"
+              >
+                {subscription.isPro ? 'Manage Plan' : 'UPGRADE TO PRO'}
+              </Button>
+            </div>
+          </SettingsBlock>
+
           <SettingsBlock title="Legal & Privacy">
             <SettingsActionRow 
               label="Privacy Policy" 
