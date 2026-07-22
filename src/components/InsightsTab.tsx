@@ -451,13 +451,13 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
         </div>
 
         <div className="space-y-3.5">
-          {analytics.categoryCounts.map(cat => {
+          {analytics.categoryCounts.map((cat, catIdx) => {
             const Icon = cat.icon;
             const maxCat = Math.max(...analytics.categoryCounts.map(c => c.count)) || 1;
             const widthPercent = cat.count > 0 ? Math.max(8, Math.round((cat.count / maxCat) * 100)) : 0;
 
             return (
-              <div key={cat.category} className="space-y-1.5">
+              <div key={cat.category || `cat-${catIdx}`} className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300">
@@ -490,8 +490,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
 
         <div className="space-y-2">
           {analytics.goingWellTasks.length > 0 ? (
-            analytics.goingWellTasks.slice(0, 4).map(item => (
-              <div key={item.title} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
+            analytics.goingWellTasks.slice(0, 4).map((item, idx) => (
+              <div key={item.title ? `going-${item.title}` : `going-${idx}`} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
                 <span>{item.title}</span>
                 <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-lg text-xs font-mono">
                   {item.count}x
@@ -515,8 +515,8 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
 
         <div className="space-y-2">
           {analytics.strugglingTasks.length > 0 ? (
-            analytics.strugglingTasks.slice(0, 4).map(item => (
-              <div key={item.title} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
+            analytics.strugglingTasks.slice(0, 4).map((item, idx) => (
+              <div key={item.title ? `struggling-${item.title}` : `struggling-${idx}`} className="flex justify-between items-center text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">
                 <span>{item.title}</span>
                 <span className="text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/60 px-2 py-0.5 rounded-lg text-xs font-mono">
                   0x
