@@ -1506,7 +1506,13 @@ export default function ParentDashboard({
 
                 {/* showAddChild moved to a modal */}
 
-                <div className="flex flex-col gap-6 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+                <div className={`grid gap-6 ${
+                  sortedChildren.length === 1 
+                    ? 'grid-cols-1 w-full' 
+                    : sortedChildren.length === 2 
+                      ? 'grid-cols-1 md:grid-cols-2 w-full' 
+                      : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full'
+                }`}>
                   {isLoading ? (
                     <>
                       <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-3xl overflow-hidden shadow-sm relative p-5 pt-6 animate-pulse">
