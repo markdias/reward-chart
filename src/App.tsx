@@ -67,6 +67,12 @@ export default function App() {
   const [authedChildId, setAuthedChildId] = useState<string | null>(
     localStorage.getItem('RCH_AUTHED_CHILD_ID')
   );
+
+  // When a child Supabase account exists but has no linked child_profiles row yet
+  const [showChildJoinCodePrompt, setShowChildJoinCodePrompt] = useState<boolean>(false);
+  const [childJoinCodeInput, setChildJoinCodeInput] = useState<string>('');
+  const [childJoinCodeError, setChildJoinCodeError] = useState<string>('');
+  const [isApplyingChildJoinCode, setIsApplyingChildJoinCode] = useState<boolean>(false);
   
   const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   
@@ -412,6 +418,11 @@ export default function App() {
                     console.error("Invalid child share token or RLS prevented reading target child");
                     return;
                   }
+                } else if (!urlParams.has('share')) {
+                  // Logged in with a child Supabase account that has no linked child record
+                  // and no join code in the URL — prompt the user to enter a join code
+                  setShowChildJoinCodePrompt(true);
+                  return;
                 } else {
                   // Creating a new parent profile
                   let familyId = parentEmail;
@@ -1140,6 +1151,58 @@ export default function App() {
     window.location.reload();
   };
 
+
+  const handleApplyChildJoinCode = async () => {
+    if (!childJoinCodeInput.trim()) return;
+    setIsApplyingChildJoinCode(true);
+    setChildJoinCodeError('');
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error('Backend not connected');
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) throw new Error('No active session');
+
+      const code = childJoinCodeInput.trim();
+      const { data: childData } = await supabase
+        .from('children')
+        .select('id, parent_id')
+        .eq('child_share_token', code)
+        .maybeSingle();
+
+      if (!childData) {
+        setChildJoinCodeError('Invalid join code. Please check and try again.');
+        playSound.pinError();
+        return;
+      }
+
+      // Link the child profile
+      await executeOrQueue('child_profiles', 'insert', {
+        user_id: sessionData.session.user.id,
+        child_id: childData.id,
+      });
+      // Mark token as linked so parent dashboard knows
+      await executeOrQueue(
+        'children',
+        'update',
+        { child_share_token: `LINKED_${childData.id}`, linked_email: sessionData.session.user.email },
+        { eq: { id: childData.id } }
+      );
+
+      setIsChildAuth(true);
+      setAuthedChildId(childData.id);
+      localStorage.setItem('RCH_CHILD_AUTH_ACTIVE', 'true');
+      localStorage.setItem('RCH_AUTHED_CHILD_ID', childData.id);
+      setShowChildJoinCodePrompt(false);
+      playSound.pinSuccess();
+      // Reload to fully initialise with the newly linked child account
+      window.location.reload();
+    } catch (e: any) {
+      setChildJoinCodeError(e.message || 'Something went wrong. Please try again.');
+      playSound.pinError();
+    } finally {
+      setIsApplyingChildJoinCode(false);
+    }
+  };
 
   const handleResetData = async (keepTemplates: boolean, keepAssignments: boolean, keepRoutines: boolean, targetChildId: string) => {
     const familyId = parentProfile?.family_id || parentEmail;
@@ -2590,7 +2653,80 @@ updateChildInSupabase(targetChild);
         )}
       </AnimatePresence>
 
+      {/* Child Join Code Prompt — shown when a child account has no linked child profile */}
+      <AnimatePresence>
+        {showChildJoinCodePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white dark:bg-stone-950 px-6"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)', paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="w-full max-w-sm space-y-6"
+            >
+              {/* Icon + heading */}
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-sm">
+                  <span className="text-3xl">🔑</span>
+                </div>
+                <h2 className="text-xl font-bold font-display text-stone-900 dark:text-stone-50">
+                  Enter Your Join Code
+                </h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400">
+                  Your account isn't linked to a family yet. Ask your parent for the 6-character code from the app.
+                </p>
+              </div>
+
+              {/* Error */}
+              {childJoinCodeError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0">⚠️</span>
+                  <span>{childJoinCodeError}</span>
+                </div>
+              )}
+
+              {/* Input + button */}
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Enter 6-character code"
+                  value={childJoinCodeInput}
+                  onChange={(e) => setChildJoinCodeInput(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  autoCapitalize="characters"
+                  className="w-full px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-50 text-center text-lg font-bold tracking-[0.3em] uppercase placeholder:tracking-normal placeholder:font-normal placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 transition-all"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleApplyChildJoinCode(); }}
+                />
+                <button
+                  onClick={handleApplyChildJoinCode}
+                  disabled={isApplyingChildJoinCode || childJoinCodeInput.trim().length < 1}
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold uppercase tracking-wider shadow-md shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+                >
+                  {isApplyingChildJoinCode ? 'Verifying…' : 'Join Family'}
+                </button>
+              </div>
+
+              {/* Log out link */}
+              <div className="text-center">
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 underline underline-offset-2 transition-colors"
+                >
+                  Sign out and use a different account
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Upgrade Account Modal */}
+
       <AnimatePresence>
         {showCreateAccount && (
           <motion.div
