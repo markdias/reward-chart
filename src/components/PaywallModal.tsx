@@ -176,7 +176,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                 Unlock <span className={styles.titleGradient}>Reward Chart Pro</span>
               </h3>
               <p className={`${styles.textMuted} text-xs sm:text-sm max-w-xs mx-auto`}>
-                {triggerReason || 'Manage unlimited children, get AI progress insights, and automate gold pot maintenance.'}
+                {triggerReason || 'Manage unlimited children, get progress insights, and automate gold pot maintenance.'}
               </p>
             </div>
 

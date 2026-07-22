@@ -380,7 +380,7 @@ export default function SettingsTab({
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                     {subscription.isPro
                       ? 'You have unlimited access to all Pro features and children charts.'
-                      : 'Free tier limits you to 1 child chart. Upgrade to unlock unlimited kids and AI features.'}
+                      : 'Free tier limits you to 1 child chart. Upgrade to unlock unlimited kids and progress insights.'}
                   </p>
                 </div>
               </div>

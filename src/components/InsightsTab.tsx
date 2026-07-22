@@ -288,20 +288,20 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({
           </div>
           <div>
             <Typography variant="h3" className="text-stone-900 dark:text-stone-50 font-bold">
-              Smart AI Progress Insights
+              Progress Insights
             </Typography>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto font-medium">
-              Upgrade to Pro to unlock personalized AI recommendations, completion bottleneck analysis, and progress forecasts for {selectedChild?.name || 'your kids'}.
+              Upgrade to Pro to unlock personalized progress recommendations, completion bottleneck analysis, and trend forecasts for {selectedChild?.name || 'your kids'}.
             </p>
           </div>
           <Button
             variant="warning"
             size="sm"
-            onClick={() => { playSound.click(); openPaywall('Smart AI Progress Insights'); }}
+            onClick={() => { playSound.click(); openPaywall('Progress Insights'); }}
             className="font-bold uppercase tracking-wider px-6"
           >
             <Crown className="w-4 h-4 mr-2 inline-block" />
-            Unlock AI Insights
+            Unlock Progress Insights
           </Button>
         </motion.div>
       ) : (

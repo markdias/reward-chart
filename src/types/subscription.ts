@@ -60,11 +60,11 @@ export const PRO_FEATURES: ProFeature[] = [
   },
   {
     id: 'ai_insights',
-    title: 'Smart AI Progress Insights',
-    description: 'Personalized AI recommendations based on completion patterns and pet care.',
+    title: 'Progress Insights',
+    description: 'Personalized progress recommendations based on completion patterns and pet care.',
     iconName: 'Sparkles',
     freeLimit: 'Basic',
-    proLimit: 'Advanced AI Insights',
+    proLimit: 'Progress Insights',
   },
   {
     id: 'custom_rewards',
