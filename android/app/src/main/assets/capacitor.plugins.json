@@ -10,5 +10,9 @@
 	{
 		"pkg": "@capgo/capacitor-app-tracking-transparency",
 		"classpath": "ee.forgr.capacitor.apptrackingtransparency.AppTrackingTransparencyPlugin"
+	},
+	{
+		"pkg": "@revenuecat/purchases-capacitor",
+		"classpath": "com.revenuecat.purchases.capacitor.PurchasesPlugin"
 	}
 ]
