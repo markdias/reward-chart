@@ -220,6 +220,11 @@ pass = "env(RESEND_API_KEY)"
 admin_email = "onboarding@resend.dev"
 sender_name = "Reward Chart"
 
+# Custom Signup Confirmation Email Template
+[auth.email.template.signup]
+subject = "Confirm Your Account - Reward Chart 🌟"
+content_path = "./supabase/templates/signup_confirmation.html"
+
 # Custom Password Reset Email Template
 [auth.email.template.recovery]
 subject = "Reset Your Password - Reward Chart 🔒"

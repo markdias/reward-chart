@@ -353,19 +353,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
 
           const session = data?.session;
           if (!session) {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-
-            if (!signInError && signInData?.session) {
-              playSound.pinSuccess();
-              if (onSignUpReal) onSignUpReal(email, name, familyName);
-              else onLoginReal(email);
-              return;
-            }
-
-            setRealAuthError('Sign up processed! Check your email inbox for welcome instructions.');
+            setResetSuccessMsg('🎉 Account created! Please check your email inbox and click the confirmation link to activate your account.');
             setAuthMode('login');
             playSound.success();
             return;
