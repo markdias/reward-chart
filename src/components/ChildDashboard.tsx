@@ -1769,7 +1769,7 @@ export default function ChildDashboard({
                       >
                         {/* Inner Cutout */}
                         <div
-                          className="relative z-10 w-full h-full rounded-[1rem] p-4 sm:p-6 flex flex-col items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
+                          className="relative z-10 w-full h-full min-h-[540px] sm:min-h-[660px] rounded-[1rem] p-5 sm:p-8 flex flex-col justify-between items-center border-4 border-stone-900 shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)] overflow-hidden"
                           style={{
                             backgroundImage: "url('/field_stand_bg.png')",
                             backgroundSize: 'cover',
@@ -1779,13 +1779,7 @@ export default function ChildDashboard({
 
                           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent rounded-[1rem]" />
 
-                          <div className="flex justify-between w-full items-start mt-1 relative z-20">
-                            {/* Pet Species Pill (Top Left) */}
-                            <div className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg border border-stone-200/50 dark:border-stone-700/50 text-center flex flex-col items-center">
-                              <span className={`text-[9px] font-sans tracking-widest uppercase text-stone-500 font-extrabold mb-0.5`}>PET SPECIES</span>
-                              <Typography variant="h3" className={`font-black text-stone-900 dark:text-white text-sm uppercase tracking-wider leading-none`}>{activeChildStage.name}</Typography>
-                            </div>
-                            
+                          <div className="flex justify-end w-full items-start mt-1 relative z-20">
                             {/* Pet Status Pill (Top Right) */}
                             <div className={`transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
                               {activeChild.pet_unhappy ? (
@@ -1805,7 +1799,7 @@ export default function ChildDashboard({
                           </div>
 
                           {/* Giant Levitating Pedestal */}
-                          <div className="my-6 sm:my-10 relative flex items-center justify-center">
+                          <div className="my-8 sm:my-14 relative flex items-center justify-center flex-1">
 
                             <motion.div
                               animate={isFeeding ? { scale: [1, 1.25, 1.1, 1.3, 1], rotate: [0, 8, -8, 8, 0] } : {}}
@@ -1836,14 +1830,17 @@ export default function ChildDashboard({
                             </motion.div>
                           </div>
                           {/* Unified Level and Feed progression */}
-                          <div className={`w-full mt-6 relative z-30 transition-opacity duration-300 ${!isFoodPotUnlocked ? 'opacity-0 pointer-events-none' : ''}`}>
-                            <div className="w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl rounded-[2.5rem] p-4 pr-5 flex items-stretch border-2 border-white/50 dark:border-stone-700/50 shadow-2xl">
+                          <div className="w-full mt-6 relative z-30">
+                            <div className={`w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl rounded-[2.5rem] p-4 flex items-stretch border-2 border-white/50 dark:border-stone-700/50 shadow-2xl ${isFoodPotUnlocked ? 'pr-5' : 'px-6'}`}>
                               
                               {/* Left Side: Level Progress */}
-                              <div className="flex-1 pl-4 pr-6 py-3 flex flex-col justify-center border-r-2 border-stone-200 dark:border-stone-800 border-dashed">
+                              <div className={`flex-1 py-3 flex flex-col justify-center ${isFoodPotUnlocked ? 'pl-4 pr-6 border-r-2 border-stone-200 dark:border-stone-800 border-dashed' : 'px-2'}`}>
                                 <div className="flex justify-between items-end mb-2">
-                                  <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest">Level {activeChild.level}</span>
-                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+                                  <div className="flex flex-col">
+                                    <span className="text-[11px] sm:text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest leading-tight">{activeChildStage.name}</span>
+                                    <span className="text-[16px] sm:text-[18px] font-black text-stone-900 dark:text-white uppercase tracking-widest leading-tight">Level {activeChild.level}</span>
+                                  </div>
+                                  <span className="text-[11px] sm:text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider pb-0.5">
                                     {(activeChild.lifetime_points || 0) % (parentProfile?.points_to_level_up ?? 500)} / {parentProfile?.points_to_level_up ?? 500} coins
                                   </span>
                                 </div>
@@ -1854,7 +1851,7 @@ export default function ChildDashboard({
                                 />
                                 
                                 {/* Show warning text inline if no food */}
-                                {(!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
+                                {isFoodPotUnlocked && (!activeChild.pet_fed_today && (activeChild.pet_food || 0) <= 0) && (
                                   <span className="text-[13px] sm:text-[15px] text-red-500 dark:text-red-400 font-black mt-3 leading-tight flex items-center">
                                     <FaTriangleExclamation className="mr-1.5 shrink-0" />
                                     No food left!
@@ -1863,47 +1860,49 @@ export default function ChildDashboard({
                               </div>
 
                               {/* Right Side: Feed Button */}
-                              <div className="w-[110px] shrink-0 pl-5 flex items-center">
-                                <div className="relative w-full">
-                                  {/* Inventory Badge */}
-                                  <div className={`absolute -top-3 -right-3 text-white text-[11px] sm:text-xs font-black w-8 h-8 rounded-full border-[3px] shadow-lg z-20 flex items-center justify-center
-                                    ${(activeChild.pet_food || 0) > 0 ? 'bg-orange-500 border-white dark:border-stone-900' : 'bg-stone-400 border-white dark:border-stone-900'}`}>
-                                    {activeChild.pet_food || 0}
+                              {isFoodPotUnlocked && (
+                                <div className="w-[110px] shrink-0 pl-5 flex items-center">
+                                  <div className="relative w-full">
+                                    {/* Inventory Badge */}
+                                    <div className={`absolute -top-3 -right-3 text-white text-[11px] sm:text-xs font-black w-8 h-8 rounded-full border-[3px] shadow-lg z-20 flex items-center justify-center
+                                      ${(activeChild.pet_food || 0) > 0 ? 'bg-orange-500 border-white dark:border-stone-900' : 'bg-stone-400 border-white dark:border-stone-900'}`}>
+                                      {activeChild.pet_food || 0}
+                                    </div>
+                                    
+                                    {/* Button */}
+                                    <Button
+                                      variant="none"
+                                      size="none"
+                                      onClick={handleFeedCompanion}
+                                      disabled={!isFoodPotUnlocked || isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
+                                      className={`w-full h-[88px] rounded-3xl font-sans text-xs sm:text-[13px] font-black uppercase flex flex-col items-center justify-center gap-1 transition-all
+                                        ${activeChild.pet_fed_today
+                                          ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 border-2 border-stone-200 dark:border-stone-700 cursor-default'
+                                          : (activeChild.pet_food || 0) > 0
+                                            ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-b-[5px] border-orange-700 hover:border-b-[3px] hover:translate-y-[2px] shadow-lg cursor-pointer'
+                                            : 'bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border-2 border-stone-300 dark:border-stone-700 shadow-sm !opacity-100 cursor-not-allowed'
+                                        }`}
+                                    >
+                                      {isFeeding ? (
+                                        <>
+                                          <FaBone className="text-3xl drop-shadow-sm mb-0.5 animate-bounce" />
+                                          Chomp...
+                                        </>
+                                      ) : activeChild.pet_fed_today ? (
+                                        <>
+                                          <FaCircleCheck className="text-3xl drop-shadow-sm mb-0.5 text-green-500" />
+                                          Fed
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaBone className="text-3xl drop-shadow-sm mb-0.5" />
+                                          Feed
+                                        </>
+                                      )}
+                                    </Button>
                                   </div>
-                                  
-                                  {/* Button */}
-                                  <Button
-                                    variant="none"
-                                    size="none"
-                                    onClick={handleFeedCompanion}
-                                    disabled={!isFoodPotUnlocked || isFeeding || (activeChild.pet_food || 0) <= 0 || activeChild.pet_fed_today}
-                                    className={`w-full h-[88px] rounded-3xl font-sans text-xs sm:text-[13px] font-black uppercase flex flex-col items-center justify-center gap-1 transition-all
-                                      ${activeChild.pet_fed_today
-                                        ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 border-2 border-stone-200 dark:border-stone-700 cursor-default'
-                                        : (activeChild.pet_food || 0) > 0
-                                          ? 'bg-gradient-to-b from-amber-400 to-orange-500 text-white border-b-[5px] border-orange-700 hover:border-b-[3px] hover:translate-y-[2px] shadow-lg cursor-pointer'
-                                          : 'bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border-2 border-stone-300 dark:border-stone-700 shadow-sm !opacity-100 cursor-not-allowed'
-                                      }`}
-                                  >
-                                    {isFeeding ? (
-                                      <>
-                                        <FaBone className="text-3xl drop-shadow-sm mb-0.5 animate-bounce" />
-                                        Chomp...
-                                      </>
-                                    ) : activeChild.pet_fed_today ? (
-                                      <>
-                                        <FaCircleCheck className="text-3xl drop-shadow-sm mb-0.5 text-green-500" />
-                                        Fed
-                                      </>
-                                    ) : (
-                                      <>
-                                        <FaBone className="text-3xl drop-shadow-sm mb-0.5" />
-                                        Feed
-                                      </>
-                                    )}
-                                  </Button>
                                 </div>
-                              </div>
+                              )}
 
                             </div>
                           </div>

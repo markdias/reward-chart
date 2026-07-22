@@ -465,7 +465,7 @@ export default function ParentDashboard({
   const sortedChildren = [...children].sort((a, b) => a.name.localeCompare(b.name));
 
   // Custom Confirmation Modal State
-  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' | 'Lifetime Gold' } | null>(null);
+  const [resetConfirmation, setResetConfirmation] = useState<{ childId: string, childName: string, type: 'Gold' | 'Level' | 'Streak' | 'Lifetime Gold' | 'Food' } | null>(null);
   const [deleteChildConfirmation, setDeleteChildConfirmation] = useState<{ childId: string, childName: string } | null>(null);
   const [showHistoryForChild, setShowHistoryForChild] = useState<string | null>(null);
   const [historyDetailView, setHistoryDetailView] = useState<'tasks' | 'deductions' | 'rewards' | null>(null);
@@ -2835,6 +2835,18 @@ export default function ParentDashboard({
                         <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { level: child.level + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Level Up"><ArrowUpCircle className="w-4 h-4" /></Button>
                       </div>
                     </div>
+                    <div className="h-[0.5px] bg-stone-200"></div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[15px] font-semibold text-black dark:text-white tracking-tight">Food Items ({child.pet_food || 0})</span>
+                      <div className="flex gap-1">
+                        <Button variant="none" size="none" onClick={() => {
+                          playSound.click();
+                          setResetConfirmation({ childId: child.id, childName: child.name, type: 'Food' });
+                        }} className="p-2 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 bg-white dark:bg-stone-900" title="Reset Food to 0"><RotateCcw className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { pet_food: Math.max(0, (child.pet_food || 0) - 1), food_pot_weekly_contribution: Math.max(0, (child.food_pot_weekly_contribution || 0) - 1) }); }} className="p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 bg-white dark:bg-stone-900" title="Remove 1 Food"><MinusCircle className="w-4 h-4" /></Button>
+                        <Button variant="none" size="none" onClick={() => { playSound.click(); onUpdateChildStats(child.id, { pet_food: (child.pet_food || 0) + 1, food_pot_weekly_contribution: (child.food_pot_weekly_contribution || 0) + 1 }); }} className="p-2 rounded-lg border border-cyan-200 text-cyan-600 hover:bg-cyan-50 bg-white dark:bg-stone-900" title="Add 1 Food"><PlusCircle className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="mt-8">
@@ -3113,6 +3125,7 @@ export default function ParentDashboard({
                       if (resetConfirmation.type === 'Streak') onUpdateChildStats(resetConfirmation.childId, { streak_days: 0 });
                       if (resetConfirmation.type === 'Level') onUpdateChildStats(resetConfirmation.childId, { level: 1 });
                       if (resetConfirmation.type === 'Lifetime Gold') onUpdateChildStats(resetConfirmation.childId, { lifetime_points: 0 });
+                      if (resetConfirmation.type === 'Food') onUpdateChildStats(resetConfirmation.childId, { pet_food: 0, food_pot_weekly_contribution: 0 });
                       setResetConfirmation(null);
                     }}
                     className="flex-1"
