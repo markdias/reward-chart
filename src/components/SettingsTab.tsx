@@ -572,6 +572,28 @@ export default function SettingsTab({
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-2 sm:p-4 relative">
         
         <div className="max-w-4xl mx-auto space-y-6">
+          {!subscription.isPro && (
+            <div className="p-5 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-orange-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-orange-500 text-white shrink-0 shadow-sm">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-stone-900 dark:text-stone-100">Co-Parent & Family Real-Time Sync</h4>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-medium">Upgrade to Pro to link partner accounts and sync reward charts across all family devices in real time.</p>
+                </div>
+              </div>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => { playSound.click(); openPaywall('Family & Co-Parent Sync'); }}
+                className="shrink-0 font-bold uppercase tracking-wider"
+              >
+                Unlock Family Sync
+              </Button>
+            </div>
+          )}
+
           {!parentProfile?.user_id ? (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-3">
               <h4 className="font-bold text-emerald-900 font-display">Cloud Account Required</h4>
