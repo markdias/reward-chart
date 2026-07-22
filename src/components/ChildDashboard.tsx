@@ -326,6 +326,39 @@ export default function ChildDashboard({
   }, [activeChildTab]);
 
   const [expandedGoal, setExpandedGoal] = useState<'daily' | 'weekly' | 'monthly' | null>(null);
+  const expandedGoalRef = useRef<HTMLDivElement>(null);
+
+  const scrollToExpandedGoalSection = () => {
+    setTimeout(() => {
+      if (expandedGoalRef.current) {
+        const rect = expandedGoalRef.current.getBoundingClientRect();
+        const bottomBoundary = window.innerHeight - 100;
+        const topBoundary = 80;
+
+        let scrollDiff = 0;
+        if (rect.bottom > bottomBoundary) {
+          scrollDiff = rect.bottom - bottomBoundary;
+        } else if (rect.top < topBoundary) {
+          scrollDiff = rect.top - topBoundary;
+        }
+
+        if (scrollDiff !== 0) {
+          const viewport = document.getElementById('child-viewport');
+          if (viewport) {
+            viewport.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+          }
+          window.scrollBy({ top: scrollDiff, behavior: 'smooth' });
+        }
+      }
+    }, 180);
+  };
+
+  useEffect(() => {
+    if (expandedGoal) {
+      scrollToExpandedGoalSection();
+    }
+  }, [expandedGoal]);
+
   const [isFeeding, setIsFeeding] = useState(false);
 
   // Well Done celebration overlay
@@ -1939,7 +1972,7 @@ export default function ChildDashboard({
                             <div className="grid grid-cols-3 gap-2 sm:gap-4">
                               {/* Daily Goal Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('daily'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('daily'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #fb923c, #fb923c 8px, #f97316 8px, #f97316 16px)' }}
                               >
@@ -1955,7 +1988,7 @@ export default function ChildDashboard({
 
                               {/* Weekly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('weekly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #22d3ee, #22d3ee 8px, #06b6d4 8px, #06b6d4 16px)' }}
                               >
@@ -1971,7 +2004,7 @@ export default function ChildDashboard({
 
                               {/* Monthly Widget */}
                               <button
-                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); }}
+                                onClick={() => { playSound.click(); setExpandedGoal('monthly'); scrollToExpandedGoalSection(); }}
                                 className="relative p-1.5 rounded-[1.75rem] transition-transform duration-200 flex shadow-lg overflow-hidden cursor-pointer hover:-translate-y-1 active:scale-[0.96] text-center w-full focus:outline-none"
                                 style={{ background: 'repeating-linear-gradient(45deg, #c084fc, #c084fc 8px, #a855f7 8px, #a855f7 16px)' }}
                               >
@@ -1989,6 +2022,7 @@ export default function ChildDashboard({
                             <AnimatePresence>
                               {expandedGoal && (
                                 <motion.div
+                                  ref={expandedGoalRef}
                                   initial={{ opacity: 0, height: 0 }}
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
