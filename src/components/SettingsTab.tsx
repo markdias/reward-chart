@@ -492,7 +492,7 @@ export default function SettingsTab({
               toggleActive={!!OneSignal?.Notifications?.permission}
               onToggle={async () => {
                 playSound.click();
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+                const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !(window as any).MSStream;
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
                 
                 if (isIOS && !isStandalone) {
