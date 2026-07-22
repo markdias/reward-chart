@@ -23,6 +23,19 @@ interface StepCreateAccountProps {
   theme?: string;
 }
 
+const formatAuthError = (err: any): string => {
+  if (!err) return 'An error occurred during account creation.';
+  if (typeof err === 'string') return err;
+  const msg = err.message || err.error_description || err.error;
+  if (typeof msg === 'string' && msg && msg !== '{}' && msg !== '[object Object]') {
+    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already in use') || msg.toLowerCase().includes('user_already_exists')) {
+      return 'An account with this email already exists. Tap "Sign in instead" below!';
+    }
+    return msg;
+  }
+  return 'An account with this email may already exist. Try signing in instead!';
+};
+
 export default function StepCreateAccount({ name = '', familyName = '', onComplete, onBack, onLoginInstead, theme }: StepCreateAccountProps) {
   const styles = {
     text: 'text-stone-900 dark:text-stone-50',
@@ -64,7 +77,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
       setResendMsg(`Confirmation email re-sent to ${email}! Check your inbox.`);
       playSound.pinSuccess();
     } else {
-      setError(res.error || 'Failed to resend confirmation email.');
+      setError(formatAuthError(res.error));
       playSound.pinError();
     }
   };
@@ -84,9 +97,9 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
           redirectTo: `${window.location.origin}/`,
         },
       });
-      if (error) throw error;
+      if (error) setError(formatAuthError(error));
     } catch (err: any) {
-      setError(err.message || 'An error occurred during social login.');
+      setError(formatAuthError(err));
       playSound.pinError();
     }
   };
@@ -96,6 +109,12 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      playSound.pinError();
+      return;
+    }
 
     if (!isSupabaseConfigured()) {
       setError('Supabase is not configured. Please check your environment variables.');
@@ -134,7 +153,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
         });
 
         if (signUpError) {
-          setError(signUpError.message);
+          setError(formatAuthError(signUpError));
           playSound.pinError();
           setIsSubmitting(false);
           return;
