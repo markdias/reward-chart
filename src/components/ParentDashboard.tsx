@@ -1297,11 +1297,11 @@ export default function ParentDashboard({
 
                 {/* Approved Rewards Waiting to be Given */}
                 {approvedRedemptions.length > 0 && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-200 dark:border-amber-900/50 space-y-3 mb-4">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3 mb-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white flex items-center justify-center text-lg shadow-md font-bold">
-                          🎁
+                        <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/40 flex items-center justify-center shrink-0">
+                          <Gift className="w-5 h-5 text-amber-500" />
                         </div>
                         <div>
                           <Typography variant="h3" className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-50">
@@ -1318,12 +1318,12 @@ export default function ParentDashboard({
                         const child = children.find(c => c.id === req.child_id);
                         const reward = rewards.find(r => r.id === req.reward_id);
                         return (
-                          <div key={req.id} className="flex items-center justify-between p-3.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 shadow-sm">
+                          <div key={req.id} className="flex items-center justify-between p-3.5 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-100 dark:border-stone-800 shadow-sm">
                             <div className="flex items-center gap-3">
                               {child && <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl" />}
                               <div>
                                 <div className="text-xs font-bold text-stone-900 dark:text-stone-50">
-                                  {child?.name} &bull; <span className="text-amber-600 dark:text-amber-400 font-extrabold">{reward?.title || 'Reward'}</span>
+                                  {child?.name} &bull; <strong className="text-stone-900 dark:text-stone-50">{reward?.title || 'Reward'}</strong>
                                 </div>
                                 <div className="text-[10px] text-stone-400 font-sans mt-0.5">
                                   Approved {req.approved_at ? new Date(req.approved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently'}
@@ -1337,9 +1337,9 @@ export default function ParentDashboard({
                                 playSound.success();
                                 onDeliverReward(req.id);
                               }}
-                              className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm text-xs font-bold px-3 py-1.5 rounded-xl"
+                              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-sm text-xs font-bold px-3.5 py-2 rounded-xl"
                             >
-                              Confirm Given ✓
+                              <Check className="w-4 h-4" /> Confirm Given
                             </Button>
                           </div>
                         );
@@ -2681,20 +2681,20 @@ export default function ParentDashboard({
                 {/* Approved Rewards Waiting to be Given */}
                 {approvedRedemptions.length > 0 && (
                   <div className="pt-8 border-t border-stone-200 dark:border-stone-800">
-                    <Typography variant="h3" className="font-bold font-sans text-sm text-amber-600 dark:text-amber-400 uppercase pb-4 flex items-center gap-2">
-                      <Gift className="w-4 h-4" /> Approved Rewards (Waiting to be Given)
+                    <Typography variant="h3" className="font-bold font-sans text-sm text-stone-900 dark:text-stone-50 uppercase pb-4 flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-amber-500" /> Approved Rewards (Waiting to be Given)
                     </Typography>
                     <div className="space-y-3">
                       {approvedRedemptions.map(req => {
                         const child = children.find(c => c.id === req.child_id);
                         const reward = rewards.find(r => r.id === req.reward_id);
                         return (
-                          <div key={req.id} className="flex items-center justify-between p-4 rounded-xl border bg-amber-500/5 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50">
+                          <div key={req.id} className="flex items-center justify-between p-4 rounded-xl border bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-800">
                             <div className="flex items-center gap-3">
                               {child && <ChildAvatar iconName={child.avatar_url} className="w-10 h-10 !rounded-xl" />}
                               <div>
                                 <div className="text-xs font-bold text-stone-900 dark:text-stone-50">
-                                  {child?.name} claimed <strong className="text-amber-600 dark:text-amber-400">{reward?.title}</strong>
+                                  {child?.name} claimed <strong className="text-stone-900 dark:text-stone-50">{reward?.title}</strong>
                                 </div>
                                 <Typography variant="body" className={`text-[10px] font-sans mt-1 ${styles.textMuted}`}>
                                   Approved {req.approved_at ? new Date(req.approved_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : ''}
@@ -2708,9 +2708,9 @@ export default function ParentDashboard({
                                 playSound.success();
                                 onDeliverReward(req.id);
                               }}
-                              className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-md text-xs font-bold px-4 py-2 rounded-xl"
+                              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-sm text-xs font-bold px-3.5 py-2 rounded-xl"
                             >
-                              Confirm Given ✓
+                              <Check className="w-4 h-4" /> Confirm Given
                             </Button>
                           </div>
                         );
