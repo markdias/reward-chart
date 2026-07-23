@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
@@ -242,23 +243,25 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
     setShowPrintModal(true);
   };
 
-  // Triggers browser print with configured duration & template options
+  // Triggers browser print with configured duration & template options synchronously
   const handleExecutePrint = () => {
     playSound.click();
-    setShowPrintModal(false);
 
     const previousRange = viewRange;
-    setViewRange(printRange);
-    setIsPrintingBlank(printMode === 'blank');
 
-    // Wait for DOM re-render before launching browser print window
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        setViewRange(previousRange);
-        setIsPrintingBlank(false);
-      }, 500);
-    }, 150);
+    // Synchronously flush DOM state updates within the user click gesture
+    flushSync(() => {
+      setShowPrintModal(false);
+      setViewRange(printRange);
+      setIsPrintingBlank(printMode === 'blank');
+    });
+
+    // Invoke window.print() synchronously in user gesture to prevent Safari 'page is trying to print' prompt
+    window.print();
+
+    // Restore interactive state after print dialog closes
+    setViewRange(previousRange);
+    setIsPrintingBlank(false);
   };
 
   // Map of completion lookup: key = `${taskId}_${dateKey}` -> TaskCompletion
