@@ -2843,19 +2843,20 @@ updateChildInSupabase(targetChild);
       </AnimatePresence>
     </div>
     <LegalModal />
-    <GlobalPaywallModal />
+    <GlobalPaywallModal inOnboarding={!hasCompletedOnboarding} />
     </Suspense>
     </SubscriptionProvider>
   );
 }
 
-function GlobalPaywallModal() {
+function GlobalPaywallModal({ inOnboarding }: { inOnboarding: boolean }) {
   const { isPaywallOpen, closePaywall, paywallFeatureTrigger } = useSubscription();
   return (
     <PaywallModal
       isOpen={isPaywallOpen}
       onClose={closePaywall}
       triggerReason={paywallFeatureTrigger}
+      inOnboarding={inOnboarding}
     />
   );
 }

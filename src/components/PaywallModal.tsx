@@ -24,14 +24,16 @@ interface PaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
   triggerReason?: string;
+  inOnboarding?: boolean;
 }
 
 export const PaywallModal: React.FC<PaywallModalProps> = ({
   isOpen,
   onClose,
   triggerReason,
+  inOnboarding = false,
 }) => {
-  const { subscription, purchase, restore } = useSubscription();
+  const { subscription, purchase, restore, togglePro } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanId>('annual');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isRestoring, setIsRestoring] = useState<boolean>(false);
@@ -290,6 +292,42 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Early Preview Free Pro Toggle */}
+            {inOnboarding && (
+              <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4.5 h-4.5 text-amber-500 shrink-0" />
+                    <span className="text-xs font-bold text-stone-800 dark:text-stone-100">
+                      Early Preview: Use Pro for Free
+                    </span>
+                  </div>
+                  <div
+                    onClick={async () => {
+                      const newStatus = !subscription.isPro;
+                      playSound.click();
+                      if (newStatus) {
+                        playSound.success();
+                      }
+                      await togglePro(newStatus);
+                    }}
+                    className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 cursor-pointer p-0.5 ${
+                      subscription.isPro ? 'bg-amber-500' : 'bg-stone-200 dark:bg-stone-700'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full transition-transform duration-300 shadow-sm ${
+                        subscription.isPro ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-normal font-medium">
+                  We are finalizing our public release. Toggle this on to enjoy all premium features for free during this preview!
+                </p>
+              </div>
+            )}
 
             {/* Subscribe Action Button */}
             <Button
