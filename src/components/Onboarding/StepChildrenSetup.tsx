@@ -10,6 +10,8 @@ import { Input } from '../ui/Input';
 import { ChildAvatar } from '../ChildAvatar';
 import { useSubscription } from '../../hooks/useSubscription';
 
+import { sanitizeText, sanitizeNumber } from '../../utils/security';
+
 interface StepChildrenSetupProps {
   onNext: (children: Partial<Child>[]) => void;
   initialChildren?: Partial<Child>[];
@@ -59,7 +61,14 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
 
   const handleAddChild = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    const cleanName = sanitizeText(name, 50);
+    if (!cleanName) return;
+    const cleanAge = typeof age === 'number' ? sanitizeNumber(age, 1, 18) : (age ? sanitizeNumber(age, 1, 18) : undefined);
+
+    if (!editingChildId && !canAddChild(children.length)) {
+      openPaywall('Unlimited Children');
+      return;
+    }
 
     if (!editingChildId && !canAddChild(children.length)) {
       openPaywall('Unlimited Children');
@@ -69,7 +78,7 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
     if (editingChildId) {
       setChildren(prev => prev.map(child => 
         child.id === editingChildId 
-          ? { ...child, name: name.trim(), age: typeof age === 'number' ? age : undefined, character_id: selectedCharId, avatar_url: selectedAvatar }
+          ? { ...child, name: cleanName, age: cleanAge, character_id: selectedCharId, avatar_url: selectedAvatar }
           : child
       ));
     } else {
@@ -77,8 +86,8 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
         ...prev,
         {
           id: `temp_${Date.now()}`,
-          name: name.trim(),
-          age: typeof age === 'number' ? age : undefined,
+          name: cleanName,
+          age: cleanAge,
           character_id: selectedCharId,
           avatar_url: selectedAvatar,
         }

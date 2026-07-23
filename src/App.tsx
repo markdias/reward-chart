@@ -18,6 +18,7 @@ import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
 import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
 import { PaywallModal } from './components/PaywallModal';
+import { CookieBanner, CookieConsentData } from './components/ui/CookieBanner';
 
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
@@ -29,7 +30,7 @@ import posthog from 'posthog-js';
 import { executeOrQueue, processSyncQueue } from './utils/offlineSync';
 import { getCurrentWeekKey, getCurrentMonthKey, getNextWeeklyResetDate, getNextMonthlyResetDate, getStartOfDailyReset } from './utils/date';
 import { revokeInvalidLevelBadges } from './utils/badgeService';
-import { generateShortCode } from './utils/security';
+import { generateShortCode, sanitizeText, sanitizeEmail, sanitizeCode, sanitizeNumber } from './utils/security';
 import { Network } from '@capacitor/network';
 import { safeLocalStorageGet, safeJsonParse, safeLocalStorageSet } from './utils/storage';
 
@@ -1203,7 +1204,7 @@ export default function App() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session?.user) throw new Error('No active session');
 
-      const code = childJoinCodeInput.trim();
+      const code = sanitizeCode(childJoinCodeInput);
       const { data: childData } = await supabase
         .from('children')
         .select('id, parent_id')
@@ -1429,11 +1430,13 @@ export default function App() {
 
   // Operations: Children
   const handleAddChild = async (name: string, characterId: string, avatarUrl: string, age?: number) => {
+    const cleanName = sanitizeText(name, 50);
+    const cleanAge = age ? sanitizeNumber(age, 1, 18) : undefined;
     const newChild: Child = {
       id: `child_${Date.now()}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
-      name,
-      age,
+      name: cleanName,
+      age: cleanAge,
       avatar_url: avatarUrl,
       character_id: characterId,
       points: 0,
@@ -1465,10 +1468,17 @@ export default function App() {
   };
 
   const handleEditChild = async (id: string, updates: Partial<Child>) => {
+    const sanitizedUpdates = { ...updates };
+    if (sanitizedUpdates.name !== undefined) {
+      sanitizedUpdates.name = sanitizeText(sanitizedUpdates.name, 50);
+    }
+    if (sanitizedUpdates.age !== undefined && sanitizedUpdates.age !== null) {
+      sanitizedUpdates.age = sanitizeNumber(sanitizedUpdates.age, 1, 18);
+    }
     let updatedChild: Child | null = null;
     const updatedChildren = children.map(c => {
       if (c.id === id) {
-        updatedChild = { ...c, ...updates };
+        updatedChild = { ...c, ...sanitizedUpdates };
         return updatedChild;
       }
       return c;
@@ -1677,12 +1687,14 @@ export default function App() {
     recurrence: any, 
     cooldownMinutes?: number
   ) => {
+    const cleanTitle = sanitizeText(title, 100);
+    const cleanPoints = sanitizeNumber(points, 0, 100000);
     const newTask: Task = {
       id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       child_id: 'directory',
-      title,
-      points,
+      title: cleanTitle,
+      points: cleanPoints,
       category,
       recurrence,
       cooldown_minutes: cooldownMinutes,
@@ -1729,9 +1741,16 @@ export default function App() {
   };
 
   const handleEditTask = async (id: string, updates: Partial<Task>) => {
+    const sanitizedUpdates = { ...updates };
+    if (sanitizedUpdates.title !== undefined) {
+      sanitizedUpdates.title = sanitizeText(sanitizedUpdates.title, 100);
+    }
+    if (sanitizedUpdates.points !== undefined) {
+      sanitizedUpdates.points = sanitizeNumber(sanitizedUpdates.points, 0, 100000);
+    }
     const updatedTasks = tasks.map(t => {
       if (t.id === id || t.template_id === id) {
-        return { ...t, ...updates };
+        return { ...t, ...sanitizedUpdates };
       }
       return t;
     });
@@ -1739,7 +1758,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await executeOrQueue('tasks', 'update', updates, { or: `id.eq.${id},template_id.eq.${id}` });
+      const { error } = await executeOrQueue('tasks', 'update', sanitizedUpdates, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to update task in Supabase:', error.message);
     }
   };
@@ -1762,12 +1781,14 @@ export default function App() {
     limitType: any,
     isBadgeEligible: boolean = false
   ) => {
+    const cleanTitle = sanitizeText(title, 100);
+    const cleanCost = sanitizeNumber(cost, 0, 100000);
     const newReward: Reward = {
       id: `rew_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       parent_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
       child_id: 'directory',
-      title,
-      cost_points: cost,
+      title: cleanTitle,
+      cost_points: cleanCost,
       is_available: true,
       is_template: true,
       icon_name: iconName,
@@ -1814,9 +1835,16 @@ export default function App() {
   };
 
   const handleEditReward = async (id: string, updates: Partial<Reward>) => {
+    const sanitizedUpdates = { ...updates };
+    if (sanitizedUpdates.title !== undefined) {
+      sanitizedUpdates.title = sanitizeText(sanitizedUpdates.title, 100);
+    }
+    if (sanitizedUpdates.cost_points !== undefined) {
+      sanitizedUpdates.cost_points = sanitizeNumber(sanitizedUpdates.cost_points, 0, 100000);
+    }
     const updatedRewards = rewards.map(r => {
       if (r.id === id || r.template_id === id) {
-        return { ...r, ...updates };
+        return { ...r, ...sanitizedUpdates };
       }
       return r;
     });
@@ -1824,7 +1852,7 @@ export default function App() {
 
     const supabase = getSupabaseClient();
     if (supabase) {
-      const { error } = await executeOrQueue('rewards', 'update', updates, { or: `id.eq.${id},template_id.eq.${id}` });
+      const { error } = await executeOrQueue('rewards', 'update', sanitizedUpdates, { or: `id.eq.${id},template_id.eq.${id}` });
       if (error) console.warn('Failed to update reward in Supabase:', error.message);
     }
   };
@@ -1963,8 +1991,7 @@ export default function App() {
     }
 
     // Wait to deduct points until parent delivers it!
-    // Just trigger celebration here for the request.
-    setCelebrationActive(true);
+    // Create Redemption Request
 
     // Create Redemption Request
     const newRedemption: RewardRedemption = {
@@ -2132,10 +2159,17 @@ export default function App() {
 
   const handleUpdateParentProfile = async (updates: Partial<ParentProfile>) => {
     if (parentProfile) {
-      const updated = { ...parentProfile, ...updates };
+      const sanitizedUpdates = { ...updates };
+      if (sanitizedUpdates.name !== undefined && sanitizedUpdates.name !== null) {
+        sanitizedUpdates.name = sanitizeText(sanitizedUpdates.name, 50);
+      }
+      if (sanitizedUpdates.family_name !== undefined && sanitizedUpdates.family_name !== null) {
+        sanitizedUpdates.family_name = sanitizeText(sanitizedUpdates.family_name, 50);
+      }
+      const updated = { ...parentProfile, ...sanitizedUpdates };
       setParentProfile(updated);
       localStorage.setItem('RCH_PARENT_PROFILE', JSON.stringify(updated));
-      await executeOrQueue('parent_profiles', 'update', updates, { eq: { 'user_id': parentProfile.user_id } });
+      await executeOrQueue('parent_profiles', 'update', sanitizedUpdates, { eq: { 'user_id': parentProfile.user_id } });
     }
   };
 
@@ -2284,8 +2318,6 @@ export default function App() {
       syncChildren(updatedChildren);
       updateChildInSupabase(targetChild);
     }
-
-    setCelebrationActive(true);
   };
 
   const handleApproveCompletion = async (completionId: string) => {
@@ -2334,9 +2366,6 @@ export default function App() {
       syncChildren(updatedChildren);
       updateChildInSupabase(targetChild);
     }
-
-    // 3. Trigger full-screen fireworks!
-    setCelebrationActive(true);
   };
 
   const handleRejectCompletion = async (completionId: string) => {
@@ -2380,13 +2409,14 @@ export default function App() {
     const child = children.find(c => c.id === childId);
     if (!child || amount <= 0 || amount > child.points) return;
 
+    const cleanCharityName = sanitizeText(charityName, 100);
     const newRequest: GiftingRequest = {
       id: `gift_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       child_id: childId,
       family_id: (parentProfile?.family_id || parentEmail) || 'parent_demo',
-      amount,
+      amount: sanitizeNumber(amount, 1, child.points),
       type: 'charity',
-      charity_name: charityName,
+      charity_name: cleanCharityName,
       status: 'pending',
       created_at: new Date().toISOString()
     };
@@ -2515,7 +2545,7 @@ updateChildInSupabase(targetChild);
         </div>
       </div>
     }>
-    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950 app-loaded`} id="app-main">
+    <div className={`relative min-h-screen transition-all duration-300 bg-stone-100 dark:bg-stone-950 app-loaded`} id="app-main">
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
@@ -2814,19 +2844,31 @@ updateChildInSupabase(targetChild);
       </AnimatePresence>
     </div>
     <LegalModal />
-    <GlobalPaywallModal />
+    <GlobalPaywallModal inOnboarding={!hasCompletedOnboarding} />
+    {!isChildAuth && (
+      <CookieBanner
+        onConsentChange={(consent: CookieConsentData) => {
+          if (consent.analytics) {
+            posthog.opt_in_capturing();
+          } else {
+            posthog.opt_out_capturing();
+          }
+        }}
+      />
+    )}
     </Suspense>
     </SubscriptionProvider>
   );
 }
 
-function GlobalPaywallModal() {
+function GlobalPaywallModal({ inOnboarding }: { inOnboarding: boolean }) {
   const { isPaywallOpen, closePaywall, paywallFeatureTrigger } = useSubscription();
   return (
     <PaywallModal
       isOpen={isPaywallOpen}
       onClose={closePaywall}
       triggerReason={paywallFeatureTrigger}
+      inOnboarding={inOnboarding}
     />
   );
 }

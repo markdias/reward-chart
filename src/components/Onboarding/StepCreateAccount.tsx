@@ -5,7 +5,7 @@ import { Cloud, AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { playSound } from '../../utils/sound';
 import { getSupabaseClient, isSupabaseConfigured } from '../../utils/supabase';
 import { PasswordInput } from '../PasswordInput';
-import { evaluatePassword } from '../../utils/security';
+import { evaluatePassword, sanitizeEmail } from '../../utils/security';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { FcGoogle } from 'react-icons/fc';
@@ -77,6 +77,8 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
     e.preventDefault();
     setError('');
 
+    const cleanEmail = sanitizeEmail(email);
+
     if (!isSupabaseConfigured()) {
       setError('Supabase is not configured. Please check your environment variables.');
       playSound.pinError();
@@ -103,7 +105,7 @@ export default function StepCreateAccount({ name = '', familyName = '', onComple
     if (supabase) {
       try {
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
             data: {

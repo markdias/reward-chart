@@ -151,3 +151,93 @@ p, li {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print Styles - Isolate Weekly Reward Chart card for clean physical printing */
+@page {
+  size: landscape;
+  margin: 0.8cm;
+}
+
+@media print {
+  /* Hide all app elements outside the weekly chart grid */
+  body * {
+    visibility: hidden !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #1c1917 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Expose ONLY the chart grid and its children */
+  #tour-chart-grid,
+  #tour-chart-grid * {
+    visibility: visible !important;
+  }
+
+  #tour-chart-grid {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 1px solid #e7e5e4 !important;
+    border-radius: 24px !important;
+    background: #ffffff !important;
+    color: #1c1917 !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Force light mode colors for printed paper */
+  #tour-chart-grid h2,
+  #tour-chart-grid p,
+  #tour-chart-grid span,
+  #tour-chart-grid th,
+  #tour-chart-grid td {
+    color: #1c1917 !important;
+  }
+
+  #tour-chart-grid .text-stone-500,
+  #tour-chart-grid .text-stone-400 {
+    color: #78716c !important;
+  }
+
+  #tour-chart-grid table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #tour-chart-grid th,
+  #tour-chart-grid td {
+    position: static !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  #tour-chart-grid thead tr {
+    background-color: #fafaf9 !important;
+    border-bottom: 1px solid #e7e5e4 !important;
+  }
+
+  #tour-chart-grid tfoot tr {
+    background-color: #fafaf9 !important;
+    border-top: 2px solid #e7e5e4 !important;
+  }
+
+  #tour-chart-grid .print\:hidden {
+    display: none !important;
+  }
+}
+
