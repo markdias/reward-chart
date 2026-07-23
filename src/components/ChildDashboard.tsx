@@ -658,9 +658,6 @@ export default function ChildDashboard({
     if (!selectedChildId) return;
     playSound.success();
     onCompleteTask(taskId, selectedChildId);
-    setWellDoneTaskName(taskName || null);
-    setShowWellDone(true);
-    setTimeout(() => setShowWellDone(false), 2600);
   };
 
   const handleClaimReward = (rewardId: string, cost: number, paymentSource: 'main' | 'savings' = 'main') => {
