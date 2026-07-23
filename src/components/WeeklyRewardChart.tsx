@@ -111,6 +111,12 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   // Date range duration state: '7d' (1 week), '14d' (2 weeks), '30d' (1 month)
   const [viewRange, setViewRange] = useState<'7d' | '14d' | '30d'>('7d');
   
+  // Print Modal & Options state
+  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+  const [printRange, setPrintRange] = useState<'7d' | '14d'>('7d');
+  const [printMode, setPrintMode] = useState<'live' | 'blank'>('live');
+  const [isPrintingBlank, setIsPrintingBlank] = useState<boolean>(false);
+  
   // Routine filter state: 'all', 'routines', 'extra'
   const [routineFilter, setRoutineFilter] = useState<'all' | 'routines' | 'extra'>('all');
 
@@ -229,10 +235,29 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
   const isCurrentWeek = weekOffset === 0;
 
-  // Print chart function
+  // Print chart function: Opens print options modal
   const handlePrint = () => {
     playSound.click();
-    window.print();
+    setShowPrintModal(true);
+  };
+
+  // Triggers browser print with configured duration & template options
+  const handleExecutePrint = () => {
+    playSound.click();
+    setShowPrintModal(false);
+
+    const previousRange = viewRange;
+    setViewRange(printRange);
+    setIsPrintingBlank(printMode === 'blank');
+
+    // Wait for DOM re-render before launching browser print window
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        setViewRange(previousRange);
+        setIsPrintingBlank(false);
+      }, 500);
+    }, 150);
   };
 
   // Map of completion lookup: key = `${taskId}_${dateKey}` -> TaskCompletion
@@ -450,7 +475,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                 {activeChild ? `${activeChild.name}'s chart` : 'Reward Chart'}
               </h2>
               <p className="text-xs text-stone-500 font-medium">
-                {dateRangeLabel}
+                {isPrintingBlank ? 'Blank Reusable Reward Chart' : dateRangeLabel}
               </p>
             </div>
           </div>
@@ -495,7 +520,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
             <div className="text-right hidden sm:block print:block">
               <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">Total Gold</span>
               <div className="flex items-center justify-end gap-1.5 font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">
-                <CoinBadge points={summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
+                <CoinBadge points={isPrintingBlank ? 0 : summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
               </div>
             </div>
           </div>
@@ -521,15 +546,17 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     <th key={dateStr} className="p-2 sm:p-3 text-center min-w-[60px] sm:min-w-[75px]">
                       <div className="flex flex-col items-center justify-center gap-1">
                         <span className="text-[10px] font-bold text-stone-400">{dayName}</span>
-                        <div
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                            isToday
-                              ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900 scale-110'
-                              : 'text-stone-700 dark:text-stone-300'
-                          }`}
-                        >
-                          {dayNum}
-                        </div>
+                        {!isPrintingBlank && (
+                          <div
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                              isToday
+                                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900 scale-110'
+                                : 'text-stone-700 dark:text-stone-300'
+                            }`}
+                          >
+                            {dayNum}
+                          </div>
+                        )}
                       </div>
                     </th>
                   );
@@ -592,7 +619,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                       {dateRangeDays.map(date => {
                         const dateStr = formatDateKey(date);
                         const key = `${task.id}_${dateStr}`;
-                        const completion = completionMap.get(key);
+                        const completion = isPrintingBlank ? undefined : completionMap.get(key);
                         const isToday = dateStr === todayKey;
 
                         return (
@@ -783,6 +810,144 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     Clear / Reset Cell
                   </Button>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Print Options Modal */}
+      <AnimatePresence>
+        {showPrintModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-6 overflow-hidden text-left"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                    <Printer className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-stone-900 dark:text-stone-50">
+                      Print Chart Options
+                    </h3>
+                    <p className="text-xs text-stone-500 font-medium">
+                      Configure duration and template style
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { playSound.click(); setShowPrintModal(false); }}
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Option 1: Print Duration */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 block">
+                  1. Print Duration
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintRange('7d'); }}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
+                      printRange === '7d'
+                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
+                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
+                    }`}
+                  >
+                    <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">7 Days</p>
+                    <p className="text-xs text-stone-500">1 Week Layout</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintRange('14d'); }}
+                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
+                      printRange === '14d'
+                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
+                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
+                    }`}
+                  >
+                    <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">14 Days</p>
+                    <p className="text-xs text-stone-500">2 Weeks Layout</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Date & Progress Format */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 block">
+                  2. Chart Template Style
+                </label>
+                <div className="space-y-2.5">
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintMode('live'); }}
+                    className={`w-full p-3.5 rounded-2xl border-2 text-left flex items-start gap-3 transition-all ${
+                      printMode === 'live'
+                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
+                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
+                    }`}
+                  >
+                    <Calendar className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">
+                        Live Chart (With Current Dates)
+                      </p>
+                      <p className="text-xs text-stone-500 font-medium">
+                        Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintMode('blank'); }}
+                    className={`w-full p-3.5 rounded-2xl border-2 text-left flex items-start gap-3 transition-all ${
+                      printMode === 'blank'
+                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
+                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
+                    }`}
+                  >
+                    <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">
+                        Blank / Plain Reusable Template
+                      </p>
+                      <p className="text-xs text-stone-500 font-medium">
+                        Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => { playSound.click(); setShowPrintModal(false); }}
+                  className="flex-1 rounded-2xl py-3 text-stone-600 dark:text-stone-300 font-extrabold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleExecutePrint}
+                  className="flex-1 rounded-2xl py-3 bg-gradient-to-r from-amber-400 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-white font-extrabold uppercase tracking-wider shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 border-none"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Chart</span>
+                </Button>
               </div>
             </motion.div>
           </div>
