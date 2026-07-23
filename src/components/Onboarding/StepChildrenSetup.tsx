@@ -70,11 +70,6 @@ export default function StepChildrenSetup({ onNext, onBack, initialChildren = []
       return;
     }
 
-    if (!editingChildId && !canAddChild(children.length)) {
-      openPaywall('Unlimited Children');
-      return;
-    }
-
     if (editingChildId) {
       setChildren(prev => prev.map(child => 
         child.id === editingChildId 
