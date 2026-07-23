@@ -66,10 +66,10 @@ export function ArcadeTicketCard({ child, onClick, isLoading = false }: ArcadeTi
       >
         
         {/* Left Notch (Hole punch effect) */}
-        <div className="absolute left-[-10px] sm:left-[-12px] top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 bg-stone-100 dark:bg-stone-800 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
+        <div className="absolute left-[-10px] sm:left-[-12px] top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 bg-stone-100 dark:bg-stone-950 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200 dark:group-hover:bg-stone-900" />
         
         {/* Right Notch */}
-        <div className="absolute right-[-10px] sm:right-[-12px] top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 bg-stone-100 dark:bg-stone-800 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200" />
+        <div className="absolute right-[-10px] sm:right-[-12px] top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 bg-stone-100 dark:bg-stone-950 rounded-full z-30 border-[3px] border-stone-800 transition-colors group-hover:bg-stone-200 dark:group-hover:bg-stone-900" />
 
         {/* Inner White Body with thick dark border */}
         <div className="flex-1 bg-white dark:bg-stone-900 rounded-xl flex relative border-[3px] border-stone-800 transition-colors group-hover:bg-stone-50 dark:group-hover:bg-stone-950 min-w-0 overflow-hidden">
@@ -83,11 +83,11 @@ export function ArcadeTicketCard({ child, onClick, isLoading = false }: ArcadeTi
             
             {/* Name & Stats */}
             <div className="flex-1 flex flex-col items-start justify-center gap-1.5 sm:gap-2.5 min-w-0">
-              <h3 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-stone-800 dark:text-stone-100 uppercase leading-none truncate w-full">
+              <h3 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-stone-900 dark:text-stone-50 uppercase leading-none truncate w-full">
                 {child.name}
               </h3>
               <div className="flex flex-row items-center gap-1.5 sm:gap-3 flex-wrap">
-                <span className="text-xs sm:text-sm font-extrabold text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800 px-2 sm:px-3 py-1 rounded-md border-2 border-stone-800 whitespace-nowrap shadow-sm">
+                <span className="text-xs sm:text-sm font-extrabold text-stone-900 dark:text-stone-50 bg-stone-100 dark:bg-stone-800 px-2 sm:px-3 py-1 rounded-md border-2 border-stone-800 whitespace-nowrap shadow-sm">
                   LVL {child.level}
                 </span>
                 <CoinBadge points={child.points} size="md" />
@@ -96,11 +96,11 @@ export function ArcadeTicketCard({ child, onClick, isLoading = false }: ArcadeTi
 
             {/* QR Code Section on Main Ticket Body */}
             <div className="flex flex-col items-center justify-center shrink-0 pr-2 sm:pr-6 border-l-2 border-stone-100 dark:border-stone-800 pl-2 sm:pl-6">
-              <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-widest text-stone-800 dark:text-stone-100 mb-1">ADMIT ONE</span>
+              <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-widest text-stone-700 dark:text-stone-300 mb-1">ADMIT ONE</span>
               <div className="p-1 sm:p-2 bg-white dark:bg-stone-900 rounded-xl border-2 border-stone-800 shadow-sm flex items-center justify-center">
-                <QrCode className="w-7 h-7 sm:w-11 sm:h-11 text-stone-800 dark:text-stone-100" />
+                <QrCode className="w-7 h-7 sm:w-11 sm:h-11 text-stone-900 dark:text-stone-50" />
               </div>
-              <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-widest text-stone-800 dark:text-stone-100 mt-1">ADMIT ONE</span>
+              <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-widest text-stone-700 dark:text-stone-300 mt-1">ADMIT ONE</span>
             </div>
           </div>
 

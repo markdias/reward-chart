@@ -48,7 +48,7 @@ export function BottomTabBar({
               <div className="relative z-10 flex flex-col items-center gap-1">
                 <div className="relative">
                   <Icon 
-                    className={`w-6 h-6 transition-colors duration-300 drop-shadow-sm ${isActive ? 'text-cyan-600' : 'text-stone-400'}`} 
+                    className={`w-6 h-6 transition-colors duration-300 drop-shadow-sm ${isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-stone-400 dark:text-stone-500'}`} 
                     strokeWidth={isActive ? 2.5 : 2} 
                   />
                   {tab.badge !== undefined && tab.badge > 0 && (
@@ -62,7 +62,7 @@ export function BottomTabBar({
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 flex items-center gap-0.5 ${isActive ? 'text-cyan-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                <span className={`text-[10px] font-bold tracking-wider transition-colors duration-300 flex items-center gap-0.5 ${isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-stone-500 dark:text-stone-400'}`}>
                   {tab.label}
                 </span>
               </div>

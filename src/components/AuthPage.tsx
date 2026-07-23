@@ -7,7 +7,7 @@ import { FaApple } from 'react-icons/fa';
 import { playSound } from '../utils/sound';
 
 import { getSupabaseClient, isSupabaseConfigured } from '../utils/supabase';
-import { hashPassword, evaluatePassword } from '../utils/security';
+import { hashPassword, evaluatePassword, sanitizeEmail, sanitizeText } from '../utils/security';
 import { PasswordInput } from './PasswordInput';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
@@ -230,7 +230,11 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
     playSound.click();
     setRealAuthError('');
     
-    if (!email || !password) {
+    const cleanEmail = sanitizeEmail(email);
+    const cleanName = sanitizeText(name, 50);
+    const cleanFamilyName = sanitizeText(familyName, 50);
+
+    if (!cleanEmail || !password) {
       setRealAuthError('Enter your credentials to proceed');
       playSound.pinError();
       return;
@@ -252,7 +256,7 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
     }
 
     if (!isSupabaseConfigured()) {
-      await handleLocalFallback(email, password, isSignUp ? 'signup' : 'signin');
+      await handleLocalFallback(cleanEmail, password, isSignUp ? 'signup' : 'signin');
       return;
     }
 
@@ -261,12 +265,12 @@ export default function AuthPage({ onLoginReal, onSignUpReal, onBackToLanding, o
       try {
         if (isSignUp) {
           const { data, error } = await supabase.auth.signUp({
-            email,
+            email: cleanEmail,
             password,
             options: {
               data: {
-                name,
-                family_name: familyName
+                name: cleanName,
+                family_name: cleanFamilyName
               }
             }
           });
