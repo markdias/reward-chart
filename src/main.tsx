@@ -13,6 +13,7 @@ try {
     posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
       api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com',
       person_profiles: 'identified_only',
+      opt_out_capturing_by_default: true,
     });
   }
 } catch (e) {

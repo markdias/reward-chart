@@ -22,6 +22,7 @@ import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import WellDoneOverlay from './WellDoneOverlay';
 import { getLogicalDateString, getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
+import { sanitizeText, sanitizeNumber } from '../utils/security';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
@@ -323,15 +324,11 @@ export default function ChildDashboard({
   useEffect(() => {
     if (lockedChildId && children.some(c => c.id === lockedChildId)) {
       setSelectedChildId(lockedChildId);
-    } else if (children.length > 0) {
-      // Fall back to first available child if selectedChildId is invalid
-      if (!selectedChildId || !children.some(c => c.id === selectedChildId)) {
-        setSelectedChildId(children[0].id);
-      }
-    } else {
+    } else if (selectedChildId && !children.some(c => c.id === selectedChildId)) {
+      // Reset to player chooser if currently selected child is no longer valid
       setSelectedChildId(null);
     }
-  }, [lockedChildId, children]);
+  }, [lockedChildId, children, selectedChildId]);
 
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
@@ -662,9 +659,6 @@ export default function ChildDashboard({
     if (!selectedChildId) return;
     playSound.success();
     onCompleteTask(taskId, selectedChildId);
-    setWellDoneTaskName(taskName || null);
-    setShowWellDone(true);
-    setTimeout(() => setShowWellDone(false), 2600);
   };
 
   const handleClaimReward = (rewardId: string, cost: number, paymentSource: 'main' | 'savings' = 'main') => {
@@ -791,7 +785,7 @@ export default function ChildDashboard({
   };
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans relative overflow-x-hidden transition-colors duration-700 ${!selectedChildId ? 'bg-transparent' : 'bg-stone-100 dark:bg-stone-950 pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]'}`} id="child-dashboard-root" >
+    <div className={`min-h-screen flex flex-col font-sans relative overflow-x-hidden transition-colors duration-700 bg-stone-100 dark:bg-stone-950 ${selectedChildId ? 'pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+68px)] sm:pt-[calc(max(env(safe-area-inset-top,0px),0.5rem)+88px)]' : ''}`} id="child-dashboard-root" >
 
       {selectedChildId && (
         <Walkthrough
@@ -1691,14 +1685,14 @@ export default function ChildDashboard({
           className="px-4 sm:px-6 pb-2 flex justify-end items-center relative z-40 bg-transparent"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}
         >
-          <div className="relative flex items-center bg-stone-50 dark:bg-stone-950/80 backdrop-blur-sm border border-stone-200 dark:border-stone-700 rounded-full shadow-sm p-1 sm:p-1.5 shrink-0 z-50">
+          <div className="relative flex items-center bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-sm border border-stone-200 dark:border-stone-800 rounded-full shadow-sm p-1 sm:p-1.5 shrink-0 z-50">
             <Button
               variant="none"
               size="none"
               onClick={() => { playSound.click(); onEnterParentMode(); }}
-              className="flex items-center gap-2 px-4 sm:px-6 h-12 sm:h-14 rounded-full text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors font-bold text-xs sm:text-sm tracking-wide"
+              className="flex items-center gap-2 px-4 sm:px-6 h-12 sm:h-14 rounded-full text-stone-700 dark:text-stone-200 hover:text-stone-900 dark:hover:text-stone-50 hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors font-bold text-xs sm:text-sm tracking-wide"
             >
-              <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400" />
+              <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400 dark:text-stone-500" />
               PARENT MODE
             </Button>
           </div>
@@ -1716,22 +1710,14 @@ export default function ChildDashboard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               key="profile-selector"
-              className="space-y-6 sm:space-y-8 text-center mt-6 sm:mt-8"
+              className="space-y-4 sm:space-y-6 text-center mt-4 sm:mt-6"
               id="profile-picker"
             >
-              <div className="space-y-1 sm:space-y-2">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold font-sans uppercase tracking-widest`}>
-                  <Gamepad2 className="w-3.5 h-3.5" /> PLAYER SELECT
-                </div>
-                <Typography variant="h1" className={`text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-800 dark:text-stone-100`}>
-                  Grab your pass!
-                </Typography>
-                <Typography variant="body" className={`text-xs sm:text-sm text-stone-500 dark:text-stone-400 max-w-md mx-auto leading-relaxed`}>
-                  Select your arcade access ticket to start your adventure and claim your rewards!
-                </Typography>
-              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-stone-900 dark:text-stone-50 tracking-tight">
+                Choose your ticket.
+              </h1>
 
-              <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
+              <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto w-full text-left" id="kids-deck">
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (

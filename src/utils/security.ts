@@ -59,3 +59,62 @@ export function generateShortCode(): string {
   }
   return code;
 }
+
+/**
+ * Sanitizes generic user text input by:
+ * 1. Stripping HTML tags (<script>, <iframe>, <b>, etc.)
+ * 2. Stripping control characters and script/javascript: protocols
+ * 3. Trimming leading and trailing whitespace
+ * 4. Enforcing an optional maximum length limit
+ */
+export function sanitizeText(input: string | null | undefined, maxLength: number = 255): string {
+  if (!input || typeof input !== 'string') return '';
+  
+  let cleaned = input
+    // Strip HTML tags
+    .replace(/<[^>]*>?/gm, '')
+    // Strip control characters
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+    // Strip dangerous inline protocols
+    .replace(/(javascript|vbscript|data):/gi, '')
+    .trim();
+
+  if (maxLength && cleaned.length > maxLength) {
+    cleaned = cleaned.substring(0, maxLength).trim();
+  }
+
+  return cleaned;
+}
+
+/**
+ * Sanitizes an email address string.
+ */
+export function sanitizeEmail(email: string | null | undefined): string {
+  if (!email || typeof email !== 'string') return '';
+  return email
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w.@+-]/g, '')
+    .replace(/\s+/g, '');
+}
+
+/**
+ * Sanitizes a 6-character short code / join code.
+ */
+export function sanitizeCode(code: string | null | undefined): string {
+  if (!code || typeof code !== 'string') return '';
+  return code
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .substring(0, 6);
+}
+
+/**
+ * Validates and clamps numerical user input.
+ */
+export function sanitizeNumber(val: any, min: number = 0, max: number = 1000000, fallback: number = 0): number {
+  const parsed = typeof val === 'number' ? val : parseFloat(val);
+  if (isNaN(parsed) || !isFinite(parsed)) return fallback;
+  return Math.min(Math.max(parsed, min), max);
+}

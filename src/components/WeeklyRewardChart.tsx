@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
@@ -9,6 +10,7 @@ import { Child, Task, TaskCompletion } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
+import { Typography } from './ui/Typography';
 import { CoinBadge } from './CoinBadge';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -110,6 +112,12 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   
   // Date range duration state: '7d' (1 week), '14d' (2 weeks), '30d' (1 month)
   const [viewRange, setViewRange] = useState<'7d' | '14d' | '30d'>('7d');
+  
+  // Print Modal & Options state
+  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+  const [printRange, setPrintRange] = useState<'7d' | '14d'>('7d');
+  const [printMode, setPrintMode] = useState<'live' | 'blank'>('live');
+  const [isPrintingBlank, setIsPrintingBlank] = useState<boolean>(false);
   
   // Routine filter state: 'all', 'routines', 'extra'
   const [routineFilter, setRoutineFilter] = useState<'all' | 'routines' | 'extra'>('all');
@@ -229,10 +237,30 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
   const isCurrentWeek = weekOffset === 0;
 
-  // Print chart function
+  // Print chart function: Opens custom print options modal
   const handlePrint = () => {
     playSound.click();
+    setShowPrintModal(true);
+  };
+
+  // Triggers browser print synchronously on click to suppress Safari security warning
+  const handleExecutePrint = () => {
+    playSound.click();
+
+    const previousRange = viewRange;
+
+    // Force React to synchronously flush DOM updates before window.print() captures the page
+    flushSync(() => {
+      setViewRange(printRange);
+      setIsPrintingBlank(printMode === 'blank');
+      setShowPrintModal(false);
+    });
+
+    // Invoke window.print() on the synchronously updated DOM
     window.print();
+
+    // Restore interactive blank state
+    setIsPrintingBlank(false);
   };
 
   // Map of completion lookup: key = `${taskId}_${dateKey}` -> TaskCompletion
@@ -363,12 +391,12 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
           {/* Print Button */}
           <Button
             id="tour-chart-print-btn"
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={handlePrint}
-            className="flex items-center gap-1.5 rounded-xl border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 font-bold hover:bg-stone-100 dark:hover:bg-stone-800"
+            className="flex items-center gap-1.5 rounded-xl font-bold"
           >
-            <Printer className="w-4 h-4 text-stone-500" />
+            <Printer className="w-4 h-4" />
             <span>Print</span>
           </Button>
         </div>
@@ -450,7 +478,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                 {activeChild ? `${activeChild.name}'s chart` : 'Reward Chart'}
               </h2>
               <p className="text-xs text-stone-500 font-medium">
-                {dateRangeLabel}
+                {isPrintingBlank ? 'Blank Reusable Reward Chart' : dateRangeLabel}
               </p>
             </div>
           </div>
@@ -495,7 +523,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
             <div className="text-right hidden sm:block print:block">
               <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">Total Gold</span>
               <div className="flex items-center justify-end gap-1.5 font-black text-amber-600 dark:text-amber-400 text-lg mt-0.5">
-                <CoinBadge points={summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
+                <CoinBadge points={isPrintingBlank ? 0 : summaryStats.goldEarned} className="w-8 h-8 text-xs font-black" />
               </div>
             </div>
           </div>
@@ -521,15 +549,17 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     <th key={dateStr} className="p-2 sm:p-3 text-center min-w-[60px] sm:min-w-[75px]">
                       <div className="flex flex-col items-center justify-center gap-1">
                         <span className="text-[10px] font-bold text-stone-400">{dayName}</span>
-                        <div
-                          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                            isToday
-                              ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900 scale-110'
-                              : 'text-stone-700 dark:text-stone-300'
-                          }`}
-                        >
-                          {dayNum}
-                        </div>
+                        {!isPrintingBlank && (
+                          <div
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                              isToday
+                                ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900 scale-110'
+                                : 'text-stone-700 dark:text-stone-300'
+                            }`}
+                          >
+                            {dayNum}
+                          </div>
+                        )}
                       </div>
                     </th>
                   );
@@ -592,14 +622,14 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                       {dateRangeDays.map(date => {
                         const dateStr = formatDateKey(date);
                         const key = `${task.id}_${dateStr}`;
-                        const completion = completionMap.get(key);
+                        const completion = isPrintingBlank ? undefined : completionMap.get(key);
                         const isToday = dateStr === todayKey;
 
                         return (
-                          <td key={dateStr} className={`p-2 text-center align-middle ${isToday ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}>
+                          <td key={dateStr} className={`p-2 text-center align-middle ${!isPrintingBlank && isToday ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}>
                             <button
                               onClick={() => handleCellClick(task, date)}
-                              className={`w-9 h-9 sm:w-11 sm:h-11 mx-auto rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                              className={`w-9 h-9 sm:w-11 sm:h-11 mx-auto rounded-full flex items-center justify-center transition-all duration-200 ${
                                 completion?.status === 'approved'
                                   ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30 hover:scale-105 ring-2 ring-rose-400/50'
                                   : completion?.status === 'pending'
@@ -633,42 +663,44 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
               )}
             </tbody>
 
-            {/* Table Footer: Daily Totals */}
-            <tfoot>
-              <tr className="bg-stone-50 dark:bg-stone-800/80 border-t-2 border-stone-200 dark:border-stone-700 text-xs font-black text-stone-700 dark:text-stone-300">
-                <td className="p-3.5 sm:p-4 sticky left-0 z-10 bg-stone-100 dark:bg-stone-800 uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                  TOTAL GOLD
-                </td>
-                {dateRangeDays.map(date => {
-                  const dateStr = formatDateKey(date);
-                  
-                  // Calculate total points earned on this date
-                  let dailyTotal = 0;
-                  activeChildTasks.forEach(task => {
-                    const key = `${task.id}_${dateStr}`;
-                    const comp = completionMap.get(key);
-                    if (comp?.status === 'approved') {
-                      dailyTotal += comp.points_awarded || task.points;
-                    }
-                  });
+            {/* Table Footer: Daily Totals (Hidden for blank reusable template printout) */}
+            {!isPrintingBlank && (
+              <tfoot>
+                <tr className="bg-stone-50 dark:bg-stone-800/80 border-t-2 border-stone-200 dark:border-stone-700 text-xs font-black text-stone-700 dark:text-stone-300">
+                  <td className="p-3.5 sm:p-4 sticky left-0 z-10 bg-stone-100 dark:bg-stone-800 uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                    TOTAL GOLD
+                  </td>
+                  {dateRangeDays.map(date => {
+                    const dateStr = formatDateKey(date);
+                    
+                    // Calculate total points earned on this date
+                    let dailyTotal = 0;
+                    activeChildTasks.forEach(task => {
+                      const key = `${task.id}_${dateStr}`;
+                      const comp = completionMap.get(key);
+                      if (comp?.status === 'approved') {
+                        dailyTotal += comp.points_awarded || task.points;
+                      }
+                    });
 
-                  return (
-                    <td key={dateStr} className="p-2 text-center">
-                      <span className={`inline-flex items-center justify-center px-2 py-1 rounded-xl text-xs font-black ${
-                        dailyTotal > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'text-stone-400'
-                      }`}>
-                        {dailyTotal > 0 ? `+${dailyTotal}` : '0'}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            </tfoot>
+                    return (
+                      <td key={dateStr} className="p-2 text-center">
+                        <span className={`inline-flex items-center justify-center px-2 py-1 rounded-xl text-xs font-black ${
+                          dailyTotal > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'text-stone-400'
+                        }`}>
+                          {dailyTotal > 0 ? `+${dailyTotal}` : '0'}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
 
         {/* Status Legend Row */}
-        <div className="p-4 bg-stone-50/80 dark:bg-stone-900/80 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-stone-600 dark:text-stone-400">
+        <div className="p-4 bg-stone-50/80 dark:bg-stone-900/80 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-stone-600 dark:text-stone-400 print:hidden">
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-lg bg-rose-500 flex items-center justify-center text-white text-[10px]">
               <Check className="w-3 h-3 stroke-[3]" />
@@ -783,6 +815,150 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     Clear / Reset Cell
                   </Button>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Interactive Print Options Modal */}
+      <AnimatePresence>
+        {showPrintModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-stone-950/80 backdrop-blur-sm print:hidden">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden text-left"
+            >
+              {/* Header Icon & Title */}
+              <div className="flex items-start justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
+                    <Printer className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <Typography variant="h2" className="text-xl font-bold">
+                      Print Chart Options
+                    </Typography>
+                    <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                      Configure duration and template style
+                    </Typography>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { playSound.click(); setShowPrintModal(false); }}
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* Option 1: Print Duration */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    1. Print Duration
+                  </Typography>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintRange('7d'); }}
+                      className={`p-3.5 rounded-2xl border transition-all text-left ${
+                        printRange === '7d'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <p className="font-extrabold text-sm">7 Days</p>
+                      <p className={`text-xs mt-0.5 ${printRange === '7d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                        1 Week Layout
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintRange('14d'); }}
+                      className={`p-3.5 rounded-2xl border transition-all text-left ${
+                        printRange === '14d'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <p className="font-extrabold text-sm">14 Days</p>
+                      <p className={`text-xs mt-0.5 ${printRange === '14d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                        2 Weeks Layout
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Option 2: Chart Template Style */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    2. Chart Template Style
+                  </Typography>
+                  <div className="space-y-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintMode('live'); }}
+                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                        printMode === 'live'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <Calendar className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+                      <div>
+                        <p className="font-extrabold text-sm">
+                          Live Chart (With Current Dates)
+                        </p>
+                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                          Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintMode('blank'); }}
+                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                        printMode === 'blank'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+                      <div>
+                        <p className="font-extrabold text-sm">
+                          Blank / Plain Reusable Template
+                        </p>
+                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                          Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100 dark:border-stone-800">
+                  <Button
+                    variant="secondary"
+                    onClick={() => { playSound.click(); setShowPrintModal(false); }}
+                    className="flex-1 justify-center"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleExecutePrint}
+                    className="flex-1 justify-center"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Chart</span>
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </div>

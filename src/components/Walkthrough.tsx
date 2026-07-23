@@ -27,6 +27,8 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
     buttons: ['skip', 'back', 'primary', 'close'] as any
   }));
 
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
   const { Tour, state, on, controls } = useJoyride({
     continuous: true,
     hideCloseButton: true,
@@ -51,6 +53,15 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
       tooltipContainer: {
         textAlign: 'left' as const,
       },
+      ...(isDarkMode ? {
+        beaconInner: {
+          backgroundColor: '#ffffff',
+        },
+        beaconOuter: {
+          borderColor: 'rgba(255,255,255,0.8)',
+          backgroundColor: 'rgba(255,255,255,0.2)',
+        },
+      } : {}),
     },
   });
 

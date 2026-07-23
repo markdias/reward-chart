@@ -40,7 +40,7 @@ import { EXTENDED_TASKS, EXTENDED_REWARDS } from '../data/extendedTemplates';
 
 import { ParentProfile } from '../types';
 import { getSupabaseClient } from '../utils/supabase';
-import { generateShortCode } from '../utils/security';
+import { generateShortCode, sanitizeText, sanitizeNumber, sanitizeEmail, sanitizeCode } from '../utils/security';
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
@@ -893,34 +893,37 @@ export default function ParentDashboard({
 
   const handleChildSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newChildName) return;
+    const cleanName = sanitizeText(newChildName, 50);
+    if (!cleanName) return;
+    const cleanAge = typeof newChildAge === 'number' ? sanitizeNumber(newChildAge, 1, 18) : (newChildAge ? sanitizeNumber(newChildAge, 1, 18) : undefined);
     playSound.click();
     if (editingChildId) {
-      onEditChild(editingChildId, { name: newChildName, age: typeof newChildAge === 'number' ? newChildAge : undefined, character_id: newChildChar, avatar_url: newChildAvatar });
+      onEditChild(editingChildId, { name: cleanName, age: cleanAge, character_id: newChildChar, avatar_url: newChildAvatar });
     } else {
-      onAddChild(newChildName, newChildChar, newChildAvatar, typeof newChildAge === 'number' ? newChildAge : undefined);
+      onAddChild(cleanName, newChildChar, newChildAvatar, cleanAge);
     }
     setNewChildName('');
     setNewChildAge('');
     setNewChildChar('unicorn');
     setEditingChildId(null);
-    setNewChildChar('unicorn');
     setNewChildAvatar('Rocket');
     setShowAddChild(false);
   };
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanTitle = sanitizeText(taskTitle, 100);
+    const cleanPoints = sanitizeNumber(taskPoints, 0, 100000);
     if (editingTaskId) {
       onEditTask(editingTaskId, {
-        title: taskTitle,
-        points: taskPoints,
+        title: cleanTitle,
+        points: cleanPoints,
         category: taskCategory,
         recurrence: taskRecurrence,
         cooldown_minutes: taskCooldownMinutes
       });
     } else {
-      onAddTask(taskTitle, Number(taskPoints) || 0, taskCategory, taskRecurrence, taskCooldownMinutes);
+      onAddTask(cleanTitle, cleanPoints, taskCategory, taskRecurrence, taskCooldownMinutes);
     }
     setShowAddTask(false);
     setTaskSubTab('directory');
@@ -935,16 +938,18 @@ export default function ParentDashboard({
 
   const handleRewardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanTitle = sanitizeText(rewardTitle, 100);
+    const cleanCost = sanitizeNumber(rewardCost, 0, 100000);
     if (editingRewardId) {
       onEditReward(editingRewardId, {
-        title: rewardTitle,
-        cost_points: Number(rewardCost) || 0,
+        title: cleanTitle,
+        cost_points: cleanCost,
         icon_name: rewardIcon,
         limit_type: rewardLimit,
         is_badge_eligible: rewardBadgeEligible
       });
     } else {
-      onAddReward(rewardTitle, Number(rewardCost) || 0, rewardIcon, rewardLimit, rewardBadgeEligible);
+      onAddReward(cleanTitle, cleanCost, rewardIcon, rewardLimit, rewardBadgeEligible);
     }
     setShowAddReward(false);
     setRewardSubTab('directory');
@@ -3114,7 +3119,9 @@ export default function ParentDashboard({
                     variant="primary"
                     onClick={() => {
                       playSound.click();
-                      onAddCoins(addCoinsModalChildId, Number(addCoinsAmount) || 0, addCoinsReason || 'Bonus coins applied');
+                      const cleanReason = sanitizeText(addCoinsReason || 'Bonus coins applied', 100);
+                      const cleanAmount = sanitizeNumber(addCoinsAmount, 1, 10000);
+                      onAddCoins(addCoinsModalChildId, cleanAmount, cleanReason);
                       setAddCoinsModalChildId(null);
                       setAddCoinsReason('');
                       setAddCoinsAmount(5);
