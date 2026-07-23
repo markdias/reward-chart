@@ -1963,8 +1963,7 @@ export default function App() {
     }
 
     // Wait to deduct points until parent delivers it!
-    // Just trigger celebration here for the request.
-    setCelebrationActive(true);
+    // Create Redemption Request
 
     // Create Redemption Request
     const newRedemption: RewardRedemption = {
@@ -2284,8 +2283,6 @@ export default function App() {
       syncChildren(updatedChildren);
       updateChildInSupabase(targetChild);
     }
-
-    setCelebrationActive(true);
   };
 
   const handleApproveCompletion = async (completionId: string) => {
@@ -2334,9 +2331,6 @@ export default function App() {
       syncChildren(updatedChildren);
       updateChildInSupabase(targetChild);
     }
-
-    // 3. Trigger full-screen fireworks!
-    setCelebrationActive(true);
   };
 
   const handleRejectCompletion = async (completionId: string) => {
