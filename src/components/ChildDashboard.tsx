@@ -22,6 +22,7 @@ import { CHARACTER_PACKS, getCharacterStage } from '../data/characters';
 import { playSound } from '../utils/sound';
 import WellDoneOverlay from './WellDoneOverlay';
 import { getLogicalDateString, getCurrentWeekKey, getStartOfDailyReset } from '../utils/date';
+import { sanitizeText, sanitizeNumber } from '../utils/security';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { ChildAvatar } from './ChildAvatar';
