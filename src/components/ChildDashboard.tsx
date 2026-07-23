@@ -1712,22 +1712,10 @@ export default function ChildDashboard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               key="profile-selector"
-              className="space-y-6 sm:space-y-8 text-center mt-6 sm:mt-8"
+              className="space-y-6 sm:space-y-8 text-center mt-2 sm:mt-4"
               id="profile-picker"
             >
-              <div className="space-y-2 sm:space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 text-xs font-bold font-sans uppercase tracking-widest shadow-xs">
-                  <Gamepad2 className="w-3.5 h-3.5" /> PLAYER SELECT
-                </div>
-                <h1 className="text-4xl md:text-5xl font-black font-display uppercase tracking-tight text-stone-900 dark:text-stone-50">
-                  Grab your pass!
-                </h1>
-                <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed font-medium">
-                  Select your arcade access ticket to start your adventure and claim your rewards!
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto pt-4 w-full text-left" id="kids-deck">
+              <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto w-full text-left" id="kids-deck">
                 {isLoading ? (
                   <>
                     {[1, 2].map((i) => (
