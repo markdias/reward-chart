@@ -1712,9 +1712,13 @@ export default function ChildDashboard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               key="profile-selector"
-              className="space-y-6 sm:space-y-8 text-center mt-2 sm:mt-4"
+              className="space-y-4 sm:space-y-6 text-center mt-4 sm:mt-6"
               id="profile-picker"
             >
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black font-display text-stone-900 dark:text-stone-50 tracking-tight">
+                Choose your ticket.
+              </h1>
+
               <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto w-full text-left" id="kids-deck">
                 {isLoading ? (
                   <>
