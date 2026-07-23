@@ -18,6 +18,7 @@ import type { OnboardingData } from './components/Onboarding/OnboardingWizard';
 import { LegalModal } from './components/LegalModal';
 import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
 import { PaywallModal } from './components/PaywallModal';
+import { CookieBanner, CookieConsentData } from './components/ui/CookieBanner';
 
 import { Child, Task, TaskCompletion, Reward, RewardRedemption, ParentProfile, GiftingRequest, Routine } from './types';
 import { playSound } from './utils/sound';
@@ -2844,6 +2845,15 @@ updateChildInSupabase(targetChild);
     </div>
     <LegalModal />
     <GlobalPaywallModal inOnboarding={!hasCompletedOnboarding} />
+    <CookieBanner
+      onConsentChange={(consent: CookieConsentData) => {
+        if (consent.analytics) {
+          posthog.opt_in_capturing();
+        } else {
+          posthog.opt_out_capturing();
+        }
+      }}
+    />
     </Suspense>
     </SubscriptionProvider>
   );
