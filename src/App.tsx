@@ -2515,7 +2515,7 @@ updateChildInSupabase(targetChild);
         </div>
       </div>
     }>
-    <div className={`relative min-h-screen transition-all duration-300 dark:bg-stone-950 app-loaded`} id="app-main">
+    <div className={`relative min-h-screen transition-all duration-300 bg-stone-100 dark:bg-stone-950 app-loaded`} id="app-main">
       
       {/* Immersive Confetti Layer */}
       <Confetti active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
