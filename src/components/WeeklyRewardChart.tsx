@@ -599,7 +599,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                           <td key={dateStr} className={`p-2 text-center align-middle ${isToday ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}>
                             <button
                               onClick={() => handleCellClick(task, date)}
-                              className={`w-9 h-9 sm:w-11 sm:h-11 mx-auto rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                              className={`w-9 h-9 sm:w-11 sm:h-11 mx-auto rounded-full flex items-center justify-center transition-all duration-200 ${
                                 completion?.status === 'approved'
                                   ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30 hover:scale-105 ring-2 ring-rose-400/50'
                                   : completion?.status === 'pending'
@@ -668,7 +668,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
         </div>
 
         {/* Status Legend Row */}
-        <div className="p-4 bg-stone-50/80 dark:bg-stone-900/80 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-stone-600 dark:text-stone-400">
+        <div className="p-4 bg-stone-50/80 dark:bg-stone-900/80 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-stone-600 dark:text-stone-400 print:hidden">
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-lg bg-rose-500 flex items-center justify-center text-white text-[10px]">
               <Check className="w-3 h-3 stroke-[3]" />
