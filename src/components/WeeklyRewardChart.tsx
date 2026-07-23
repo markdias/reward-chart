@@ -247,13 +247,16 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   const handleExecutePrint = () => {
     playSound.click();
 
-    // Apply print options & hide modal state
     const previousRange = viewRange;
-    setViewRange(printRange);
-    setIsPrintingBlank(printMode === 'blank');
-    setShowPrintModal(false);
 
-    // Invoke window.print() synchronously within user gesture
+    // Force React to synchronously flush DOM updates before window.print() captures the page
+    flushSync(() => {
+      setViewRange(printRange);
+      setIsPrintingBlank(printMode === 'blank');
+      setShowPrintModal(false);
+    });
+
+    // Invoke window.print() on the synchronously updated DOM
     window.print();
 
     // Restore interactive blank state
@@ -623,7 +626,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                         const isToday = dateStr === todayKey;
 
                         return (
-                          <td key={dateStr} className={`p-2 text-center align-middle ${isToday ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}>
+                          <td key={dateStr} className={`p-2 text-center align-middle ${!isPrintingBlank && isToday ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}>
                             <button
                               onClick={() => handleCellClick(task, date)}
                               className={`w-9 h-9 sm:w-11 sm:h-11 mx-auto rounded-full flex items-center justify-center transition-all duration-200 ${
