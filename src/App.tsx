@@ -2845,15 +2845,17 @@ updateChildInSupabase(targetChild);
     </div>
     <LegalModal />
     <GlobalPaywallModal inOnboarding={!hasCompletedOnboarding} />
-    <CookieBanner
-      onConsentChange={(consent: CookieConsentData) => {
-        if (consent.analytics) {
-          posthog.opt_in_capturing();
-        } else {
-          posthog.opt_out_capturing();
-        }
-      }}
-    />
+    {!isChildAuth && (
+      <CookieBanner
+        onConsentChange={(consent: CookieConsentData) => {
+          if (consent.analytics) {
+            posthog.opt_in_capturing();
+          } else {
+            posthog.opt_out_capturing();
+          }
+        }}
+      />
+    )}
     </Suspense>
     </SubscriptionProvider>
   );
