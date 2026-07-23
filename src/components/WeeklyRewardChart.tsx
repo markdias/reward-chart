@@ -9,6 +9,7 @@ import { Child, Task, TaskCompletion } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
+import { Typography } from './ui/Typography';
 import { CoinBadge } from './CoinBadge';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -819,135 +820,141 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       {/* Interactive Print Options Modal */}
       <AnimatePresence>
         {showPrintModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-stone-950/80 backdrop-blur-sm print:hidden">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-6 overflow-hidden text-left"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden text-left"
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-4">
+              {/* Header Icon & Title */}
+              <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                    <Printer className="w-5 h-5" />
+                  <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
+                    <Printer className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base text-stone-900 dark:text-stone-50">
+                    <Typography variant="h2" className="text-xl font-bold">
                       Print Chart Options
-                    </h3>
-                    <p className="text-xs text-stone-500 font-medium">
+                    </Typography>
+                    <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                       Configure duration and template style
-                    </p>
+                    </Typography>
                   </div>
                 </div>
                 <button
                   onClick={() => { playSound.click(); setShowPrintModal(false); }}
-                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors"
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Option 1: Print Duration */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 block">
-                  1. Print Duration
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintRange('7d'); }}
-                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
-                      printRange === '7d'
-                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
-                    }`}
-                  >
-                    <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">7 Days</p>
-                    <p className="text-xs text-stone-500">1 Week Layout</p>
-                  </button>
+              <div className="space-y-5">
+                {/* Option 1: Print Duration */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    1. Print Duration
+                  </Typography>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintRange('7d'); }}
+                      className={`p-3.5 rounded-2xl border transition-all text-left ${
+                        printRange === '7d'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <p className="font-extrabold text-sm">7 Days</p>
+                      <p className={`text-xs mt-0.5 ${printRange === '7d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                        1 Week Layout
+                      </p>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintRange('14d'); }}
-                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
-                      printRange === '14d'
-                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
-                    }`}
-                  >
-                    <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">14 Days</p>
-                    <p className="text-xs text-stone-500">2 Weeks Layout</p>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintRange('14d'); }}
+                      className={`p-3.5 rounded-2xl border transition-all text-left ${
+                        printRange === '14d'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <p className="font-extrabold text-sm">14 Days</p>
+                      <p className={`text-xs mt-0.5 ${printRange === '14d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                        2 Weeks Layout
+                      </p>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Option 2: Date & Progress Format */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-wider text-stone-500 dark:text-stone-400 block">
-                  2. Chart Template Style
-                </label>
-                <div className="space-y-2.5">
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintMode('live'); }}
-                    className={`w-full p-3.5 rounded-2xl border-2 text-left flex items-start gap-3 transition-all ${
-                      printMode === 'live'
-                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
-                    }`}
-                  >
-                    <Calendar className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">
-                        Live Chart (With Current Dates)
-                      </p>
-                      <p className="text-xs text-stone-500 font-medium">
-                        Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
-                      </p>
-                    </div>
-                  </button>
+                {/* Option 2: Chart Template Style */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    2. Chart Template Style
+                  </Typography>
+                  <div className="space-y-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintMode('live'); }}
+                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                        printMode === 'live'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <Calendar className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+                      <div>
+                        <p className="font-extrabold text-sm">
+                          Live Chart (With Current Dates)
+                        </p>
+                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                          Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
+                        </p>
+                      </div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintMode('blank'); }}
-                    className={`w-full p-3.5 rounded-2xl border-2 text-left flex items-start gap-3 transition-all ${
-                      printMode === 'blank'
-                        ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30 text-stone-900 dark:text-stone-50 ring-2 ring-rose-300 dark:ring-rose-900'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 hover:border-stone-300'
-                    }`}
-                  >
-                    <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-extrabold text-sm text-stone-900 dark:text-stone-50">
-                        Blank / Plain Reusable Template
-                      </p>
-                      <p className="text-xs text-stone-500 font-medium">
-                        Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
-                      </p>
-                    </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => { playSound.click(); setPrintMode('blank'); }}
+                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                        printMode === 'blank'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      }`}
+                    >
+                      <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+                      <div>
+                        <p className="font-extrabold text-sm">
+                          Blank / Plain Reusable Template
+                        </p>
+                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                          Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
+                        </p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Modal Actions */}
-              <div className="flex items-center gap-3 pt-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => { playSound.click(); setShowPrintModal(false); }}
-                  className="flex-1 rounded-2xl py-3 text-stone-600 dark:text-stone-300 font-extrabold"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleExecutePrint}
-                  className="flex-1 rounded-2xl py-3 bg-gradient-to-r from-amber-400 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-white font-extrabold uppercase tracking-wider shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 border-none"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Chart</span>
-                </Button>
+                {/* Modal Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100 dark:border-stone-800">
+                  <Button
+                    variant="secondary"
+                    onClick={() => { playSound.click(); setShowPrintModal(false); }}
+                    className="flex-1 justify-center"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleExecutePrint}
+                    className="flex-1 justify-center"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Chart</span>
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </div>
