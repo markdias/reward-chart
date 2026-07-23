@@ -1715,7 +1715,7 @@ export default function ChildDashboard({
               className="space-y-4 sm:space-y-6 text-center mt-4 sm:mt-6"
               id="profile-picker"
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-stone-900 dark:text-white tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-white tracking-tight">
                 Choose your ticket.
               </h1>
 
