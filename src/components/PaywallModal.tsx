@@ -297,12 +297,9 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             {inOnboarding && (
               <div className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4.5 h-4.5 text-amber-500 shrink-0" />
-                    <span className="text-xs font-bold text-stone-800 dark:text-stone-100">
-                      Early Preview: Use Pro for Free
-                    </span>
-                  </div>
+                  <span className="text-xs font-bold text-stone-800 dark:text-stone-100">
+                    Early Preview: Use Pro for Free
+                  </span>
                   <div
                     onClick={async () => {
                       const newStatus = !subscription.isPro;
