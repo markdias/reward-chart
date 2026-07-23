@@ -663,37 +663,39 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
               )}
             </tbody>
 
-            {/* Table Footer: Daily Totals */}
-            <tfoot>
-              <tr className="bg-stone-50 dark:bg-stone-800/80 border-t-2 border-stone-200 dark:border-stone-700 text-xs font-black text-stone-700 dark:text-stone-300">
-                <td className="p-3.5 sm:p-4 sticky left-0 z-10 bg-stone-100 dark:bg-stone-800 uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                  TOTAL GOLD
-                </td>
-                {dateRangeDays.map(date => {
-                  const dateStr = formatDateKey(date);
-                  
-                  // Calculate total points earned on this date
-                  let dailyTotal = 0;
-                  activeChildTasks.forEach(task => {
-                    const key = `${task.id}_${dateStr}`;
-                    const comp = completionMap.get(key);
-                    if (comp?.status === 'approved') {
-                      dailyTotal += comp.points_awarded || task.points;
-                    }
-                  });
+            {/* Table Footer: Daily Totals (Hidden for blank reusable template printout) */}
+            {!isPrintingBlank && (
+              <tfoot>
+                <tr className="bg-stone-50 dark:bg-stone-800/80 border-t-2 border-stone-200 dark:border-stone-700 text-xs font-black text-stone-700 dark:text-stone-300">
+                  <td className="p-3.5 sm:p-4 sticky left-0 z-10 bg-stone-100 dark:bg-stone-800 uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                    TOTAL GOLD
+                  </td>
+                  {dateRangeDays.map(date => {
+                    const dateStr = formatDateKey(date);
+                    
+                    // Calculate total points earned on this date
+                    let dailyTotal = 0;
+                    activeChildTasks.forEach(task => {
+                      const key = `${task.id}_${dateStr}`;
+                      const comp = completionMap.get(key);
+                      if (comp?.status === 'approved') {
+                        dailyTotal += comp.points_awarded || task.points;
+                      }
+                    });
 
-                  return (
-                    <td key={dateStr} className="p-2 text-center">
-                      <span className={`inline-flex items-center justify-center px-2 py-1 rounded-xl text-xs font-black ${
-                        dailyTotal > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'text-stone-400'
-                      }`}>
-                        {dailyTotal > 0 ? `+${dailyTotal}` : '0'}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            </tfoot>
+                    return (
+                      <td key={dateStr} className="p-2 text-center">
+                        <span className={`inline-flex items-center justify-center px-2 py-1 rounded-xl text-xs font-black ${
+                          dailyTotal > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'text-stone-400'
+                        }`}>
+                          {dailyTotal > 0 ? `+${dailyTotal}` : '0'}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
 
