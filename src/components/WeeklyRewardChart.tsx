@@ -385,24 +385,6 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
             ))}
           </div>
 
-          {/* Template Style Toggle: Live vs Blank Plain Chart */}
-          <button
-            type="button"
-            onClick={() => {
-              playSound.click();
-              setIsPrintingBlank(prev => !prev);
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
-              isPrintingBlank
-                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700'
-            }`}
-            title={isPrintingBlank ? 'Currently showing Blank Reusable Template' : 'Currently showing Live Chart with Dates'}
-          >
-            <Sparkles className={`w-3.5 h-3.5 ${isPrintingBlank ? 'text-white' : 'text-amber-500'}`} />
-            <span>{isPrintingBlank ? 'Blank Template' : 'Live Chart'}</span>
-          </button>
-
           {/* Print Button */}
           <Button
             id="tour-chart-print-btn"
