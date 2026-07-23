@@ -323,15 +323,11 @@ export default function ChildDashboard({
   useEffect(() => {
     if (lockedChildId && children.some(c => c.id === lockedChildId)) {
       setSelectedChildId(lockedChildId);
-    } else if (children.length > 0) {
-      // Fall back to first available child if selectedChildId is invalid
-      if (!selectedChildId || !children.some(c => c.id === selectedChildId)) {
-        setSelectedChildId(children[0].id);
-      }
-    } else {
+    } else if (selectedChildId && !children.some(c => c.id === selectedChildId)) {
+      // Reset to player chooser if currently selected child is no longer valid
       setSelectedChildId(null);
     }
-  }, [lockedChildId, children]);
+  }, [lockedChildId, children, selectedChildId]);
 
   const [flippedPot, setFlippedPot] = useState<string | null>(null);
 
