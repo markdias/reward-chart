@@ -87,7 +87,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
   <title>${activeChild.name}'s Rewards Chart</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
   <style>
-    @page { size: landscape; margin: 1.2cm 1cm; }
+    @page { size: 297mm 210mm; margin: 1.2cm 1cm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
     .header { 
