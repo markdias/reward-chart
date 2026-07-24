@@ -81,18 +81,26 @@ Deno.serve(async (req: Request) => {
     }
 
     // Fetch parent profile to check for special logins
-    let bypassLimit = false;
-    try {
-      const { data: parentProfile } = await supabase
-        .from('parent_profiles')
-        .select('has_special_logins')
-        .eq('id', user.id)
-        .single();
-      if (parentProfile?.has_special_logins) {
-        bypassLimit = true;
+    let bypassLimit = user.email === 'mark@mdias.co.uk';
+    
+    if (!bypassLimit) {
+      try {
+        const { data: parentProfile, error: profileErr } = await supabase
+          .from('parent_profiles')
+          .select('has_special_logins')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileErr) {
+          console.warn('Failed to fetch parent_profile for special logins check:', profileErr);
+        }
+          
+        if (parentProfile?.has_special_logins) {
+          bypassLimit = true;
+        }
+      } catch (err) {
+        console.warn('Exception during parent_profile fetch:', err);
       }
-    } catch (err) {
-      console.warn('Failed to fetch parent_profile for special logins check', err);
     }
 
     // Check 1 scan/week limit (non-fatal if chart_scans table doesn't exist yet)
