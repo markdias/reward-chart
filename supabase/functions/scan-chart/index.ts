@@ -80,26 +80,43 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Check 1 scan/week limit (non-fatal if chart_scans table doesn't exist yet)
+    // Fetch parent profile to check for special logins
+    let bypassLimit = false;
     try {
-      const { data: existingScans } = await supabase
-        .from('chart_scans')
-        .select('id')
-        .eq('child_id', childId)
-        .eq('week_start_date', weekStartDate)
-        .eq('parent_id', user.id);
-
-      if (existingScans && existingScans.length > 0) {
-        return new Response(JSON.stringify({
-          error: 'weekly_limit_reached',
-          message: 'You have already scanned a chart for this child this week.',
-        }), {
-          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      const { data: parentProfile } = await supabase
+        .from('parent_profiles')
+        .select('has_special_logins')
+        .eq('id', user.id)
+        .single();
+      if (parentProfile?.has_special_logins) {
+        bypassLimit = true;
       }
-    } catch (limitCheckErr) {
-      // Table may not exist yet — allow the scan to proceed
-      console.warn('chart_scans limit check skipped:', String(limitCheckErr));
+    } catch (err) {
+      console.warn('Failed to fetch parent_profile for special logins check', err);
+    }
+
+    // Check 1 scan/week limit (non-fatal if chart_scans table doesn't exist yet)
+    if (!bypassLimit) {
+      try {
+        const { data: existingScans } = await supabase
+          .from('chart_scans')
+          .select('id')
+          .eq('child_id', childId)
+          .eq('week_start_date', weekStartDate)
+          .eq('parent_id', user.id);
+
+        if (existingScans && existingScans.length > 0) {
+          return new Response(JSON.stringify({
+            error: 'weekly_limit_reached',
+            message: 'You have already scanned a chart for this child this week.',
+          }), {
+            status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } catch (limitCheckErr) {
+        // Table may not exist yet — allow the scan to proceed
+        console.warn('chart_scans limit check skipped:', String(limitCheckErr));
+      }
     }
 
     // Fetch child's active tasks
