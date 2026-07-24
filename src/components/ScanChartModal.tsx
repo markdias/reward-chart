@@ -1,14 +1,14 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  X, Camera, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
-  Loader2, Star, Check, ToggleLeft, ToggleRight, Sparkles, Calendar,
-  Coins
+  Check, X, Camera, Upload, AlertCircle, Loader2, Sparkles, Calendar, CalendarDays,
+  ChevronLeft, ChevronRight, CheckCircle2, ToggleLeft, ToggleRight, Coins, Star
 } from 'lucide-react';
 import { Child, Task, TaskCompletion } from '../types';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { ChildAvatar } from './ChildAvatar';
+import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -180,7 +180,10 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
         if (data.error === 'weekly_limit_reached') {
           throw new Error('weekly_limit_reached');
         }
-        throw new Error(data.message ?? data.error ?? 'Scan failed');
+        const errorMsg = data.error 
+          ? (data.detail ? `${data.error} \n\nDetail: ${data.detail}` : data.error)
+          : (data.message ?? 'Scan failed');
+        throw new Error(errorMsg);
       }
 
       // Map detections to tasks for live coin values
@@ -410,18 +413,18 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
 
             {/* Step 4: Processing */}
             {step === 4 && (
-              <div className="flex flex-col items-center justify-center py-12 gap-5">
-                <div className="relative">
-                  <div className="w-20 h-20 bg-violet-100 dark:bg-violet-950/50 rounded-3xl flex items-center justify-center">
-                    <Loader2 className="w-10 h-10 text-violet-500 animate-spin" />
-                  </div>
-                  <div className="absolute -top-1 -right-1">
-                    <Sparkles className="w-6 h-6 text-amber-400 animate-pulse" />
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center py-12 gap-8">
                 <div className="text-center">
-                  <p className="font-black text-lg text-stone-900 dark:text-stone-50">Reading your chart…</p>
-                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">AI is looking for coloured-in stars ⭐</p>
+                  <p className="font-black text-lg text-stone-900 dark:text-stone-50 mb-2">Reading your chart…</p>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">AI is analysing the image</p>
+                </div>
+                <div className="w-64 h-3 bg-stone-200 dark:bg-stone-800 rounded-full overflow-hidden relative shadow-inner">
+                  <motion.div 
+                    className="absolute top-0 bottom-0 bg-violet-500 rounded-full"
+                    initial={{ left: "-100%", width: "50%" }}
+                    animate={{ left: "200%" }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                  />
                 </div>
               </div>
             )}
@@ -431,9 +434,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-bold text-stone-700 dark:text-stone-200">Toggle chores to confirm or remove:</p>
-                  <span className="text-xs font-extrabold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 px-3 py-1 rounded-xl">
-                    +{totalCoins} 🪙
-                  </span>
+                  <CoinBadge points={totalCoins} className="px-3 py-1 shadow-sm" />
                 </div>
 
                 {/* Group detections by task */}
@@ -443,9 +444,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                   return (
                     <div key={task.id} className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-3.5 space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
-                          {task.points} 🪙
-                        </span>
+                        <CoinBadge points={task.points} className="w-8 h-8 text-[10px]" />
                         <span className="text-sm font-extrabold text-stone-800 dark:text-stone-100">{task.title}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -455,13 +454,12 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                             <button
                               key={`${d.taskId}-${d.dayIndex}`}
                               onClick={() => toggleDetection(idx)}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
                                 d.confirmed
                                   ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
                                   : 'bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600 text-stone-500 line-through'
                               }`}
                             >
-                              <Star className={`w-3 h-3 ${d.confirmed ? 'fill-white' : ''}`} />
                               {DAY_NAMES[d.dayIndex]}
                               {d.confidence < 0.7 && (
                                 <span title="AI was uncertain about this one" className={`text-[9px] ${d.confirmed ? 'text-emerald-200' : 'text-stone-400'}`}>?</span>
@@ -536,12 +534,12 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
 
             {step === 3 && (
               <Button
-                variant="primary"
+                variant="purple"
                 onClick={handleScan}
                 className="flex-1 justify-center"
                 disabled={!imageFile || isProcessing || processingError === 'weekly_limit_reached'}
               >
-                <Sparkles className="w-4 h-4" /> Scan Chart
+                Scan Chart
               </Button>
             )}
 
@@ -555,7 +553,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                   Retake
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="purple"
                   onClick={handleConfirmAll}
                   className="flex-1 justify-center"
                   disabled={totalConfirmed === 0}
@@ -566,7 +564,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
             )}
 
             {step === 6 && (
-              <Button variant="primary" onClick={handleClose} className="flex-1 justify-center">
+              <Button variant="purple" onClick={handleClose} className="flex-1 justify-center">
                 Close
               </Button>
             )}

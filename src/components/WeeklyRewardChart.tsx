@@ -136,7 +136,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
   // Tip banner visibility
-  const [showTip, setShowTip] = useState<boolean>(true);
+
 
   // Unlocked badges count from DB
   const [unlockedBadgesCount, setUnlockedBadgesCount] = useState<number | null>(null);
@@ -336,8 +336,8 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
     }
 
     // Hollow star SVG
-    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-    const filledStar = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const filledStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
     const colHeaders = (printRange === '7d' ? dayNames : [...dayNames, ...dayNames])
       .slice(0, printDays.length)
@@ -345,21 +345,22 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
         const date = printDays[i];
         const dateStr = formatDateKey(date);
         const isToday = dateStr === todayStr;
-        return `<th style="text-align:center;padding:8px 4px;font-size:11px;color:${isToday ? '#e11d48' : '#78716c'};font-weight:800;min-width:52px;">
-          ${day}${!isBlank ? `<br/><span style="font-size:10px;font-weight:600">${date.getDate()}</span>` : ''}
+        return `<th style="text-align:center;padding:12px 4px;font-size:12px;color:${isToday ? '#7c3aed' : '#4b5563'};font-weight:900;min-width:56px;">
+          ${day}${!isBlank ? `<br/><span style="font-size:11px;font-weight:700">${date.getDate()}</span>` : ''}
         </th>`;
       }).join('');
 
-    const taskRows = printTasks.map(task => {
+    const taskRows = printTasks.map((task, index) => {
       const cells = printDays.map(date => {
         const dk = formatDateKey(date);
         const status = compLookup.get(`${task.id}_${dk}`);
         const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-        return `<td style="text-align:center;padding:6px 3px;border-left:1px solid #e7e5e4;">${star}</td>`;
+        return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
       }).join('');
-      return `<tr style="border-bottom:1px solid #f5f5f4;">
-        <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-          <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;margin-bottom:3px;">${task.points} 🪙</span><br/>
+      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
           ${task.title}
         </td>
         ${cells}
@@ -370,53 +371,79 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
       ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
       : '';
 
+    const routineLabel = printRoutinePeriod === 'all' 
+      ? 'Chore Chart' 
+      : `${printRoutinePeriod.charAt(0).toUpperCase() + printRoutinePeriod.slice(1)} Routine`;
+
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${childName}'s Chore Chart — ${chartId}</title>
+  <title>${childName}'s ${routineLabel} — ${chartId}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
   <style>
     @page { size: landscape; margin: 1.2cm 1cm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 0 0 12px 0; border-bottom: 2px solid #f5f5f4; margin-bottom: 12px; }
-    .header-title { font-size: 20px; font-weight: 900; color: #1c1917; }
-    .header-sub { font-size: 12px; color: #78716c; font-weight: 600; margin-top: 2px; }
-    .header-logo { font-size: 11px; color: #a8a29e; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+    body { font-family: 'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
+    .header { 
+      display: flex; align-items: center; justify-content: space-between; 
+      padding: 16px 24px; 
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+      border-radius: 16px;
+      margin-bottom: 20px; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      color: white;
+    }
+    .header-title { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
+    .header-sub { font-size: 13px; font-weight: 700; opacity: 0.9; margin-top: 4px; }
+    .header-logo { font-size: 12px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 99px; }
+    
+    .table-container {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #e7e5e4;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
     table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #fafaf9; border-bottom: 2px solid #e7e5e4; }
-    th:first-child { text-align: left; padding: 8px 10px; font-size: 11px; color: #78716c; font-weight: 800; }
+    thead tr { background: #f3f4f6; border-bottom: 2px solid #e7e5e4; }
+    th:first-child { text-align: left; padding: 12px 14px; font-size: 13px; color: #4b5563; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
     tbody tr:last-child { border-bottom: none; }
-    .footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid #e7e5e4; display: flex; align-items: center; justify-content: space-between; }
-    .footer-instruction { font-size: 11px; color: #78716c; font-weight: 600; }
-    .footer-id { font-size: 9px; color: #d4d0ce; font-weight: 700; letter-spacing: 0.05em; font-family: monospace; }
+    
+    .footer { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-instruction { font-size: 13px; color: #6b7280; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .footer-id { font-size: 10px; color: #d1d5db; font-weight: 800; letter-spacing: 0.05em; font-family: monospace; }
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .table-container { border: 2px solid #e7e5e4; }
     }
   </style>
 </head>
 <body>
   <div class="header">
     <div>
-      <div class="header-title">⭐ ${childName}'s Chore Chart</div>
+      <div class="header-title">${childName}'s ${routineLabel}</div>
       <div class="header-sub">${isBlank ? 'Reusable — Fill in the week yourself' : printDays[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' – ' + printDays[printDays.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
     </div>
     <div class="header-logo">Quest Sync</div>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align:left;padding:8px 10px;font-size:11px;color:#78716c;font-weight:800;">Chore</th>
-        ${colHeaders}
-      </tr>
-    </thead>
-    <tbody>
-      ${taskRows}${noTasksRow}
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Chore</th>
+          ${colHeaders}
+        </tr>
+      </thead>
+      <tbody>
+        ${taskRows}${noTasksRow}
+      </tbody>
+    </table>
+  </div>
   <div class="footer">
-    <div class="footer-instruction">⭐ Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart in the Quest Sync app.</div>
+    <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
   </div>
   <script>window.onload = function() { window.print(); }<\/script>
@@ -591,29 +618,6 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
           </Button>
         </div>
       </div>
-
-      {/* Tip Banner Callout */}
-      {showTip && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 rounded-2xl p-3.5 sm:p-4 flex items-start justify-between gap-3 text-cyan-900 dark:text-cyan-200 shadow-sm print:hidden"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" />
-            <p className="text-xs sm:text-sm font-medium leading-relaxed">
-              <span className="font-bold">Pro Tip:</span> Tap any empty cell to mark a chore as done — even for past days. It'll be auto-approved since you're the parent!
-            </p>
-          </div>
-          <button
-            onClick={() => setShowTip(false)}
-            className="text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 p-1 rounded-lg transition-colors shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
 
       {/* Date Navigation Header */}
       <div className="flex items-center justify-between bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-2xl p-3 sm:p-4 shadow-sm print:border-none print:p-0">
@@ -1102,7 +1106,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                           : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                       }`}
                     >
-                      <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+
                       <div>
                         <p className="font-extrabold text-sm">Blank / Reusable Template</p>
                         <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
