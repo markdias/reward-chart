@@ -101,6 +101,7 @@ interface ParentDashboardProps {
   onExitParentMode: () => void;
   parentEmail: string;
   onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
+  onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
@@ -148,6 +149,7 @@ export default function ParentDashboard({
   onExitParentMode,
   parentEmail,
   onParentCompleteTask,
+  onParentCompleteTasks,
   parentProfile,
   linkedParents = [],
   onResetData,
@@ -3883,7 +3885,9 @@ export default function ParentDashboard({
         onClose={() => setShowScanModal(false)}
         children={children}
         tasks={tasks}
+        completions={completions}
         onParentCompleteTask={onParentCompleteTask}
+        onParentCompleteTasks={onParentCompleteTasks}
       />
 
     </div>

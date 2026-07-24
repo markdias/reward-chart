@@ -18,6 +18,8 @@ interface ScanChartModalProps {
   children: Child[];
   tasks: Task[];
   onParentCompleteTask: (taskId: string, childId: string, dateIso: string) => void;
+  onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
+  completions?: TaskCompletion[];
 }
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -30,6 +32,7 @@ interface Detection {
   confidence: number;
   confirmed: boolean; // parent's toggle
   task?: Task;        // resolved task (for live coin value)
+  alreadyCompleted?: boolean;
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -71,6 +74,8 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   children,
   tasks,
   onParentCompleteTask,
+  onParentCompleteTasks,
+  completions = [],
 }) => {
   const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(children[0]?.id ?? '');
@@ -189,7 +194,25 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
       // Map detections to tasks for live coin values
       const mapped: Detection[] = (data.detections ?? []).map((d: any) => {
         const task = activeChildTasks.find(t => t.id === d.taskId);
-        return { ...d, confirmed: d.detected && d.confidence >= 0.6, task };
+        
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + d.dayIndex);
+        date.setHours(12, 0, 0, 0);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const alreadyCompleted = completions.some(c => 
+          c.task_id === d.taskId && 
+          c.child_id === activeChild.id &&
+          c.completed_at?.startsWith(dateStr) &&
+          c.status !== 'rejected'
+        );
+
+        return { 
+          ...d, 
+          confirmed: d.detected && d.confidence >= 0.6 && !alreadyCompleted, 
+          task, 
+          alreadyCompleted 
+        };
       });
 
       setDetections(mapped);
@@ -205,6 +228,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   };
 
   const toggleDetection = (index: number) => {
+    if (detections[index].alreadyCompleted) return;
     playSound.click();
     setDetections(prev => {
       const next = [...prev];
@@ -216,13 +240,25 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
 
   const handleConfirmAll = () => {
     playSound.success();
-    const confirmedDetections = detections.filter(d => d.confirmed);
-    confirmedDetections.forEach(d => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + d.dayIndex);
-      date.setHours(12, 0, 0, 0);
-      onParentCompleteTask(d.taskId, activeChild.id, date.toISOString());
-    });
+    const confirmedDetections = detections.filter(d => d.confirmed && !d.alreadyCompleted);
+    
+    if (onParentCompleteTasks) {
+      const items = confirmedDetections.map(d => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + d.dayIndex);
+        date.setHours(12, 0, 0, 0);
+        return { taskId: d.taskId, childId: activeChild.id, dateIso: date.toISOString() };
+      });
+      onParentCompleteTasks(items);
+    } else {
+      confirmedDetections.forEach(d => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + d.dayIndex);
+        date.setHours(12, 0, 0, 0);
+        onParentCompleteTask(d.taskId, activeChild.id, date.toISOString());
+      });
+    }
+
     setTotalConfirmed(confirmedDetections.length);
     setStep(6);
   };
@@ -454,14 +490,18 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                             <button
                               key={`${d.taskId}-${d.dayIndex}`}
                               onClick={() => toggleDetection(idx)}
+                              disabled={d.alreadyCompleted}
                               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
-                                d.confirmed
+                                d.alreadyCompleted
+                                  ? 'bg-stone-200 border-stone-200 text-stone-500 opacity-60 cursor-not-allowed'
+                                  : d.confirmed
                                   ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
                                   : 'bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600 text-stone-500 line-through'
                               }`}
                             >
                               {DAY_NAMES[d.dayIndex]}
-                              {d.confidence < 0.7 && (
+                              {d.alreadyCompleted && <CheckCircle2 className="w-3 h-3 ml-0.5 opacity-70" />}
+                              {!d.alreadyCompleted && d.confidence < 0.7 && (
                                 <span title="AI was uncertain about this one" className={`text-[9px] ${d.confirmed ? 'text-emerald-200' : 'text-stone-400'}`}>?</span>
                               )}
                             </button>
