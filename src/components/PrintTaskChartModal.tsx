@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Printer, Camera, CheckSquare, Sparkles, Sun, CloudSun, Moon, ClipboardList } from 'lucide-react';
+import { X, Printer, Camera, CheckSquare, Layers, Sun, CloudSun, Moon, ClipboardList } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { playSound } from '../utils/sound';
-import { Task, TaskCompletion, Child, TaskCategory, Routine } from '../types';
+import { Task, TaskCompletion, Child, Routine } from '../types';
 
 const getActiveRoutineForPrint = (child: Child, range: 'weekdays' | 'weekends'): Routine | undefined => {
   const currentRoutines = child.routines || [];
@@ -74,7 +74,6 @@ export function PrintTaskChartModal({
   const [printRange, setPrintRange] = useState<'weekdays' | 'weekends'>('weekdays');
   const [printMode, setPrintMode] = useState<'live' | 'blank'>('blank');
   const [printRoutinePeriod, setPrintRoutinePeriod] = useState<'all_routines' | 'morning' | 'afternoon' | 'evening' | 'all_tasks'>('all_routines');
-  const [printCategories, setPrintCategories] = useState<Set<TaskCategory>>(new Set());
 
   // Helper to format Date to YYYY-MM-DD
   const formatDateKey = (date: Date): string => {
@@ -83,15 +82,6 @@ export function PrintTaskChartModal({
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   };
-
-  const handleToggleCategoryFilter = (cat: TaskCategory) => {
-    playSound.click();
-    const next = new Set(printCategories);
-    if (next.has(cat)) next.delete(cat);
-    else next.add(cat);
-    setPrintCategories(next);
-  };
-
   const buildPrintTasks = (): Task[] => {
     const activeChild = childrenList.find(c => c.id === selectedChildId);
     if (!activeChild) return [];
@@ -120,10 +110,6 @@ export function PrintTaskChartModal({
         const info = getTaskRoutineInfoForSpecificRoutine(task, routine);
         return info.period === printRoutinePeriod;
       });
-    }
-
-    if (printCategories.size > 0) {
-      filteredTasks = filteredTasks.filter(t => printCategories.has(t.category as TaskCategory));
     }
 
     return filteredTasks;
@@ -187,8 +173,8 @@ export function PrintTaskChartModal({
       });
     }
 
-    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-    const filledStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const hollowCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
+    const filledCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
 
     const colHeaders = dayNames
       .map((day, i) => {
@@ -230,8 +216,8 @@ export function PrintTaskChartModal({
             const cells = printDays.map(date => {
               const dk = formatDateKey(date);
               const status = compLookup.get(`${task.id}_${dk}`);
-              const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-              return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+              const icon = (!isBlank && status === 'approved') ? filledCircle : hollowCircle;
+              return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${icon}</td>`;
             }).join('');
             const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
             tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
@@ -253,8 +239,8 @@ export function PrintTaskChartModal({
         const cells = printDays.map(date => {
           const dk = formatDateKey(date);
           const status = compLookup.get(`${task.id}_${dk}`);
-          const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+          const icon = (!isBlank && status === 'approved') ? filledCircle : hollowCircle;
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${icon}</td>`;
         }).join('');
         const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
         return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
@@ -356,7 +342,7 @@ export function PrintTaskChartModal({
     </table>
   </div>
   <div class="footer">
-    <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
+    <div class="footer-instruction">✅ Colour in each circle when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
   </div>
   <script>window.onload = function() { window.print(); }<\/script>
@@ -490,7 +476,7 @@ export function PrintTaskChartModal({
                     <div>
                       <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
                       <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Prints calendar dates and any already-completed stars.
+                        Prints calendar dates and any already-completed tasks.
                       </p>
                     </div>
                   </button>
@@ -508,7 +494,7 @@ export function PrintTaskChartModal({
                     <div>
                       <p className="font-extrabold text-sm">Blank / Reusable Template</p>
                       <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Generic MON–SUN headers, empty stars — perfect for colouring in!
+                        Generic MON–SUN headers, empty circles — perfect for colouring in!
                       </p>
                     </div>
                   </button>
@@ -532,7 +518,7 @@ export function PrintTaskChartModal({
                         : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                     }`}
                   >
-                    <Sparkles className="w-4 h-4" />
+                    <Layers className="w-4 h-4" />
                     <span>All Routines (Morning, Afternoon & Evening)</span>
                   </button>
                 </div>
@@ -573,31 +559,6 @@ export function PrintTaskChartModal({
                 </div>
               </div>
 
-              {/* Option 5: Category Filter */}
-              <div>
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                  5. Categories <span className="normal-case text-stone-400">(leave blank = all)</span>
-                </Typography>
-                <div className="flex gap-2 flex-wrap">
-                  {(['chores', 'homework', 'behavior', 'health', 'creative', 'other'] as TaskCategory[]).map(cat => {
-                    const isSelected = printCategories.has(cat);
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => handleToggleCategoryFilter(cat)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all capitalize ${
-                          isSelected
-                            ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
-                            : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
 
             {/* Modal Action Buttons */}
