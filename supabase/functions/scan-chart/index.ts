@@ -80,21 +80,26 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Check 1 scan/week limit
-    const { data: existingScans } = await supabase
-      .from('chart_scans')
-      .select('id')
-      .eq('child_id', childId)
-      .eq('week_start_date', weekStartDate)
-      .eq('parent_id', user.id);
+    // Check 1 scan/week limit (non-fatal if chart_scans table doesn't exist yet)
+    try {
+      const { data: existingScans } = await supabase
+        .from('chart_scans')
+        .select('id')
+        .eq('child_id', childId)
+        .eq('week_start_date', weekStartDate)
+        .eq('parent_id', user.id);
 
-    if (existingScans && existingScans.length > 0) {
-      return new Response(JSON.stringify({
-        error: 'weekly_limit_reached',
-        message: 'You have already scanned a chart for this child this week.',
-      }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      if (existingScans && existingScans.length > 0) {
+        return new Response(JSON.stringify({
+          error: 'weekly_limit_reached',
+          message: 'You have already scanned a chart for this child this week.',
+        }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } catch (limitCheckErr) {
+      // Table may not exist yet — allow the scan to proceed
+      console.warn('chart_scans limit check skipped:', String(limitCheckErr));
     }
 
     // Fetch child's active tasks
@@ -212,16 +217,20 @@ Reply ONLY with a JSON object. No markdown, no explanation, no code fences. Exam
         typeof d.detected === 'boolean'
     );
 
-    // Log scan to chart_scans table
+    // Log scan to chart_scans table (best-effort — non-fatal)
     const detectedCount = detections.filter(d => d.detected).length;
-    await supabase.from('chart_scans').insert({
-      parent_id: user.id,
-      child_id: childId,
-      week_start_date: weekStartDate,
-      tasks_detected: detectedCount,
-      tasks_confirmed: 0,
-      chart_id: chartId ?? null,
-    });
+    try {
+      await supabase.from('chart_scans').insert({
+        parent_id: user.id,
+        child_id: childId,
+        week_start_date: weekStartDate,
+        tasks_detected: detectedCount,
+        tasks_confirmed: 0,
+        chart_id: chartId ?? null,
+      });
+    } catch (insertErr) {
+      console.warn('chart_scans insert skipped (table may not exist yet):', String(insertErr));
+    }
 
     return new Response(JSON.stringify({ detections }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
