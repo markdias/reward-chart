@@ -242,6 +242,11 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                 </div>
               </div>
 
+              {/* Landscape Print Tip */}
+              <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center">
+                <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
+              </div>
+
               {/* Modal Action Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-stone-100 dark:border-stone-800 shrink-0">
                 <Button

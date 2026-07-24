@@ -284,7 +284,7 @@ export function PrintTaskChartModal({
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
   <style>
-    @page { size: 297mm 210mm; margin: 1.2cm 1cm; }
+    @page { size: landscape; margin: 0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
     .header { 
@@ -314,13 +314,27 @@ export function PrintTaskChartModal({
     .footer { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
     .footer-instruction { font-size: 13px; color: #6b7280; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .footer-id { font-size: 10px; color: #d1d5db; font-weight: 800; letter-spacing: 0.05em; font-family: monospace; }
+    
+    /* Screen: normal layout with padding */
+    #print-wrapper { padding: 1.2cm 1cm; }
+    
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .table-container { border: 2px solid #e7e5e4; }
+      /* Safari landscape workaround: rotate content when printed in portrait */
+      #print-wrapper {
+        width: 100vw;
+        padding: 1.2cm 1cm;
+        transform-origin: top left;
+      }
+      @supports (-webkit-touch-callout: none) {
+        /* Target WebKit/Safari specifically */
+      }
     }
   </style>
 </head>
 <body>
+  <div id="print-wrapper">
   <div class="header">
     <div>
       <div class="header-title">${childName}'s ${routineLabel}</div>
@@ -344,6 +358,7 @@ export function PrintTaskChartModal({
   <div class="footer">
     <div class="footer-instruction">✅ Colour in each circle when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
+  </div>
   </div>
   <script>window.onload = function() { window.print(); }<\/script>
 </body>
@@ -560,9 +575,13 @@ export function PrintTaskChartModal({
               </div>
 
             </div>
+              {/* Landscape Print Tip */}
+              <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center">
+                <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
+              </div>
 
-            {/* Modal Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-stone-100 dark:border-stone-800 shrink-0">
+              {/* Modal Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-stone-100 dark:border-stone-800 shrink-0">
               <Button
                 variant="secondary"
                 onClick={() => { playSound.click(); onClose(); }}
