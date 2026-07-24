@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Printer, Camera, CheckSquare } from 'lucide-react';
+import { X, Printer, Camera, CheckSquare, Sparkles, Sun, CloudSun, Moon, ClipboardList } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { playSound } from '../utils/sound';
@@ -200,26 +200,77 @@ export function PrintTaskChartModal({
         </th>`;
       }).join('');
 
-    const taskRows = printTasks.map((task, index) => {
-      const cells = printDays.map(date => {
-        const dk = formatDateKey(date);
-        const status = compLookup.get(`${task.id}_${dk}`);
-        const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-        return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
-      }).join('');
-      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-          <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
-          ${task.title}
-        </td>
-        ${cells}
-      </tr>`;
-    }).join('');
+    let tableBodyHtml = '';
+    if (printRoutinePeriod === 'all_routines') {
+      const routine = getActiveRoutineForPrint(activeChild, printRange);
+      const periods: { key: 'morning' | 'afternoon' | 'evening'; label: string }[] = [
+        { key: 'morning', label: 'Morning Routine' },
+        { key: 'afternoon', label: 'Afternoon Routine' },
+        { key: 'evening', label: 'Evening Routine' }
+      ];
 
-    const noTasksRow = printTasks.length === 0
-      ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
-      : '';
+      let totalTasksCount = 0;
+      periods.forEach(p => {
+        const periodTasks = printTasks.filter(t => {
+          const info = getTaskRoutineInfoForSpecificRoutine(t, routine);
+          return info.period === p.key;
+        });
+
+        if (periodTasks.length > 0) {
+          totalTasksCount += periodTasks.length;
+          // Add section header row
+          tableBodyHtml += `<tr style="background:#f3f4f6;border-bottom:2px solid #e7e5e4;">
+            <td colspan="${printDays.length + 1}" style="padding:10px 14px;font-size:12px;font-weight:900;color:#374151;text-transform:uppercase;letter-spacing:0.05em;text-align:left;">
+              ${p.label}
+            </td>
+          </tr>`;
+
+          // Add task rows for this period
+          periodTasks.forEach((task, index) => {
+            const cells = printDays.map(date => {
+              const dk = formatDateKey(date);
+              const status = compLookup.get(`${task.id}_${dk}`);
+              const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+              return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+            }).join('');
+            const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+            tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+              <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+                ${task.title}
+              </td>
+              ${cells}
+            </tr>`;
+          });
+        }
+      });
+
+      if (totalTasksCount === 0) {
+        tableBodyHtml = `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No routine chores match the selected filters.</td></tr>`;
+      }
+    } else {
+      const taskRows = printTasks.map((task, index) => {
+        const cells = printDays.map(date => {
+          const dk = formatDateKey(date);
+          const status = compLookup.get(`${task.id}_${dk}`);
+          const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+        }).join('');
+        const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+        return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+          <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+            ${task.title}
+          </td>
+          ${cells}
+        </tr>`;
+      }).join('');
+
+      const noTasksRow = printTasks.length === 0
+        ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
+        : '';
+      tableBodyHtml = taskRows + noTasksRow;
+    }
 
     let routineLabel = 'Tasks';
     if (printRoutinePeriod === 'all_routines') {
@@ -300,7 +351,7 @@ export function PrintTaskChartModal({
         </tr>
       </thead>
       <tbody>
-        ${taskRows}${noTasksRow}
+        ${tableBodyHtml}
       </tbody>
     </table>
   </div>
@@ -465,29 +516,60 @@ export function PrintTaskChartModal({
               </div>
 
               {/* Option 4: Routine & Task Selection */}
-              <div>
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+              <div className="space-y-3">
+                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
                   4. Routine & Tasks
                 </Typography>
-                <div className="flex gap-2 flex-wrap">
-                  {(['all_routines', 'morning', 'afternoon', 'evening', 'all_tasks'] as const).map(period => (
+                
+                {/* Row 1: All Routines */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintRoutinePeriod('all_routines'); }}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                      printRoutinePeriod === 'all_routines'
+                        ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                        : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>All Routines (Morning, Afternoon & Evening)</span>
+                  </button>
+                </div>
+
+                {/* Row 2: Individual Routines */}
+                <div className="grid grid-cols-3 gap-2">
+                  {(['morning', 'afternoon', 'evening'] as const).map(period => (
                     <button
                       key={period}
                       type="button"
                       onClick={() => { playSound.click(); setPrintRoutinePeriod(period); }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 text-center ${
                         printRoutinePeriod === period
                           ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
                           : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                       }`}
                     >
-                      {period === 'all_routines' ? '✨ All Routines' 
-                       : period === 'morning' ? '☀️ Morning' 
-                       : period === 'afternoon' ? '🌤 Afternoon' 
-                       : period === 'evening' ? '🌙 Evening' 
-                       : '📋 All Tasks (Non-Routine)'}
+                      {period === 'morning' ? <Sun className="w-4 h-4" /> : period === 'afternoon' ? <CloudSun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                      <span className="capitalize">{period}</span>
                     </button>
                   ))}
+                </div>
+
+                {/* Row 3: All Tasks (Non-Routine) */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => { playSound.click(); setPrintRoutinePeriod('all_tasks'); }}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                      printRoutinePeriod === 'all_tasks'
+                        ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                        : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                    }`}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    <span>All Tasks (Non-Routine)</span>
+                  </button>
                 </div>
               </div>
 
