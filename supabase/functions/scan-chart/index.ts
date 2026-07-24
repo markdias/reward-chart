@@ -136,12 +136,11 @@ The chart has 7 columns for days of the week: Mon=dayIndex 0, Tue=1, Wed=2, Thu=
 
 Each cell has a hollow star outline. When the child completed that chore on that day, they COLOURED IN the star with a pen or crayon (the star appears filled/coloured).
 
-For EVERY combination of task row x day column (${tasks.length} tasks x 7 days = ${tasks.length * 7} total entries), determine:
-- detected: true if the star appears coloured/filled, false if it is still hollow/empty
-- confidence: 0.0 to 1.0 (how sure you are)
+Determine which stars are coloured in.
+Reply ONLY with a JSON object. ONLY include detections where the star appears COLOURED/FILLED. Do NOT include entries where the star is hollow/empty.
 
-Reply ONLY with a JSON object. No markdown, no explanation, no code fences. Example format:
-{"detections":[{"taskId":"abc","taskTitle":"Make bed","dayIndex":0,"detected":true,"confidence":0.95},{"taskId":"abc","taskTitle":"Make bed","dayIndex":1,"detected":false,"confidence":0.9}]}`;
+Example format:
+{"detections":[{"taskId":"abc","taskTitle":"Make bed","dayIndex":0,"detected":true,"confidence":0.95}]}`;
 
     // Check for API key
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
@@ -163,7 +162,8 @@ Reply ONLY with a JSON object. No markdown, no explanation, no code fences. Exam
       }],
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
       },
     };
 
@@ -204,8 +204,12 @@ Reply ONLY with a JSON object. No markdown, no explanation, no code fences. Exam
     try {
       parsedResult = JSON.parse(cleaned);
     } catch (parseErr) {
-      console.error('Failed to parse Gemini response:', cleaned.substring(0, 500));
-      return new Response(JSON.stringify({ error: 'AI returned an unexpected format. Try again.' }), {
+      const finishReason = geminiData?.candidates?.[0]?.finishReason ?? 'UNKNOWN';
+      console.error(`Failed to parse. Finish reason: ${finishReason}. Raw:`, cleaned.substring(0, 500));
+      return new Response(JSON.stringify({ 
+        error: 'AI returned an unexpected format. Try again.', 
+        detail: `[Reason: ${finishReason}] ${cleaned.substring(0, 1000)}` 
+      }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
