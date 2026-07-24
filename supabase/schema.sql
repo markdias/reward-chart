@@ -669,3 +669,30 @@ INSERT INTO badges (id, name, description, icon_name, category, unlock_condition
 ('gold-pot-guardian', 'Gold Pot Guardian', 'Go 30 days without breaking the gold pot.', 'ShieldCheck','responsibility', 'gold_pot_unbroken_days >= 30')
 
 ON CONFLICT (id) DO NOTHING;
+
+
+-- =============================================================================
+-- TABLE: chart_scans
+-- One row per AI scan attempt. Used to enforce 1 scan per week per child (Pro).
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS chart_scans (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id         UUID REFERENCES parent_profiles(user_id) ON DELETE CASCADE,
+  child_id          TEXT NOT NULL,       -- matches children.id (TEXT primary key)
+  scanned_at        TIMESTAMPTZ DEFAULT now(),
+  week_start_date   DATE NOT NULL,       -- ISO Monday of the week being scanned
+  tasks_detected    INTEGER DEFAULT 0,   -- how many the AI found
+  tasks_confirmed   INTEGER DEFAULT 0,   -- how many the parent confirmed
+  chart_id          TEXT                 -- e.g. "ELLA-2026-W30" printed on the chart
+);
+
+ALTER TABLE chart_scans ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow parent insert for chart_scans"
+  ON chart_scans FOR INSERT TO authenticated
+  WITH CHECK (parent_id = auth.uid());
+
+CREATE POLICY "Allow parent select for chart_scans"
+  ON chart_scans FOR SELECT TO authenticated
+  USING (parent_id = auth.uid());
+

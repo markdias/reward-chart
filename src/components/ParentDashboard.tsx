@@ -49,6 +49,7 @@ import { WeeklyRewardChart } from './WeeklyRewardChart';
 import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { useSubscription } from '../hooks/useSubscription';
+import { ScanChartModal } from './ScanChartModal';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { Walkthrough } from './Walkthrough';
@@ -174,7 +175,11 @@ export default function ParentDashboard({
     }
   }, [isBetaUser, activeTab]);
 
-  const { canAddChild, openPaywall } = useSubscription();
+  const { canAddChild, openPaywall, subscription } = useSubscription();
+  const isPro = subscription?.isPro ?? false;
+
+  // Scan Chart Modal
+  const [showScanModal, setShowScanModal] = useState(false);
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -1484,6 +1489,9 @@ export default function ParentDashboard({
                         onApproveCompletion={onApproveCompletion}
                         onRejectCompletion={onRejectCompletion}
                         onDeleteCompletion={onRejectCompletion}
+                        isPro={isPro}
+                        onOpenPaywall={openPaywall}
+                        onOpenScanChart={() => setShowScanModal(true)}
                       />
                     )}
 
@@ -1503,6 +1511,9 @@ export default function ParentDashboard({
                     onParentCompleteTask={onParentCompleteTask}
                     onApproveCompletion={onApproveCompletion}
                     onRejectCompletion={onRejectCompletion}
+                    isPro={isPro}
+                    onOpenPaywall={openPaywall}
+                    onOpenScanChart={() => setShowScanModal(true)}
                   />
                 )}
               </motion.div>
@@ -3866,6 +3877,16 @@ export default function ParentDashboard({
         )}
       </AnimatePresence>
 
+      {/* Scan Chart Modal (Pro feature) */}
+      <ScanChartModal
+        isOpen={showScanModal}
+        onClose={() => setShowScanModal(false)}
+        children={children}
+        tasks={tasks}
+        onParentCompleteTask={onParentCompleteTask}
+      />
+
     </div>
   );
 }
+
