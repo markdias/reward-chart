@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
   Sparkles, Star, Flame, Trophy, CheckCircle2, RotateCcw, Info, Coins, Filter, Award,
-  Sun, Moon, CheckSquare
+  Sun, Moon, CheckSquare, Camera
 } from 'lucide-react';
-import { Child, Task, TaskCompletion } from '../types';
+import { Child, Task, TaskCompletion, TaskCategory } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
@@ -22,6 +21,9 @@ interface WeeklyRewardChartProps {
   onApproveCompletion?: (id: string) => void;
   onRejectCompletion?: (id: string) => void;
   onDeleteCompletion?: (id: string) => void;
+  isPro?: boolean;
+  onOpenPaywall?: (feature?: string) => void;
+  onOpenScanChart?: () => void;
 }
 
 // Helper to determine if a task belongs to a routine (and which period)
@@ -105,7 +107,10 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   onParentCompleteTask,
   onApproveCompletion,
   onRejectCompletion,
-  onDeleteCompletion
+  onDeleteCompletion,
+  isPro = false,
+  onOpenPaywall,
+  onOpenScanChart,
 }) => {
   // Selected child state - default to first child or empty
   const [selectedChildId, setSelectedChildId] = useState<string>(children[0]?.id || '');
@@ -118,7 +123,12 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   const [printRange, setPrintRange] = useState<'7d' | '14d'>('7d');
   const [printMode, setPrintMode] = useState<'live' | 'blank'>('live');
   const [isPrintingBlank, setIsPrintingBlank] = useState<boolean>(false);
-  
+
+  // Print filter: routine time period
+  const [printRoutinePeriod, setPrintRoutinePeriod] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
+  // Print filter: categories (empty set = all)
+  const [printCategories, setPrintCategories] = useState<Set<TaskCategory>>(new Set());
+
   // Routine filter state: 'all', 'routines', 'extra'
   const [routineFilter, setRoutineFilter] = useState<'all' | 'routines' | 'extra'>('all');
 
@@ -126,7 +136,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
   // Tip banner visibility
-  const [showTip, setShowTip] = useState<boolean>(true);
+
 
   // Unlocked badges count from DB
   const [unlockedBadgesCount, setUnlockedBadgesCount] = useState<number | null>(null);
@@ -243,24 +253,211 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
     setShowPrintModal(true);
   };
 
-  // Triggers browser print synchronously on click to suppress Safari security warning
+  // Build tasks list for printing, respecting print filters
+  const buildPrintTasks = (): Task[] => {
+    const numDays = printRange === '7d' ? 7 : 14;
+    // Start from current Monday
+    const now = new Date();
+    const distanceToMonday = (now.getDay() + 6) % 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - distanceToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    let filteredTasks = (tasks || []).filter(t =>
+      (t.child_id === activeChild?.id || t.child_id === 'all') &&
+      t.child_id !== 'directory' &&
+      t.is_template !== true &&
+      t.is_active !== false
+    );
+
+    // Apply routine period filter
+    if (printRoutinePeriod !== 'all') {
+      filteredTasks = filteredTasks.filter(task => {
+        const info = getTaskRoutineInfo(task, activeChild);
+        return info.period === printRoutinePeriod;
+      });
+    }
+
+    // Apply category filter (if any categories selected)
+    if (printCategories.size > 0) {
+      filteredTasks = filteredTasks.filter(t => printCategories.has(t.category as TaskCategory));
+    }
+
+    return filteredTasks;
+  };
+
+  // Get print date range days
+  const buildPrintDays = (): Date[] => {
+    const numDays = printRange === '7d' ? 7 : 14;
+    const now = new Date();
+    const distanceToMonday = (now.getDay() + 6) % 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - distanceToMonday);
+    monday.setHours(0, 0, 0, 0);
+    return Array.from({ length: numDays }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  };
+
+  // Generate week label like "2026-W30"
+  const getWeekLabel = (date: Date): string => {
+    const yr = date.getFullYear();
+    const startOfYear = new Date(yr, 0, 1);
+    const weekNum = Math.ceil(((date.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+    return `${yr}-W${String(weekNum).padStart(2, '0')}`;
+  };
+
+  // Open a new window with a self-contained print-ready HTML chart (works on mobile)
   const handleExecutePrint = () => {
     playSound.click();
+    setShowPrintModal(false);
 
-    const previousRange = viewRange;
+    const printTasks = buildPrintTasks();
+    const printDays = buildPrintDays();
+    const isBlank = printMode === 'blank';
+    const childName = activeChild?.name || 'Child';
+    const weekLabel = getWeekLabel(printDays[0]);
+    const chartId = `${childName.toUpperCase().replace(/\s+/g, '-')}-${weekLabel}`;
 
-    // Force React to synchronously flush DOM updates before window.print() captures the page
-    flushSync(() => {
-      setViewRange(printRange);
-      setIsPrintingBlank(printMode === 'blank');
-      setShowPrintModal(false);
-    });
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const todayStr = formatDateKey(new Date());
 
-    // Invoke window.print() on the synchronously updated DOM
-    window.print();
+    // Build completion lookup for live mode
+    const compLookup = new Map<string, string>(); // key -> status
+    if (!isBlank) {
+      completions.forEach(c => {
+        if (c.child_id === activeChild?.id) {
+          const dk = formatDateKey(new Date(c.completed_at));
+          compLookup.set(`${c.task_id}_${dk}`, c.status);
+        }
+      });
+    }
 
-    // Restore interactive blank state
-    setIsPrintingBlank(false);
+    // Hollow star SVG
+    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const filledStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
+    const colHeaders = (printRange === '7d' ? dayNames : [...dayNames, ...dayNames])
+      .slice(0, printDays.length)
+      .map((day, i) => {
+        const date = printDays[i];
+        const dateStr = formatDateKey(date);
+        const isToday = dateStr === todayStr;
+        return `<th style="text-align:center;padding:12px 4px;font-size:12px;color:${isToday ? '#7c3aed' : '#4b5563'};font-weight:900;min-width:56px;">
+          ${day}${!isBlank ? `<br/><span style="font-size:11px;font-weight:700">${date.getDate()}</span>` : ''}
+        </th>`;
+      }).join('');
+
+    const taskRows = printTasks.map((task, index) => {
+      const cells = printDays.map(date => {
+        const dk = formatDateKey(date);
+        const status = compLookup.get(`${task.id}_${dk}`);
+        const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+        return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+      }).join('');
+      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+          ${task.title}
+        </td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    const noTasksRow = printTasks.length === 0
+      ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
+      : '';
+
+    const routineLabel = printRoutinePeriod === 'all' 
+      ? 'Chore Chart' 
+      : `${printRoutinePeriod.charAt(0).toUpperCase() + printRoutinePeriod.slice(1)} Routine`;
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${childName}'s ${routineLabel} — ${chartId}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    @page { size: landscape; margin: 1.2cm 1cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
+    .header { 
+      display: flex; align-items: center; justify-content: space-between; 
+      padding: 16px 24px; 
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+      border-radius: 16px;
+      margin-bottom: 20px; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      color: white;
+    }
+    .header-title { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
+    .header-sub { font-size: 13px; font-weight: 700; opacity: 0.9; margin-top: 4px; }
+    .header-logo { font-size: 12px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 99px; }
+    
+    .table-container {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #e7e5e4;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #f3f4f6; border-bottom: 2px solid #e7e5e4; }
+    th:first-child { text-align: left; padding: 12px 14px; font-size: 13px; color: #4b5563; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+    tbody tr:last-child { border-bottom: none; }
+    
+    .footer { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-instruction { font-size: 13px; color: #6b7280; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .footer-id { font-size: 10px; color: #d1d5db; font-weight: 800; letter-spacing: 0.05em; font-family: monospace; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .table-container { border: 2px solid #e7e5e4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="header-title">${childName}'s ${routineLabel}</div>
+      <div class="header-sub">${isBlank ? 'Reusable — Fill in the week yourself' : printDays[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' – ' + printDays[printDays.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+    </div>
+    <div class="header-logo">Quest Sync</div>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Chore</th>
+          ${colHeaders}
+        </tr>
+      </thead>
+      <tbody>
+        ${taskRows}${noTasksRow}
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">
+    <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
+    <div class="footer-id">Chart: ${chartId}</div>
+  </div>
+  <script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    } else {
+      // Fallback: try old-school print if popup blocked
+      alert('Please allow pop-ups for this site to print charts, or try from a desktop browser.');
+    }
   };
 
   // Map of completion lookup: key = `${taskId}_${dateKey}` -> TaskCompletion
@@ -399,31 +596,28 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
             <Printer className="w-4 h-4" />
             <span>Print</span>
           </Button>
+
+          {/* Scan Completed Chart Button */}
+          <Button
+            id="tour-chart-scan-btn"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              playSound.click();
+              if (!isPro) {
+                onOpenPaywall?.('scan_chart');
+              } else {
+                onOpenScanChart?.();
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-xl font-bold"
+            title={isPro ? 'Scan a completed paper chart' : 'Pro feature — upgrade to scan charts'}
+          >
+            <Camera className="w-4 h-4" />
+            <span className="hidden sm:inline">Scan</span>
+          </Button>
         </div>
       </div>
-
-      {/* Tip Banner Callout */}
-      {showTip && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 rounded-2xl p-3.5 sm:p-4 flex items-start justify-between gap-3 text-cyan-900 dark:text-cyan-200 shadow-sm print:hidden"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" />
-            <p className="text-xs sm:text-sm font-medium leading-relaxed">
-              <span className="font-bold">Pro Tip:</span> Tap any empty cell to mark a chore as done — even for past days. It'll be auto-approved since you're the parent!
-            </p>
-          </div>
-          <button
-            onClick={() => setShowTip(false)}
-            className="text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 p-1 rounded-lg transition-colors shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
 
       {/* Date Navigation Header */}
       <div className="flex items-center justify-between bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-2xl p-3 sm:p-4 shadow-sm print:border-none print:p-0">
@@ -854,67 +1048,51 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
                 {/* Option 1: Print Duration */}
                 <div>
                   <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    1. Print Duration
+                    1. Duration
                   </Typography>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRange('7d'); }}
-                      className={`p-3.5 rounded-2xl border transition-all text-left ${
-                        printRange === '7d'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">7 Days</p>
-                      <p className={`text-xs mt-0.5 ${printRange === '7d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        1 Week Layout
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRange('14d'); }}
-                      className={`p-3.5 rounded-2xl border transition-all text-left ${
-                        printRange === '14d'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">14 Days</p>
-                      <p className={`text-xs mt-0.5 ${printRange === '14d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        2 Weeks Layout
-                      </p>
-                    </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([['7d', '7 Days', '1 Week'], ['14d', '14 Days', '2 Weeks']] as const).map(([val, label, sub]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => { playSound.click(); setPrintRange(val); }}
+                        className={`p-3 rounded-2xl border transition-all text-left ${
+                          printRange === val
+                            ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
+                            : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                        }`}
+                      >
+                        <p className="font-extrabold text-sm">{label}</p>
+                        <p className={`text-xs mt-0.5 ${printRange === val ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>{sub} Layout</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Option 2: Chart Template Style */}
+                {/* Option 2: Chart Style */}
                 <div>
                   <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    2. Chart Template Style
+                    2. Chart Style
                   </Typography>
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <button
                       type="button"
                       onClick={() => { playSound.click(); setPrintMode('live'); }}
-                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                      className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
                         printMode === 'live'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
                           : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                       }`}
                     >
                       <Calendar className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
                       <div>
-                        <p className="font-extrabold text-sm">
-                          Live Chart (With Current Dates)
-                        </p>
+                        <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
                         <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                          Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
+                          Prints calendar dates and any already-completed stars.
                         </p>
                       </div>
                     </button>
@@ -922,22 +1100,76 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
                     <button
                       type="button"
                       onClick={() => { playSound.click(); setPrintMode('blank'); }}
-                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
+                      className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
                         printMode === 'blank'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
+                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
                           : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                       }`}
                     >
-                      <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
+
                       <div>
-                        <p className="font-extrabold text-sm">
-                          Blank / Plain Reusable Template
-                        </p>
+                        <p className="font-extrabold text-sm">Blank / Reusable Template</p>
                         <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                          Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
+                          Generic MON–SUN headers, empty stars — perfect for colouring in!
                         </p>
                       </div>
                     </button>
+                  </div>
+                </div>
+
+                {/* Option 3: Routine Time Period */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    3. Routine Time
+                  </Typography>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['all', 'morning', 'afternoon', 'evening'] as const).map(period => (
+                      <button
+                        key={period}
+                        type="button"
+                        onClick={() => { playSound.click(); setPrintRoutinePeriod(period); }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all capitalize ${
+                          printRoutinePeriod === period
+                            ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                            : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                        }`}
+                      >
+                        {period === 'all' ? '🌟 All' : period === 'morning' ? '☀️ Morning' : period === 'afternoon' ? '🌤 Afternoon' : '🌙 Evening'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Option 4: Category Filter */}
+                <div>
+                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                    4. Categories <span className="normal-case text-stone-400">(leave blank = all)</span>
+                  </Typography>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['chores', 'homework', 'behavior', 'health', 'creative', 'other'] as TaskCategory[]).map(cat => {
+                      const isSelected = printCategories.has(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            playSound.click();
+                            setPrintCategories(prev => {
+                              const next = new Set(prev);
+                              if (next.has(cat)) next.delete(cat); else next.add(cat);
+                              return next;
+                            });
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all capitalize ${
+                            isSelected
+                              ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                              : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
