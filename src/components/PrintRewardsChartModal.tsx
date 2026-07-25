@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { X, Printer, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  X, Printer, Check, ChevronLeft, ChevronRight, Calendar
+} from 'lucide-react';
 import { Typography } from './ui/Typography';
 import { Button } from './ui/Button';
+import { ChildAvatar } from './ChildAvatar';
 import { Child, Reward } from '../types';
 import { playSound } from '../utils/sound';
 
@@ -13,9 +16,30 @@ interface PrintRewardsChartModalProps {
   rewards: Reward[];
 }
 
+type Step = 1 | 2 | 3;
+
 export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards }: PrintRewardsChartModalProps) {
+  const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(childrenList[0]?.id || '');
-  const [printRange, setPrintRange] = useState<'7d' | '14d'>('7d');
+  const [weekOffset, setWeekOffset] = useState<0 | -1>(0);
+
+  const activeChild = childrenList.find(c => c.id === selectedChildId) || childrenList[0];
+
+  const getMondayOfWeek = (offset: number): Date => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (offset * 7);
+    const mon = new Date(today.setDate(diff));
+    mon.setHours(0, 0, 0, 0);
+    return mon;
+  };
+
+  const formatWeekRange = (monday: Date): string => {
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `${fmt(monday)} – ${fmt(sunday)}`;
+  };
 
   const formatDateKey = (d: Date) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -23,24 +47,16 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
 
   const handlePrint = () => {
     playSound.click();
-    const activeChild = childrenList.find(c => c.id === selectedChildId);
     if (!activeChild) return;
 
     // Filter active rewards for this child
     const childRewards = rewards.filter(r => r.child_id === activeChild.id && r.is_available && !r.is_template);
 
-    const numDays = printRange === '7d' ? 7 : 14;
-    const today = new Date();
-    // Start on previous Monday
-    const startDay = new Date(today);
-    const dayOfWeek = startDay.getDay() === 0 ? 7 : startDay.getDay();
-    startDay.setDate(startDay.getDate() - dayOfWeek + 1);
-    startDay.setHours(12, 0, 0, 0);
-
+    const monday = getMondayOfWeek(weekOffset);
     const printDays: Date[] = [];
-    for (let i = 0; i < numDays; i++) {
-      const d = new Date(startDay);
-      d.setDate(startDay.getDate() + i);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
       d.setHours(12, 0, 0, 0);
       printDays.push(d);
     }
@@ -50,8 +66,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
 
     const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
-    const colHeaders = (printRange === '7d' ? dayNames : [...dayNames, ...dayNames])
-      .slice(0, printDays.length)
+    const colHeaders = dayNames
       .map((day, i) => {
         const date = printDays[i];
         const dateStr = formatDateKey(date);
@@ -152,6 +167,12 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
     onClose();
   };
 
+  const handleClose = () => {
+    playSound.click();
+    setStep(1);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -160,7 +181,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => { playSound.click(); onClose(); }}
+            onClick={handleClose}
             className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm"
           />
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
@@ -168,102 +189,174 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md pointer-events-auto bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden flex flex-col max-h-[80vh] text-left"
+              className="relative w-full max-w-md pointer-events-auto bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden flex flex-col max-h-[85vh] text-left"
             >
               {/* Header Icon & Title */}
-              <div className="flex items-start justify-between mb-5 shrink-0">
+              <div className="flex items-start justify-between mb-3 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
-                    <Printer className="w-6 h-6" />
+                  <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shrink-0">
+                    <Printer className="w-5 h-5" />
                   </div>
                   <div>
-                    <Typography variant="h2" className="text-xl font-bold">
+                    <Typography variant="h2" className="text-base font-black">
                       Print Reward Chart
                     </Typography>
                     <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                      Select child and duration
+                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : 'Print chart'}
                     </Typography>
                   </div>
                 </div>
                 <button
-                  onClick={() => { playSound.click(); onClose(); }}
+                  onClick={handleClose}
                   className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-5 overflow-y-auto pr-1 pb-4 flex-1">
-                {/* Option 1: Child Selection */}
-                <div>
-                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    1. Child
-                  </Typography>
-                  <div className="grid grid-cols-2 gap-2">
-                    {childrenList.map(c => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => { playSound.click(); setSelectedChildId(c.id); }}
-                        className={`p-3 rounded-2xl border transition-all text-left ${
-                          selectedChildId === c.id 
-                            ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md' 
-                            : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                        }`}
-                      >
-                        <p className="font-extrabold text-sm">{c.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              {/* Step indicator */}
+              <div className="flex gap-1.5 pt-1 pb-3 shrink-0">
+                {([1, 2, 3] as const).map(s => (
+                  <div
+                    key={s}
+                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${s <= step ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-stone-700'}`}
+                  />
+                ))}
+              </div>
 
-                {/* Option 2: Print Duration */}
-                <div>
-                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    2. Duration
-                  </Typography>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([['7d', '7 Days', '1 Week'], ['14d', '14 Days', '2 Weeks']] as const).map(([val, label, sub]) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => { playSound.click(); setPrintRange(val); }}
-                        className={`p-3 rounded-2xl border transition-all text-left ${
-                          printRange === val
-                            ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
-                            : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                        }`}
-                      >
-                        <p className="font-extrabold text-sm">{label}</p>
-                        <p className={`text-xs mt-0.5 ${printRange === val ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>{sub} Layout</p>
-                      </button>
-                    ))}
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto pr-1 pb-4 space-y-4">
+                
+                {/* Step 1: Choose Child */}
+                {step === 1 && (
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which child is this chart for?</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {childrenList.map(child => (
+                        <button
+                          key={child.id}
+                          onClick={() => { playSound.click(); setSelectedChildId(child.id); }}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                            child.id === selectedChildId
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-md'
+                              : 'border-stone-200 dark:border-stone-700 hover:border-emerald-300'
+                          }`}
+                        >
+                          <ChildAvatar iconName={child.avatar_url || 'Smile'} className="w-12 h-12 rounded-2xl" />
+                          <span className="text-sm font-extrabold text-stone-800 dark:text-stone-100">{child.name}</span>
+                          {child.id === selectedChildId && <Check className="w-4 h-4 text-emerald-500" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Step 2: Select Week */}
+                {step === 2 && (
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which week should the chart print?</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {([0, -1] as const).map(offset => {
+                        const mon = getMondayOfWeek(offset);
+                        const isSelected = weekOffset === offset;
+                        return (
+                          <button
+                            key={offset}
+                            onClick={() => { playSound.click(); setWeekOffset(offset); }}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-md'
+                                : 'border-stone-200 dark:border-stone-700 hover:border-emerald-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className={`w-4 h-4 ${isSelected ? 'text-emerald-500' : 'text-stone-400'}`} />
+                              <span className="font-black text-sm text-stone-900 dark:text-stone-50">
+                                {offset === 0 ? 'This Week' : 'Last Week'}
+                              </span>
+                            </div>
+                            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{formatWeekRange(mon)}</span>
+                            {isSelected && <Check className="w-4 h-4 text-emerald-500 mt-2" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Print */}
+                {step === 3 && (
+                  <div className="space-y-4 pt-1">
+                    
+                    {/* Example/Mockup Card */}
+                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Chart Preview</span>
+                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
+                          {activeChild?.name}'s Reward Chart
+                        </p>
+                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
+                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
+                      Prints a full 7-day grid (Mon–Sun) of all available rewards and their coin costs for {activeChild?.name}.
+                    </p>
+                  </div>
+                )}
+
               </div>
 
               {/* Landscape Print Tip */}
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center">
-                <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
-              </div>
+              {step === 3 && (
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center shrink-0">
+                  <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
+                </div>
+              )}
 
-              {/* Modal Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-stone-100 dark:border-stone-800 shrink-0">
-                <Button
-                  variant="secondary"
-                  onClick={() => { playSound.click(); onClose(); }}
-                  className="flex-1 justify-center"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handlePrint}
-                  className="flex-1 justify-center"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>Print Chart</span>
-                </Button>
+              {/* Footer actions */}
+              <div className="px-5 pb-5 pt-3 border-t border-stone-100 dark:border-stone-800 shrink-0 flex gap-3">
+                {step > 1 && (
+                  <Button variant="secondary" onClick={() => { playSound.click(); setStep(s => (s - 1) as Step); }} className="flex-1 justify-center">
+                    <ChevronLeft className="w-4 h-4" /> Back
+                  </Button>
+                )}
+
+                {step === 1 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(2); }}
+                    className="flex-1 justify-center"
+                    disabled={!selectedChildId}
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 2 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(3); }}
+                    className="flex-1 justify-center"
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 3 && (
+                  <Button
+                    variant="primary"
+                    onClick={handlePrint}
+                    className="flex-1 justify-center"
+                  >
+                    <Printer className="w-4 h-4" /> Print Chart
+                  </Button>
+                )}
               </div>
             </motion.div>
           </div>

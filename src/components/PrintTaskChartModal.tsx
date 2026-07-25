@@ -1,59 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Printer, Camera, CheckSquare, Layers, Sun, CloudSun, Moon, ClipboardList } from 'lucide-react';
+import {
+  X, Printer, Camera, CheckSquare, Layers, Sun, CloudSun, Moon,
+  ClipboardList, ChevronLeft, ChevronRight, Calendar, Check, AlertCircle
+} from 'lucide-react';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
+import { ChildAvatar } from './ChildAvatar';
 import { playSound } from '../utils/sound';
 import { Task, TaskCompletion, Child, Routine } from '../types';
-
-const getActiveRoutineForPrint = (child: Child, range: 'weekdays' | 'weekends'): Routine | undefined => {
-  const currentRoutines = child.routines || [];
-  let routineId = 'weekday';
-  if (range === 'weekdays') {
-    routineId = child.holiday_mode ? 'holiday' : 'weekday';
-  } else {
-    routineId = 'weekend';
-  }
-
-  const DEFAULT_ROUTINES = [
-    { id: 'weekday', name: 'Weekday Routine' },
-    { id: 'weekend', name: 'Weekend Routine' },
-    { id: 'holiday', name: 'Holiday Routine' }
-  ];
-
-  let routine = currentRoutines.find(r => r.id === routineId);
-  if (!routine) {
-    routine = currentRoutines.find(r => r.name?.toLowerCase().includes(routineId));
-    if (routine) {
-      routine = { ...routine, id: routineId };
-    }
-  }
-  if (!routine && routineId === 'weekday' && currentRoutines.length > 0) {
-    const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => d.id === r.id || r.name?.toLowerCase().includes(d.id)));
-    if (unassigned) {
-      routine = { ...unassigned, id: routineId };
-    }
-  }
-  return routine;
-};
-
-const getTaskRoutineInfoForSpecificRoutine = (
-  task: Task,
-  routine?: Routine
-): { isRoutine: boolean; period?: 'morning' | 'afternoon' | 'evening'; label: string } => {
-  if (routine) {
-    if (routine.morningTaskIds?.includes(task.id) || (task.template_id && routine.morningTaskIds?.includes(task.template_id))) {
-      return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
-    }
-    if (routine.afternoonTaskIds?.includes(task.id) || (task.template_id && routine.afternoonTaskIds?.includes(task.template_id))) {
-      return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
-    }
-    if (routine.eveningTaskIds?.includes(task.id) || (task.template_id && routine.eveningTaskIds?.includes(task.template_id))) {
-      return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
-    }
-  }
-  return { isRoutine: false, label: '' };
-};
 
 interface PrintTaskChartModalProps {
   isOpen: boolean;
@@ -63,6 +18,8 @@ interface PrintTaskChartModalProps {
   childrenList: Child[];
 }
 
+type Step = 1 | 2 | 3;
+
 export function PrintTaskChartModal({
   isOpen,
   onClose,
@@ -70,20 +27,38 @@ export function PrintTaskChartModal({
   completions,
   childrenList
 }: PrintTaskChartModalProps) {
+  const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(childrenList[0]?.id || '');
-  const [printRange, setPrintRange] = useState<'weekdays' | 'weekends'>('weekdays');
+  const [weekOffset, setWeekOffset] = useState<0 | -1>(0);
   const [printMode, setPrintMode] = useState<'live' | 'blank'>('blank');
   const [printRoutinePeriod, setPrintRoutinePeriod] = useState<'all_routines' | 'morning' | 'afternoon' | 'evening' | 'all_tasks'>('all_routines');
 
-  // Helper to format Date to YYYY-MM-DD
+  const activeChild = childrenList.find(c => c.id === selectedChildId) || childrenList[0];
+
+  const getMondayOfWeek = (offset: number): Date => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1) + (offset * 7);
+    const mon = new Date(today.setDate(diff));
+    mon.setHours(0, 0, 0, 0);
+    return mon;
+  };
+
+  const formatWeekRange = (monday: Date): string => {
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `${fmt(monday)} – ${fmt(sunday)}`;
+  };
+
   const formatDateKey = (date: Date): string => {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   };
+
   const buildPrintTasks = (): Task[] => {
-    const activeChild = childrenList.find(c => c.id === selectedChildId);
     if (!activeChild) return [];
 
     let filteredTasks = (tasks || []).filter(t =>
@@ -93,22 +68,27 @@ export function PrintTaskChartModal({
       t.is_active !== false
     );
 
-    const routine = getActiveRoutineForPrint(activeChild, printRange);
+    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
+    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
 
     if (printRoutinePeriod === 'all_tasks') {
       filteredTasks = filteredTasks.filter(task => {
-        const info = getTaskRoutineInfoForSpecificRoutine(task, routine);
-        return !info.isRoutine;
+        const inWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const inWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        return !inWeekday && !inWeekend;
       });
     } else if (printRoutinePeriod === 'all_routines') {
       filteredTasks = filteredTasks.filter(task => {
-        const info = getTaskRoutineInfoForSpecificRoutine(task, routine);
-        return info.isRoutine;
+        const inWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const inWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        return inWeekday || inWeekend;
       });
     } else {
       filteredTasks = filteredTasks.filter(task => {
-        const info = getTaskRoutineInfoForSpecificRoutine(task, routine);
-        return info.period === printRoutinePeriod;
+        const weekdayTask = weekdayRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
+        const weekendTask = weekendRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
+        const period = weekdayTask?.period || weekendTask?.period;
+        return period === printRoutinePeriod;
       });
     }
 
@@ -116,25 +96,12 @@ export function PrintTaskChartModal({
   };
 
   const buildPrintDays = (): Date[] => {
-    const now = new Date();
-    const distanceToMonday = (now.getDay() + 6) % 7;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - distanceToMonday);
-    monday.setHours(0, 0, 0, 0);
-
-    if (printRange === 'weekdays') {
-      return Array.from({ length: 5 }, (_, i) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        return d;
-      });
-    } else {
-      return Array.from({ length: 2 }, (_, i) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + 5 + i);
-        return d;
-      });
-    }
+    const monday = getMondayOfWeek(weekOffset);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
   };
 
   const getWeekLabel = (date: Date): string => {
@@ -144,10 +111,23 @@ export function PrintTaskChartModal({
     return `${yr}-W${String(weekNum).padStart(2, '0')}`;
   };
 
+  const getTaskPeriod = (task: Task): 'morning' | 'afternoon' | 'evening' | 'general' => {
+    if (!activeChild) return 'general';
+    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
+    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+
+    const weekdayTask = weekdayRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
+    if (weekdayTask?.period) return weekdayTask.period;
+
+    const weekendTask = weekendRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
+    if (weekendTask?.period) return weekendTask.period;
+
+    return 'general';
+  };
+
   const handleExecutePrint = () => {
     playSound.click();
     
-    const activeChild = childrenList.find(c => c.id === selectedChildId);
     if (!activeChild) return;
 
     const printTasks = buildPrintTasks();
@@ -157,10 +137,7 @@ export function PrintTaskChartModal({
     const weekLabel = getWeekLabel(printDays[0]);
     const chartId = `${childName.toUpperCase().replace(/\s+/g, '-')}-${weekLabel}`;
 
-    const isWeekdays = printRange === 'weekdays';
-    const dayNames = isWeekdays 
-      ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] 
-      : ['Sat', 'Sun'];
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const todayStr = formatDateKey(new Date());
 
     const compLookup = new Map<string, string>();
@@ -186,9 +163,48 @@ export function PrintTaskChartModal({
         </th>`;
       }).join('');
 
+    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
+    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+
+    const renderTaskCells = (task: Task, index: number) => {
+      const cells = printDays.map((date, dayIdx) => {
+        const dk = formatDateKey(date);
+        const status = compLookup.get(`${task.id}_${dk}`);
+        const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+
+        // Schedule mapping: weekday vs weekend
+        const isWeekendDay = dayIdx === 5 || dayIdx === 6;
+        const isWeekdayDay = !isWeekendDay;
+
+        const isTaskInWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const isTaskInWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+
+        let isActiveDay = true;
+        if (isTaskInWeekday && !isTaskInWeekend) {
+          isActiveDay = isWeekdayDay;
+        } else if (isTaskInWeekend && !isTaskInWeekday) {
+          isActiveDay = isWeekendDay;
+        }
+
+        if (isActiveDay) {
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+        } else {
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;background:#fafaf9;color:#e7e5e4;font-size:16px;font-weight:bold;">—</td>`;
+        }
+      }).join('');
+
+      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+          ${task.title}
+        </td>
+        ${cells}
+      </tr>`;
+    };
+
     let tableBodyHtml = '';
     if (printRoutinePeriod === 'all_routines') {
-      const routine = getActiveRoutineForPrint(activeChild, printRange);
       const periods: { key: 'morning' | 'afternoon' | 'evening'; label: string }[] = [
         { key: 'morning', label: 'Morning Routine' },
         { key: 'afternoon', label: 'Afternoon Routine' },
@@ -197,37 +213,19 @@ export function PrintTaskChartModal({
 
       let totalTasksCount = 0;
       periods.forEach(p => {
-        const periodTasks = printTasks.filter(t => {
-          const info = getTaskRoutineInfoForSpecificRoutine(t, routine);
-          return info.period === p.key;
-        });
+        const periodTasks = printTasks.filter(t => getTaskPeriod(t) === p.key);
 
         if (periodTasks.length > 0) {
           totalTasksCount += periodTasks.length;
-          // Add section header row
           tableBodyHtml += `<tr style="background:#f3f4f6;border-bottom:2px solid #e7e5e4;">
             <td colspan="${printDays.length + 1}" style="padding:10px 14px;font-size:12px;font-weight:900;color:#374151;text-transform:uppercase;letter-spacing:0.05em;text-align:left;">
               ${p.label}
             </td>
           </tr>`;
 
-            // Add task rows for this period
-            periodTasks.forEach((task, index) => {
-              const cells = printDays.map(date => {
-                const dk = formatDateKey(date);
-                const status = compLookup.get(`${task.id}_${dk}`);
-                const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-                return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
-              }).join('');
-              const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-              tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-                <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-                  <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
-                  ${task.title}
-                </td>
-                ${cells}
-              </tr>`;
-            });
+          periodTasks.forEach((task, index) => {
+            tableBodyHtml += renderTaskCells(task, index);
+          });
         }
       });
 
@@ -235,44 +233,18 @@ export function PrintTaskChartModal({
         tableBodyHtml = `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No routine chores match the selected filters.</td></tr>`;
       }
     } else {
-      const taskRows = printTasks.map((task, index) => {
-        const cells = printDays.map(date => {
-          const dk = formatDateKey(date);
-          const status = compLookup.get(`${task.id}_${dk}`);
-          const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
-        }).join('');
-        const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-        return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-          <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
-            ${task.title}
-          </td>
-          ${cells}
-        </tr>`;
-      }).join('');
-
+      const taskRows = printTasks.map((task, index) => renderTaskCells(task, index)).join('');
       const noTasksRow = printTasks.length === 0
         ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
         : '';
       tableBodyHtml = taskRows + noTasksRow;
     }
 
-    let routineLabel = 'Tasks';
-    if (printRoutinePeriod === 'all_routines') {
-      routineLabel = isWeekdays 
-        ? (activeChild.holiday_mode ? 'Holiday Routine' : 'Weekday Routine') 
-        : 'Weekend Routine';
-    } else if (printRoutinePeriod === 'all_tasks') {
-      routineLabel = isWeekdays
-        ? (activeChild.holiday_mode ? 'Holiday General Tasks' : 'Weekday General Tasks')
-        : 'Weekend General Tasks';
-    } else {
-      const periodLabel = printRoutinePeriod.charAt(0).toUpperCase() + printRoutinePeriod.slice(1);
-      routineLabel = isWeekdays
-        ? (activeChild.holiday_mode ? `Holiday ${periodLabel} Routine` : `Weekday ${periodLabel} Routine`)
-        : `Weekend ${periodLabel} Routine`;
-    }
+    const routineLabel = printRoutinePeriod === 'all_tasks' 
+      ? 'Chore Chart' 
+      : activeChild.holiday_mode 
+      ? 'Holiday Routine Chart' 
+      : 'Weekly Routine Chart';
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -315,20 +287,15 @@ export function PrintTaskChartModal({
     .footer-instruction { font-size: 13px; color: #6b7280; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .footer-id { font-size: 10px; color: #d1d5db; font-weight: 800; letter-spacing: 0.05em; font-family: monospace; }
     
-    /* Screen: normal layout with padding */
     #print-wrapper { padding: 1.2cm 1cm; }
     
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .table-container { border: 2px solid #e7e5e4; }
-      /* Safari landscape workaround: rotate content when printed in portrait */
       #print-wrapper {
         width: 100vw;
         padding: 1.2cm 1cm;
         transform-origin: top left;
-      }
-      @supports (-webkit-touch-callout: none) {
-        /* Target WebKit/Safari specifically */
       }
     }
   </style>
@@ -355,6 +322,7 @@ export function PrintTaskChartModal({
       </tbody>
     </table>
   </div>
+  
   <div class="footer">
     <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
@@ -375,8 +343,13 @@ export function PrintTaskChartModal({
     }
   };
 
+  const handleClose = () => {
+    playSound.click();
+    setStep(1);
+    onClose();
+  };
+
   if (!childrenList || childrenList.length === 0) return null;
-  const activeChild = childrenList.find(c => c.id === selectedChildId);
 
   return (
     <AnimatePresence>
@@ -386,7 +359,7 @@ export function PrintTaskChartModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => { playSound.click(); onClose(); }}
+            onClick={handleClose}
             className="fixed inset-0 z-[100] bg-stone-900/60 backdrop-blur-sm"
           />
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
@@ -394,210 +367,279 @@ export function PrintTaskChartModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md pointer-events-auto bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden flex flex-col max-h-[80vh] text-left"
+              className="relative w-full max-w-md pointer-events-auto bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden flex flex-col max-h-[85vh] text-left"
             >
-            {/* Header Icon & Title */}
-            <div className="flex items-start justify-between mb-5 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-purple-50 dark:bg-purple-950/50 text-purple-500 rounded-2xl flex items-center justify-center shrink-0">
-                  <Printer className="w-6 h-6" />
+              {/* Header Icon & Title */}
+              <div className="flex items-start justify-between mb-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center shrink-0">
+                    <Printer className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <Typography variant="h2" className="text-base font-black">
+                      Print Chore Chart
+                    </Typography>
+                    <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : 'Configure & print'}
+                    </Typography>
+                  </div>
                 </div>
-                <div>
-                  <Typography variant="h2" className="text-xl font-bold">
-                    Print Chart Options
-                  </Typography>
-                  <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                    Configure duration and template style
-                  </Typography>
-                </div>
-              </div>
-              <button
-                onClick={() => { playSound.click(); onClose(); }}
-                className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-5 overflow-y-auto pr-1 pb-4 flex-1">
-              {/* Option 1: Child Selection */}
-              <div>
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                  1. Child
-                </Typography>
-                <div className="grid grid-cols-2 gap-2">
-                  {childrenList.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => { playSound.click(); setSelectedChildId(c.id); }}
-                      className={`p-3 rounded-2xl border transition-all text-left ${
-                        selectedChildId === c.id 
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md' 
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">{c.name}</p>
-                    </button>
-                  ))}
-                </div>
+                <button
+                  onClick={handleClose}
+                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* Option 2: Days to Print */}
-              <div>
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                  2. Days to Print
-                </Typography>
-                <div className="grid grid-cols-2 gap-2">
-                  {([['weekdays', 'Weekdays', 'Mon – Fri'], ['weekends', 'Weekends', 'Sat – Sun']] as const).map(([val, label, sub]) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRange(val); }}
-                      className={`p-3 rounded-2xl border transition-all text-left ${
-                        printRange === val
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">{label}</p>
-                      <p className={`text-xs mt-0.5 ${printRange === val ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>{sub}</p>
-                    </button>
-                  ))}
-                </div>
-                {printRange === 'weekdays' && activeChild?.holiday_mode && (
-                  <div className="mt-2 p-2.5 bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-400 text-xs font-bold rounded-xl flex items-center gap-2 border border-cyan-100 dark:border-cyan-900/30">
-                    <span>🌴 Holiday Mode is active. This will print the Holiday routine instead of Weekdays.</span>
+              {/* Step indicator */}
+              <div className="flex gap-1.5 pt-1 pb-3 shrink-0">
+                {([1, 2, 3] as const).map(s => (
+                  <div
+                    key={s}
+                    className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${s <= step ? 'bg-purple-500' : 'bg-stone-200 dark:bg-stone-700'}`}
+                  />
+                ))}
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto pr-1 pb-4 space-y-4">
+                
+                {/* Step 1: Choose Child */}
+                {step === 1 && (
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which child is this chart for?</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {childrenList.map(child => (
+                        <button
+                          key={child.id}
+                          onClick={() => { playSound.click(); setSelectedChildId(child.id); }}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                            child.id === selectedChildId
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-md'
+                              : 'border-stone-200 dark:border-stone-700 hover:border-purple-300'
+                          }`}
+                        >
+                          <ChildAvatar iconName={child.avatar_url || 'Smile'} className="w-12 h-12 rounded-2xl" />
+                          <span className="text-sm font-extrabold text-stone-800 dark:text-stone-100">{child.name}</span>
+                          {child.id === selectedChildId && <Check className="w-4 h-4 text-purple-500" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Option 3: Chart Style */}
-              <div>
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                  3. Chart Style
-                </Typography>
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintMode('live'); }}
-                    className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
-                      printMode === 'live'
-                        ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                    }`}
-                  >
-                    <Camera className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
-                    <div>
-                      <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
-                      <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Prints calendar dates and any already-completed stars.
-                      </p>
+                {/* Step 2: Select Week */}
+                {step === 2 && (
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which week should the chart print?</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {([0, -1] as const).map(offset => {
+                        const mon = getMondayOfWeek(offset);
+                        const isSelected = weekOffset === offset;
+                        return (
+                          <button
+                            key={offset}
+                            onClick={() => { playSound.click(); setWeekOffset(offset); }}
+                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
+                              isSelected
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-md'
+                                : 'border-stone-200 dark:border-stone-700 hover:border-purple-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className={`w-4 h-4 ${isSelected ? 'text-purple-500' : 'text-stone-400'}`} />
+                              <span className="font-black text-sm text-stone-900 dark:text-stone-50">
+                                {offset === 0 ? 'This Week' : 'Last Week'}
+                              </span>
+                            </div>
+                            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{formatWeekRange(mon)}</span>
+                            {isSelected && <Check className="w-4 h-4 text-purple-500 mt-2" />}
+                          </button>
+                        );
+                      })}
                     </div>
-                  </button>
+                    {activeChild?.holiday_mode && (
+                      <div className="p-3.5 bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-400 text-xs font-semibold rounded-2xl flex items-center gap-2 border border-cyan-100 dark:border-cyan-900/30">
+                        <span>🌴 Holiday Mode is active. This will print the Holiday routine instead of Weekdays.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintMode('blank'); }}
-                    className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
-                      printMode === 'blank'
-                        ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md'
-                        : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                    }`}
-                  >
-                    <CheckSquare className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
-                    <div>
-                      <p className="font-extrabold text-sm">Blank / Reusable Template</p>
-                      <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Generic MON–SUN headers, empty stars — perfect for colouring in!
-                      </p>
+                {/* Step 3: Configure & Print */}
+                {step === 3 && (
+                  <div className="space-y-4 pt-1">
+                    
+                    {/* Example/Mockup Card */}
+                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Chart Preview</span>
+                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
+                          {activeChild?.name}'s {printRoutinePeriod === 'all_tasks' ? 'Chore Chart' : activeChild?.holiday_mode ? 'Holiday Routine' : 'Weekday & Weekend Routines'}
+                        </p>
+                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
+                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
+                        </p>
+                      </div>
                     </div>
-                  </button>
-                </div>
+
+                    {/* Chart Style */}
+                    <div>
+                      <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
+                        Chart Style
+                      </Typography>
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => { playSound.click(); setPrintMode('live'); }}
+                          className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
+                            printMode === 'live'
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
+                              : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          <Camera className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
+                          <div>
+                            <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
+                            <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                              Prints calendar dates and completed stars.
+                            </p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { playSound.click(); setPrintMode('blank'); }}
+                          className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
+                            printMode === 'blank'
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
+                              : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          <CheckSquare className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
+                          <div>
+                            <p className="font-extrabold text-sm">Blank / Reusable Template</p>
+                            <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
+                              Generic headers, empty stars — perfect for colouring!
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Routine & Task Selection */}
+                    <div className="space-y-2">
+                      <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
+                        Routine & Tasks
+                      </Typography>
+                      
+                      {/* Row 1: All Routines */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => { playSound.click(); setPrintRoutinePeriod('all_routines'); }}
+                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                            printRoutinePeriod === 'all_routines'
+                              ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                              : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          <Layers className="w-4 h-4" />
+                          <span>All Routines (Morning, Afternoon & Evening)</span>
+                        </button>
+                      </div>
+
+                      {/* Row 2: Individual Routines */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['morning', 'afternoon', 'evening'] as const).map(period => (
+                          <button
+                            key={period}
+                            type="button"
+                            onClick={() => { playSound.click(); setPrintRoutinePeriod(period); }}
+                            className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 text-center ${
+                              printRoutinePeriod === period
+                                ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                                : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                            }`}
+                          >
+                            {period === 'morning' ? <Sun className="w-4 h-4" /> : period === 'afternoon' ? <CloudSun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                            <span className="capitalize">{period}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Row 3: All Tasks (Non-Routine) */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => { playSound.click(); setPrintRoutinePeriod('all_tasks'); }}
+                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                            printRoutinePeriod === 'all_tasks'
+                              ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
+                              : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          <ClipboardList className="w-4 h-4" />
+                          <span>All Tasks (Non-Routine)</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
               </div>
 
-              {/* Option 4: Routine & Task Selection */}
-              <div className="space-y-3">
-                <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
-                  4. Routine & Tasks
-                </Typography>
-                
-                {/* Row 1: All Routines */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintRoutinePeriod('all_routines'); }}
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                      printRoutinePeriod === 'all_routines'
-                        ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
-                        : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                    }`}
-                  >
-                    <Layers className="w-4 h-4" />
-                    <span>All Routines (Morning, Afternoon & Evening)</span>
-                  </button>
-                </div>
-
-                {/* Row 2: Individual Routines */}
-                <div className="grid grid-cols-3 gap-2">
-                  {(['morning', 'afternoon', 'evening'] as const).map(period => (
-                    <button
-                      key={period}
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRoutinePeriod(period); }}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 text-center ${
-                        printRoutinePeriod === period
-                          ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
-                          : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      {period === 'morning' ? <Sun className="w-4 h-4" /> : period === 'afternoon' ? <CloudSun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                      <span className="capitalize">{period}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Row 3: All Tasks (Non-Routine) */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => { playSound.click(); setPrintRoutinePeriod('all_tasks'); }}
-                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
-                      printRoutinePeriod === 'all_tasks'
-                        ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
-                        : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                    }`}
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    <span>All Tasks (Non-Routine)</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
               {/* Landscape Print Tip */}
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center">
-                <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
-              </div>
+              {step === 3 && (
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center shrink-0">
+                  <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
+                </div>
+              )}
 
-              {/* Modal Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-stone-100 dark:border-stone-800 shrink-0">
-              <Button
-                variant="secondary"
-                onClick={() => { playSound.click(); onClose(); }}
-                className="flex-1 justify-center"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleExecutePrint}
-                className="flex-1 justify-center"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Chart</span>
-              </Button>
-            </div>
+              {/* Footer actions */}
+              <div className="px-5 pb-5 pt-3 border-t border-stone-100 dark:border-stone-800 shrink-0 flex gap-3">
+                {step > 1 && (
+                  <Button variant="secondary" onClick={() => { playSound.click(); setStep(s => (s - 1) as Step); }} className="flex-1 justify-center">
+                    <ChevronLeft className="w-4 h-4" /> Back
+                  </Button>
+                )}
+
+                {step === 1 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(2); }}
+                    className="flex-1 justify-center"
+                    disabled={!selectedChildId}
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 2 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(3); }}
+                    className="flex-1 justify-center"
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 3 && (
+                  <Button
+                    variant="primary"
+                    onClick={handleExecutePrint}
+                    className="flex-1 justify-center"
+                  >
+                    <Printer className="w-4 h-4" /> Print Chart
+                  </Button>
+                )}
+              </div>
             </motion.div>
           </div>
         </>
