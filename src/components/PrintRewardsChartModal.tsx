@@ -61,32 +61,23 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
         </th>`;
       }).join('');
 
-    const totalRowsCount = childRewards.length;
-    const shouldSplit = totalRowsCount > 10;
-    const page1Rewards = shouldSplit ? childRewards.slice(0, 10) : childRewards;
-    const page2Rewards = shouldSplit ? childRewards.slice(10) : [];
-
-    const renderRewardsToHtml = (rewardsList: typeof childRewards) => {
-      if (rewardsList.length === 0) {
-        return `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No active rewards assigned to this child.</td></tr>`;
-      }
-      return rewardsList.map((reward, index) => {
-        const cells = printDays.map(() => {
-          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${hollowStar}</td>`;
-        }).join('');
-        const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-        return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-          <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;background:#f0fdf4;color:#10b981;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #34d399;border-radius:50%;margin-bottom:6px;">${reward.cost_points}</span><br/>
-            ${reward.title}
-          </td>
-          ${cells}
-        </tr>`;
+    const rewardRows = childRewards.map((reward, index) => {
+      const cells = printDays.map(() => {
+        return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${hollowStar}</td>`;
       }).join('');
-    };
+      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;background:#f0fdf4;color:#10b981;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #34d399;border-radius:50%;margin-bottom:6px;">${reward.cost_points}</span><br/>
+          ${reward.title}
+        </td>
+        ${cells}
+      </tr>`;
+    }).join('');
 
-    const page1Html = renderRewardsToHtml(page1Rewards);
-    const page2Html = renderRewardsToHtml(page2Rewards);
+    const noRewardsRow = childRewards.length === 0
+      ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No active rewards assigned to this child.</td></tr>`
+      : '';
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -133,7 +124,6 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
       <div class="header-sub">${printDays[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${printDays[printDays.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
     </div>
   </div>
-  ${shouldSplit ? `
   <div class="table-container">
     <table>
       <thead>
@@ -143,44 +133,10 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
         </tr>
       </thead>
       <tbody>
-        ${page1Html}
+        ${rewardRows}${noRewardsRow}
       </tbody>
     </table>
   </div>
-
-  <div class="page-break" style="page-break-after: always; page-break-inside: avoid; border-top: 2px dashed #a8a29e; position: relative; margin: 30px 0; text-align: left;">
-    <span style="position: absolute; top: -12px; left: 24px; background: #fff; padding: 0 8px; font-size: 14px; font-weight: bold; color: #78716c; font-family: 'Nunito', sans-serif;">✂️ Cut along this line to join pages</span>
-  </div>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Reward</th>
-          ${colHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${page2Html}
-      </tbody>
-    </table>
-  </div>
-  ` : `
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Reward</th>
-          ${colHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${page1Html}
-      </tbody>
-    </table>
-  </div>
-  `}
-
   <div class="footer">
     🎨 Colour in a star when you claim a reward! &nbsp; Ask a grown-up to scan this chart to deduct coins.
   </div>

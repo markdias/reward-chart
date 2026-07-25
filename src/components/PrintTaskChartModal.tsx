@@ -186,11 +186,7 @@ export function PrintTaskChartModal({
         </th>`;
       }).join('');
 
-    const rowsToRender: Array<
-      | { type: 'header'; label: string }
-      | { type: 'task'; task: Task; index: number }
-    > = [];
-
+    let tableBodyHtml = '';
     if (printRoutinePeriod === 'all_routines') {
       const routine = getActiveRoutineForPrint(activeChild, printRange);
       const periods: { key: 'morning' | 'afternoon' | 'evening'; label: string }[] = [
@@ -199,6 +195,7 @@ export function PrintTaskChartModal({
         { key: 'evening', label: 'Evening Routine' }
       ];
 
+      let totalTasksCount = 0;
       periods.forEach(p => {
         const periodTasks = printTasks.filter(t => {
           const info = getTaskRoutineInfoForSpecificRoutine(t, routine);
@@ -206,56 +203,60 @@ export function PrintTaskChartModal({
         });
 
         if (periodTasks.length > 0) {
-          rowsToRender.push({ type: 'header', label: p.label });
-          periodTasks.forEach((task, idx) => {
-            rowsToRender.push({ type: 'task', task, index: idx });
-          });
-        }
-      });
-    } else {
-      printTasks.forEach((task, idx) => {
-        rowsToRender.push({ type: 'task', task, index: idx });
-      });
-    }
-
-    const totalRowsCount = rowsToRender.length;
-    const shouldSplit = totalRowsCount > 10;
-    const page1Rows = shouldSplit ? rowsToRender.slice(0, 10) : rowsToRender;
-    const page2Rows = shouldSplit ? rowsToRender.slice(10) : [];
-
-    const renderRowsToHtml = (rows: typeof rowsToRender) => {
-      if (rows.length === 0) {
-        return `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`;
-      }
-      return rows.map(row => {
-        if (row.type === 'header') {
-          return `<tr style="background:#f3f4f6;border-bottom:2px solid #e7e5e4;">
+          totalTasksCount += periodTasks.length;
+          // Add section header row
+          tableBodyHtml += `<tr style="background:#f3f4f6;border-bottom:2px solid #e7e5e4;">
             <td colspan="${printDays.length + 1}" style="padding:10px 14px;font-size:12px;font-weight:900;color:#374151;text-transform:uppercase;letter-spacing:0.05em;text-align:left;">
-              ${row.label}
+              ${p.label}
             </td>
           </tr>`;
-        } else {
-          const { task, index } = row;
-          const cells = printDays.map(date => {
-            const dk = formatDateKey(date);
-            const status = compLookup.get(`${task.id}_${dk}`);
-            const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
-            return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
-          }).join('');
-          const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-          return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-            <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-              <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
-              ${task.title}
-            </td>
-            ${cells}
-          </tr>`;
-        }
-      }).join('');
-    };
 
-    const page1Html = renderRowsToHtml(page1Rows);
-    const page2Html = renderRowsToHtml(page2Rows);
+            // Add task rows for this period
+            periodTasks.forEach((task, index) => {
+              const cells = printDays.map(date => {
+                const dk = formatDateKey(date);
+                const status = compLookup.get(`${task.id}_${dk}`);
+                const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+                return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+              }).join('');
+              const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+              tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+                <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+                  ${task.title}
+                </td>
+                ${cells}
+              </tr>`;
+            });
+        }
+      });
+
+      if (totalTasksCount === 0) {
+        tableBodyHtml = `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No routine chores match the selected filters.</td></tr>`;
+      }
+    } else {
+      const taskRows = printTasks.map((task, index) => {
+        const cells = printDays.map(date => {
+          const dk = formatDateKey(date);
+          const status = compLookup.get(`${task.id}_${dk}`);
+          const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+        }).join('');
+        const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+        return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+          <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+            ${task.title}
+          </td>
+          ${cells}
+        </tr>`;
+      }).join('');
+
+      const noTasksRow = printTasks.length === 0
+        ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No chores match the selected filters.</td></tr>`
+        : '';
+      tableBodyHtml = taskRows + noTasksRow;
+    }
 
     let routineLabel = 'Tasks';
     if (printRoutinePeriod === 'all_routines') {
@@ -341,7 +342,6 @@ export function PrintTaskChartModal({
     </div>
     <div class="header-logo">Quest Sync</div>
   </div>
-  ${shouldSplit ? `
   <div class="table-container">
     <table>
       <thead>
@@ -351,44 +351,10 @@ export function PrintTaskChartModal({
         </tr>
       </thead>
       <tbody>
-        ${page1Html}
+        ${tableBodyHtml}
       </tbody>
     </table>
   </div>
-
-  <div class="page-break" style="page-break-after: always; page-break-inside: avoid; border-top: 2px dashed #a8a29e; position: relative; margin: 30px 0; text-align: left;">
-    <span style="position: absolute; top: -12px; left: 24px; background: #fff; padding: 0 8px; font-size: 14px; font-weight: bold; color: #78716c; font-family: 'Nunito', sans-serif;">✂️ Cut along this line to join pages</span>
-  </div>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Chore</th>
-          ${colHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${page2Html}
-      </tbody>
-    </table>
-  </div>
-  ` : `
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Chore</th>
-          ${colHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${page1Html}
-      </tbody>
-    </table>
-  </div>
-  `}
-  
   <div class="footer">
     <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
