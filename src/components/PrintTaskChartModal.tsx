@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { ChildAvatar } from './ChildAvatar';
 import { playSound } from '../utils/sound';
-import { Task, TaskCompletion, Child } from '../types';
+import { Task, TaskCompletion, Child, Routine } from '../types';
 
 interface PrintTaskChartModalProps {
   isOpen: boolean;
@@ -58,6 +58,39 @@ export function PrintTaskChartModal({
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const getRoutineForType = (child: Child, type: 'weekday' | 'weekend' | 'holiday'): Routine | undefined => {
+    const currentRoutines = child.routines || [];
+    let routine = currentRoutines.find(r => r.id === type);
+    if (!routine) {
+      routine = currentRoutines.find(r => r.name?.toLowerCase().includes(type));
+    }
+    if (!routine && type === 'weekday' && currentRoutines.length > 0) {
+      const DEFAULT_ROUTINES = ['weekday', 'weekend', 'holiday'];
+      const unassigned = currentRoutines.find(r => !DEFAULT_ROUTINES.some(d => r.id === d || r.name?.toLowerCase().includes(d)));
+      if (unassigned) routine = unassigned;
+    }
+    return routine;
+  };
+
+  const isTaskInSpecificRoutine = (task: Task, routine?: Routine): boolean => {
+    if (!routine) return false;
+    const ids = [
+      ...(routine.morningTaskIds || []),
+      ...(routine.afternoonTaskIds || []),
+      ...(routine.eveningTaskIds || [])
+    ];
+    return ids.includes(task.id) || (task.template_id ? ids.includes(task.template_id) : false);
+  };
+
+  const getTaskPeriodInSpecificRoutine = (task: Task, routine?: Routine): 'morning' | 'afternoon' | 'evening' | null => {
+    if (!routine) return null;
+    const tid = task.template_id;
+    if (routine.morningTaskIds?.includes(task.id) || (tid && routine.morningTaskIds?.includes(tid))) return 'morning';
+    if (routine.afternoonTaskIds?.includes(task.id) || (tid && routine.afternoonTaskIds?.includes(tid))) return 'afternoon';
+    if (routine.eveningTaskIds?.includes(task.id) || (tid && routine.eveningTaskIds?.includes(tid))) return 'evening';
+    return null;
+  };
+
   const buildPrintTasks = (): Task[] => {
     if (!activeChild) return [];
 
@@ -68,27 +101,26 @@ export function PrintTaskChartModal({
       t.is_active !== false
     );
 
-    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
-    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+    const weekdayRoutine = getRoutineForType(activeChild, activeChild.holiday_mode ? 'holiday' : 'weekday');
+    const weekendRoutine = getRoutineForType(activeChild, 'weekend');
 
     if (printRoutinePeriod === 'all_tasks') {
       filteredTasks = filteredTasks.filter(task => {
-        const inWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
-        const inWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const inWeekday = isTaskInSpecificRoutine(task, weekdayRoutine);
+        const inWeekend = isTaskInSpecificRoutine(task, weekendRoutine);
         return !inWeekday && !inWeekend;
       });
     } else if (printRoutinePeriod === 'all_routines') {
       filteredTasks = filteredTasks.filter(task => {
-        const inWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
-        const inWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const inWeekday = isTaskInSpecificRoutine(task, weekdayRoutine);
+        const inWeekend = isTaskInSpecificRoutine(task, weekendRoutine);
         return inWeekday || inWeekend;
       });
     } else {
       filteredTasks = filteredTasks.filter(task => {
-        const weekdayTask = weekdayRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
-        const weekendTask = weekendRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
-        const period = weekdayTask?.period || weekendTask?.period;
-        return period === printRoutinePeriod;
+        const weekdayPeriod = getTaskPeriodInSpecificRoutine(task, weekdayRoutine);
+        const weekendPeriod = getTaskPeriodInSpecificRoutine(task, weekendRoutine);
+        return weekdayPeriod === printRoutinePeriod || weekendPeriod === printRoutinePeriod;
       });
     }
 
@@ -113,14 +145,14 @@ export function PrintTaskChartModal({
 
   const getTaskPeriod = (task: Task): 'morning' | 'afternoon' | 'evening' | 'general' => {
     if (!activeChild) return 'general';
-    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
-    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+    const weekdayRoutine = getRoutineForType(activeChild, activeChild.holiday_mode ? 'holiday' : 'weekday');
+    const weekendRoutine = getRoutineForType(activeChild, 'weekend');
 
-    const weekdayTask = weekdayRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
-    if (weekdayTask?.period) return weekdayTask.period;
+    const wp = getTaskPeriodInSpecificRoutine(task, weekdayRoutine);
+    if (wp) return wp;
 
-    const weekendTask = weekendRoutine?.tasks?.find(rt => rt.id === task.id || rt.template_id === task.id);
-    if (weekendTask?.period) return weekendTask.period;
+    const wep = getTaskPeriodInSpecificRoutine(task, weekendRoutine);
+    if (wep) return wep;
 
     return 'general';
   };
@@ -163,8 +195,8 @@ export function PrintTaskChartModal({
         </th>`;
       }).join('');
 
-    const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
-    const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+    const weekdayRoutine = getRoutineForType(activeChild, activeChild.holiday_mode ? 'holiday' : 'weekday');
+    const weekendRoutine = getRoutineForType(activeChild, 'weekend');
 
     const renderTaskCells = (task: Task, index: number) => {
       const cells = printDays.map((date, dayIdx) => {
@@ -176,8 +208,8 @@ export function PrintTaskChartModal({
         const isWeekendDay = dayIdx === 5 || dayIdx === 6;
         const isWeekdayDay = !isWeekendDay;
 
-        const isTaskInWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
-        const isTaskInWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+        const isTaskInWeekday = isTaskInSpecificRoutine(task, weekdayRoutine);
+        const isTaskInWeekend = isTaskInSpecificRoutine(task, weekendRoutine);
 
         let isActiveDay = true;
         if (isTaskInWeekday && !isTaskInWeekend) {
@@ -615,11 +647,11 @@ export function PrintTaskChartModal({
                                   const isWeekend = i === 5 || i === 6;
                                   const isWeekday = !isWeekend;
                                   
-                                  const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
-                                  const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+                                  const weekdayRoutine = getRoutineForType(activeChild, activeChild.holiday_mode ? 'holiday' : 'weekday');
+                                  const weekendRoutine = getRoutineForType(activeChild, 'weekend');
                                   
-                                  const isTaskInWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
-                                  const isTaskInWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+                                  const isTaskInWeekday = isTaskInSpecificRoutine(task, weekdayRoutine);
+                                  const isTaskInWeekend = isTaskInSpecificRoutine(task, weekendRoutine);
                                   
                                   let isActive = true;
                                   if (isTaskInWeekday && !isTaskInWeekend) {
