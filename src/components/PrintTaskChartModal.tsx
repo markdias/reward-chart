@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, Printer, Camera, CheckSquare, Layers, Sun, CloudSun, Moon,
-  ClipboardList, ChevronLeft, ChevronRight, Calendar, Check, AlertCircle
+  ClipboardList, ChevronLeft, ChevronRight, Calendar, Check
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { ChildAvatar } from './ChildAvatar';
 import { playSound } from '../utils/sound';
-import { Task, TaskCompletion, Child, Routine } from '../types';
+import { Task, TaskCompletion, Child } from '../types';
 
 interface PrintTaskChartModalProps {
   isOpen: boolean;
@@ -18,7 +18,7 @@ interface PrintTaskChartModalProps {
   childrenList: Child[];
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 export function PrintTaskChartModal({
   isOpen,
@@ -380,7 +380,7 @@ export function PrintTaskChartModal({
                       Print Chore Chart
                     </Typography>
                     <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : 'Configure & print'}
+                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : step === 3 ? 'Choose style' : step === 4 ? 'Select routine' : 'Print preview'}
                     </Typography>
                   </div>
                 </div>
@@ -394,7 +394,7 @@ export function PrintTaskChartModal({
 
               {/* Step indicator */}
               <div className="flex gap-1.5 pt-1 pb-3 shrink-0">
-                {([1, 2, 3] as const).map(s => (
+                {([1, 2, 3, 4, 5] as const).map(s => (
                   <div
                     key={s}
                     className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${s <= step ? 'bg-purple-500' : 'bg-stone-200 dark:bg-stone-700'}`}
@@ -467,82 +467,61 @@ export function PrintTaskChartModal({
                   </div>
                 )}
 
-                {/* Step 3: Configure & Print */}
+                {/* Step 3: Choose Style */}
                 {step === 3 && (
                   <div className="space-y-4 pt-1">
-                    
-                    {/* Example/Mockup Card */}
-                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Chart Preview</span>
-                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
-                          {activeChild?.name}'s {printRoutinePeriod === 'all_tasks' ? 'Chore Chart' : activeChild?.holiday_mode ? 'Holiday Routine' : 'Weekday & Weekend Routines'}
-                        </p>
-                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
-                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Chart Style */}
-                    <div>
-                      <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                        Chart Style
-                      </Typography>
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => { playSound.click(); setPrintMode('live'); }}
-                          className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
-                            printMode === 'live'
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
-                              : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                          }`}
-                        >
-                          <Camera className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
-                          <div>
-                            <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
-                            <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                              Prints calendar dates and completed stars.
-                            </p>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => { playSound.click(); setPrintMode('blank'); }}
-                          className={`w-full p-3 rounded-2xl border transition-all text-left flex items-start gap-3 ${
-                            printMode === 'blank'
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
-                              : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                          }`}
-                        >
-                          <CheckSquare className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-purple-300 dark:text-purple-600' : 'text-purple-500'}`} />
-                          <div>
-                            <p className="font-extrabold text-sm">Blank / Reusable Template</p>
-                            <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                              Generic headers, empty stars — perfect for colouring!
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Routine & Task Selection */}
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Choose your chart style:</p>
                     <div className="space-y-2">
-                      <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
-                        Routine & Tasks
-                      </Typography>
-                      
+                      <button
+                        type="button"
+                        onClick={() => { playSound.click(); setPrintMode('live'); }}
+                        className={`w-full p-4 rounded-2xl border-2 transition-all text-left flex items-start gap-3 ${
+                          printMode === 'live'
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
+                            : 'border-stone-200 dark:border-stone-700 hover:border-purple-300 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300'
+                        }`}
+                      >
+                        <Camera className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-purple-500' : 'text-stone-400'}`} />
+                        <div>
+                          <p className="font-extrabold text-sm text-stone-800 dark:text-stone-100 font-sans">Live Chart (with Dates)</p>
+                          <p className="text-xs mt-1 font-medium text-stone-500 dark:text-stone-400 leading-normal">
+                            Prints calendar dates and completed stars.
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { playSound.click(); setPrintMode('blank'); }}
+                        className={`w-full p-4 rounded-2xl border-2 transition-all text-left flex items-start gap-3 ${
+                          printMode === 'blank'
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-sm'
+                            : 'border-stone-200 dark:border-stone-700 hover:border-purple-300 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300'
+                        }`}
+                      >
+                        <CheckSquare className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-purple-500' : 'text-stone-400'}`} />
+                        <div>
+                          <p className="font-extrabold text-sm text-stone-800 dark:text-stone-100 font-sans">Blank / Reusable Template</p>
+                          <p className="text-xs mt-1 font-medium text-stone-500 dark:text-stone-400 leading-normal">
+                            Generic headers, empty stars — perfect for colouring!
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Select Routine */}
+                {step === 4 && (
+                  <div className="space-y-4 pt-1">
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Select routines or tasks to include:</p>
+                    <div className="space-y-3">
                       {/* Row 1: All Routines */}
                       <div>
                         <button
                           type="button"
                           onClick={() => { playSound.click(); setPrintRoutinePeriod('all_routines'); }}
-                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                          className={`w-full py-3.5 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
                             printRoutinePeriod === 'all_routines'
                               ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
                               : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -560,14 +539,14 @@ export function PrintTaskChartModal({
                             key={period}
                             type="button"
                             onClick={() => { playSound.click(); setPrintRoutinePeriod(period); }}
-                            className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 text-center ${
+                            className={`py-3 px-3 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center justify-center gap-1 text-center ${
                               printRoutinePeriod === period
                                 ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
                                 : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                             }`}
                           >
                             {period === 'morning' ? <Sun className="w-4 h-4" /> : period === 'afternoon' ? <CloudSun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                            <span className="capitalize">{period}</span>
+                            <span className="capitalize mt-1">{period}</span>
                           </button>
                         ))}
                       </div>
@@ -577,7 +556,7 @@ export function PrintTaskChartModal({
                         <button
                           type="button"
                           onClick={() => { playSound.click(); setPrintRoutinePeriod('all_tasks'); }}
-                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                          className={`w-full py-3.5 px-4 rounded-2xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
                             printRoutinePeriod === 'all_tasks'
                               ? 'bg-rose-500 border-rose-500 text-white shadow-sm'
                               : 'bg-stone-50/50 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -588,14 +567,41 @@ export function PrintTaskChartModal({
                         </button>
                       </div>
                     </div>
+                  </div>
+                )}
 
+                {/* Step 5: Print Preview */}
+                {step === 5 && (
+                  <div className="space-y-4 pt-1">
+                    {/* Example/Mockup Card */}
+                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Chart Preview</span>
+                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
+                          {activeChild?.name}'s {printRoutinePeriod === 'all_tasks' ? 'Chore Chart' : activeChild?.holiday_mode ? 'Holiday Routine' : 'Weekday & Weekend Routines'}
+                        </p>
+                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
+                          Style: <span className="capitalize">{printMode === 'live' ? 'Live Chart' : 'Blank Template'}</span>
+                        </p>
+                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
+                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
+                      Prints a full 7-day landscape chart (Mon–Sun) of chores, routines, and star completion slots for {activeChild?.name}.
+                    </p>
                   </div>
                 )}
 
               </div>
 
               {/* Landscape Print Tip */}
-              {step === 3 && (
+              {step === 5 && (
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center shrink-0">
                   <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
                 </div>
@@ -631,6 +637,26 @@ export function PrintTaskChartModal({
                 )}
 
                 {step === 3 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(4); }}
+                    className="flex-1 justify-center"
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 4 && (
+                  <Button
+                    variant="primary"
+                    onClick={() => { playSound.click(); setStep(5); }}
+                    className="flex-1 justify-center"
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {step === 5 && (
                   <Button
                     variant="primary"
                     onClick={handleExecutePrint}
