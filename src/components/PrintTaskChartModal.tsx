@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, Printer, Camera, CheckSquare, Layers, Sun, CloudSun, Moon,
-  ClipboardList, ChevronLeft, ChevronRight, Calendar, Check
+  ClipboardList, ChevronLeft, ChevronRight, Check
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
@@ -18,7 +18,7 @@ interface PrintTaskChartModalProps {
   childrenList: Child[];
 }
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4;
 
 export function PrintTaskChartModal({
   isOpen,
@@ -29,10 +29,10 @@ export function PrintTaskChartModal({
 }: PrintTaskChartModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(childrenList[0]?.id || '');
-  const [weekOffset, setWeekOffset] = useState<0 | -1>(0);
   const [printMode, setPrintMode] = useState<'live' | 'blank'>('blank');
   const [printRoutinePeriod, setPrintRoutinePeriod] = useState<'all_routines' | 'morning' | 'afternoon' | 'evening' | 'all_tasks'>('all_routines');
 
+  const weekOffset = 0; // Hardcoded to This Week (7 days)
   const activeChild = childrenList.find(c => c.id === selectedChildId) || childrenList[0];
 
   const getMondayOfWeek = (offset: number): Date => {
@@ -412,7 +412,7 @@ export function PrintTaskChartModal({
                       Print Chore Chart
                     </Typography>
                     <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : step === 3 ? 'Choose style' : step === 4 ? 'Select routine' : 'Print preview'}
+                      {step === 1 ? 'Choose child' : step === 2 ? 'Choose style' : step === 3 ? 'Select routine' : 'Print preview'}
                     </Typography>
                   </div>
                 </div>
@@ -426,7 +426,7 @@ export function PrintTaskChartModal({
 
               {/* Step indicator */}
               <div className="flex gap-1.5 pt-1 pb-3 shrink-0">
-                {([1, 2, 3, 4, 5] as const).map(s => (
+                {([1, 2, 3, 4] as const).map(s => (
                   <div
                     key={s}
                     className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${s <= step ? 'bg-purple-500' : 'bg-stone-200 dark:bg-stone-700'}`}
@@ -461,46 +461,8 @@ export function PrintTaskChartModal({
                   </div>
                 )}
 
-                {/* Step 2: Select Week */}
+                {/* Step 2: Choose Style */}
                 {step === 2 && (
-                  <div className="space-y-4 pt-1">
-                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which week should the chart print?</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {([0, -1] as const).map(offset => {
-                        const mon = getMondayOfWeek(offset);
-                        const isSelected = weekOffset === offset;
-                        return (
-                          <button
-                            key={offset}
-                            onClick={() => { playSound.click(); setWeekOffset(offset); }}
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              isSelected
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/40 shadow-md'
-                                : 'border-stone-200 dark:border-stone-700 hover:border-purple-300'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <Calendar className={`w-4 h-4 ${isSelected ? 'text-purple-500' : 'text-stone-400'}`} />
-                              <span className="font-black text-sm text-stone-900 dark:text-stone-50">
-                                {offset === 0 ? 'This Week' : 'Last Week'}
-                              </span>
-                            </div>
-                            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{formatWeekRange(mon)}</span>
-                            {isSelected && <Check className="w-4 h-4 text-purple-500 mt-2" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {activeChild?.holiday_mode && (
-                      <div className="p-3.5 bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-400 text-xs font-semibold rounded-2xl flex items-center gap-2 border border-cyan-100 dark:border-cyan-900/30">
-                        <span>🌴 Holiday Mode is active. This will print the Holiday routine instead of Weekdays.</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Step 3: Choose Style */}
-                {step === 3 && (
                   <div className="space-y-4 pt-1">
                     <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Choose your chart style:</p>
                     <div className="space-y-2">
@@ -543,8 +505,8 @@ export function PrintTaskChartModal({
                   </div>
                 )}
 
-                {/* Step 4: Select Routine */}
-                {step === 4 && (
+                {/* Step 3: Select Routine */}
+                {step === 3 && (
                   <div className="space-y-4 pt-1">
                     <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Select routines or tasks to include:</p>
                     <div className="space-y-3">
@@ -602,8 +564,8 @@ export function PrintTaskChartModal({
                   </div>
                 )}
 
-                {/* Step 5: Print Preview */}
-                {step === 5 && (
+                {/* Step 4: Print Preview */}
+                {step === 4 && (
                   <div className="space-y-4 pt-1">
                     <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
                       Chart Preview
@@ -700,7 +662,7 @@ export function PrintTaskChartModal({
               </div>
 
               {/* Landscape Print Tip */}
-              {step === 5 && (
+              {step === 4 && (
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center shrink-0">
                   <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
                 </div>
@@ -746,16 +708,6 @@ export function PrintTaskChartModal({
                 )}
 
                 {step === 4 && (
-                  <Button
-                    variant="primary"
-                    onClick={() => { playSound.click(); setStep(5); }}
-                    className="flex-1 justify-center"
-                  >
-                    Next <ChevronRight className="w-4 h-4" />
-                  </Button>
-                )}
-
-                {step === 5 && (
                   <Button
                     variant="primary"
                     onClick={handleExecutePrint}

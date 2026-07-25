@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  X, Printer, Check, ChevronLeft, ChevronRight, Calendar
+  X, Printer, Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Typography } from './ui/Typography';
 import { Button } from './ui/Button';
@@ -16,13 +16,13 @@ interface PrintRewardsChartModalProps {
   rewards: Reward[];
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2;
 
 export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards }: PrintRewardsChartModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(childrenList[0]?.id || '');
-  const [weekOffset, setWeekOffset] = useState<0 | -1>(0);
 
+  const weekOffset = 0; // Hardcoded to This Week (7 days)
   const activeChild = childrenList.find(c => c.id === selectedChildId) || childrenList[0];
 
   const getMondayOfWeek = (offset: number): Date => {
@@ -202,7 +202,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                       Print Reward Chart
                     </Typography>
                     <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                      {step === 1 ? 'Choose child' : step === 2 ? 'Select week' : 'Print chart'}
+                      {step === 1 ? 'Choose child' : 'Print preview'}
                     </Typography>
                   </div>
                 </div>
@@ -216,7 +216,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
 
               {/* Step indicator */}
               <div className="flex gap-1.5 pt-1 pb-3 shrink-0">
-                {([1, 2, 3] as const).map(s => (
+                {([1, 2] as const).map(s => (
                   <div
                     key={s}
                     className={`h-1.5 rounded-full flex-1 transition-all duration-300 ${s <= step ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-stone-700'}`}
@@ -251,41 +251,8 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                   </div>
                 )}
 
-                {/* Step 2: Select Week */}
+                {/* Step 2: Print */}
                 {step === 2 && (
-                  <div className="space-y-4 pt-1">
-                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which week should the chart print?</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {([0, -1] as const).map(offset => {
-                        const mon = getMondayOfWeek(offset);
-                        const isSelected = weekOffset === offset;
-                        return (
-                          <button
-                            key={offset}
-                            onClick={() => { playSound.click(); setWeekOffset(offset); }}
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
-                              isSelected
-                                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-md'
-                                : 'border-stone-200 dark:border-stone-700 hover:border-emerald-300'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <Calendar className={`w-4 h-4 ${isSelected ? 'text-emerald-500' : 'text-stone-400'}`} />
-                              <span className="font-black text-sm text-stone-900 dark:text-stone-50">
-                                {offset === 0 ? 'This Week' : 'Last Week'}
-                              </span>
-                            </div>
-                            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{formatWeekRange(mon)}</span>
-                            {isSelected && <Check className="w-4 h-4 text-emerald-500 mt-2" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Print */}
-                {step === 3 && (
                   <div className="space-y-4 pt-1">
                     <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
                       Chart Preview
@@ -361,7 +328,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
               </div>
 
               {/* Landscape Print Tip */}
-              {step === 3 && (
+              {step === 2 && (
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1.5 justify-center shrink-0">
                   <span>💡 Tip: Set orientation to <strong>Landscape</strong> in print settings for the best fit.</span>
                 </div>
@@ -387,16 +354,6 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                 )}
 
                 {step === 2 && (
-                  <Button
-                    variant="primary"
-                    onClick={() => { playSound.click(); setStep(3); }}
-                    className="flex-1 justify-center"
-                  >
-                    Next <ChevronRight className="w-4 h-4" />
-                  </Button>
-                )}
-
-                {step === 3 && (
                   <Button
                     variant="primary"
                     onClick={handlePrint}
