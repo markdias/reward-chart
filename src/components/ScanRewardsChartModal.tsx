@@ -4,7 +4,7 @@ import {
   Check, X, Camera, Upload, AlertCircle, Loader2, Sparkles, Calendar, CalendarDays,
   ChevronLeft, ChevronRight, CheckCircle2, ToggleLeft, ToggleRight, Coins, Star
 } from 'lucide-react';
-import { Child, Task, TaskCompletion } from '../types';
+import { Child, Reward, RewardRedemption } from '../types';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { ChildAvatar } from './ChildAvatar';
@@ -12,27 +12,26 @@ import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
 import { getSupabaseClient } from '../utils/supabase';
 
-interface ScanChartModalProps {
+interface ScanRewardsChartModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: Child[];
-  tasks: Task[];
-  onParentCompleteTask: (taskId: string, childId: string, dateIso: string) => void;
-  onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
-  completions?: TaskCompletion[];
+  rewards: Reward[];
+  onParentRedeemRewards: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
+  redemptions?: RewardRedemption[];
 }
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface Detection {
-  taskId: string;
-  taskTitle: string;
+  rewardId: string;
+  rewardTitle: string;
   dayIndex: number;   // 0 = Monday
   detected: boolean;
   confidence: number;
   confirmed: boolean; // parent's toggle
-  task?: Task;        // resolved task (for live coin value)
-  alreadyCompleted?: boolean;
+  reward?: Reward;        // resolved reward (for live coin value)
+  alreadyRedeemed?: boolean;
 }
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -68,14 +67,13 @@ function getWeekLabel(monday: Date): string {
   return `${yr}-W${String(weekNum).padStart(2, '0')}`;
 }
 
-export const ScanChartModal: React.FC<ScanChartModalProps> = ({
+export const ScanRewardsChartModal: React.FC<ScanRewardsChartModalProps> = ({
   isOpen,
   onClose,
   children,
-  tasks,
-  onParentCompleteTask,
-  onParentCompleteTasks,
-  completions = [],
+  rewards,
+  onParentRedeemRewards,
+  redemptions = [],
 }) => {
   const [step, setStep] = useState<Step>(1);
   const [selectedChildId, setSelectedChildId] = useState<string>(children[0]?.id ?? '');
@@ -90,11 +88,10 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeChild = children.find(c => c.id === selectedChildId) ?? children[0];
-  const activeChildTasks = tasks.filter(t =>
-    (t.child_id === activeChild?.id || t.child_id === 'all') &&
-    t.child_id !== 'directory' &&
-    t.is_template !== true &&
-    t.is_active !== false
+  const activeChildRewards = rewards.filter(r =>
+    r.child_id === activeChild?.id &&
+    r.is_template !== true &&
+    r.is_available === true
   );
 
   const monday = getMondayOfWeek(weekOffset);
@@ -104,7 +101,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   const recalcSummary = useCallback((dets: Detection[]) => {
     const confirmed = dets.filter(d => d.confirmed);
     setTotalConfirmed(confirmed.length);
-    setTotalCoins(confirmed.reduce((sum, d) => sum + (d.task?.points ?? 0), 0));
+    setTotalCoins(confirmed.reduce((sum, d) => sum + (d.reward?.cost_points ?? 0), 0));
   }, []);
 
   const handleImageSelect = (file: File) => {
@@ -164,7 +161,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
       if (!session) throw new Error('Not authenticated');
 
       const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/scan-chart`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/scan-reward-chart`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,27 +188,27 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
         throw new Error(errorMsg);
       }
 
-      // Map detections to tasks for live coin values
+      // Map detections to rewards for live coin values
       const mapped: Detection[] = (data.detections ?? []).map((d: any) => {
-        const task = activeChildTasks.find(t => t.id === d.taskId);
+        const reward = activeChildRewards.find(r => r.id === d.rewardId);
         
         const date = new Date(monday);
         date.setDate(monday.getDate() + d.dayIndex);
         date.setHours(12, 0, 0, 0);
         const dateStr = date.toISOString().split('T')[0];
 
-        const alreadyCompleted = completions.some(c => 
-          c.task_id === d.taskId && 
-          c.child_id === activeChild.id &&
-          c.completed_at?.startsWith(dateStr) &&
-          c.status !== 'rejected'
+        const alreadyRedeemed = redemptions.some(r => 
+          r.reward_id === d.rewardId && 
+          r.child_id === activeChild.id &&
+          r.redeemed_at?.startsWith(dateStr) &&
+          r.status !== 'rejected'
         );
 
         return { 
           ...d, 
-          confirmed: d.detected && d.confidence >= 0.6 && !alreadyCompleted, 
-          task, 
-          alreadyCompleted 
+          confirmed: d.detected && d.confidence >= 0.6 && !alreadyRedeemed, 
+          reward, 
+          alreadyRedeemed 
         };
       });
 
@@ -228,7 +225,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   };
 
   const toggleDetection = (index: number) => {
-    if (detections[index].alreadyCompleted) return;
+    if (detections[index].alreadyRedeemed) return;
     playSound.click();
     setDetections(prev => {
       const next = [...prev];
@@ -240,23 +237,17 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
 
   const handleConfirmAll = () => {
     playSound.success();
-    const confirmedDetections = detections.filter(d => d.confirmed && !d.alreadyCompleted);
+    const confirmedDetections = detections.filter(d => d.confirmed && !d.alreadyRedeemed);
     
-    if (onParentCompleteTasks) {
-      const items = confirmedDetections.map(d => {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + d.dayIndex);
-        date.setHours(12, 0, 0, 0);
-        return { taskId: d.taskId, childId: activeChild.id, dateIso: date.toISOString() };
-      });
-      onParentCompleteTasks(items);
-    } else {
-      confirmedDetections.forEach(d => {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + d.dayIndex);
-        date.setHours(12, 0, 0, 0);
-        onParentCompleteTask(d.taskId, activeChild.id, date.toISOString());
-      });
+    const items = confirmedDetections.map(d => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + d.dayIndex);
+      date.setHours(12, 0, 0, 0);
+      return { rewardId: d.rewardId, childId: activeChild.id, dateIso: date.toISOString() };
+    });
+    
+    if (items.length > 0) {
+      onParentRedeemRewards(items);
     }
 
     setTotalConfirmed(confirmedDetections.length);
@@ -469,30 +460,30 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
             {step === 5 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-stone-700 dark:text-stone-200">Toggle chores to confirm or remove:</p>
+                  <p className="text-sm font-bold text-stone-700 dark:text-stone-200">Toggle rewards to confirm or remove:</p>
                   <CoinBadge points={totalCoins} className="px-3 py-1 shadow-sm" />
                 </div>
 
-                {/* Group detections by task */}
-                {activeChildTasks.map(task => {
-                  const taskDetections = detections.filter(d => d.taskId === task.id && d.detected);
-                  if (taskDetections.length === 0) return null;
+                {/* Group detections by reward */}
+                {activeChildRewards.map(reward => {
+                  const rewardDetections = detections.filter(d => d.rewardId === reward.id && d.detected);
+                  if (rewardDetections.length === 0) return null;
                   return (
-                    <div key={task.id} className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-3.5 space-y-2">
+                    <div key={reward.id} className="bg-stone-50 dark:bg-stone-800/50 rounded-2xl p-3.5 space-y-2">
                       <div className="flex items-center gap-2">
-                        <CoinBadge points={task.points} className="w-8 h-8 text-[10px]" />
-                        <span className="text-sm font-extrabold text-stone-800 dark:text-stone-100">{task.title}</span>
+                        <CoinBadge points={reward.cost_points} className="w-8 h-8 text-[10px]" />
+                        <span className="text-sm font-extrabold text-stone-800 dark:text-stone-100">{reward.title}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {taskDetections.map((d, globalIdx) => {
+                        {rewardDetections.map((d, globalIdx) => {
                           const idx = detections.indexOf(d);
                           return (
                             <button
-                              key={`${d.taskId}-${d.dayIndex}`}
+                              key={`${d.rewardId}-${d.dayIndex}`}
                               onClick={() => toggleDetection(idx)}
-                              disabled={d.alreadyCompleted}
+                              disabled={d.alreadyRedeemed}
                               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
-                                d.alreadyCompleted
+                                d.alreadyRedeemed
                                   ? 'bg-stone-200 border-stone-200 text-stone-500 opacity-60 cursor-not-allowed'
                                   : d.confirmed
                                   ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
@@ -500,8 +491,8 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                               }`}
                             >
                               {DAY_NAMES[d.dayIndex]}
-                              {d.alreadyCompleted && <CheckCircle2 className="w-3 h-3 ml-0.5 opacity-70" />}
-                              {!d.alreadyCompleted && d.confidence < 0.7 && (
+                              {d.alreadyRedeemed && <CheckCircle2 className="w-3 h-3 ml-0.5 opacity-70" />}
+                              {!d.alreadyRedeemed && d.confidence < 0.7 && (
                                 <span title="AI was uncertain about this one" className={`text-[9px] ${d.confirmed ? 'text-emerald-200' : 'text-stone-400'}`}>?</span>
                               )}
                             </button>
@@ -515,13 +506,13 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                 {detections.filter(d => d.detected).length === 0 && (
                   <div className="text-center py-8 text-stone-400">
                     <Star className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                    <p className="font-semibold text-sm">No completed chores detected.</p>
+                    <p className="font-semibold text-sm">No claimed rewards detected.</p>
                     <p className="text-xs mt-1">Try a clearer photo with better lighting.</p>
                   </div>
                 )}
 
                 <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-2xl p-3.5 text-xs text-violet-700 dark:text-violet-300 font-medium">
-                  <strong>{totalConfirmed}</strong> chore{totalConfirmed !== 1 ? 's' : ''} selected · <strong>+{totalCoins}</strong> coins to be awarded
+                  <strong>{totalConfirmed}</strong> reward{totalConfirmed !== 1 ? 's' : ''} selected · <strong className="text-rose-600">-{totalCoins}</strong> coins to be deducted
                 </div>
               </div>
             )}
@@ -535,8 +526,8 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                 <div>
                   <p className="font-black text-2xl text-stone-900 dark:text-stone-50">Done! 🎉</p>
                   <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">
-                    <strong className="text-stone-800 dark:text-stone-100">{totalConfirmed}</strong> chore{totalConfirmed !== 1 ? 's' : ''} marked complete
-                    {totalCoins > 0 && <> · <strong className="text-amber-600 dark:text-amber-400">+{totalCoins} coins</strong> earned</>}
+                    <strong className="text-stone-800 dark:text-stone-100">{totalConfirmed}</strong> reward{totalConfirmed !== 1 ? 's' : ''} claimed
+                    {totalCoins > 0 && <> · <strong className="text-rose-600 dark:text-rose-400">-{totalCoins} coins</strong> spent</>}
                   </p>
                 </div>
               </div>
@@ -598,7 +589,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                   className="flex-1 justify-center"
                   disabled={totalConfirmed === 0}
                 >
-                  <Check className="w-4 h-4" /> Confirm {totalConfirmed > 0 ? `${totalConfirmed}` : ''} Chore{totalConfirmed !== 1 ? 's' : ''}
+                  <Check className="w-4 h-4" /> Confirm {totalConfirmed > 0 ? `${totalConfirmed}` : ''} Reward{totalConfirmed !== 1 ? 's' : ''}
                 </Button>
               </>
             )}

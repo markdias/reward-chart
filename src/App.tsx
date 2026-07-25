@@ -2063,6 +2063,48 @@ export default function App() {
     }
   };
 
+  const handleParentRedeemRewards = async (items: {rewardId: string, childId: string, dateIso: string}[]) => {
+    let currentChildren = [...children];
+    let newRedemptions = [...redemptions];
+    
+    for (const item of items) {
+      const reward = rewards.find(r => r.id === item.rewardId);
+      if (!reward) continue;
+      const child = currentChildren.find(c => c.id === item.childId);
+      if (!child) continue;
+
+      const newRedemption: RewardRedemption = {
+        id: crypto.randomUUID(),
+        reward_id: reward.id,
+        child_id: child.id,
+        parent_id: parentProfile?.family_id || parentEmail || 'parent_demo',
+        redeemed_at: item.dateIso,
+        status: 'delivered',
+        payment_source: 'points'
+      };
+      
+      newRedemptions.push(newRedemption);
+      
+      const cost = reward.cost_points;
+      const targetChild = {
+        ...child,
+        points: Math.max(0, child.points - cost),
+        pet_food: (child.pet_food || 0) + (cost > 0 ? 1 : 0),
+      };
+      
+      currentChildren = currentChildren.map(c => c.id === child.id ? targetChild : c);
+      
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        executeOrQueue('children', 'update', targetChild, { eq: { id: targetChild.id } });
+        executeOrQueue('reward_redemptions', 'insert', newRedemption);
+      }
+    }
+    
+    syncChildren(currentChildren);
+    syncRedemptions(newRedemptions);
+  };
+
   const handleFeedPet = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child || (child.pet_food || 0) <= 0) return;
@@ -2674,7 +2716,6 @@ updateChildInSupabase(targetChild);
               onApproveGiftingRequest={handleApproveGiftingRequest}
               onRejectGiftingRequest={handleRejectGiftingRequest}
               onExitParentMode={handleExitParentMode}
-              onParentCompleteTask={handleParentCompleteTask}
               parentProfile={parentProfile}
               linkedParents={linkedParents}
               onResetData={handleResetData}

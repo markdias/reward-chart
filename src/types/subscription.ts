@@ -59,6 +59,13 @@ export const PRO_FEATURES: ProFeature[] = [
     proLimit: 'Unlimited Children',
   },
   {
+    id: 'paper',
+    title: 'Paper Charts & AI Scan',
+    description: 'Print beautiful physical charts and update them instantly using AI chart scanning.',
+    iconName: 'Printer',
+    proLimit: 'Included',
+  },
+  {
     id: 'pots',
     title: 'Unlock All 4 Pots & Mechanics',
     description: 'Access Main, Savings, Food, and Gifting pots for complete habit building.',

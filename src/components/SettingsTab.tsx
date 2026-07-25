@@ -19,6 +19,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { FlaskConical } from 'lucide-react';
 
 import { Child } from '../types';
+import TargetsTab from './TargetsTab';
 
 interface SettingsTabProps {
   children?: Child[];
@@ -30,8 +31,8 @@ interface SettingsTabProps {
   onCleanDuplicates: () => void;
   onRequireAccount?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => Promise<void>;
-  activeSubTab?: 'profile' | 'security' | 'sharing' | 'danger';
-  onSubTabChange?: (tab: 'profile' | 'security' | 'sharing' | 'danger') => void;
+  activeSubTab?: 'profile' | 'targets' | 'security' | 'sharing' | 'danger';
+  onSubTabChange?: (tab: 'profile' | 'targets' | 'security' | 'sharing' | 'danger') => void;
 }
 
 export default function SettingsTab({ 
@@ -95,9 +96,9 @@ export default function SettingsTab({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const [internalSubTab, setInternalSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+  const [internalSubTab, setInternalSubTab] = useState<'profile' | 'targets' | 'security' | 'sharing' | 'danger'>('profile');
   const activeSubTab = externalSubTab || internalSubTab;
-  const setActiveSubTab = (tab: 'profile' | 'security' | 'sharing' | 'danger') => {
+  const setActiveSubTab = (tab: 'profile' | 'targets' | 'security' | 'sharing' | 'danger') => {
     setInternalSubTab(tab);
     if (onSubTabChange) onSubTabChange(tab);
   };
@@ -295,6 +296,17 @@ export default function SettingsTab({
             }`}
         >
           PROFILE
+        </button>
+        <button
+          id="tour-settings-targets-tab"
+          onClick={() => { playSound.click(); setActiveSubTab('targets'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'targets' 
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
+            }`}
+        >
+          TARGETS
         </button>
         <button
           id="tour-settings-security-tab"
@@ -544,6 +556,15 @@ export default function SettingsTab({
           </div>
         </div>
       </motion.div>
+      )}
+
+      {activeSubTab === 'targets' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-0 sm:p-2">
+          <TargetsTab 
+            parentProfile={parentProfile} 
+            onUpdateParentProfile={onUpdateParentProfile} 
+          />
+        </motion.div>
       )}
 
       {activeSubTab === 'security' && (

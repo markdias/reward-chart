@@ -27,7 +27,7 @@ import { SortableTaskItem } from './ui/SortableTaskItem';
 import {
   Users, CheckSquare, Trophy, Bell, ShieldAlert, Sparkles, Plus,
   Trash2, LogOut, Check, X, ShieldCheck, Heart, UserPlus,
-  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical
+  BookOpen, Lock, RefreshCw, Coins, Info, Activity, Award, Settings, CheckCircle2, Edit2, TrendingUp, ArrowUpCircle, ArrowDownCircle, PlusCircle, MinusCircle, Eye, EyeOff, RotateCcw, ChevronDown, MessageSquare, Send, Target, Gift, ScrollText, Home, Calendar, ChevronRight, Star, Flame, PiggyBank, Utensils, MoreHorizontal, HelpCircle, Link as LinkIcon, FlaskConical, Printer, Camera
 } from 'lucide-react';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ActivityFeed } from './ui/ActivityFeed';
@@ -44,12 +44,14 @@ import { generateShortCode, sanitizeText, sanitizeNumber, sanitizeEmail, sanitiz
 import { Capacitor } from '@capacitor/core';
 import SettingsTab from './SettingsTab';
 import { HelpTab } from './HelpTab';
-import TargetsTab from './TargetsTab';
+import PaperChartsTab from './PaperChartsTab';
 import { WeeklyRewardChart } from './WeeklyRewardChart';
 import { InsightsTab } from './InsightsTab';
 import { ActionShowcase } from './ActionShowcase';
 import { useSubscription } from '../hooks/useSubscription';
 import { ScanChartModal } from './ScanChartModal';
+import { PrintRewardsChartModal } from './PrintRewardsChartModal';
+import { ScanRewardsChartModal } from './ScanRewardsChartModal';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { Walkthrough } from './Walkthrough';
@@ -102,6 +104,7 @@ interface ParentDashboardProps {
   parentEmail: string;
   onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
   onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
+  onParentRedeemRewards?: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
@@ -113,7 +116,7 @@ interface ParentDashboardProps {
   onDeleteAccount?: () => void;
   onLogout?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => void;
-  initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help';
+  initialTab?: 'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'paper_charts' | 'help';
   initialSubTab?: 'directory' | 'active' | 'routines';
   isLoading?: boolean;
   onRefresh?: () => Promise<void>;
@@ -150,6 +153,7 @@ export default function ParentDashboard({
   parentEmail,
   onParentCompleteTask,
   onParentCompleteTasks,
+  onParentRedeemRewards,
   parentProfile,
   linkedParents = [],
   onResetData,
@@ -167,7 +171,7 @@ export default function ParentDashboard({
   onRefresh,
   theme
 }: ParentDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'targets' | 'help'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'paper_charts' | 'help'>(initialTab);
   const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
   const isBetaUser = Boolean(parentProfile?.is_beta_tester || flags.insights_tab);
 
@@ -180,8 +184,7 @@ export default function ParentDashboard({
   const { canAddChild, openPaywall, subscription } = useSubscription();
   const isPro = subscription?.isPro ?? false;
 
-  // Scan Chart Modal
-  const [showScanModal, setShowScanModal] = useState(false);
+
 
   // Walkthrough State
   const [runTour, setRunTour] = useState(false);
@@ -305,11 +308,7 @@ export default function ParentDashboard({
         content: 'Under ASSIGNED, you can check which rewards have been claimed by your kids and manage fulfillment.',
         placement: 'bottom',
       },
-      {
-        target: '.joyride-target-targets',
-        content: 'This is the Targets tab. Review and approve pending tasks or reward claims. Your approval triggers coin animations for your kids!',
-        placement: 'bottom',
-      },
+
       {
         target: '#global-logout-btn',
         content: 'This is the Sign Out button. Use it to log out of your parent account securely.',
@@ -319,7 +318,30 @@ export default function ParentDashboard({
         target: '#global-help-btn',
         content: 'Need help? The Guide button replays this tour and explains how the system works.',
         placement: 'bottom',
-      },
+      }
+    );
+
+    if (subscription.isPro) {
+      steps.push(
+        {
+          target: '.joyride-target-paper_charts',
+          content: 'The Paper tab is an exclusive Pro feature where you can generate physical chore charts.',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-paper-print',
+          content: 'Click here to generate and print beautiful physical charts to stick on the fridge!',
+          placement: 'bottom',
+        },
+        {
+          target: '#tour-paper-scan',
+          content: 'Take a photo of a completed chart, and our AI will instantly update your kids\' progress inside the app.',
+          placement: 'bottom',
+        }
+      );
+    }
+
+    steps.push(
       {
         target: '#global-settings-btn',
         content: 'Click the Settings button to access and manage your profile, security, and family sharing.',
@@ -328,6 +350,11 @@ export default function ParentDashboard({
       {
         target: '#tour-settings-profile-tab',
         content: 'The Profile tab lets you update your personal details, family name, and manage push notifications.',
+        placement: 'bottom',
+      },
+      {
+        target: '#tour-settings-targets-tab',
+        content: 'The Targets tab allows you to configure your family\'s weekly goals, chores limits, and economy settings.',
         placement: 'bottom',
       },
       {
@@ -373,7 +400,7 @@ export default function ParentDashboard({
     );
 
     return steps;
-  }, [isBetaUser, onUpdateParentProfile]);
+  }, [isBetaUser, onUpdateParentProfile, subscription.isPro]);
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
@@ -405,11 +432,12 @@ export default function ParentDashboard({
       setActiveTab('rewards');
       if (targetSelector === '#tour-reward-subtab-directory') setRewardSubTab('directory');
       else if (targetSelector === '#tour-reward-subtab-active') setRewardSubTab('active');
-    } else if (targetSelector === '.joyride-target-targets') {
-      setActiveTab('targets');
+    } else if (targetSelector.startsWith('.joyride-target-paper_charts') || targetSelector.startsWith('#tour-paper-')) {
+      setActiveTab('paper_charts');
     } else if (targetSelector.startsWith('#tour-settings-') || targetSelector === '#global-settings-btn') {
       setActiveTab('settings');
       if (targetSelector === '#tour-settings-profile-tab') setSettingsSubTab('profile');
+      else if (targetSelector === '#tour-settings-targets-tab') setSettingsSubTab('targets');
       else if (targetSelector === '#tour-settings-security-tab') setSettingsSubTab('security');
       else if (targetSelector === '#tour-settings-sharing-tab') setSettingsSubTab('sharing');
       else if (targetSelector === '#tour-settings-danger-tab') setSettingsSubTab('danger');
@@ -1141,6 +1169,7 @@ export default function ParentDashboard({
                               </button>
                             </>
                           )}
+
                         </motion.div>
                       </>
                     )}
@@ -1208,7 +1237,7 @@ export default function ParentDashboard({
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
-              { id: 'targets', label: 'Targets', icon: Target },
+              ...(isPro ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : []),
               { id: 'settings', label: 'Settings', icon: Settings },
               { id: 'help', label: 'Guide', icon: HelpCircle }
             ].map((tab) => {
@@ -2573,7 +2602,8 @@ export default function ParentDashboard({
 
                 {/* ACTIVE Rewards */}
                 {rewardSubTab === 'active' && (
-                  <div className="mt-0">
+                  <div className="mt-0 space-y-3">
+
                     <div className="flex flex-col gap-0 border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 rounded-2xl overflow-hidden shadow-sm">
                       {rewards.filter(r => (!r.is_template && r.child_id !== 'directory') && children.some(c => c.id === r.child_id)).map((reward, index, arr) => {
                         const assignedName = children.find(c => c.id === reward.child_id)?.name;
@@ -2711,17 +2741,24 @@ export default function ParentDashboard({
               </motion.div>
             )}
 
-            {activeTab === 'targets' && (
+            {activeTab === 'paper_charts' && (
               <motion.div
-                key="targets"
+                key="paper_charts"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <TargetsTab
-                  
-                  parentProfile={parentProfile}
-                  onUpdateParentProfile={onUpdateParentProfile}
+                <PaperChartsTab
+                  children={children}
+                  tasks={tasks}
+                  completions={completions}
+                  rewards={rewards}
+                  redemptions={redemptions}
+                  isPro={isPro}
+                  onOpenPaywall={openPaywall}
+                  onParentCompleteTask={onParentCompleteTask}
+                  onParentCompleteTasks={onParentCompleteTasks}
+                  onParentRedeemRewards={onParentRedeemRewards || (() => {})}
                 />
               </motion.div>
             )}
@@ -3267,7 +3304,7 @@ export default function ParentDashboard({
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
-              { id: 'targets', label: 'Targets', icon: Target }
+              ...(isPro ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : [])
             ]}
             activeTab={activeTab}
             onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
@@ -3879,16 +3916,7 @@ export default function ParentDashboard({
         )}
       </AnimatePresence>
 
-      {/* Scan Chart Modal (Pro feature) */}
-      <ScanChartModal
-        isOpen={showScanModal}
-        onClose={() => setShowScanModal(false)}
-        children={children}
-        tasks={tasks}
-        completions={completions}
-        onParentCompleteTask={onParentCompleteTask}
-        onParentCompleteTasks={onParentCompleteTasks}
-      />
+
 
     </div>
   );
