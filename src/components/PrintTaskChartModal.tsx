@@ -187,6 +187,17 @@ export function PrintTaskChartModal({
       }).join('');
 
     let tableBodyHtml = '';
+    let renderedRowsCount = 0;
+    const getCutLineRow = () => `
+      <tr class="cut-line-row" style="page-break-after: always; page-break-inside: avoid; border: none; background: #fff;">
+        <td colspan="${printDays.length + 1}" style="padding: 16px 0; border: none; background: #fff;">
+          <div style="border-top: 2px dashed #a8a29e; position: relative; width: 100%; text-align: left; margin: 8px 0;">
+            <span style="position: absolute; top: -12px; left: 24px; background: #fff; padding: 0 8px; font-size: 14px; font-weight: bold; color: #78716c; font-family: 'Nunito', sans-serif;">✂️ Cut along this line to join pages</span>
+          </div>
+        </td>
+      </tr>
+    `;
+
     if (printRoutinePeriod === 'all_routines') {
       const routine = getActiveRoutineForPrint(activeChild, printRange);
       const periods: { key: 'morning' | 'afternoon' | 'evening'; label: string }[] = [
@@ -204,6 +215,12 @@ export function PrintTaskChartModal({
 
         if (periodTasks.length > 0) {
           totalTasksCount += periodTasks.length;
+          
+          if (renderedRowsCount > 0 && renderedRowsCount % 7 === 0) {
+            tableBodyHtml += getCutLineRow();
+          }
+          renderedRowsCount++;
+          
           // Add section header row
           tableBodyHtml += `<tr style="background:#f3f4f6;border-bottom:2px solid #e7e5e4;">
             <td colspan="${printDays.length + 1}" style="padding:10px 14px;font-size:12px;font-weight:900;color:#374151;text-transform:uppercase;letter-spacing:0.05em;text-align:left;">
@@ -213,6 +230,11 @@ export function PrintTaskChartModal({
 
             // Add task rows for this period
             periodTasks.forEach((task, index) => {
+              if (renderedRowsCount > 0 && renderedRowsCount % 7 === 0) {
+                tableBodyHtml += getCutLineRow();
+              }
+              renderedRowsCount++;
+
               const cells = printDays.map(date => {
                 const dk = formatDateKey(date);
                 const status = compLookup.get(`${task.id}_${dk}`);
@@ -236,6 +258,12 @@ export function PrintTaskChartModal({
       }
     } else {
       const taskRows = printTasks.map((task, index) => {
+        let prefix = '';
+        if (renderedRowsCount > 0 && renderedRowsCount % 7 === 0) {
+          prefix = getCutLineRow();
+        }
+        renderedRowsCount++;
+
         const cells = printDays.map(date => {
           const dk = formatDateKey(date);
           const status = compLookup.get(`${task.id}_${dk}`);
@@ -243,7 +271,7 @@ export function PrintTaskChartModal({
           return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
         }).join('');
         const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-        return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+        return `${prefix}<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
           <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
             <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
             ${task.title}
