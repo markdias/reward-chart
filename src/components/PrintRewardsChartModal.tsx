@@ -287,25 +287,73 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                 {/* Step 3: Print */}
                 {step === 3 && (
                   <div className="space-y-4 pt-1">
-                    
-                    {/* Example/Mockup Card */}
-                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Chart Preview</span>
-                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
+                    <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
+                      Chart Preview
+                    </Typography>
+
+                    {/* Miniature Printed Chart Layout Mockup */}
+                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 shadow-sm space-y-3 font-sans overflow-hidden">
+                      {/* Emerald Header Bar */}
+                      <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white rounded-xl p-3 flex justify-between items-center shadow-sm">
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-wider">
+                            {activeChild?.name}'s Reward Chart
+                          </div>
+                          <div className="text-[8px] font-bold opacity-80 mt-0.5">
+                            {formatWeekRange(getMondayOfWeek(weekOffset))}
+                          </div>
+                        </div>
+                        <div className="text-[8px] font-black uppercase bg-white/20 px-2.5 py-0.5 rounded-full tracking-wider">
+                          Quest Sync
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
-                          {activeChild?.name}'s Reward Chart
-                        </p>
-                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
-                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
-                        </p>
+
+                      {/* Mini Table Grid */}
+                      <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden text-[9px]">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-stone-50 dark:bg-stone-800/50 border-b border-stone-200 dark:border-stone-800">
+                              <th className="text-left p-1.5 font-black text-stone-500">Reward</th>
+                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                                <th key={i} className="text-center p-1.5 font-black text-stone-500 w-5">{day}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).slice(0, 3).map((reward, idx) => (
+                              <tr key={reward.id} className="border-b border-stone-100 dark:border-stone-800/40 last:border-none">
+                                <td className="p-1.5 font-bold text-stone-700 dark:text-stone-300 truncate max-w-[120px]">
+                                  <span className="inline-flex items-center justify-center bg-emerald-50 text-emerald-600 text-[7px] font-extrabold w-4.5 h-4.5 rounded-full border border-emerald-200 mr-1">{reward.cost_points}</span>
+                                  {reward.title}
+                                </td>
+                                {Array.from({ length: 7 }).map((_, i) => (
+                                  <td key={i} className="text-center p-1.5">
+                                    <span className="text-stone-300 dark:text-stone-700 font-bold text-[8px]">☆</span>
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length > 3 && (
+                              <tr>
+                                <td colSpan={8} className="p-1.5 text-center text-stone-400 dark:text-stone-500 text-[8px] font-bold bg-stone-50/50 dark:bg-stone-800/20">
+                                  + {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length - 3} more rewards included
+                                </td>
+                              </tr>
+                            )}
+                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="p-3 text-center text-stone-400 dark:text-stone-500 font-medium">
+                                  No active rewards assigned.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
                     <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
-                      Prints a full 7-day grid (Mon–Sun) of all available rewards and their coin costs for {activeChild?.name}.
+                      Prints a full 7-day landscape grid (Mon–Sun) of all available rewards and their coin costs for {activeChild?.name}.
                     </p>
                   </div>
                 )}

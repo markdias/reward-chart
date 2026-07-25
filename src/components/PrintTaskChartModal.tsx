@@ -573,22 +573,89 @@ export function PrintTaskChartModal({
                 {/* Step 5: Print Preview */}
                 {step === 5 && (
                   <div className="space-y-4 pt-1">
-                    {/* Example/Mockup Card */}
-                    <div className="bg-stone-50 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-800 p-4 rounded-2xl">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">Chart Preview</span>
-                        <span className="text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-2.5 py-0.5 rounded-full font-black">7 DAYS</span>
+                    <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
+                      Chart Preview
+                    </Typography>
+
+                    {/* Miniature Printed Chart Layout Mockup */}
+                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 shadow-sm space-y-3 font-sans overflow-hidden">
+                      {/* Purple Header Bar */}
+                      <div className="bg-gradient-to-r from-violet-400 to-indigo-500 text-white rounded-xl p-3 flex justify-between items-center shadow-sm">
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-wider">
+                            {activeChild?.name}'s {printRoutinePeriod === 'all_tasks' ? 'Chore Chart' : activeChild?.holiday_mode ? 'Holiday Routine' : 'Weekly Routine'}
+                          </div>
+                          <div className="text-[8px] font-bold opacity-80 mt-0.5">
+                            {formatWeekRange(getMondayOfWeek(weekOffset))}
+                          </div>
+                        </div>
+                        <div className="text-[8px] font-black uppercase bg-white/20 px-2.5 py-0.5 rounded-full tracking-wider">
+                          Quest Sync
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <p className="text-sm font-black text-stone-800 dark:text-stone-200">
-                          {activeChild?.name}'s {printRoutinePeriod === 'all_tasks' ? 'Chore Chart' : activeChild?.holiday_mode ? 'Holiday Routine' : 'Weekday & Weekend Routines'}
-                        </p>
-                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
-                          Style: <span className="capitalize">{printMode === 'live' ? 'Live Chart' : 'Blank Template'}</span>
-                        </p>
-                        <p className="text-xs font-bold text-stone-400 dark:text-stone-500">
-                          Range: {formatWeekRange(getMondayOfWeek(weekOffset))}
-                        </p>
+
+                      {/* Mini Table Grid */}
+                      <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden text-[9px]">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-stone-50 dark:bg-stone-800/50 border-b border-stone-200 dark:border-stone-800">
+                              <th className="text-left p-1.5 font-black text-stone-500">Chore</th>
+                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                                <th key={i} className="text-center p-1.5 font-black text-stone-500 w-5">{day}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {buildPrintTasks().slice(0, 3).map((task, idx) => (
+                              <tr key={task.id} className="border-b border-stone-100 dark:border-stone-800/40 last:border-none">
+                                <td className="p-1.5 font-bold text-stone-700 dark:text-stone-300 truncate max-w-[120px]">
+                                  {task.title}
+                                </td>
+                                {Array.from({ length: 7 }).map((_, i) => {
+                                  const isWeekend = i === 5 || i === 6;
+                                  const isWeekday = !isWeekend;
+                                  
+                                  const weekdayRoutine = activeChild.routines?.find(r => r.id === (activeChild.holiday_mode ? 'holiday' : 'weekday'));
+                                  const weekendRoutine = activeChild.routines?.find(r => r.id === 'weekend');
+                                  
+                                  const isTaskInWeekday = weekdayRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+                                  const isTaskInWeekend = weekendRoutine?.tasks?.some(rt => rt.id === task.id || rt.template_id === task.id);
+                                  
+                                  let isActive = true;
+                                  if (isTaskInWeekday && !isTaskInWeekend) {
+                                    isActive = isWeekday;
+                                  } else if (isTaskInWeekend && !isTaskInWeekday) {
+                                    isActive = isWeekend;
+                                  }
+                                  
+                                  return (
+                                    <td key={i} className="text-center p-1.5">
+                                      {isActive ? (
+                                        <span className="text-amber-500 font-black text-[9px]">☆</span>
+                                      ) : (
+                                        <span className="text-stone-300 dark:text-stone-700 text-[8px]">—</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                            {buildPrintTasks().length > 3 && (
+                              <tr>
+                                <td colSpan={8} className="p-1.5 text-center text-stone-400 dark:text-stone-500 text-[8px] font-bold bg-stone-50/50 dark:bg-stone-800/20">
+                                  + {buildPrintTasks().length - 3} more chores included
+                                </td>
+                              </tr>
+                            )}
+                            {buildPrintTasks().length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="p-3 text-center text-stone-400 dark:text-stone-500 font-medium">
+                                  No chores match selected filters.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
