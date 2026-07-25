@@ -173,8 +173,8 @@ export function PrintTaskChartModal({
       });
     }
 
-    const hollowCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
-    const filledCircle = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>`;
+    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const filledStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
     const colHeaders = dayNames
       .map((day, i) => {
@@ -211,23 +211,23 @@ export function PrintTaskChartModal({
             </td>
           </tr>`;
 
-          // Add task rows for this period
-          periodTasks.forEach((task, index) => {
-            const cells = printDays.map(date => {
-              const dk = formatDateKey(date);
-              const status = compLookup.get(`${task.id}_${dk}`);
-              const icon = (!isBlank && status === 'approved') ? filledCircle : hollowCircle;
-              return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${icon}</td>`;
-            }).join('');
-            const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-            tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-              <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-                <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
-                ${task.title}
-              </td>
-              ${cells}
-            </tr>`;
-          });
+            // Add task rows for this period
+            periodTasks.forEach((task, index) => {
+              const cells = printDays.map(date => {
+                const dk = formatDateKey(date);
+                const status = compLookup.get(`${task.id}_${dk}`);
+                const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+                return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
+              }).join('');
+              const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
+              tableBodyHtml += `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
+                <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;background:#fffbeb;color:#d97706;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #fcd34d;border-radius:50%;margin-bottom:6px;">${task.points}</span><br/>
+                  ${task.title}
+                </td>
+                ${cells}
+              </tr>`;
+            });
         }
       });
 
@@ -239,8 +239,8 @@ export function PrintTaskChartModal({
         const cells = printDays.map(date => {
           const dk = formatDateKey(date);
           const status = compLookup.get(`${task.id}_${dk}`);
-          const icon = (!isBlank && status === 'approved') ? filledCircle : hollowCircle;
-          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${icon}</td>`;
+          const star = (!isBlank && status === 'approved') ? filledStar : hollowStar;
+          return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${star}</td>`;
         }).join('');
         const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
         return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
@@ -356,7 +356,7 @@ export function PrintTaskChartModal({
     </table>
   </div>
   <div class="footer">
-    <div class="footer-instruction">✅ Colour in each circle when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
+    <div class="footer-instruction">🎨 Colour in each star when you finish a chore! &nbsp; Ask a grown-up to scan this chart.</div>
     <div class="footer-id">Chart: ${chartId}</div>
   </div>
   </div>
@@ -491,7 +491,7 @@ export function PrintTaskChartModal({
                     <div>
                       <p className="font-extrabold text-sm">Live Chart (with Dates)</p>
                       <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Prints calendar dates and any already-completed tasks.
+                        Prints calendar dates and any already-completed stars.
                       </p>
                     </div>
                   </button>
@@ -509,7 +509,7 @@ export function PrintTaskChartModal({
                     <div>
                       <p className="font-extrabold text-sm">Blank / Reusable Template</p>
                       <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        Generic MON–SUN headers, empty circles — perfect for colouring in!
+                        Generic MON–SUN headers, empty stars — perfect for colouring in!
                       </p>
                     </div>
                   </button>

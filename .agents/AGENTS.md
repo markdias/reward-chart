@@ -1,4 +1,5 @@
 # Project Rules
 
 ## Icons
-- **Never use star icons** anywhere in this project. Use circles with checkmarks instead for completion indicators in print charts.
+- **Never use star icons** in the on-screen UI buttons/selectors (e.g., selection lists, routine lists). Use non-star icons instead.
+- **Printed charts** should use star shape outlines/stars as completion indicators for child coloring-in.
