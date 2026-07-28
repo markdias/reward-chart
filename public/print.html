@@ -274,13 +274,14 @@
     /* -------------------------------------------------------------------
        WALLET LAYOUT
        ------------------------------------------------------------------- */
-    .wallet-page {
+    body.wallet-page {
       padding: 15px;
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: auto;
     }
     .wallet-instructions {
       position: absolute;
@@ -470,6 +471,15 @@
     const container = document.getElementById('content-container');
     const statusText = document.getElementById('status-text');
     const printBtn = document.getElementById('print-btn');
+
+    // Dynamically inject page style tag for printing orientation
+    const pageStyle = document.createElement('style');
+    if (asset === 'wallet') {
+      pageStyle.innerHTML = `@page { size: landscape; margin: 0.5cm; }`;
+    } else {
+      pageStyle.innerHTML = `@page { size: portrait; margin: 1cm; }`;
+    }
+    document.head.appendChild(pageStyle);
 
     // 2. Render view
     if (asset === 'coins') {
