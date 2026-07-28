@@ -8,8 +8,9 @@ This design guide defines the layout, color palettes, visual hierarchies, and st
 
 1. **Board-Game Aesthetic:** All printed assets must feel like parts of a premium physical board game (e.g., thick borders, decorative corners, rich gradients, and clean card styling).
 2. **Strictly Gold Coins:** Do not mix copper, silver, and gold. All coins are gold-colored, with numbers indicating value.
-3. **Dashed Guidelines:** Any asset that needs to be cut out must have a subtle, light-grey dashed border (`border: 2px dashed #d1d5db`).
+3. **Dashed Guidelines:** Any asset that needs to be cut out must have a subtle, light-grey dashed border (`border: 2px dashed #d1d5db`). For circular assets like coins, the cutting lines must follow the circular contours of the shape.
 4. **Print Optimization:** Use vector components (pure CSS shapes and inline SVGs) for maximum sharpness when printed. Avoid low-resolution raster images. Set CSS page sizes to A4/Letter dynamically.
+
 
 ---
 

@@ -77,12 +77,14 @@ export function PrintAssetsModal({
 
       const coinsHtml = coinDefs.map(value => `
         <div class="coin-card">
-          <div class="coin coin-${value}">
-            <div class="emblem-wrapper">
-              ${getCoinEmblemSvg(value)}
-            </div>
-            <div class="coin-inner">
-              <span class="coin-value">${value}</span>
+          <div class="coin-wrapper">
+            <div class="coin coin-${value}">
+              <div class="emblem-wrapper">
+                ${getCoinEmblemSvg(value)}
+              </div>
+              <div class="coin-inner">
+                <span class="coin-value">${value}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -134,12 +136,21 @@ export function PrintAssetsModal({
     .coin-card {
       width: 80px;
       height: 80px;
-      border: 1px dashed #d1d5db;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+    .coin-wrapper {
+      border: 1.5px dashed #a8a29e;
+      border-radius: 50%;
+      padding: 3px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #fff;
     }
+
     .coin {
       position: relative;
       border-radius: 50%;
@@ -203,7 +214,7 @@ export function PrintAssetsModal({
 <body>
   <div class="header">
     <div class="title">Quest Sync — Gold Coins Stash</div>
-    <div class="subtitle">✂️ Cut along the dashed lines. Tip: Print on thick cardstock or paper!</div>
+    <div class="subtitle">✂️ Cut along the circular dashed lines. Tip: Print on thick cardstock or paper!</div>
   </div>
   <div class="grid">
     ${coinsHtml}
