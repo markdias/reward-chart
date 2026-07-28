@@ -2581,7 +2581,7 @@ export default function ParentDashboard({
 
                                     <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
                                       <a
-                                        href={`/print.html?asset=reward_card&rewardId=${reward.id}&title=${encodeURIComponent(reward.title)}&description=${encodeURIComponent(reward.description || '')}&cost=${reward.cost_points}`}
+                                        href={`/print.html?asset=reward_card&rewardId=${reward.id}&title=${encodeURIComponent(reward.title)}&cost=${reward.cost_points}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={(e) => {
@@ -2669,7 +2669,7 @@ export default function ParentDashboard({
                                 >
                                   <div className="p-4 border-t border-stone-100 dark:border-stone-800 flex justify-end gap-2">
                                     <a
-                                      href={`/print.html?asset=reward_card&rewardId=${reward.id}&childId=${reward.child_id}&title=${encodeURIComponent(reward.title)}&description=${encodeURIComponent(reward.description || '')}&cost=${reward.cost_points}&childName=${encodeURIComponent(assignedName || '')}`}
+                                      href={`/print.html?asset=reward_card&rewardId=${reward.id}&childId=${reward.child_id}&title=${encodeURIComponent(reward.title)}&cost=${reward.cost_points}&childName=${encodeURIComponent(assignedName || '')}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => {
