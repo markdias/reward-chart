@@ -11,8 +11,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Nunito', sans-serif;
-      background: white;
+      background: #e2e8f0; /* Darker desktop canvas background to make paper POP! */
       color: #292524;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding-top: 70px;
+      overflow-x: auto;
+      overflow-y: auto;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -33,6 +41,7 @@
       z-index: 9999;
       font-size: 13px;
       font-weight: 800;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .print-bar button {
       background: #78716c;
@@ -61,6 +70,7 @@
         height: 100% !important;
         max-height: 100% !important;
         overflow: hidden !important;
+        background: white !important;
         margin: 0 !important;
         padding: 0 !important;
       }
@@ -69,19 +79,76 @@
         max-height: 100% !important;
         overflow: hidden !important;
       }
+      .paper-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      body.coins-page .paper-sheet,
+      body.companion-body .paper-sheet {
+        padding: 1.2cm 1cm !important;
+      }
+      body.wallet-page .paper-sheet {
+        padding: 0.5cm !important;
+      }
+      body.wallet-page {
+        overflow: hidden !important;
+      }
+    }
+
+    /* -------------------------------------------------------------------
+       A4 PAPER CONTAINER (Desk Preview Sheet)
+       ------------------------------------------------------------------- */
+    .paper-sheet {
+      background: white;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05);
+      border-radius: 6px;
+      margin: 15px auto 40px auto;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Portrait dimensions (A4: 210mm x 297mm) */
+    body.coins-page .paper-sheet,
+    body.companion-body .paper-sheet {
+      width: 210mm;
+      height: 297mm;
+      padding: 1.2cm 1cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    /* Landscape dimensions (A4: 297mm x 210mm) */
+    body.wallet-page .paper-sheet {
+      width: 297mm;
+      height: 210mm;
+      padding: 1.2cm 1cm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* -------------------------------------------------------------------
        COINS LAYOUT
        ------------------------------------------------------------------- */
-    .coins-page {
-      padding: 1.2cm 1cm;
-    }
     .coins-header {
       text-align: center;
       margin-bottom: 24px;
       border-bottom: 3px double #e7e5e4;
       padding-bottom: 12px;
+      width: 100%;
     }
     .coins-title {
       font-size: 24px;
@@ -178,20 +245,9 @@
     /* -------------------------------------------------------------------
        COMPANION LAYOUT
        ------------------------------------------------------------------- */
-    .companion-body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-      padding-top: 50px;
-    }
     .companion-poster {
       width: 100%;
-      height: 90%;
-      max-height: 90vh;
-      max-width: 500px;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -254,15 +310,6 @@
       margin-bottom: 10px;
     }
     @media print {
-      .companion-body {
-        padding-top: 0 !important;
-      }
-      .companion-poster {
-        border: none !important;
-        max-height: 100% !important;
-        height: 100% !important;
-        padding: 0 !important;
-      }
       #poster-img {
         display: block !important;
       }
@@ -275,11 +322,6 @@
        WALLET LAYOUT
        ------------------------------------------------------------------- */
     body.wallet-page {
-      padding: 15px;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow-x: auto;
       overflow-y: auto;
     }
@@ -521,12 +563,14 @@
       `).join('');
 
       container.innerHTML = `
-        <div class="coins-header">
-          <div class="coins-title">Quest Sync — Gold Coins Stash</div>
-          <div class="coins-subtitle">✂️ Cut along the circular dashed lines. Tip: Print on thick cardstock or paper!</div>
-        </div>
-        <div class="coins-grid">
-          ${coinsHtml}
+        <div class="paper-sheet">
+          <div class="coins-header">
+            <div class="coins-title">Quest Sync — Gold Coins Stash</div>
+            <div class="coins-subtitle">✂️ Cut along the circular dashed lines. Tip: Print on thick cardstock or paper!</div>
+          </div>
+          <div class="coins-grid">
+            ${coinsHtml}
+          </div>
         </div>
       `;
       
@@ -549,28 +593,30 @@
       printBtn.classList.remove('ready');
 
       container.innerHTML = `
-        <div class="companion-poster">
-          <div class="companion-header">
-            <div class="owner-label">${childName}'s Fridge Companion</div>
-            <div class="companion-title">${petPack}</div>
-            <div class="stage-level">${stageName} • Level ${level}</div>
-          </div>
+        <div class="paper-sheet">
+          <div class="companion-poster">
+            <div class="companion-header">
+              <div class="owner-label">${childName}'s Fridge Companion</div>
+              <div class="companion-title">${petPack}</div>
+              <div class="stage-level">${stageName} • Level ${level}</div>
+            </div>
 
-          <div class="viewer-container">
-            <model-viewer
-              src="${fullModelUrl}"
-              alt="3D Companion Character"
-              auto-rotate
-              camera-controls
-              interaction-prompt="none"
-              shadow-intensity="1.5"
-              shadow-softness="1"
-            ></model-viewer>
-            <img id="poster-img" alt="Companion Model" />
-          </div>
+            <div class="viewer-container">
+              <model-viewer
+                src="${fullModelUrl}"
+                alt="3D Companion Character"
+                auto-rotate
+                camera-controls
+                interaction-prompt="none"
+                shadow-intensity="1.5"
+                shadow-softness="1"
+              ></model-viewer>
+              <img id="poster-img" alt="Companion Model" />
+            </div>
 
-          <div class="companion-footer">
-            Quest Sync Companion Poster
+            <div class="companion-footer">
+              Quest Sync Companion Poster
+            </div>
           </div>
         </div>
       `;
@@ -626,89 +672,91 @@
           <div>🧴 <strong>Grey tabs:</strong> Fold backward & tape to the Board slots</div>
         </div>
         
-        <div class="wallet-container">
-          <!-- Left: Fridge Board -->
-          <div class="backing-board">
-            <div class="board-title">Quest Pots Wallet</div>
-            <div class="board-child">${childName}'s Fridge Board</div>
-            
-            <div class="board-slot">
-              <span class="board-slot-title" style="color: #d97706">🟡 Spending Pot Slot</span>
-            </div>
-            <div class="board-slot">
-              <span class="board-slot-title" style="color: #059669">🟢 Savings Pot Slot</span>
-            </div>
-            <div class="board-slot">
-              <span class="board-slot-title" style="color: #2563eb">🔵 Feeding Pot Slot</span>
-            </div>
-            <div class="board-slot">
-              <span class="board-slot-title" style="color: #db2777">🔴 Gifting Pot Slot</span>
-            </div>
-          </div>
-
-          <!-- Right: Pocket Nets -->
-          <div class="nets-area">
-            <div class="net-card">
-              <span class="net-label">1. Spending Pot Net</span>
-              <div class="pocket-net">
-                <div class="pocket-row">
-                  <div class="tab tab-left">Glue</div>
-                  <div class="pocket-center theme-gold">
-                    <span>🟡 Spending</span>
-                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gold Pot</span>
-                  </div>
-                  <div class="tab tab-right">Glue</div>
-                </div>
-                <div class="tab tab-bottom">Glue / Tape Tab</div>
-                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+        <div class="paper-sheet">
+          <div class="wallet-container">
+            <!-- Left: Fridge Board -->
+            <div class="backing-board">
+              <div class="board-title">Quest Pots Wallet</div>
+              <div class="board-child">${childName}'s Fridge Board</div>
+              
+              <div class="board-slot">
+                <span class="board-slot-title" style="color: #d97706">🟡 Spending Pot Slot</span>
+              </div>
+              <div class="board-slot">
+                <span class="board-slot-title" style="color: #059669">🟢 Savings Pot Slot</span>
+              </div>
+              <div class="board-slot">
+                <span class="board-slot-title" style="color: #2563eb">🔵 Feeding Pot Slot</span>
+              </div>
+              <div class="board-slot">
+                <span class="board-slot-title" style="color: #db2777">🔴 Gifting Pot Slot</span>
               </div>
             </div>
 
-            <div class="net-card">
-              <span class="net-label">2. Savings Pot Net</span>
-              <div class="pocket-net">
-                <div class="pocket-row">
-                  <div class="tab tab-left">Glue</div>
-                  <div class="pocket-center theme-savings">
-                    <span>🟢 Saving</span>
-                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Savings Pot</span>
+            <!-- Right: Pocket Nets -->
+            <div class="nets-area">
+              <div class="net-card">
+                <span class="net-label">1. Spending Pot Net</span>
+                <div class="pocket-net">
+                  <div class="pocket-row">
+                    <div class="tab tab-left">Glue</div>
+                    <div class="pocket-center theme-gold">
+                      <span>🟡 Spending</span>
+                      <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gold Pot</span>
+                    </div>
+                    <div class="tab tab-right">Glue</div>
                   </div>
-                  <div class="tab tab-right">Glue</div>
+                  <div class="tab tab-bottom">Glue / Tape Tab</div>
+                  <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
                 </div>
-                <div class="tab tab-bottom">Glue / Tape Tab</div>
-                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
               </div>
-            </div>
 
-            <div class="net-card">
-              <span class="net-label">3. Feeding Pot Net</span>
-              <div class="pocket-net">
-                <div class="pocket-row">
-                  <div class="tab tab-left">Glue</div>
-                  <div class="pocket-center theme-food">
-                    <span>🔵 Feeding Pot</span>
-                    <img class="pocket-qr" src="${feedQrUrl}" alt="Feed QR" />
+              <div class="net-card">
+                <span class="net-label">2. Savings Pot Net</span>
+                <div class="pocket-net">
+                  <div class="pocket-row">
+                    <div class="tab tab-left">Glue</div>
+                    <div class="pocket-center theme-savings">
+                      <span>🟢 Saving</span>
+                      <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Savings Pot</span>
+                    </div>
+                    <div class="tab tab-right">Glue</div>
                   </div>
-                  <div class="tab tab-right">Glue</div>
+                  <div class="tab tab-bottom">Glue / Tape Tab</div>
+                  <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
                 </div>
-                <div class="tab tab-bottom">Glue / Tape Tab</div>
-                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
               </div>
-            </div>
 
-            <div class="net-card">
-              <span class="net-label">4. Gifting Pot Net</span>
-              <div class="pocket-net">
-                <div class="pocket-row">
-                  <div class="tab tab-left">Glue</div>
-                  <div class="pocket-center theme-gifting">
-                    <span>🔴 Giving</span>
-                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gifting Pot</span>
+              <div class="net-card">
+                <span class="net-label">3. Feeding Pot Net</span>
+                <div class="pocket-net">
+                  <div class="pocket-row">
+                    <div class="tab tab-left">Glue</div>
+                    <div class="pocket-center theme-food">
+                      <span>🔵 Feeding Pot</span>
+                      <img class="pocket-qr" src="${feedQrUrl}" alt="Feed QR" />
+                    </div>
+                    <div class="tab tab-right">Glue</div>
                   </div>
-                  <div class="tab tab-right">Glue</div>
+                  <div class="tab tab-bottom">Glue / Tape Tab</div>
+                  <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
                 </div>
-                <div class="tab tab-bottom">Glue / Tape Tab</div>
-                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+              </div>
+
+              <div class="net-card">
+                <span class="net-label">4. Gifting Pot Net</span>
+                <div class="pocket-net">
+                  <div class="pocket-row">
+                    <div class="tab tab-left">Glue</div>
+                    <div class="pocket-center theme-gifting">
+                      <span>🔴 Giving</span>
+                      <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gifting Pot</span>
+                    </div>
+                    <div class="tab tab-right">Glue</div>
+                  </div>
+                  <div class="tab tab-bottom">Glue / Tape Tab</div>
+                  <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+                </div>
               </div>
             </div>
           </div>
