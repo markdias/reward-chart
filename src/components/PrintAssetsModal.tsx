@@ -42,10 +42,8 @@ export function PrintAssetsModal({
     }
   };
 
-  const handleExecutePrint = () => {
-    playSound.click();
-    if (!selectedAsset) return;
-
+  const getPrintUrl = () => {
+    if (!selectedAsset) return '#';
     let url = `/print.html?asset=${selectedAsset}`;
 
     if (selectedAsset === 'companion' && activeChild) {
@@ -59,13 +57,7 @@ export function PrintAssetsModal({
       url += `&childName=${encodeURIComponent(activeChild.name)}`
            + `&childId=${activeChild.id}`;
     }
-
-    const printWindow = window.open(url, '_blank');
-    if (printWindow) {
-      handleClose();
-    } else {
-      alert("Please allow popups to print assets.");
-    }
+    return url;
   };
 
   const handleClose = () => {
@@ -297,13 +289,18 @@ export function PrintAssetsModal({
             )}
 
             {step === 3 && (
-              <Button
-                variant="primary"
-                onClick={handleExecutePrint}
-                className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
+              <a
+                href={getPrintUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  playSound.click();
+                  handleClose();
+                }}
+                className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-all text-center"
               >
                 <Printer className="w-4 h-4" /> Print Asset
-              </Button>
+              </a>
             )}
           </div>
         </motion.div>
