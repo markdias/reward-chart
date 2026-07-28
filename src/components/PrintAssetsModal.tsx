@@ -295,7 +295,6 @@ export function PrintAssetsModal({
                 rel="noopener noreferrer"
                 onClick={() => {
                   playSound.click();
-                  setTimeout(handleClose, 200);
                 }}
                 className="flex-1 justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm transition-all text-center"
               >
