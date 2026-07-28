@@ -237,7 +237,7 @@ export function PrintAssetsModal({
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    @page { size: portrait; margin: 1.5cm; }
+    @page { size: portrait; margin: 1cm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Nunito', sans-serif;
@@ -247,73 +247,137 @@ export function PrintAssetsModal({
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+      padding-top: 50px;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    
+    /* Top print control bar (hidden in printout) */
+    .print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: #1c1917;
+      color: #f5f5f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 9999;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .print-bar button {
+      background: #78716c;
+      color: #fafaf9;
+      border: none;
+      padding: 6px 18px;
+      border-radius: 8px;
+      font-weight: 900;
+      cursor: not-allowed;
+      transition: all 0.2s;
+    }
+    .print-bar button.ready {
+      background: #10b981;
+      cursor: pointer;
+    }
+    .print-bar button.ready:hover {
+      background: #059669;
+    }
+
     .poster {
       width: 100%;
-      max-width: 550px;
+      height: 90%;
+      max-height: 90vh;
+      max-width: 500px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: space-between;
       text-align: center;
-      padding: 40px;
-      border: 1px dashed #d6d3d1;
+      padding: 30px;
+      border: 1.5px dashed #d6d3d1;
       border-radius: 24px;
+      background: #fff;
     }
     .header {
-      margin-bottom: 24px;
+      margin-top: 10px;
     }
     .owner-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.15em;
       color: #78716c;
-      margin-bottom: 8px;
-    }
-    .companion-name {
-      font-size: 32px;
-      font-weight: 900;
-      color: #1c1917;
       margin-bottom: 6px;
     }
+    .companion-name {
+      font-size: 28px;
+      font-weight: 900;
+      color: #1c1917;
+      margin-bottom: 4px;
+    }
     .stage-level {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
       color: #d97706;
     }
     
     .viewer-container {
-      width: 360px;
-      height: 360px;
-      margin: 15px 0;
-      position: relative;
+      flex: 1;
+      width: 100%;
+      max-height: 380px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 15px 0;
     }
     model-viewer {
-      width: 100%;
-      height: 100%;
+      width: 320px;
+      height: 320px;
       --poster-color: transparent;
     }
     
     .footer {
-      margin-top: 24px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
       color: #a8a29e;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       border-top: 1px dashed #f5f5f4;
       width: 100%;
-      padding-top: 20px;
+      padding-top: 16px;
+      margin-bottom: 10px;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding-top: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .poster {
+        border: none;
+        max-height: 100%;
+        padding: 0;
+        height: 100%;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="print-bar no-print">
+    <span id="status-text">🔄 Loading 3D Character model...</span>
+    <button id="print-btn" onclick="window.print()" disabled>Print Poster</button>
+  </div>
+
   <div class="poster">
     <div class="header">
       <div class="owner-label">${activeChild.name}'s Fridge Companion</div>
@@ -337,13 +401,26 @@ export function PrintAssetsModal({
       Quest Sync Companion Poster
     </div>
   </div>
+
   <script>
-    // Delay printing to allow the 3D model to load in the browser frame
-    window.onload = function() {
-      setTimeout(function() {
-        window.print();
-      }, 2000);
-    }
+    const modelViewer = document.querySelector('model-viewer');
+    const printBtn = document.getElementById('print-btn');
+    const statusText = document.getElementById('status-text');
+    
+    modelViewer.addEventListener('load', () => {
+      printBtn.removeAttribute('disabled');
+      printBtn.classList.add('ready');
+      statusText.innerHTML = '✨ 3D Character Ready!';
+    });
+
+    // Fallback in case load event takes too long
+    setTimeout(() => {
+      printBtn.removeAttribute('disabled');
+      printBtn.classList.add('ready');
+      if (statusText.innerHTML.includes('Loading')) {
+        statusText.innerHTML = '✨ Ready to Print';
+      }
+    }, 2500);
   </script>
 </body>
 </html>`;
