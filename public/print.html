@@ -67,8 +67,8 @@
         display: none !important;
       }
       html, body {
-        height: 100% !important;
-        max-height: 100% !important;
+        height: 99% !important;
+        max-height: 99% !important;
         overflow: hidden !important;
         background: white !important;
         margin: 0 !important;
@@ -77,6 +77,8 @@
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       #content-container {
         width: 100% !important;
@@ -87,6 +89,8 @@
         justify-content: center !important;
         margin: 0 !important;
         padding: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .paper-sheet {
         border: none !important;
@@ -95,12 +99,16 @@
         width: 100% !important;
         height: auto !important;
         max-width: 100% !important;
-        max-height: 100% !important;
+        max-height: 99% !important;
         padding: 0 !important;
         border-radius: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       body.coins-page .paper-sheet,
       body.companion-body .paper-sheet {
@@ -118,7 +126,7 @@
       }
       body.wallet-page {
         overflow: hidden !important;
-        height: 100% !important;
+        height: 99% !important;
       }
     }
 
