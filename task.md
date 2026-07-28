@@ -17,11 +17,11 @@ We will build and verify this hybrid board-game experience in **5 distinct phase
 
   - **Testing 🧪:** Verify print layout responsiveness, print preview styling, and verify cut margins.
 
-- `[/]` **Phase 2: Trading Card Rewards & QR Codes**
-  - `[/]` **Phase 2a:** Set up dynamic QR Code generation using a clean inline generator or web API.
-  - `[ ]` **Phase 2b:** Design the printable **Preset Reward Card** template (trading-card layout, coin slots, and custom QR code).
-  - `[ ]` **Phase 2c:** Design the printable **Blank Reward Card** template (write-in title/cost lines, coin slots, and generic `rewardId=blank` QR code).
-  - `[ ]` **Phase 2d:** Add printing buttons for specific rewards in the Rewards list.
+- `[x]` **Phase 2: Trading Card Rewards & QR Codes**
+  - `[x]` **Phase 2a:** Set up dynamic QR Code generation using a clean inline generator or web API.
+  - `[x]` **Phase 2b:** Design the printable **Preset Reward Card** template (trading-card layout, coin slots, and custom QR code).
+  - `[x]` **Phase 2c:** Design the printable **Blank Reward Card** template (write-in title/cost lines, coin slots, and generic `rewardId=blank` QR code).
+  - `[x]` **Phase 2d:** Add printing buttons for specific rewards in the Rewards list.
   - **Testing 🧪:** Print one specific reward and one blank reward, confirming card borders and QR codes display clearly.
 
 - `[ ]` **Phase 3: QR Scanner Integration**
