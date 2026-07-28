@@ -225,226 +225,126 @@ export function PrintAssetsModal({
     } else if (selectedAsset === 'companion' && activeChild) {
       const activeStage = getCharacterStage(activeChild.character_id, activeChild.level);
       const petPack = activeChild.character_id === 'sparky' ? 'Emerald Dragon' : 'Companion';
+      const modelUrl = window.location.origin + activeStage.model_url;
 
       htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Companion Evolution — ${activeChild.name}</title>
+  <title>Fridge Companion — ${activeChild.name}</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    @page { size: portrait; margin: 1cm; }
+    @page { size: portrait; margin: 1.5cm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Nunito', sans-serif;
       background: white;
-      color: #064e3b;
+      color: #292524;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .poster-container {
+    .poster {
       width: 100%;
-      max-width: 650px;
-      height: 900px;
-      border: 12px double #065f46;
-      border-radius: 32px;
-      padding: 40px;
+      max-width: 550px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      position: relative;
-      background: radial-gradient(circle at center, #f0fdf4 0%, #d1fae5 60%, #a7f3d0 100%);
-      box-shadow: inset 0 0 40px rgba(6, 95, 70, 0.15);
-      overflow: hidden;
-    }
-    
-    .corner {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      border: 4px solid #065f46;
-      pointer-events: none;
-    }
-    .corner-tl { top: 16px; left: 16px; border-right: none; border-bottom: none; border-top-left-radius: 12px; }
-    .corner-tr { top: 16px; right: 16px; border-left: none; border-bottom: none; border-top-right-radius: 12px; }
-    .corner-bl { bottom: 16px; left: 16px; border-right: none; border-top: none; border-bottom-left-radius: 12px; }
-    .corner-br { bottom: 16px; right: 16px; border-left: none; border-top: none; border-bottom-right-radius: 12px; }
-
-    .header {
       text-align: center;
-      z-index: 10;
-      margin-top: 10px;
+      padding: 40px;
+      border: 1px dashed #d6d3d1;
+      border-radius: 24px;
     }
-    .pet-owner {
-      font-size: 14px;
-      font-weight: 900;
+    .header {
+      margin-bottom: 24px;
+    }
+    .owner-label {
+      font-size: 12px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: #047857;
+      color: #78716c;
       margin-bottom: 8px;
     }
-    .pet-name {
-      font-family: 'Cinzel', serif;
-      font-size: 38px;
+    .companion-name {
+      font-size: 32px;
       font-weight: 900;
-      color: #064e3b;
-      line-height: 1.1;
-      margin-bottom: 12px;
+      color: #1c1917;
+      margin-bottom: 6px;
     }
-    .stage-badge {
-      display: inline-block;
-      background: #065f46;
-      color: #f0fdf4;
-      padding: 6px 20px;
-      border-radius: 9999px;
-      font-weight: 900;
-      font-size: 13px;
+    .stage-level {
+      font-size: 16px;
+      font-weight: 700;
+      color: #d97706;
+    }
+    
+    .viewer-container {
+      width: 360px;
+      height: 360px;
+      margin: 15px 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      --poster-color: transparent;
+    }
+    
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #a8a29e;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      box-shadow: 0 4px 6px rgba(4, 120, 87, 0.2);
-    }
-
-    .centerpiece {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-    .glow-ring-outer {
-      position: absolute;
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      border: 4px solid #34d399;
-      opacity: 0.4;
-    }
-    .glow-ring-inner {
-      position: absolute;
-      width: 250px;
-      height: 250px;
-      border-radius: 50%;
-      border: 2px dashed #059669;
-      opacity: 0.6;
-    }
-    .pet-circle {
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffffff 30%, #ecfdf5 70%, #a7f3d0 100%);
-      border: 6px solid #065f46;
-      box-shadow: 0 10px 25px rgba(6, 95, 70, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 110px;
-      z-index: 2;
-    }
-
-    .description-block {
-      text-align: center;
-      max-width: 480px;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.4);
-      padding: 20px;
-      border-radius: 20px;
-      border: 1px solid rgba(52, 211, 153, 0.3);
-      backdrop-filter: blur(4px);
-    }
-    .stage-title {
-      font-family: 'Cinzel', serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: #064e3b;
-      margin-bottom: 8px;
-    }
-    .stage-desc {
-      font-size: 14px;
-      line-height: 1.6;
-      color: #065f46;
-      font-weight: 700;
-    }
-
-    .footer-hud {
+      border-top: 1px dashed #f5f5f4;
       width: 100%;
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      z-index: 10;
-      border-top: 2px dashed rgba(6, 95, 70, 0.2);
       padding-top: 20px;
-      margin-bottom: 10px;
-    }
-    .hud-box {
-      flex: 1;
-      background: #065f46;
-      color: #f0fdf4;
-      padding: 12px;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 4px 6px rgba(6, 95, 70, 0.15);
-    }
-    .hud-label {
-      font-size: 10px;
-      text-transform: uppercase;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      opacity: 0.8;
-      margin-bottom: 2px;
-    }
-    .hud-val {
-      font-size: 18px;
-      font-weight: 900;
     }
   </style>
 </head>
 <body>
-  <div class="poster-container">
-    <div class="corner corner-tl"></div>
-    <div class="corner corner-tr"></div>
-    <div class="corner corner-bl"></div>
-    <div class="corner corner-br"></div>
-
+  <div class="poster">
     <div class="header">
-      <div class="pet-owner">${activeChild.name}'s Companion</div>
-      <div class="pet-name">${petPack}</div>
-      <div class="stage-badge">Stage ${activeStage.stage_number} of 5</div>
+      <div class="owner-label">${activeChild.name}'s Fridge Companion</div>
+      <div class="companion-name">${petPack}</div>
+      <div class="stage-level">${activeStage.name} • Level ${activeChild.level}</div>
     </div>
 
-    <div class="centerpiece">
-      <div class="glow-ring-outer"></div>
-      <div class="glow-ring-inner"></div>
-      <div class="pet-circle">
-        ${activeStage.emoji}
-      </div>
+    <div class="viewer-container">
+      <model-viewer
+        src="${modelUrl}"
+        alt="3D Companion Character"
+        auto-rotate
+        camera-controls
+        interaction-prompt="none"
+        shadow-intensity="1.5"
+        shadow-softness="1"
+      ></model-viewer>
     </div>
 
-    <div class="description-block">
-      <div class="stage-title">${activeStage.name}</div>
-      <div class="stage-desc">${activeStage.description}</div>
-    </div>
-
-    <div class="footer-hud">
-      <div class="hud-box">
-        <div class="hud-label">Companion Level</div>
-        <div class="hud-val">Level ${activeChild.level}</div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-label">Energy Type</div>
-        <div class="hud-val">Emerald (Earth)</div>
-      </div>
+    <div class="footer">
+      Quest Sync Companion Poster
     </div>
   </div>
-  <script>window.onload = function() { window.print(); }</script>
+  <script>
+    // Delay printing to allow the 3D model to load in the browser frame
+    window.onload = function() {
+      setTimeout(function() {
+        window.print();
+      }, 2000);
+    }
+  </script>
 </body>
 </html>`;
     } else if (selectedAsset === 'wallet') {
