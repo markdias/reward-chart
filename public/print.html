@@ -517,9 +517,9 @@
     // Dynamically inject page style tag for printing orientation
     const pageStyle = document.createElement('style');
     if (asset === 'wallet') {
-      pageStyle.innerHTML = `@page { size: landscape; margin: 0.5cm; }`;
+      pageStyle.innerHTML = `@page { size: landscape; margin: 0; }`;
     } else {
-      pageStyle.innerHTML = `@page { size: portrait; margin: 1cm; }`;
+      pageStyle.innerHTML = `@page { size: portrait; margin: 0; }`;
     }
     document.head.appendChild(pageStyle);
 
