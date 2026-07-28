@@ -336,10 +336,14 @@ export function PrintAssetsModal({
       justify-content: center;
       margin: 15px 0;
     }
-    model-viewer {
+    model-viewer, #poster-img {
       width: 320px;
       height: 320px;
       --poster-color: transparent;
+    }
+    #poster-img {
+      display: none;
+      object-fit: contain;
     }
     
     .footer {
@@ -369,6 +373,12 @@ export function PrintAssetsModal({
         padding: 0;
         height: 100%;
       }
+      #poster-img {
+        display: block !important;
+      }
+      model-viewer {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -395,6 +405,7 @@ export function PrintAssetsModal({
         shadow-intensity="1.5"
         shadow-softness="1"
       ></model-viewer>
+      <img id="poster-img" alt="Companion Model" />
     </div>
 
     <div class="footer">
@@ -406,21 +417,41 @@ export function PrintAssetsModal({
     const modelViewer = document.querySelector('model-viewer');
     const printBtn = document.getElementById('print-btn');
     const statusText = document.getElementById('status-text');
+    const posterImg = document.getElementById('poster-img');
     
+    function captureFrame() {
+      try {
+        const dataUrl = modelViewer.toDataURL('image/png');
+        if (dataUrl && dataUrl.startsWith('data:image')) {
+          posterImg.src = dataUrl;
+          posterImg.style.display = 'block';
+          modelViewer.style.display = 'none';
+          
+          printBtn.removeAttribute('disabled');
+          printBtn.classList.add('ready');
+          statusText.innerHTML = '✨ 3D Character Ready!';
+        }
+      } catch (e) {
+        console.error("Failed to capture model frame:", e);
+        // Fallback: enable print anyway
+        printBtn.removeAttribute('disabled');
+        printBtn.classList.add('ready');
+        statusText.innerHTML = '✨ Ready to Print';
+      }
+    }
+
     modelViewer.addEventListener('load', () => {
-      printBtn.removeAttribute('disabled');
-      printBtn.classList.add('ready');
-      statusText.innerHTML = '✨ 3D Character Ready!';
+      setTimeout(captureFrame, 1000);
     });
 
-    // Fallback in case load event takes too long
+    // Fallback: enable print button after 3.5 seconds
     setTimeout(() => {
       printBtn.removeAttribute('disabled');
       printBtn.classList.add('ready');
       if (statusText.innerHTML.includes('Loading')) {
         statusText.innerHTML = '✨ Ready to Print';
       }
-    }, 2500);
+    }, 3500);
   </script>
 </body>
 </html>`;
