@@ -516,6 +516,246 @@
       margin-top: 1px;
       text-align: center;
     }
+
+    /* -------------------------------------------------------------------
+       REWARD CARDS STYLES
+       ------------------------------------------------------------------- */
+    body.blank_rewards-page {
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+    body.reward_card-page {
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    @media print {
+      body.blank_rewards-page .paper-sheet {
+        height: auto !important;
+        max-height: none !important;
+        padding: 0.5cm !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      body.blank_rewards-page {
+        overflow: hidden !important;
+        height: 99% !important;
+      }
+      body.reward_card-page .paper-sheet {
+        height: auto !important;
+        max-height: none !important;
+        padding: 1.2cm 1cm !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      body.reward_card-page {
+        overflow: hidden !important;
+        height: 99% !important;
+      }
+    }
+
+    body.blank_rewards-page .paper-sheet {
+      width: 297mm;
+      height: 210mm;
+      padding: 1cm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.reward_card-page .paper-sheet {
+      width: 210mm;
+      height: 297mm;
+      padding: 1.2cm 1cm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward-card-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      width: 100%;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .reward-card-item {
+      width: 63mm;
+      height: 88mm;
+      border: 2px solid #581c87;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      box-shadow: inset 0 0 10px rgba(88, 28, 135, 0.05);
+      outline: 1.5px dashed #c084fc;
+      outline-offset: 4px;
+    }
+
+    .card-header {
+      text-align: center;
+      border-bottom: 1.5px solid #f3e8ff;
+      width: 100%;
+      padding-bottom: 3px;
+    }
+
+    .card-type-label {
+      font-size: 7px;
+      font-weight: 800;
+      color: #a855f7;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: #1e1b4b;
+      margin-top: 1px;
+      text-align: center;
+      line-height: 1.1;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .card-desc {
+      font-size: 8px;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 2px;
+      line-height: 1.2;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .card-slots-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin: 4px 0;
+    }
+
+    .slots-label {
+      font-size: 6px;
+      font-weight: 800;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .slots-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .coin-slot-circle {
+      width: 14mm;
+      height: 14mm;
+      border: 1.5px dashed #fbbf24;
+      border-radius: 50%;
+      background: #fffbeb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .coin-slot-circle::after {
+      content: '';
+      position: absolute;
+      width: 80%;
+      height: 80%;
+      border: 1px dashed rgba(251, 191, 36, 0.3);
+      border-radius: 50%;
+    }
+
+    .slot-val {
+      font-size: 8px;
+      font-weight: 900;
+      color: #d97706;
+    }
+
+    .write-in-title-line {
+      width: 90%;
+      border-bottom: 1px dashed #cbd5e1;
+      height: 14px;
+      margin: 4px 0;
+    }
+
+    .write-in-desc-line {
+      width: 95%;
+      border-bottom: 1px dashed #e2e8f0;
+      height: 10px;
+      margin-top: 3px;
+    }
+
+    .card-footer {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #f3e8ff;
+      padding-top: 4px;
+    }
+
+    .card-qr-wrapper {
+      width: 32px;
+      height: 32px;
+      padding: 1px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-qr {
+      width: 100%;
+      height: 100%;
+    }
+
+    .card-cost-area {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .cost-label {
+      font-size: 6px;
+      font-weight: 800;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+
+    .cost-badge {
+      background: #faf5ff;
+      border: 1px solid #d8b4fe;
+      color: #7e22ce;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -540,7 +780,7 @@
 
     // Dynamically inject page style tag for printing orientation
     const pageStyle = document.createElement('style');
-    if (asset === 'wallet') {
+    if (asset === 'wallet' || asset === 'blank_rewards') {
       pageStyle.innerHTML = `@page { size: landscape; margin: 0; }`;
     } else {
       pageStyle.innerHTML = `@page { size: portrait; margin: 0; }`;
@@ -788,6 +1028,159 @@
       `;
       
       // Auto-trigger printing for wallet
+      setTimeout(() => window.print(), 800);
+    } else if (asset === 'blank_rewards') {
+      document.title = "Quest Sync — Blank Reward Cards";
+      container.className = "blank_rewards-page";
+      document.body.className = "blank_rewards-page";
+
+      let cardsHtml = '';
+      const genericPayload = `questsync://redeem?rewardId=blank`;
+      const genericQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(genericPayload)}`;
+
+      for (let i = 0; i < 8; i++) {
+        const coinSlotsHtml = `
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+        `;
+
+        cardsHtml += `
+          <div class="reward-card-item">
+            <div class="card-header">
+              <div class="card-type-label">Quest Reward</div>
+              <div class="write-in-title-line"></div>
+              <div class="write-in-title-line" style="margin-top: 2px; width: 60%;"></div>
+            </div>
+            
+            <div class="card-desc">
+              <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="write-in-desc-line"></div>
+                <div class="write-in-desc-line"></div>
+              </div>
+            </div>
+            
+            <div class="card-slots-area">
+              <div class="slots-label">Saving Slots</div>
+              <div class="slots-row">
+                ${coinSlotsHtml}
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <div class="card-qr-wrapper">
+                <img class="card-qr" src="${genericQrUrl}" alt="Redeem QR" />
+              </div>
+              <div class="card-cost-area">
+                <div class="cost-label">Cost</div>
+                <div class="cost-badge">___ Coins</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="wallet-instructions no-print">
+          <div>✂️ <strong>Purple dashed outlines:</strong> Cut out the 8 individual trading cards</div>
+          <div>✍️ <strong>Write-in:</strong> Use a pen to write the Reward Title, Description, and Coin Cost</div>
+          <div>🪙 <strong>Coin Slots:</strong> Place physical gold coins in the slots until you reach the cost</div>
+        </div>
+        
+        <div class="paper-sheet">
+          <div class="reward-card-grid">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => window.print(), 800);
+    } else if (asset === 'reward_card') {
+      document.title = "Quest Sync — Reward Card";
+      container.className = "reward_card-page";
+      document.body.className = "reward_card-page";
+
+      const rewardId = params.get('rewardId') || 'blank';
+      const childId = params.get('childId') || '';
+      const title = params.get('title') || 'Write-in Reward';
+      const description = params.get('description') || 'Write a custom description...';
+      const cost = parseInt(params.get('cost') || '0', 10);
+      const childName = params.get('childName') || '';
+
+      const payload = childId 
+        ? `questsync://redeem?rewardId=${rewardId}&childId=${childId}` 
+        : `questsync://redeem?rewardId=${rewardId}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(payload)}`;
+
+      function getCoinSlotsForCost(total) {
+        let remaining = total;
+        const slots = [];
+        const denoms = [50, 20, 10, 5, 1];
+        for (const d of denoms) {
+          while (remaining >= d) {
+            slots.push(d);
+            remaining -= d;
+          }
+        }
+        return slots.slice(0, 6);
+      }
+
+      const coinSlots = getCoinSlotsForCost(cost);
+      let coinSlotsHtml = '';
+      if (coinSlots.length > 0) {
+        coinSlotsHtml = coinSlots.map(val => `
+          <div class="coin-slot-circle">
+            <span class="slot-val">${val}</span>
+          </div>
+        `).join('');
+      } else {
+        coinSlotsHtml = `
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="wallet-instructions no-print">
+          <div>✂️ <strong>Purple dashed outlines:</strong> Cut out the reward card</div>
+          <div>🪙 <strong>Coin Slots:</strong> Place physical gold coins matching the numbers in the slots</div>
+          <div>📱 <strong>Redeem:</strong> Hand the filled card to your parent to scan and claim!</div>
+        </div>
+        
+        <div class="paper-sheet">
+          <div class="reward-card-item" style="transform: scale(1.3); transform-origin: center; margin: 40px auto 0 auto;">
+            <div class="card-header">
+              <div class="card-type-label">${childName ? `${childName}'s Quest` : 'Quest Reward'}</div>
+              <div class="card-title">${title}</div>
+            </div>
+            
+            <div class="card-desc">
+              ${description}
+            </div>
+            
+            <div class="card-slots-area">
+              <div class="slots-label">Required Coins</div>
+              <div class="slots-row">
+                ${coinSlotsHtml}
+              </div>
+            </div>
+            
+            <div class="card-footer">
+              <div class="card-qr-wrapper">
+                <img class="card-qr" src="${qrUrl}" alt="Redeem QR" />
+              </div>
+              <div class="card-cost-area">
+                <div class="cost-label">Cost</div>
+                <div class="cost-badge">${cost} Coins</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
       setTimeout(() => window.print(), 800);
     }
   </script>

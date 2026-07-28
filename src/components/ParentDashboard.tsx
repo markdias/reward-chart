@@ -2580,6 +2580,18 @@ export default function ParentDashboard({
                                     </div>
 
                                     <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+                                      <a
+                                        href={`/print.html?asset=reward_card&rewardId=${reward.id}&title=${encodeURIComponent(reward.title)}&description=${encodeURIComponent(reward.description || '')}&cost=${reward.cost_points}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          playSound.click();
+                                        }}
+                                        className="px-4 py-2 rounded-2xl font-bold text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-all flex items-center gap-2"
+                                      >
+                                        <Printer className="w-4 h-4" /> Print Card
+                                      </a>
                                       <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); openEditReward(reward); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 transition-all flex items-center gap-2">
                                         <Edit2 className="w-4 h-4" /> Edit
                                       </Button>
@@ -2656,6 +2668,18 @@ export default function ParentDashboard({
                                   className="overflow-hidden bg-stone-50 dark:bg-stone-950/50"
                                 >
                                   <div className="p-4 border-t border-stone-100 dark:border-stone-800 flex justify-end gap-2">
+                                    <a
+                                      href={`/print.html?asset=reward_card&rewardId=${reward.id}&childId=${reward.child_id}&title=${encodeURIComponent(reward.title)}&description=${encodeURIComponent(reward.description || '')}&cost=${reward.cost_points}&childName=${encodeURIComponent(assignedName || '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        playSound.click();
+                                      }}
+                                      className="px-4 py-2 rounded-2xl font-bold text-sm text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-all flex items-center gap-2"
+                                    >
+                                      <Printer className="w-4 h-4" /> Print Card
+                                    </a>
                                     <Button variant="none" size="none" onClick={(e) => { e.stopPropagation(); playSound.click(); onDeleteReward(reward.id); }} className="px-4 py-2 rounded-2xl font-bold text-sm text-rose-600 bg-rose-50 hover:bg-rose-100 transition-all flex items-center gap-2">
                                       <MinusCircle className="w-4 h-4" /> Unassign
                                     </Button>
