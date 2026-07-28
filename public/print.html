@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quest Sync — Print Assets</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: white;
+      color: #292524;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    /* Top print control bar (hidden in printout) */
+    .print-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: #1c1917;
+      color: #f5f5f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 9999;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .print-bar button {
+      background: #78716c;
+      color: #fafaf9;
+      border: none;
+      padding: 6px 18px;
+      border-radius: 8px;
+      font-weight: 900;
+      cursor: not-allowed;
+      transition: all 0.2s;
+    }
+    .print-bar button.ready {
+      background: #10b981;
+      cursor: pointer;
+    }
+    .print-bar button.ready:hover {
+      background: #059669;
+    }
+
+    /* Print styling rules */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding-top: 0 !important;
+      }
+    }
+
+    /* -------------------------------------------------------------------
+       COINS LAYOUT
+       ------------------------------------------------------------------- */
+    .coins-page {
+      padding: 1.2cm 1cm;
+    }
+    .coins-header {
+      text-align: center;
+      margin-bottom: 24px;
+      border-bottom: 3px double #e7e5e4;
+      padding-bottom: 12px;
+    }
+    .coins-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #7c2d12;
+    }
+    .coins-subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      color: #78716c;
+      margin-top: 4px;
+    }
+    .coins-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      justify-items: center;
+      align-items: center;
+    }
+    .coin-card {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+    .coin-wrapper {
+      border: 1.5px dashed #a8a29e;
+      border-radius: 50%;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+    }
+    .coin {
+      position: relative;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fef08a 0%, #fbbf24 30%, #f59e0b 70%, #d97706 100%);
+      box-shadow: inset 0 3px 6px rgba(255,255,255,0.6), 0 3px 6px rgba(180, 83, 9, 0.3), 0 0 0 2px #d97706;
+      border: 2px solid #b45309;
+    }
+    .coin-1 { width: 48px; height: 48px; }
+    .coin-5 { width: 54px; height: 54px; }
+    .coin-10 { width: 60px; height: 60px; }
+    .coin-20 { width: 66px; height: 66px; }
+    .coin-50 { width: 72px; height: 72px; }
+
+    .coin-inner {
+      width: 82%;
+      height: 82%;
+      border-radius: 50%;
+      border: 2px dashed rgba(254, 240, 138, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .coin-value {
+      font-size: 16px;
+      font-weight: 900;
+      color: #78350f;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      z-index: 10;
+    }
+    .coin-1 .coin-value { font-size: 14px; }
+    .coin-5 .coin-value { font-size: 17px; }
+    .coin-10 .coin-value { font-size: 20px; }
+    .coin-20 .coin-value { font-size: 22px; }
+    .coin-50 .coin-value { font-size: 24px; }
+
+    .emblem-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50%;
+      height: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .coin-emblem {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* -------------------------------------------------------------------
+       COMPANION LAYOUT
+       ------------------------------------------------------------------- */
+    .companion-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      padding-top: 50px;
+    }
+    .companion-poster {
+      width: 100%;
+      height: 90%;
+      max-height: 90vh;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      padding: 30px;
+      border: 1.5px dashed #d6d3d1;
+      border-radius: 24px;
+      background: #fff;
+    }
+    .companion-header {
+      margin-top: 10px;
+    }
+    .owner-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #78716c;
+      margin-bottom: 6px;
+    }
+    .companion-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: #1c1917;
+      margin-bottom: 4px;
+    }
+    .stage-level {
+      font-size: 14px;
+      font-weight: 700;
+      color: #d97706;
+    }
+    .viewer-container {
+      flex: 1;
+      width: 100%;
+      max-height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 15px 0;
+    }
+    model-viewer, #poster-img {
+      width: 320px;
+      height: 320px;
+      --poster-color: transparent;
+    }
+    #poster-img {
+      display: none;
+      object-fit: contain;
+    }
+    .companion-footer {
+      font-size: 11px;
+      font-weight: 800;
+      color: #a8a29e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-top: 1px dashed #f5f5f4;
+      width: 100%;
+      padding-top: 16px;
+      margin-bottom: 10px;
+    }
+    @media print {
+      .companion-body {
+        padding-top: 0 !important;
+      }
+      .companion-poster {
+        border: none !important;
+        max-height: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+      }
+      #poster-img {
+        display: block !important;
+      }
+      model-viewer {
+        display: none !important;
+      }
+    }
+
+    /* -------------------------------------------------------------------
+       WALLET LAYOUT
+       ------------------------------------------------------------------- */
+    .wallet-page {
+      padding: 10px;
+    }
+    .wallet-instructions {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 10px;
+      text-align: right;
+      color: #78716c;
+    }
+    .wallet-container {
+      display: flex;
+      gap: 30px;
+      height: 100%;
+      align-items: stretch;
+    }
+    .backing-board {
+      width: 320px;
+      border: 8px double #1c1917;
+      border-radius: 20px;
+      padding: 20px;
+      background: #fafaf9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .board-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #7c2d12;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    .board-child {
+      font-size: 11px;
+      font-weight: 800;
+      color: #d97706;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: -12px;
+      margin-bottom: 8px;
+    }
+    .board-slot {
+      width: 100%;
+      height: 72px;
+      border: 2px dashed #d6d3d1;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f4;
+      position: relative;
+    }
+    .board-slot-title {
+      font-size: 12px;
+      font-weight: 900;
+      opacity: 0.35;
+    }
+    .nets-area {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    .net-card {
+      border: 1px dashed #d6d3d1;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fdfbf7;
+      position: relative;
+    }
+    .net-label {
+      position: absolute;
+      top: 5px;
+      left: 8px;
+      font-size: 9px;
+      font-weight: 800;
+      color: #a8a29e;
+      text-transform: uppercase;
+    }
+    .pocket-net {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .pocket-row {
+      display: flex;
+      align-items: center;
+    }
+    .pocket-center {
+      width: 110px;
+      height: 60px;
+      border: 2px solid #292524;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: white;
+      text-align: center;
+      border-radius: 4px;
+      position: relative;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+    .tab {
+      background: #e7e5e4;
+      border: 1px dashed #78716c;
+      font-size: 7px;
+      font-weight: 800;
+      color: #78716c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+    }
+    .tab-left {
+      width: 20px;
+      height: 54px;
+      border-right: none;
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+    }
+    .tab-right {
+      width: 20px;
+      height: 54px;
+      border-left: none;
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+    .tab-bottom {
+      width: 110px;
+      height: 15px;
+      border-top: none;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+    .theme-gold { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+    .theme-savings { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+    .theme-food { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); color: white; }
+    .theme-gifting { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
+    
+    .pocket-qr {
+      width: 44px;
+      height: 44px;
+      background: white;
+      padding: 2px;
+      border-radius: 4px;
+      margin-top: 4px;
+      border: 1px solid #1e3a8a;
+    }
+    .cut-line-desc {
+      font-size: 8px;
+      color: #dc2626;
+      margin-top: 2px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="print-bar no-print">
+    <span id="status-text">✨ Ready to Print</span>
+    <button id="print-btn" onclick="window.print()">Print Poster</button>
+  </div>
+
+  <div id="content-container">
+    <!-- Dynmically loaded content -->
+  </div>
+
+  <script>
+    // 1. Get parameters
+    const params = new URLSearchParams(window.location.search);
+    const asset = params.get('asset');
+    const container = document.getElementById('content-container');
+    const statusText = document.getElementById('status-text');
+    const printBtn = document.getElementById('print-btn');
+
+    // 2. Render view
+    if (asset === 'coins') {
+      document.title = "Quest Sync — Gold Coins Stash";
+      container.className = "coins-page";
+      
+      const coinDefs = [
+        ...Array(12).fill(1),
+        ...Array(8).fill(5),
+        ...Array(6).fill(10),
+        ...Array(6).fill(20),
+        ...Array(4).fill(50)
+      ];
+
+      const getCoinEmblemSvg = (val) => {
+        switch (val) {
+          case 1: return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2" class="coin-emblem"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+          case 5: return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#78350f" class="coin-emblem"><circle cx="9" cy="14" r="2.5"/><circle cx="15" cy="14" r="2.5"/><circle cx="7" cy="9" r="2.5"/><circle cx="17" cy="9" r="2.5"/><path d="M12 11c-2.5 0-4 1.5-4 4 0 2 1.5 3 4 3s4-1 4-3c0-2.5-1.5-4-4-4z"/></svg>`;
+          case 10: return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2" class="coin-emblem"><path d="M6 3h12l4 6-10 12L2 9z"/></svg>`;
+          case 20: return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2" class="coin-emblem"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7z"/></svg>`;
+          case 50: return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#78350f" stroke-width="2" class="coin-emblem"><path d="M22 19V9a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2zM2 13h20M12 7v6"/></svg>`;
+          default: return '';
+        }
+      };
+
+      const coinsHtml = coinDefs.map(value => `
+        <div class="coin-card">
+          <div class="coin-wrapper">
+            <div class="coin coin-${value}">
+              <div class="emblem-wrapper">
+                ${getCoinEmblemSvg(value)}
+              </div>
+              <div class="coin-inner">
+                <span class="coin-value">${value}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="coins-header">
+          <div class="coins-title">Quest Sync — Gold Coins Stash</div>
+          <div class="coins-subtitle">✂️ Cut along the circular dashed lines. Tip: Print on thick cardstock or paper!</div>
+        </div>
+        <div class="coins-grid">
+          ${coinsHtml}
+        </div>
+      `;
+      
+      // Auto-trigger printing for coins
+      setTimeout(() => window.print(), 800);
+
+    } else if (asset === 'companion') {
+      const childName = params.get('childName') || 'Child';
+      const level = params.get('level') || '1';
+      const characterId = params.get('characterId') || 'sparky';
+      const stageName = params.get('stageName') || 'Egg';
+      const modelUrl = params.get('modelUrl');
+      const petPack = characterId === 'sparky' ? 'Emerald Dragon' : 'Companion';
+      const fullModelUrl = window.location.origin + modelUrl;
+
+      document.title = "Fridge Companion — " + childName;
+      document.body.className = "companion-body";
+      statusText.innerHTML = "🔄 Loading 3D Character model...";
+      printBtn.setAttribute('disabled', 'true');
+      printBtn.classList.remove('ready');
+
+      container.innerHTML = `
+        <div class="companion-poster">
+          <div class="companion-header">
+            <div class="owner-label">${childName}'s Fridge Companion</div>
+            <div class="companion-title">${petPack}</div>
+            <div class="stage-level">${stageName} • Level ${level}</div>
+          </div>
+
+          <div class="viewer-container">
+            <model-viewer
+              src="${fullModelUrl}"
+              alt="3D Companion Character"
+              auto-rotate
+              camera-controls
+              interaction-prompt="none"
+              shadow-intensity="1.5"
+              shadow-softness="1"
+            ></model-viewer>
+            <img id="poster-img" alt="Companion Model" />
+          </div>
+
+          <div class="companion-footer">
+            Quest Sync Companion Poster
+          </div>
+        </div>
+      `;
+
+      // Set up canvas image snapshot
+      const modelViewer = document.querySelector('model-viewer');
+      const posterImg = document.getElementById('poster-img');
+
+      function captureFrame() {
+        try {
+          const dataUrl = modelViewer.toDataURL('image/png');
+          if (dataUrl && dataUrl.startsWith('data:image')) {
+            posterImg.src = dataUrl;
+            posterImg.style.display = 'block';
+            modelViewer.style.display = 'none';
+            printBtn.removeAttribute('disabled');
+            printBtn.classList.add('ready');
+            statusText.innerHTML = '✨ 3D Character Ready!';
+          }
+        } catch (e) {
+          console.error("Failed to capture WebGL frame:", e);
+          printBtn.removeAttribute('disabled');
+          printBtn.classList.add('ready');
+          statusText.innerHTML = '✨ Ready to Print';
+        }
+      }
+
+      modelViewer.addEventListener('load', () => {
+        setTimeout(captureFrame, 1000);
+      });
+
+      // Enable print button fallback
+      setTimeout(() => {
+        printBtn.removeAttribute('disabled');
+        printBtn.classList.add('ready');
+        if (statusText.innerHTML.includes('Loading')) {
+          statusText.innerHTML = '✨ Ready to Print';
+        }
+      }, 3500);
+
+    } else if (asset === 'wallet') {
+      const childName = params.get('childName') || 'Child';
+      const childId = params.get('childId') || '';
+      document.title = "Foldable Pots Wallet — " + childName;
+      container.className = "wallet-page";
+      
+      const feedQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('questsync://feed?childId=' + childId)}`;
+
+      container.innerHTML = `
+        <div class="wallet-instructions no-print">
+          <div>🔴 <strong>Dotted lines:</strong> Cut here</div>
+          <div>⚫ <strong>Solid lines:</strong> Fold here</div>
+          <div>🧴 <strong>Grey tabs:</strong> Fold backward & tape to the Board slots</div>
+        </div>
+        
+        <div class="wallet-container">
+          <!-- Left: Fridge Board -->
+          <div class="backing-board">
+            <div class="board-title">Quest Pots Wallet</div>
+            <div class="board-child">${childName}'s Fridge Board</div>
+            
+            <div class="board-slot">
+              <span class="board-slot-title" style="color: #d97706">🟡 Spending Pot Slot</span>
+            </div>
+            <div class="board-slot">
+              <span class="board-slot-title" style="color: #059669">🟢 Savings Pot Slot</span>
+            </div>
+            <div class="board-slot">
+              <span class="board-slot-title" style="color: #2563eb">🔵 Feeding Pot Slot</span>
+            </div>
+            <div class="board-slot">
+              <span class="board-slot-title" style="color: #db2777">🔴 Gifting Pot Slot</span>
+            </div>
+          </div>
+
+          <!-- Right: Pocket Nets -->
+          <div class="nets-area">
+            <div class="net-card">
+              <span class="net-label">1. Spending Pot Net</span>
+              <div class="pocket-net">
+                <div class="pocket-row">
+                  <div class="tab tab-left">Glue</div>
+                  <div class="pocket-center theme-gold">
+                    <span>🟡 Spending</span>
+                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gold Pot</span>
+                  </div>
+                  <div class="tab tab-right">Glue</div>
+                </div>
+                <div class="tab tab-bottom">Glue / Tape Tab</div>
+                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+              </div>
+            </div>
+
+            <div class="net-card">
+              <span class="net-label">2. Savings Pot Net</span>
+              <div class="pocket-net">
+                <div class="pocket-row">
+                  <div class="tab tab-left">Glue</div>
+                  <div class="pocket-center theme-savings">
+                    <span>🟢 Saving</span>
+                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Savings Pot</span>
+                  </div>
+                  <div class="tab tab-right">Glue</div>
+                </div>
+                <div class="tab tab-bottom">Glue / Tape Tab</div>
+                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+              </div>
+            </div>
+
+            <div class="net-card">
+              <span class="net-label">3. Feeding Pot Net</span>
+              <div class="pocket-net">
+                <div class="pocket-row">
+                  <div class="tab tab-left">Glue</div>
+                  <div class="pocket-center theme-food">
+                    <span>🔵 Feeding Pot</span>
+                    <img class="pocket-qr" src="${feedQrUrl}" alt="Feed QR" />
+                  </div>
+                  <div class="tab tab-right">Glue</div>
+                </div>
+                <div class="tab tab-bottom">Glue / Tape Tab</div>
+                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+              </div>
+            </div>
+
+            <div class="net-card">
+              <span class="net-label">4. Gifting Pot Net</span>
+              <div class="pocket-net">
+                <div class="pocket-row">
+                  <div class="tab tab-left">Glue</div>
+                  <div class="pocket-center theme-gifting">
+                    <span>🔴 Giving</span>
+                    <span style="font-size: 8px; font-weight: normal; opacity: 0.9;">Gifting Pot</span>
+                  </div>
+                  <div class="tab tab-right">Glue</div>
+                </div>
+                <div class="tab tab-bottom">Glue / Tape Tab</div>
+                <span class="cut-line-desc">✂️ Cut outer red dotted boundary</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Auto-trigger printing for wallet
+      setTimeout(() => window.print(), 800);
+    }
+  </script>
+</body>
+</html>
