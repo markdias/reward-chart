@@ -41,24 +41,14 @@ export default function PaperChartsTab({
 }: PaperChartsTabProps) {
   // Modal states
   const [showPrintTaskModal, setShowPrintTaskModal] = useState(false);
-  const [showScanTaskModal, setShowScanTaskModal] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
   const [showPrintRewardModal, setShowPrintRewardModal] = useState(false);
-  const [showScanRewardModal, setShowScanRewardModal] = useState(false);
   const [showPrintAssetsModal, setShowPrintAssetsModal] = useState(false);
 
   const handleScanChart = () => {
     playSound.click();
     if (isPro) {
-      setShowScanTaskModal(true);
-    } else {
-      onOpenPaywall('scan-chart');
-    }
-  };
-
-  const handleScanRewards = () => {
-    playSound.click();
-    if (isPro) {
-      setShowScanRewardModal(true);
+      setShowScanModal(true);
     } else {
       onOpenPaywall('scan-chart');
     }
@@ -176,27 +166,10 @@ export default function PaperChartsTab({
               </div>
               <div className="text-left flex-1">
                 <div className="font-bold text-sm text-sky-900 dark:text-sky-100 flex items-center gap-2">
-                  Scan Completed Chart
+                  Open Camera Scanner
                   {!isPro && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-black bg-amber-100 text-amber-700 rounded-full">PRO</span>}
                 </div>
-                <div className="text-xs text-sky-650/80 dark:text-sky-400/80 font-normal font-sans">Use AI to automatically verify completed chores</div>
-              </div>
-            </Button>
-
-            <Button 
-              variant="secondary" 
-              className="w-full flex justify-start items-center gap-3 p-4 bg-purple-50/50 hover:bg-purple-100/50 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 border-transparent hover:border-purple-100 dark:hover:border-purple-800 transition-all"
-              onClick={handleScanRewards}
-            >
-              <div className="p-2 bg-white dark:bg-stone-900 rounded-lg shadow-xs">
-                <Camera className="w-4 h-4 text-purple-650 dark:text-purple-400" />
-              </div>
-              <div className="text-left flex-1">
-                <div className="font-bold text-sm text-purple-900 dark:text-purple-100 flex items-center gap-2">
-                  Scan Claimed Rewards
-                  {!isPro && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-black bg-amber-100 text-amber-700 rounded-full">PRO</span>}
-                </div>
-                <div className="text-xs text-purple-650/80 dark:text-purple-400/80 font-normal font-sans">Scan QR codes on trading cards or wallet pots</div>
+                <div className="text-xs text-sky-650/85 dark:text-sky-400/85 font-normal font-sans">Scan completed chore charts or redeem reward QR codes</div>
               </div>
             </Button>
           </div>
@@ -213,10 +186,10 @@ export default function PaperChartsTab({
         childrenList={children}
       />
       
-      {showScanTaskModal && (
+      {showScanModal && (
         <ScanChartModal
-          isOpen={showScanTaskModal}
-          onClose={() => setShowScanTaskModal(false)}
+          isOpen={showScanModal}
+          onClose={() => setShowScanModal(false)}
           children={children}
           tasks={tasks}
           completions={completions}
@@ -234,22 +207,6 @@ export default function PaperChartsTab({
           onClose={() => setShowPrintRewardModal(false)}
           childrenList={children}
           rewards={rewards}
-        />
-      )}
-
-      {showScanRewardModal && (
-        <ScanChartModal
-          isOpen={showScanRewardModal}
-          onClose={() => setShowScanRewardModal(false)}
-          children={children}
-          tasks={tasks}
-          completions={completions}
-          rewards={rewards}
-          onParentCompleteTask={onParentCompleteTask}
-          onParentCompleteTasks={onParentCompleteTasks}
-          onParentRedeemRewards={onParentRedeemRewards}
-          onFeedPet={onFeedPet}
-          initialMode="reward"
         />
       )}
 
