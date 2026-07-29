@@ -134,8 +134,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
     let stream: MediaStream | null = null;
 
     async function startCamera() {
-      if (scanMode !== 'reward' || step !== 1 || !isOpen) {
-        setCameraActive(false);
+      if (scanMode !== 'reward' || step !== 1 || !isOpen || !cameraActive) {
         return;
       }
       try {
@@ -145,7 +144,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setCameraActive(true);
+          videoRef.current.play().catch(e => console.warn('Webcam playback failed:', e));
         }
       } catch (err) {
         console.warn('Camera access denied or not available:', err);
@@ -161,7 +160,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [scanMode, step, isOpen]);
+  }, [scanMode, step, isOpen, cameraActive]);
 
   // Video scanning animation frame loop
   useEffect(() => {
@@ -936,6 +935,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
                           className="w-full bg-black object-cover max-h-64 scale-x-[-1]"
                           autoPlay
                           playsInline
+                          muted
                         />
                         {/* Overlay scan target frame */}
                         <div className="absolute inset-0 flex items-center justify-center">
