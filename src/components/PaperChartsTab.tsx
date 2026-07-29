@@ -24,6 +24,7 @@ interface PaperChartsTabProps {
   onParentCompleteTask: (taskId: string, childId: string, dateIso: string) => void;
   onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
   onParentRedeemRewards: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
+  onFeedPet?: (childId: string) => Promise<void>;
 }
 
 export default function PaperChartsTab({
@@ -36,7 +37,8 @@ export default function PaperChartsTab({
   onOpenPaywall,
   onParentCompleteTask,
   onParentCompleteTasks,
-  onParentRedeemRewards
+  onParentRedeemRewards,
+  onFeedPet
 }: PaperChartsTabProps) {
   // Modal states
   const [showPrintTaskModal, setShowPrintTaskModal] = useState(false);
@@ -230,8 +232,11 @@ export default function PaperChartsTab({
           children={children}
           tasks={tasks}
           completions={completions}
+          rewards={rewards}
           onParentCompleteTask={onParentCompleteTask}
           onParentCompleteTasks={onParentCompleteTasks}
+          onParentRedeemRewards={onParentRedeemRewards}
+          onFeedPet={onFeedPet}
         />
       )}
 

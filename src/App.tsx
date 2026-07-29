@@ -2682,7 +2682,7 @@ updateChildInSupabase(targetChild);
             <ParentDashboard
               onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
-              initialTab={initialParentTab}
+              initialTab={initialParentTab as any}
               initialSubTab={initialParentSubTab}
               children={children}
               tasks={tasks}
@@ -2708,6 +2708,8 @@ updateChildInSupabase(targetChild);
               onDeleteReward={handleDeleteReward}
               onParentCompleteTask={handleParentCompleteTask}
               onParentCompleteTasks={handleParentCompleteTasks}
+              onParentRedeemRewards={handleParentRedeemRewards}
+              onFeedPet={handleFeedPet}
               onApproveCompletion={handleApproveCompletion}
               onRejectCompletion={handleRejectCompletion}
               onDeliverReward={handleDeliverReward}

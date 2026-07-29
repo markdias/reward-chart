@@ -105,6 +105,7 @@ interface ParentDashboardProps {
   onParentCompleteTask: (taskId: string, childId: string, dateIso?: string) => void;
   onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
   onParentRedeemRewards?: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
+  onFeedPet?: (childId: string) => Promise<void>;
   giftingRequests: GiftingRequest[];
   onApproveGiftingRequest: (id: string) => void;
   onRejectGiftingRequest: (id: string) => void;
@@ -154,6 +155,7 @@ export default function ParentDashboard({
   onParentCompleteTask,
   onParentCompleteTasks,
   onParentRedeemRewards,
+  onFeedPet,
   parentProfile,
   linkedParents = [],
   onResetData,
@@ -190,6 +192,7 @@ export default function ParentDashboard({
   const [runTour, setRunTour] = useState(false);
   const [tourStepIndex, setTourStepIndex] = useState(0);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
 
   useEffect(() => {
@@ -2783,6 +2786,7 @@ export default function ParentDashboard({
                   onParentCompleteTask={onParentCompleteTask}
                   onParentCompleteTasks={onParentCompleteTasks}
                   onParentRedeemRewards={onParentRedeemRewards || (() => {})}
+                  onFeedPet={onFeedPet}
                 />
               </motion.div>
             )}
@@ -3940,7 +3944,20 @@ export default function ParentDashboard({
         )}
       </AnimatePresence>
 
-
+      {showScanModal && (
+        <ScanChartModal
+          isOpen={showScanModal}
+          onClose={() => setShowScanModal(false)}
+          children={children}
+          tasks={tasks}
+          completions={completions}
+          rewards={rewards}
+          onParentCompleteTask={onParentCompleteTask}
+          onParentCompleteTasks={onParentCompleteTasks}
+          onParentRedeemRewards={onParentRedeemRewards || (() => {})}
+          onFeedPet={onFeedPet}
+        />
+      )}
 
     </div>
   );
