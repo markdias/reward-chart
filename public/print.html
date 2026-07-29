@@ -1097,6 +1097,153 @@
       `;
 
       setTimeout(() => window.print(), 800);
+    } else if (asset === 'assigned_rewards') {
+      const childId = params.get('childId') || '';
+      const childName = params.get('childName') || 'Child';
+      document.title = `Quest Sync — ${childName}'s Reward Cards`;
+      container.className = "blank_rewards-page";
+      document.body.className = "blank_rewards-page";
+
+      let rawRewards = [];
+      try {
+        rawRewards = JSON.parse(params.get('rewards') || '[]');
+      } catch (e) {
+        console.error('Failed to parse rewards:', e);
+      }
+
+      function getCoinSlotsForCost(total) {
+        let remaining = total;
+        const slots = [];
+        const denoms = [50, 20, 10, 5, 1];
+        for (const d of denoms) {
+          while (remaining >= d) {
+            slots.push(d);
+            remaining -= d;
+          }
+        }
+        return slots.slice(0, 6);
+      }
+
+      let cardsHtml = '';
+      for (let i = 0; i < 8; i++) {
+        if (i < rawRewards.length) {
+          const reward = rawRewards[i];
+          const payload = childId 
+            ? `questsync://redeem?rewardId=${reward.id}&childId=${childId}` 
+            : `questsync://redeem?rewardId=${reward.id}`;
+          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(payload)}`;
+          
+          const coinSlots = getCoinSlotsForCost(reward.cost);
+          let coinSlotsHtml = '';
+          if (coinSlots.length > 0) {
+            coinSlotsHtml = coinSlots.map(val => `
+              <div class="coin-slot-circle">
+                <span class="slot-val">${val}</span>
+              </div>
+            `).join('');
+          } else {
+            coinSlotsHtml = `
+              <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+              <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+              <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+            `;
+          }
+
+          cardsHtml += `
+            <div class="reward-card-item">
+              <div class="card-header">
+                <div class="card-type-label">${childName}'s Reward</div>
+                <div class="card-title-text" style="font-size: 13px; font-weight: 900; color: #1c1917; margin-top: 6px; line-height: 1.2;">
+                  ${reward.title}
+                </div>
+              </div>
+              
+              <div class="card-desc">
+                <div style="font-size: 10px; color: #6b7280; text-align: center; font-weight: 700; margin-top: 4px; padding: 0 4px; line-height: 1.3;">
+                  Deposit physical gold coins matching the coin slots to claim this reward!
+                </div>
+              </div>
+              
+              <div class="card-slots-area">
+                <div class="slots-label">Coin Slots</div>
+                <div class="slots-row">
+                  ${coinSlotsHtml}
+                </div>
+              </div>
+              
+              <div class="card-footer">
+                <div class="card-qr-wrapper">
+                  <img class="card-qr" src="${qrUrl}" alt="Redeem QR" />
+                </div>
+                <div class="card-cost-area">
+                  <div class="cost-label">Cost</div>
+                  <div class="cost-badge">${reward.cost} Coins</div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          const genericPayload = `questsync://redeem?rewardId=blank`;
+          const genericQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(genericPayload)}`;
+          const coinSlotsHtml = `
+            <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+            <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+            <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+            <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+            <div class="coin-slot-circle"><span class="slot-val">Coin</span></div>
+          `;
+
+          cardsHtml += `
+            <div class="reward-card-item">
+              <div class="card-header">
+                <div class="card-type-label">Write-in Reward</div>
+                <div class="write-in-title-line"></div>
+                <div class="write-in-title-line" style="margin-top: 2px; width: 60%;"></div>
+              </div>
+              
+              <div class="card-desc">
+                <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                  <div class="write-in-desc-line"></div>
+                  <div class="write-in-desc-line"></div>
+                </div>
+              </div>
+              
+              <div class="card-slots-area">
+                <div class="slots-label">Saving Slots</div>
+                <div class="slots-row">
+                  ${coinSlotsHtml}
+                </div>
+              </div>
+              
+              <div class="card-footer">
+                <div class="card-qr-wrapper">
+                  <img class="card-qr" src="${genericQrUrl}" alt="Redeem QR" />
+                </div>
+                <div class="card-cost-area">
+                  <div class="cost-label">Cost</div>
+                  <div class="cost-badge">___ Coins</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      container.innerHTML = `
+        <div class="wallet-instructions no-print">
+          <div>✂️ <strong>Purple dashed outlines:</strong> Cut out the 8 reward cards</div>
+          <div>🪙 <strong>Coin Slots:</strong> Place physical gold coins in the slots until you reach the cost</div>
+          <div>📱 <strong>Scan to Redeem:</strong> Have a parent scan the QR code to deduct coins digitally</div>
+        </div>
+        
+        <div class="paper-sheet">
+          <div class="reward-card-grid">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => window.print(), 800);
     } else if (asset === 'reward_card') {
       document.title = "Quest Sync — Reward Card";
       container.className = "reward_card-page";

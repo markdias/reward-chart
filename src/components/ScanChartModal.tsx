@@ -24,6 +24,7 @@ interface ScanChartModalProps {
   onParentRedeemRewards: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
   onFeedPet?: (childId: string) => Promise<void>;
   completions?: TaskCompletion[];
+  initialMode?: 'chart' | 'reward';
 }
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -76,6 +77,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   onParentRedeemRewards,
   onFeedPet,
   completions = [],
+  initialMode,
 }) => {
   // Modal Steps & Chore Scan States
   const [step, setStep] = useState<Step>(1);
@@ -91,7 +93,13 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // QR Scan Mode States
-  const [scanMode, setScanMode] = useState<'chart' | 'reward'>('chart');
+  const [scanMode, setScanMode] = useState<'chart' | 'reward'>(initialMode || 'chart');
+
+  useEffect(() => {
+    if (isOpen) {
+      setScanMode(initialMode || 'chart');
+    }
+  }, [isOpen, initialMode]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null);
@@ -566,7 +574,7 @@ export const ScanChartModal: React.FC<ScanChartModalProps> = ({
       setDetections([]);
       setProcessingError(null);
       setWeekOffset(0);
-      setScanMode('chart');
+      setScanMode(initialMode || 'chart');
       setCameraActive(false);
       setCameraPermissionError(null);
       setScannedPayload(null);

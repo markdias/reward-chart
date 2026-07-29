@@ -52,118 +52,14 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
     // Filter active rewards for this child
     const childRewards = rewards.filter(r => r.child_id === activeChild.id && r.is_available && !r.is_template);
 
-    const monday = getMondayOfWeek(weekOffset);
-    const printDays: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      d.setHours(12, 0, 0, 0);
-      printDays.push(d);
-    }
+    const serializedRewards = childRewards.map(r => ({
+      id: r.id,
+      title: r.title,
+      cost: r.cost_points
+    }));
 
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const todayStr = formatDateKey(new Date());
-
-    const hollowStar = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-
-    const colHeaders = dayNames
-      .map((day, i) => {
-        const date = printDays[i];
-        const dateStr = formatDateKey(date);
-        const isToday = dateStr === todayStr;
-        return `<th style="text-align:center;padding:12px 4px;font-size:12px;color:${isToday ? '#7c3aed' : '#4b5563'};font-weight:900;min-width:56px;">
-          ${day}<br/><span style="font-size:11px;font-weight:700">${date.getDate()}</span>
-        </th>`;
-      }).join('');
-
-    const rewardRows = childRewards.map((reward, index) => {
-      const cells = printDays.map(() => {
-        return `<td style="text-align:center;padding:8px 3px;border-left:1px dashed #e7e5e4;">${hollowStar}</td>`;
-      }).join('');
-      const bg = index % 2 === 0 ? '#ffffff' : '#faf5ff';
-      return `<tr style="background:${bg};border-bottom:1px solid #f5f5f4;">
-        <td style="padding:10px 14px;font-size:14px;font-weight:800;color:#1c1917;min-width:140px;max-width:180px;white-space:normal;word-break:break-word;">
-          <span style="display:inline-flex;align-items:center;justify-content:center;background:#f0fdf4;color:#10b981;font-size:10px;font-weight:800;width:24px;height:24px;border:2px solid #34d399;border-radius:50%;margin-bottom:6px;">${reward.cost_points}</span><br/>
-          ${reward.title}
-        </td>
-        ${cells}
-      </tr>`;
-    }).join('');
-
-    const noRewardsRow = childRewards.length === 0
-      ? `<tr><td colspan="${printDays.length + 1}" style="text-align:center;padding:32px;color:#a8a29e;font-size:13px;">No active rewards assigned to this child.</td></tr>`
-      : '';
-
-    const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${activeChild.name}'s Rewards Chart</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    @page { size: 297mm 210mm; margin: 1.2cm 1cm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #1c1917; }
-    .header { 
-      display: flex; align-items: center; justify-content: space-between; 
-      padding: 16px 24px; 
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-radius: 16px;
-      margin-bottom: 20px; 
-      color: white;
-    }
-    .header-title { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
-    .header-sub { font-size: 13px; font-weight: 700; opacity: 0.9; margin-top: 4px; }
-    
-    .table-container {
-      border-radius: 16px;
-      overflow: hidden;
-      border: 2px solid #e7e5e4;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #f3f4f6; border-bottom: 2px solid #e7e5e4; }
-    th:first-child { text-align: left; padding: 12px 14px; font-size: 13px; color: #4b5563; font-weight: 900; text-transform: uppercase; }
-    tbody tr:last-child { border-bottom: none; }
-    
-    .footer { margin-top: 24px; font-size: 13px; color: #6b7280; font-weight: 700; }
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <div class="header-title">${activeChild.name}'s Rewards Chart</div>
-      <div class="header-sub">${printDays[0].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${printDays[printDays.length - 1].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
-    </div>
-  </div>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="text-align:left;padding:12px 14px;font-size:12px;color:#4b5563;font-weight:900;text-transform:uppercase;">Reward</th>
-          ${colHeaders}
-        </tr>
-      </thead>
-      <tbody>
-        ${rewardRows}${noRewardsRow}
-      </tbody>
-    </table>
-  </div>
-  <div class="footer">
-    🎨 Colour in a star when you claim a reward! &nbsp; Ask a grown-up to scan this chart to deduct coins.
-  </div>
-  <script>window.onload = function() { window.print(); }<\/script>
-</body>
-</html>`;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-    }
+    const url = `/print.html?asset=assigned_rewards&childId=${activeChild.id}&childName=${encodeURIComponent(activeChild.name)}&rewards=${encodeURIComponent(JSON.stringify(serializedRewards))}`;
+    window.open(url, '_blank');
     onClose();
   };
 
@@ -199,7 +95,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                   </div>
                   <div>
                     <Typography variant="h2" className="text-base font-black">
-                      Print Reward Chart
+                      Print Reward Cards
                     </Typography>
                     <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                       {step === 1 ? 'Choose child' : 'Print preview'}
@@ -230,7 +126,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                 {/* Step 1: Choose Child */}
                 {step === 1 && (
                   <div className="space-y-4 pt-1">
-                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which child is this chart for?</p>
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-300">Which child are these cards for?</p>
                     <div className="grid grid-cols-2 gap-3">
                       {childrenList.map(child => (
                         <button
@@ -255,72 +151,32 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                 {step === 2 && (
                   <div className="space-y-4 pt-1">
                     <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
-                      Chart Preview
+                      Cards Preview
                     </Typography>
 
-                    {/* Miniature Printed Chart Layout Mockup */}
-                    <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 shadow-sm space-y-3 font-sans overflow-hidden">
-                      {/* Emerald Header Bar */}
-                      <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white rounded-xl p-3 flex justify-between items-center shadow-sm">
-                        <div>
-                          <div className="text-[10px] font-black uppercase tracking-wider">
-                            {activeChild?.name}'s Reward Chart
+                    {/* Miniature Printed Cards Grid Mockup */}
+                    <div className="bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-800 rounded-2xl p-4 shadow-inner grid grid-cols-3 gap-2">
+                      {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).slice(0, 3).map((reward) => (
+                        <div key={reward.id} className="bg-white dark:bg-stone-900 border border-stone-250 dark:border-stone-800 rounded-lg p-2 flex flex-col justify-between text-center aspect-[3/4.2] shadow-sm select-none">
+                          <div className="text-[7px] text-stone-400 font-extrabold uppercase truncate">{activeChild?.name}'s Reward</div>
+                          <div className="text-[8px] font-black text-stone-800 dark:text-stone-100 line-clamp-2 mt-1 leading-tight">{reward.title}</div>
+                          <div className="w-6 h-6 bg-stone-100 dark:bg-stone-800 mx-auto rounded border border-stone-200/50 flex items-center justify-center my-1.5">
+                            <span className="text-[6px] text-stone-400">QR</span>
                           </div>
-                          <div className="text-[8px] font-bold opacity-80 mt-0.5">
-                            {formatWeekRange(getMondayOfWeek(weekOffset))}
+                          <div className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 py-0.5 rounded border border-emerald-100/50">
+                            {reward.cost_points} Coins
                           </div>
                         </div>
-                        <div className="text-[8px] font-black uppercase bg-white/20 px-2.5 py-0.5 rounded-full tracking-wider">
-                          Quest Sync
+                      ))}
+                      {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length === 0 && (
+                        <div className="col-span-3 py-6 text-center text-stone-400 dark:text-stone-500 font-medium text-xs">
+                          No active rewards assigned.
                         </div>
-                      </div>
-
-                      {/* Mini Table Grid */}
-                      <div className="border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden text-[9px]">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-stone-50 dark:bg-stone-800/50 border-b border-stone-200 dark:border-stone-800">
-                              <th className="text-left p-1.5 font-black text-stone-500">Reward</th>
-                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                                <th key={i} className="text-center p-1.5 font-black text-stone-500 w-5">{day}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).slice(0, 3).map((reward, idx) => (
-                              <tr key={reward.id} className="border-b border-stone-100 dark:border-stone-800/40 last:border-none">
-                                <td className="p-1.5 font-bold text-stone-700 dark:text-stone-300 truncate max-w-[120px]">
-                                  <span className="inline-flex items-center justify-center bg-emerald-50 text-emerald-600 text-[7px] font-extrabold w-4.5 h-4.5 rounded-full border border-emerald-200 mr-1">{reward.cost_points}</span>
-                                  {reward.title}
-                                </td>
-                                {Array.from({ length: 7 }).map((_, i) => (
-                                  <td key={i} className="text-center p-1.5">
-                                    <span className="text-stone-300 dark:text-stone-700 font-bold text-[8px]">☆</span>
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length > 3 && (
-                              <tr>
-                                <td colSpan={8} className="p-1.5 text-center text-stone-400 dark:text-stone-500 text-[8px] font-bold bg-stone-50/50 dark:bg-stone-800/20">
-                                  + {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length - 3} more rewards included
-                                </td>
-                              </tr>
-                            )}
-                            {rewards.filter(r => r.child_id === activeChild?.id && r.is_available && !r.is_template).length === 0 && (
-                              <tr>
-                                <td colSpan={8} className="p-3 text-center text-stone-400 dark:text-stone-500 font-medium">
-                                  No active rewards assigned.
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                      )}
                     </div>
 
                     <p className="text-xs text-stone-500 dark:text-stone-400 font-medium leading-relaxed">
-                      Prints a full 7-day landscape grid (Mon–Sun) of all available rewards and their coin costs for {activeChild?.name}.
+                      Prints a sheet of trading cards for all active assigned rewards for {activeChild?.name}. Includes dynamic coin slots, cut guidelines, and custom QR codes.
                     </p>
                   </div>
                 )}
@@ -359,7 +215,7 @@ export function PrintRewardsChartModal({ isOpen, onClose, childrenList, rewards 
                     onClick={handlePrint}
                     className="flex-1 justify-center"
                   >
-                    <Printer className="w-4 h-4" /> Print Chart
+                    <Printer className="w-4 h-4" /> Print Cards
                   </Button>
                 )}
               </div>

@@ -24,17 +24,17 @@ We will build and verify this hybrid board-game experience in **5 distinct phase
   - `[x]` **Phase 2d:** Add printing buttons for specific rewards in the Rewards list.
   - **Testing 🧪:** Print one specific reward and one blank reward, confirming card borders and QR codes display clearly.
 
-- `[ ]` **Phase 3: QR Scanner Integration**
-  - `[ ]` **Phase 3a:** Implement the toggle switcher header in `ScanChartModal` (**[Scan Chore Chart]** vs. **[Redeem Reward Card]**).
-  - `[ ]` **Phase 3b:** Add a canvas-based QR-code scanning parser that reads video/image stream frames.
-  - `[ ]` **Phase 3c:** Connect camera inputs and permissions for the new QR mode.
+- `[x]` **Phase 3: QR Scanner Integration**
+  - `[x]` **Phase 3a:** Implement the toggle switcher header in `ScanChartModal` (**[Scan Chore Chart]** vs. **[Redeem Reward Card]**).
+  - `[x]` **Phase 3b:** Add a canvas-based QR-code scanning parser that reads video/image stream frames.
+  - `[x]` **Phase 3c:** Connect camera inputs and permissions for the new QR mode.
   - **Testing 🧪:** Toggle scanner to reward mode, verify camera starts, and confirm it decodes QR codes from screen or paper.
 
-- `[ ]` **Phase 4: Redemption Logic & Balance Verification**
-  - `[ ]` **Phase 4a:** Implement balance verification checks in database and state (insufficient balance handling).
-  - `[ ]` **Phase 4b:** Create the **Write-in Reward Form** popup in `ScanChartModal` for `rewardId=blank` scans.
-  - `[ ]` **Phase 4c:** Connect Supabase database mutations (deduct child coins, log `RewardRedemption`).
-  - `[ ]` **Phase 4d:** Add success sound triggers and overlay celebrations (confetti).
+- `[x]` **Phase 4: Redemption Logic & Balance Verification**
+  - `[x]` **Phase 4a:** Implement balance verification checks in database and state (insufficient balance handling).
+  - `[x]` **Phase 4b:** Create the **Write-in Reward Form** popup in `ScanChartModal` for `rewardId=blank` scans.
+  - `[x]` **Phase 4c:** Connect Supabase database mutations (deduct child coins, log `RewardRedemption`).
+  - `[x]` **Phase 4d:** Add success sound triggers and overlay celebrations (confetti).
   - **Testing 🧪:** Scan a blank card (verify form prompts), scan with sufficient coins (verify points subtracted), scan with insufficient coins (verify error).
 
 - `[ ]` **Phase 5: Starter Pack Signpost & Polish**

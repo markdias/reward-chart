@@ -10,7 +10,6 @@ import { Camera, Printer, CheckCircle2, Gift, Coins } from 'lucide-react';
 import { PrintTaskChartModal } from './PrintTaskChartModal';
 import { ScanChartModal } from './ScanChartModal';
 import { PrintRewardsChartModal } from './PrintRewardsChartModal';
-import { ScanRewardsChartModal } from './ScanRewardsChartModal';
 import { PrintAssetsModal } from './PrintAssetsModal';
 
 interface PaperChartsTabProps {
@@ -51,6 +50,15 @@ export default function PaperChartsTab({
     playSound.click();
     if (isPro) {
       setShowScanTaskModal(true);
+    } else {
+      onOpenPaywall('scan-chart');
+    }
+  };
+
+  const handleScanRewards = () => {
+    playSound.click();
+    if (isPro) {
+      setShowScanRewardModal(true);
     } else {
       onOpenPaywall('scan-chart');
     }
@@ -138,7 +146,7 @@ export default function PaperChartsTab({
             </div>
             <div>
               <Typography variant="h3" className="font-bold text-stone-900 dark:text-stone-100">
-                Reward Charts
+                Reward Cards
               </Typography>
               <Typography variant="body" className="text-xs text-stone-500 dark:text-stone-400">
                 Track points towards assigned prizes
@@ -156,15 +164,15 @@ export default function PaperChartsTab({
                 <Printer className="w-4 h-4 text-stone-600 dark:text-stone-300" />
               </div>
               <div className="text-left flex-1">
-                <div className="font-bold text-sm text-stone-800 dark:text-stone-200">Print Reward Chart</div>
-                <div className="text-xs text-stone-500 dark:text-stone-400 font-normal">Print a grid of active rewards</div>
+                <div className="font-bold text-sm text-stone-800 dark:text-stone-200">Print Reward Cards</div>
+                <div className="text-xs text-stone-500 dark:text-stone-400 font-normal">Print a sheet of trading cards</div>
               </div>
             </Button>
 
             <Button 
               variant="secondary" 
               className="w-full flex justify-start items-center gap-3 p-4 bg-purple-50/50 hover:bg-purple-100/50 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 border-transparent hover:border-purple-100 dark:hover:border-purple-800 transition-all"
-              onClick={() => { playSound.click(); setShowScanRewardModal(true); }}
+              onClick={handleScanRewards}
             >
               <div className="p-2 bg-white dark:bg-stone-900 rounded-lg shadow-xs">
                 <Camera className="w-4 h-4 text-purple-600 dark:text-purple-400" />
@@ -173,7 +181,7 @@ export default function PaperChartsTab({
                 <div className="font-bold text-sm text-purple-900 dark:text-purple-100">
                   Scan Claimed Rewards
                 </div>
-                <div className="text-xs text-purple-600/70 dark:text-purple-400/70 font-normal">Deduct coins for redeemed rewards</div>
+                <div className="text-xs text-purple-600/70 dark:text-purple-400/70 font-normal font-sans">Deduct coins for redeemed rewards</div>
               </div>
             </Button>
           </div>
@@ -250,13 +258,18 @@ export default function PaperChartsTab({
       )}
 
       {showScanRewardModal && (
-        <ScanRewardsChartModal
+        <ScanChartModal
           isOpen={showScanRewardModal}
           onClose={() => setShowScanRewardModal(false)}
           children={children}
+          tasks={tasks}
+          completions={completions}
           rewards={rewards}
-          redemptions={redemptions}
+          onParentCompleteTask={onParentCompleteTask}
+          onParentCompleteTasks={onParentCompleteTasks}
           onParentRedeemRewards={onParentRedeemRewards}
+          onFeedPet={onFeedPet}
+          initialMode="reward"
         />
       )}
 
