@@ -1,18 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar, ChevronLeft, ChevronRight, Printer, Plus, Check, X, Clock,
   Sparkles, Star, Flame, Trophy, CheckCircle2, RotateCcw, Info, Coins, Filter, Award,
-  Sun, Moon, CheckSquare
+  Sun, Moon, CheckSquare, Camera
 } from 'lucide-react';
-import { Child, Task, TaskCompletion } from '../types';
+import { Child, Task, TaskCompletion, TaskCategory } from '../types';
 import { playSound } from '../utils/sound';
 import { ChildAvatar } from './ChildAvatar';
 import { Button } from './ui/Button';
 import { Typography } from './ui/Typography';
 import { CoinBadge } from './CoinBadge';
 import { getSupabaseClient } from '../utils/supabase';
+import { getTaskRoutineInfo } from '../utils/taskUtils';
 
 interface WeeklyRewardChartProps {
   children: Child[];
@@ -22,32 +22,12 @@ interface WeeklyRewardChartProps {
   onApproveCompletion?: (id: string) => void;
   onRejectCompletion?: (id: string) => void;
   onDeleteCompletion?: (id: string) => void;
+  isPro?: boolean;
+  onOpenPaywall?: (feature?: string) => void;
+  onOpenScanChart?: () => void;
 }
 
-// Helper to determine if a task belongs to a routine (and which period)
-const getTaskRoutineInfo = (task: Task, child?: Child): { isRoutine: boolean; period?: 'morning' | 'afternoon' | 'evening' | 'general'; label: string } => {
-  if (child && child.routines && child.routines.length > 0) {
-    for (const routine of child.routines) {
-      if (routine.morningTaskIds?.includes(task.id) || (task.template_id && routine.morningTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
-      }
-      if (routine.afternoonTaskIds?.includes(task.id) || (task.template_id && routine.afternoonTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
-      }
-      if (routine.eveningTaskIds?.includes(task.id) || (task.template_id && routine.eveningTaskIds?.includes(task.template_id))) {
-        return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
-      }
-    }
-  }
 
-  // Fallback period detection by title keywords
-  const titleLower = task.title.toLowerCase();
-  if (titleLower.includes('morning')) return { isRoutine: true, period: 'morning', label: 'Morning Routine' };
-  if (titleLower.includes('afternoon')) return { isRoutine: true, period: 'afternoon', label: 'Afternoon Routine' };
-  if (titleLower.includes('evening') || titleLower.includes('bedtime')) return { isRoutine: true, period: 'evening', label: 'Evening Routine' };
-
-  return { isRoutine: false, label: '' };
-};
 
 // Calculate unlocked badge count dynamically based on child stats & completions
 const calculateBadgeCount = (child: Child, allCompletions: TaskCompletion[]): number => {
@@ -105,7 +85,10 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   onParentCompleteTask,
   onApproveCompletion,
   onRejectCompletion,
-  onDeleteCompletion
+  onDeleteCompletion,
+  isPro = false,
+  onOpenPaywall,
+  onOpenScanChart,
 }) => {
   // Selected child state - default to first child or empty
   const [selectedChildId, setSelectedChildId] = useState<string>(children[0]?.id || '');
@@ -113,12 +96,9 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   // Date range duration state: '7d' (1 week), '14d' (2 weeks), '30d' (1 month)
   const [viewRange, setViewRange] = useState<'7d' | '14d' | '30d'>('7d');
   
-  // Print Modal & Options state
-  const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
-  const [printRange, setPrintRange] = useState<'7d' | '14d'>('7d');
-  const [printMode, setPrintMode] = useState<'live' | 'blank'>('live');
-  const [isPrintingBlank, setIsPrintingBlank] = useState<boolean>(false);
-  
+  // WeeklyRewardChart no longer handles printing blank directly, but we keep the constant for internal rendering logic
+  const isPrintingBlank = false;
+
   // Routine filter state: 'all', 'routines', 'extra'
   const [routineFilter, setRoutineFilter] = useState<'all' | 'routines' | 'extra'>('all');
 
@@ -126,7 +106,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
   const [weekOffset, setWeekOffset] = useState<number>(0);
 
   // Tip banner visibility
-  const [showTip, setShowTip] = useState<boolean>(true);
+
 
   // Unlocked badges count from DB
   const [unlockedBadgesCount, setUnlockedBadgesCount] = useState<number | null>(null);
@@ -237,31 +217,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
 
   const isCurrentWeek = weekOffset === 0;
 
-  // Print chart function: Opens custom print options modal
-  const handlePrint = () => {
-    playSound.click();
-    setShowPrintModal(true);
-  };
 
-  // Triggers browser print synchronously on click to suppress Safari security warning
-  const handleExecutePrint = () => {
-    playSound.click();
-
-    const previousRange = viewRange;
-
-    // Force React to synchronously flush DOM updates before window.print() captures the page
-    flushSync(() => {
-      setViewRange(printRange);
-      setIsPrintingBlank(printMode === 'blank');
-      setShowPrintModal(false);
-    });
-
-    // Invoke window.print() on the synchronously updated DOM
-    window.print();
-
-    // Restore interactive blank state
-    setIsPrintingBlank(false);
-  };
 
   // Map of completion lookup: key = `${taskId}_${dateKey}` -> TaskCompletion
   const completionMap = useMemo(() => {
@@ -387,43 +343,8 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
               </button>
             ))}
           </div>
-
-          {/* Print Button */}
-          <Button
-            id="tour-chart-print-btn"
-            variant="primary"
-            size="sm"
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 rounded-xl font-bold"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Print</span>
-          </Button>
         </div>
       </div>
-
-      {/* Tip Banner Callout */}
-      {showTip && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 rounded-2xl p-3.5 sm:p-4 flex items-start justify-between gap-3 text-cyan-900 dark:text-cyan-200 shadow-sm print:hidden"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-cyan-500 shrink-0 mt-0.5" />
-            <p className="text-xs sm:text-sm font-medium leading-relaxed">
-              <span className="font-bold">Pro Tip:</span> Tap any empty cell to mark a chore as done — even for past days. It'll be auto-approved since you're the parent!
-            </p>
-          </div>
-          <button
-            onClick={() => setShowTip(false)}
-            className="text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 p-1 rounded-lg transition-colors shrink-0"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      )}
 
       {/* Date Navigation Header */}
       <div className="flex items-center justify-between bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-2xl p-3 sm:p-4 shadow-sm print:border-none print:p-0">
@@ -821,149 +742,7 @@ export const WeeklyRewardChart: React.FC<WeeklyRewardChartProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Interactive Print Options Modal */}
-      <AnimatePresence>
-        {showPrintModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-stone-950/80 backdrop-blur-sm print:hidden">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-100 dark:border-stone-800 p-6 overflow-hidden text-left"
-            >
-              {/* Header Icon & Title */}
-              <div className="flex items-start justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center shrink-0">
-                    <Printer className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <Typography variant="h2" className="text-xl font-bold">
-                      Print Chart Options
-                    </Typography>
-                    <Typography variant="helper" className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                      Configure duration and template style
-                    </Typography>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { playSound.click(); setShowPrintModal(false); }}
-                  className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1.5 rounded-xl transition-colors shrink-0"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              <div className="space-y-5">
-                {/* Option 1: Print Duration */}
-                <div>
-                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    1. Print Duration
-                  </Typography>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRange('7d'); }}
-                      className={`p-3.5 rounded-2xl border transition-all text-left ${
-                        printRange === '7d'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">7 Days</p>
-                      <p className={`text-xs mt-0.5 ${printRange === '7d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        1 Week Layout
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintRange('14d'); }}
-                      className={`p-3.5 rounded-2xl border transition-all text-left ${
-                        printRange === '14d'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <p className="font-extrabold text-sm">14 Days</p>
-                      <p className={`text-xs mt-0.5 ${printRange === '14d' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                        2 Weeks Layout
-                      </p>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Option 2: Chart Template Style */}
-                <div>
-                  <Typography variant="label" className="block text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-2">
-                    2. Chart Template Style
-                  </Typography>
-                  <div className="space-y-2.5">
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintMode('live'); }}
-                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
-                        printMode === 'live'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <Calendar className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'live' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
-                      <div>
-                        <p className="font-extrabold text-sm">
-                          Live Chart (With Current Dates)
-                        </p>
-                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'live' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                          Prints actual calendar dates ({dateRangeLabel}) and current checked stars.
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { playSound.click(); setPrintMode('blank'); }}
-                      className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-start gap-3.5 ${
-                        printMode === 'blank'
-                          ? 'border-stone-900 dark:border-stone-100 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-md font-bold'
-                          : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
-                      }`}
-                    >
-                      <Sparkles className={`w-5 h-5 shrink-0 mt-0.5 ${printMode === 'blank' ? 'text-amber-300 dark:text-amber-600' : 'text-amber-500'}`} />
-                      <div>
-                        <p className="font-extrabold text-sm">
-                          Blank / Plain Reusable Template
-                        </p>
-                        <p className={`text-xs mt-0.5 font-medium ${printMode === 'blank' ? 'text-stone-300 dark:text-stone-600' : 'text-stone-500 dark:text-stone-400'}`}>
-                          Prints generic MON–SUN headers without date numbers or pre-checked stars. Perfect for physical reuse!
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Modal Action Buttons */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100 dark:border-stone-800">
-                  <Button
-                    variant="secondary"
-                    onClick={() => { playSound.click(); setShowPrintModal(false); }}
-                    className="flex-1 justify-center"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleExecutePrint}
-                    className="flex-1 justify-center"
-                  >
-                    <Printer className="w-4 h-4" />
-                    <span>Print Chart</span>
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

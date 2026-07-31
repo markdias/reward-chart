@@ -2063,6 +2063,48 @@ export default function App() {
     }
   };
 
+  const handleParentRedeemRewards = async (items: {rewardId: string, childId: string, dateIso: string}[]) => {
+    let currentChildren = [...children];
+    let newRedemptions = [...redemptions];
+    
+    for (const item of items) {
+      const reward = rewards.find(r => r.id === item.rewardId);
+      if (!reward) continue;
+      const child = currentChildren.find(c => c.id === item.childId);
+      if (!child) continue;
+
+      const newRedemption: RewardRedemption = {
+        id: crypto.randomUUID(),
+        reward_id: reward.id,
+        child_id: child.id,
+        parent_id: parentProfile?.family_id || parentEmail || 'parent_demo',
+        redeemed_at: item.dateIso,
+        status: 'delivered',
+        payment_source: 'points'
+      };
+      
+      newRedemptions.push(newRedemption);
+      
+      const cost = reward.cost_points;
+      const targetChild = {
+        ...child,
+        points: Math.max(0, child.points - cost),
+        pet_food: (child.pet_food || 0) + (cost > 0 ? 1 : 0),
+      };
+      
+      currentChildren = currentChildren.map(c => c.id === child.id ? targetChild : c);
+      
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        executeOrQueue('children', 'update', targetChild, { eq: { id: targetChild.id } });
+        executeOrQueue('reward_redemptions', 'insert', newRedemption);
+      }
+    }
+    
+    syncChildren(currentChildren);
+    syncRedemptions(newRedemptions);
+  };
+
   const handleFeedPet = async (childId: string) => {
     const child = children.find(c => c.id === childId);
     if (!child || (child.pet_food || 0) <= 0) return;
@@ -2272,52 +2314,61 @@ export default function App() {
     handleEditReward(rewardId, { is_available: true });
   };
 
-  const handleParentCompleteTask = async (taskId: string, childId: string, dateIso?: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
+  const handleParentCompleteTasks = async (items: {taskId: string, childId: string, dateIso?: string}[]) => {
+    let newComps: TaskCompletion[] = [];
+    let childUpdates: Record<string, Child> = {};
 
-    // Create a completion directly as 'approved'
-    const newCompletion: TaskCompletion = {
-      id: `comp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      task_id: taskId,
-      child_id: childId,
-      points_awarded: task.points,
-      status: 'approved',
-      completed_at: dateIso || new Date().toISOString()
-    };
-
-    syncCompletions([...completions, newCompletion]);
-
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await executeOrQueue('completions', 'insert', newCompletion);
-      if (error) console.warn('Failed to sync completion to Supabase:', error.message);
-    }
-
-    // Award points and update Child stats
-    const child = children.find(c => c.id === childId);
-    if (child) {
-      let targetChild = processLifetimePoints(child, newCompletion.points_awarded);
+    items.forEach(item => {
+      const task = tasks.find(t => t.id === item.taskId);
+      if (!task) return;
       
-      const todayStr = new Date().toISOString().split('T')[0];
-      const lastActiveStr = targetChild.last_active_date ? targetChild.last_active_date.split('T')[0] : '';
-      
-      let newStreak = targetChild.streak_days || 0;
-      if (lastActiveStr !== todayStr) {
-        newStreak += 1;
-      }
-
-      targetChild = {
-        ...targetChild,
-        points: targetChild.points + newCompletion.points_awarded,
-        streak_days: newStreak,
-        last_active_date: new Date().toISOString()
+      const newCompletion: TaskCompletion = {
+        id: `comp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        task_id: item.taskId,
+        child_id: item.childId,
+        points_awarded: task.points,
+        status: 'approved',
+        completed_at: item.dateIso || new Date().toISOString()
       };
+      newComps.push(newCompletion);
+      
+      const c = childUpdates[item.childId] || children.find(ch => ch.id === item.childId);
+      if (c) {
+        let targetChild = processLifetimePoints(c, newCompletion.points_awarded);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const lastActiveStr = targetChild.last_active_date ? targetChild.last_active_date.split('T')[0] : '';
+        let newStreak = targetChild.streak_days || 0;
+        if (lastActiveStr !== todayStr) {
+          newStreak += 1;
+        }
+        targetChild = {
+          ...targetChild,
+          points: targetChild.points + newCompletion.points_awarded,
+          streak_days: newStreak,
+          last_active_date: new Date().toISOString()
+        };
+        childUpdates[item.childId] = targetChild;
+      }
+    });
 
-      const updatedChildren = children.map(c => c.id === childId ? targetChild : c);
-      syncChildren(updatedChildren);
-      updateChildInSupabase(targetChild);
+    if (newComps.length > 0) {
+      syncCompletions([...completions, ...newComps]);
+      
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        newComps.forEach(comp => executeOrQueue('completions', 'insert', comp));
+      }
+      
+      if (Object.keys(childUpdates).length > 0) {
+        const updatedChildren = children.map(c => childUpdates[c.id] || c);
+        syncChildren(updatedChildren);
+        Object.values(childUpdates).forEach(targetChild => updateChildInSupabase(targetChild));
+      }
     }
+  };
+
+  const handleParentCompleteTask = async (taskId: string, childId: string, dateIso?: string) => {
+    return handleParentCompleteTasks([{taskId, childId, dateIso}]);
   };
 
   const handleApproveCompletion = async (completionId: string) => {
@@ -2631,7 +2682,7 @@ updateChildInSupabase(targetChild);
             <ParentDashboard
               onRefresh={triggerDataRefresh}
               isLoading={isLoadingData}
-              initialTab={initialParentTab}
+              initialTab={initialParentTab as any}
               initialSubTab={initialParentSubTab}
               children={children}
               tasks={tasks}
@@ -2655,6 +2706,10 @@ updateChildInSupabase(targetChild);
               onAssignReward={handleAssignReward}
               onEditReward={handleEditReward}
               onDeleteReward={handleDeleteReward}
+              onParentCompleteTask={handleParentCompleteTask}
+              onParentCompleteTasks={handleParentCompleteTasks}
+              onParentRedeemRewards={handleParentRedeemRewards}
+              onFeedPet={handleFeedPet}
               onApproveCompletion={handleApproveCompletion}
               onRejectCompletion={handleRejectCompletion}
               onDeliverReward={handleDeliverReward}
@@ -2663,7 +2718,6 @@ updateChildInSupabase(targetChild);
               onApproveGiftingRequest={handleApproveGiftingRequest}
               onRejectGiftingRequest={handleRejectGiftingRequest}
               onExitParentMode={handleExitParentMode}
-              onParentCompleteTask={handleParentCompleteTask}
               parentProfile={parentProfile}
               linkedParents={linkedParents}
               onResetData={handleResetData}

@@ -19,6 +19,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { FlaskConical } from 'lucide-react';
 
 import { Child } from '../types';
+import TargetsTab from './TargetsTab';
 
 interface SettingsTabProps {
   children?: Child[];
@@ -30,8 +31,8 @@ interface SettingsTabProps {
   onCleanDuplicates: () => void;
   onRequireAccount?: () => void;
   onUpdateParentProfile?: (updates: Partial<ParentProfile>) => Promise<void>;
-  activeSubTab?: 'profile' | 'security' | 'sharing' | 'danger';
-  onSubTabChange?: (tab: 'profile' | 'security' | 'sharing' | 'danger') => void;
+  activeSubTab?: 'profile' | 'targets' | 'security' | 'sharing' | 'danger';
+  onSubTabChange?: (tab: 'profile' | 'targets' | 'security' | 'sharing' | 'danger') => void;
 }
 
 export default function SettingsTab({ 
@@ -95,9 +96,9 @@ export default function SettingsTab({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  const [internalSubTab, setInternalSubTab] = useState<'profile' | 'security' | 'sharing' | 'danger'>('profile');
+  const [internalSubTab, setInternalSubTab] = useState<'profile' | 'targets' | 'security' | 'sharing' | 'danger'>('profile');
   const activeSubTab = externalSubTab || internalSubTab;
-  const setActiveSubTab = (tab: 'profile' | 'security' | 'sharing' | 'danger') => {
+  const setActiveSubTab = (tab: 'profile' | 'targets' | 'security' | 'sharing' | 'danger') => {
     setInternalSubTab(tab);
     if (onSubTabChange) onSubTabChange(tab);
   };
@@ -297,6 +298,17 @@ export default function SettingsTab({
           PROFILE
         </button>
         <button
+          id="tour-settings-targets-tab"
+          onClick={() => { playSound.click(); setActiveSubTab('targets'); }}
+          className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
+            ${activeSubTab === 'targets' 
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:border-stone-300'
+            }`}
+        >
+          TARGETS
+        </button>
+        <button
           id="tour-settings-security-tab"
           onClick={() => { playSound.click(); setActiveSubTab('security'); }}
           className={`flex-1 py-3 px-1 sm:px-4 text-[10px] sm:text-xs font-bold transition-all border-b-2 -mb-[2px]
@@ -461,29 +473,7 @@ export default function SettingsTab({
             />
           </SettingsBlock>
 
-          {flags.beta_opt_in && (
-            <SettingsBlock title="Beta Program">
-              <div className={`flex items-center justify-between p-4 bg-white dark:bg-stone-900 transition-colors`}>
-                <div className="flex gap-4 items-center">
-                  <div className={`p-2 rounded-xl shrink-0 ${isBetaTester ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400'}`}>
-                    <FlaskConical className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className={`text-sm font-bold text-stone-700 dark:text-stone-200`}>Join Beta Program</h4>
-                    <p className={`text-xs text-stone-500 dark:text-stone-400 mt-0.5 pr-4`}>
-                      Get early access to experimental features like Chart Performance Insights before they are released to everyone.
-                    </p>
-                  </div>
-                </div>
-                <div 
-                  onClick={handleToggleBeta}
-                  className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 cursor-pointer ${isBetaTester ? 'bg-indigo-500' : 'bg-stone-200 dark:bg-stone-700'}`}
-                >
-                  <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isBetaTester ? 'translate-x-5' : 'translate-x-0'}`} />
-                </div>
-              </div>
-            </SettingsBlock>
-          )}
+
 
           <SettingsBlock title="Notifications">
             <SettingsRow 
@@ -544,6 +534,15 @@ export default function SettingsTab({
           </div>
         </div>
       </motion.div>
+      )}
+
+      {activeSubTab === 'targets' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-0 sm:p-2">
+          <TargetsTab 
+            parentProfile={parentProfile} 
+            onUpdateParentProfile={onUpdateParentProfile} 
+          />
+        </motion.div>
       )}
 
       {activeSubTab === 'security' && (
