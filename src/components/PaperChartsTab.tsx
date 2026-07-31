@@ -18,7 +18,7 @@ interface PaperChartsTabProps {
   completions: TaskCompletion[];
   rewards: Reward[];
   redemptions: RewardRedemption[];
-  isPro: boolean;
+  hasSpecialLogins: boolean;
   onOpenPaywall: (featureId: string) => void;
   onParentCompleteTask: (taskId: string, childId: string, dateIso: string) => void;
   onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
@@ -34,7 +34,7 @@ export default function PaperChartsTab({
   completions,
   rewards,
   redemptions,
-  isPro,
+  hasSpecialLogins,
   onOpenPaywall,
   onParentCompleteTask,
   onParentCompleteTasks,
@@ -51,7 +51,7 @@ export default function PaperChartsTab({
 
   const handleScanChart = () => {
     playSound.click();
-    if (isPro) {
+    if (hasSpecialLogins) {
       setShowScanModal(true);
     } else {
       onOpenPaywall('scan-chart');
@@ -75,7 +75,7 @@ export default function PaperChartsTab({
       </div>
 
       {/* Starter Pack Banner */}
-      {isPro && !starterPackClaimed && (
+      {hasSpecialLogins && !starterPackClaimed && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -204,7 +204,7 @@ export default function PaperChartsTab({
               <div className="text-left flex-1">
                 <div className="font-bold text-sm text-sky-900 dark:text-sky-100 flex items-center gap-2">
                   Open Camera Scanner
-                  {!isPro && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-black bg-amber-100 text-amber-700 rounded-full">PRO</span>}
+                  {!hasSpecialLogins && <span className="px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-black bg-stone-100 text-stone-700 rounded-full">SPECIAL LOGIN</span>}
                 </div>
                 <div className="text-xs text-sky-650/85 dark:text-sky-400/85 font-normal font-sans">Scan completed chore charts or redeem reward QR codes</div>
               </div>

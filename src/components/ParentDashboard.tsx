@@ -229,7 +229,7 @@ export default function ParentDashboard({
   useEffect(() => {
     async function checkStarterPack() {
       if (!parentProfile?.user_id || hasCheckedStarterPack) return;
-      if (!isPro) return;
+      if (!parentProfile?.has_special_logins) return;
 
       try {
         const supabase = getSupabaseClient();
@@ -245,7 +245,7 @@ export default function ParentDashboard({
           setStarterPackClaimed(true);
         } else {
           setStarterPackClaimed(false);
-          // Auto-open modal on dashboard load if they are Pro and haven't claimed it yet
+          // Auto-open modal on dashboard load if they have special login and haven't claimed it yet
           setShowStarterPackModal(true);
         }
         setHasCheckedStarterPack(true);
@@ -257,7 +257,7 @@ export default function ParentDashboard({
     if (parentProfile && !isLoading) {
       checkStarterPack();
     }
-  }, [parentProfile, isLoading, isPro, hasCheckedStarterPack]);
+  }, [parentProfile, isLoading, hasCheckedStarterPack]);
 
   const handleTourFinish = async () => {
     setRunTour(false);
@@ -361,11 +361,11 @@ export default function ParentDashboard({
       }
     );
 
-    if (subscription.isPro) {
+    if (parentProfile?.has_special_logins) {
       steps.push(
         {
           target: '.joyride-target-paper_charts',
-          content: 'The Paper tab is an exclusive Pro feature where you can generate physical chore charts.',
+          content: 'The Paper tab is an exclusive feature where you can generate physical chore charts.',
           placement: 'bottom',
         },
         {
@@ -440,7 +440,7 @@ export default function ParentDashboard({
     );
 
     return steps;
-  }, [isBetaUser, onUpdateParentProfile, subscription.isPro]);
+  }, [isBetaUser, onUpdateParentProfile, parentProfile?.has_special_logins]);
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
@@ -1277,7 +1277,7 @@ export default function ParentDashboard({
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
-              ...(isPro ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : []),
+              ...(parentProfile?.has_special_logins ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : []),
               { id: 'settings', label: 'Settings', icon: Settings },
               { id: 'help', label: 'Guide', icon: HelpCircle }
             ].map((tab) => {
@@ -2818,7 +2818,7 @@ export default function ParentDashboard({
                   completions={completions}
                   rewards={rewards}
                   redemptions={redemptions}
-                  isPro={isPro}
+                  hasSpecialLogins={parentProfile?.has_special_logins ?? false}
                   onOpenPaywall={openPaywall}
                   onParentCompleteTask={onParentCompleteTask}
                   onParentCompleteTasks={onParentCompleteTasks}
@@ -3371,7 +3371,7 @@ export default function ParentDashboard({
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },
-              ...(isPro ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : [])
+              ...(parentProfile?.has_special_logins ? [{ id: 'paper_charts', label: 'Paper', icon: ScrollText }] : [])
             ]}
             activeTab={activeTab}
             onTabChange={(id) => { playSound.click(); setActiveTab(id as any); }}
