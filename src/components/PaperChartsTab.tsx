@@ -24,6 +24,8 @@ interface PaperChartsTabProps {
   onParentCompleteTasks?: (items: {taskId: string, childId: string, dateIso?: string}[]) => void;
   onParentRedeemRewards: (items: {rewardId: string, childId: string, dateIso: string}[]) => void;
   onFeedPet?: (childId: string) => Promise<void>;
+  starterPackClaimed?: boolean;
+  onClaimStarterPack?: () => void;
 }
 
 export default function PaperChartsTab({
@@ -37,7 +39,9 @@ export default function PaperChartsTab({
   onParentCompleteTask,
   onParentCompleteTasks,
   onParentRedeemRewards,
-  onFeedPet
+  onFeedPet,
+  starterPackClaimed = false,
+  onClaimStarterPack
 }: PaperChartsTabProps) {
   // Modal states
   const [showPrintTaskModal, setShowPrintTaskModal] = useState(false);
@@ -69,6 +73,39 @@ export default function PaperChartsTab({
           </Typography>
         </div>
       </div>
+
+      {/* Starter Pack Banner */}
+      {isPro && !starterPackClaimed && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative bg-gradient-to-r from-amber-500/10 via-violet-500/5 to-amber-500/10 dark:from-amber-500/20 dark:via-violet-500/10 dark:to-amber-500/20 border border-amber-200/60 dark:border-amber-900/50 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm mx-2 sm:mx-0"
+        >
+          <div className="flex items-center gap-3.5 text-left">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+              <Gift className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <Typography variant="h3" className="font-bold text-sm text-stone-800 dark:text-stone-100">
+                Claim Your Free Physical Starter Pack!
+              </Typography>
+              <Typography variant="body" className="text-xs text-stone-550 dark:text-stone-400 mt-0.5">
+                Includes pre-cut double-sided gold coins, companion sheets, foldable wallets & backing boards. Shipped free!
+              </Typography>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => {
+              playSound.click();
+              if (onClaimStarterPack) onClaimStarterPack();
+            }}
+            className="w-full sm:w-auto shrink-0 bg-amber-500 hover:bg-amber-600 border-transparent text-white justify-center shadow-md font-bold text-xs py-2 px-4 rounded-xl"
+          >
+            Claim Now
+          </Button>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 px-2 sm:px-0 mt-4">
         

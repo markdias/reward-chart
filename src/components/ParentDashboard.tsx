@@ -52,6 +52,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { ScanChartModal } from './ScanChartModal';
 import { PrintRewardsChartModal } from './PrintRewardsChartModal';
 import { ScanRewardsChartModal } from './ScanRewardsChartModal';
+import { StarterPackModal } from './StarterPackModal';
 import { CoinBadge } from './CoinBadge';
 import { Tooltip } from './ui/Tooltip';
 import { Walkthrough } from './Walkthrough';
@@ -193,6 +194,9 @@ export default function ParentDashboard({
   const [tourStepIndex, setTourStepIndex] = useState(0);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showStarterPackModal, setShowStarterPackModal] = useState(false);
+  const [starterPackClaimed, setStarterPackClaimed] = useState(false);
+  const [hasCheckedStarterPack, setHasCheckedStarterPack] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 1024px)').matches);
 
   useEffect(() => {
@@ -221,6 +225,39 @@ export default function ParentDashboard({
       setTimeout(() => setRunTour(true), 1000);
     }
   }, [isLoading, parentProfile, runTour, hasAutoStarted]);
+
+  useEffect(() => {
+    async function checkStarterPack() {
+      if (!parentProfile?.user_id || hasCheckedStarterPack) return;
+      if (!isPro) return;
+
+      try {
+        const supabase = getSupabaseClient();
+        if (!supabase) return;
+        
+        const { data, error } = await supabase
+          .from('starter_pack_orders')
+          .select('user_id')
+          .eq('user_id', parentProfile.user_id)
+          .maybeSingle();
+
+        if (data) {
+          setStarterPackClaimed(true);
+        } else {
+          setStarterPackClaimed(false);
+          // Auto-open modal on dashboard load if they are Pro and haven't claimed it yet
+          setShowStarterPackModal(true);
+        }
+        setHasCheckedStarterPack(true);
+      } catch (err) {
+        console.error('Error checking starter pack status:', err);
+      }
+    }
+    
+    if (parentProfile && !isLoading) {
+      checkStarterPack();
+    }
+  }, [parentProfile, isLoading, isPro, hasCheckedStarterPack]);
 
   const handleTourFinish = async () => {
     setRunTour(false);
@@ -2787,6 +2824,8 @@ export default function ParentDashboard({
                   onParentCompleteTasks={onParentCompleteTasks}
                   onParentRedeemRewards={onParentRedeemRewards || (() => {})}
                   onFeedPet={onFeedPet}
+                  starterPackClaimed={starterPackClaimed}
+                  onClaimStarterPack={() => setShowStarterPackModal(true)}
                 />
               </motion.div>
             )}
@@ -3956,6 +3995,15 @@ export default function ParentDashboard({
           onParentCompleteTasks={onParentCompleteTasks}
           onParentRedeemRewards={onParentRedeemRewards || (() => {})}
           onFeedPet={onFeedPet}
+        />
+      )}
+
+      {showStarterPackModal && (
+        <StarterPackModal
+          isOpen={showStarterPackModal}
+          onClose={() => setShowStarterPackModal(false)}
+          parentProfile={parentProfile}
+          onSuccess={() => setStarterPackClaimed(true)}
         />
       )}
 
