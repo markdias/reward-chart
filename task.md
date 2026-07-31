@@ -37,8 +37,8 @@ We will build and verify this hybrid board-game experience in **5 distinct phase
   - `[x]` **Phase 4d:** Add success sound triggers and overlay celebrations (confetti).
   - **Testing 🧪:** Scan a blank card (verify form prompts), scan with sufficient coins (verify points subtracted), scan with insufficient coins (verify error).
 
-- `[ ]` **Phase 5: Starter Pack Signpost & Polish**
-  - `[ ]` **Phase 5a:** Build the **Starter Pack Shipping Form** onboarding modal for subscribed parents.
-  - `[ ]` **Phase 5b:** Add webhook hooks for auto-fulfillment.
-  - `[ ]` **Phase 5c:** Final visual alignment, transitions, and UX polish.
+- `[x]` **Phase 5: Starter Pack Signpost & Polish**
+  - `[x]` **Phase 5a:** Build the **Starter Pack Shipping Form** onboarding modal for subscribed parents.
+  - `[x]` **Phase 5b:** Add webhook hooks for auto-fulfillment.
+  - `[x]` **Phase 5c:** Final visual alignment, transitions, and UX polish.
   - **Testing 🧪:** End-to-end user verification (print coins/blank card -> fill with paper coins -> scan to redeem).
