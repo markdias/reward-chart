@@ -152,7 +152,14 @@ export default function LockScreen({
             <Lock className="w-6 h-6 text-stone-900 dark:text-stone-50" />
           </div>
           <Typography variant="h2">{title}</Typography>
-          <p className="text-xs mt-1.5 text-stone-500 dark:text-stone-400">{subtitle}</p>
+          {parentEmail && (
+            <div className="mt-2.5">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-900 border border-stone-200/50 dark:border-stone-800 max-w-xs truncate" title={parentEmail}>
+                {parentEmail}
+              </span>
+            </div>
+          )}
+          <p className="text-xs mt-2 text-stone-500 dark:text-stone-400">{subtitle}</p>
         </div>
 
         {/* Password Entry Form */}
