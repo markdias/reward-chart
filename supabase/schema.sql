@@ -696,3 +696,64 @@ CREATE POLICY "Allow parent select for chart_scans"
   ON chart_scans FOR SELECT TO authenticated
   USING (parent_id = auth.uid());
 
+
+-- =============================================================================
+-- TABLE: public.starter_pack_orders
+-- Tracks physical starter pack claims and shipping information for Pro members.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.starter_pack_orders (
+  user_id           UUID PRIMARY KEY REFERENCES public.parent_profiles(user_id) ON DELETE CASCADE,
+  email             TEXT NOT NULL,
+  full_name         TEXT NOT NULL,
+  address_line1     TEXT NOT NULL,
+  address_line2     TEXT,
+  city              TEXT NOT NULL,
+  state_province    TEXT NOT NULL,
+  postal_code       TEXT NOT NULL,
+  country           TEXT NOT NULL DEFAULT 'United Kingdom',
+  status            TEXT NOT NULL DEFAULT 'pending',
+  created_at        TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE public.starter_pack_orders ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated read starter_pack_orders" ON public.starter_pack_orders
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow authenticated insert starter_pack_orders" ON public.starter_pack_orders
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+
+-- trigger: on_starter_pack_order_insert
+-- Executes the notify parent webhook function for auto-fulfillment.
+CREATE OR REPLACE FUNCTION public.fulfill_starter_pack_webhook()
+RETURNS trigger AS $$
+DECLARE
+  edge_function_url TEXT := 'https://qnbpenvudqrngbxelvnx.supabase.co/functions/v1/notify-parent';
+  request_body JSON;
+BEGIN
+  request_body := json_build_object(
+    'type',   'fulfillment_requested',
+    'table',  TG_TABLE_NAME,
+    'record', row_to_json(NEW),
+    'schema', TG_TABLE_SCHEMA
+  );
+
+  PERFORM net.http_post(
+    url     := edge_function_url,
+    headers := jsonb_build_object(
+      'Content-Type',  'application/json',
+      'Authorization', 'Bearer <YOUR_ANON_KEY>'
+    ),
+    body := request_body::jsonb
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_starter_pack_order_insert ON public.starter_pack_orders;
+
+CREATE TRIGGER on_starter_pack_order_insert
+  AFTER INSERT ON public.starter_pack_orders
+  FOR EACH ROW EXECUTE FUNCTION public.fulfill_starter_pack_webhook();
+

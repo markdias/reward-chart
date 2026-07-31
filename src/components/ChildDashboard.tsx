@@ -1737,7 +1737,7 @@ export default function ChildDashboard({
               </div>
 
               {/* Empty state CTA — prompt to enter a join code */}
-              {children.length === 0 && onEnterJoinCode && (
+              {!isLoading && children.length === 0 && onEnterJoinCode && (
                 <div className="flex flex-col items-center gap-3 mt-4">
                   <p className="text-xs text-stone-400 dark:text-stone-500">
                     No profile found for this account.

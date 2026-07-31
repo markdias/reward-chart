@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Typography } from './ui/Typography';
 import { motion } from 'motion/react';
-import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils, Wrench } from 'lucide-react';
+import { ShieldCheck, Sparkles, Gamepad2, Play, ArrowRight, Heart, Award, Zap, CircleDot, PiggyBank, Target, Utensils, Wrench, Printer } from 'lucide-react';
 import { Button } from './ui/Button';
 import { CoinBadge } from './CoinBadge';
 import { playSound } from '../utils/sound';
@@ -176,26 +176,39 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
             </Button>
           </div>
 
-          {/* Value Badges */}
-          <div className="grid grid-cols-2 gap-3 max-w-lg">
-            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
-                <ShieldCheck className="w-4 h-4" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full">
+            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex flex-col justify-center gap-1.5 h-full relative overflow-hidden">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-100 text-amber-600 shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <span className={`text-[10px] font-bold font-sans ${styles.textMuted} uppercase leading-tight`}>SECURE CLOUD</span>
               </div>
-              <div>
-                <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>SECURE CLOUD</span>
-                <span className={`text-[11px] font-bold ${styles.text}`}>Cross-Device Sync</span>
-              </div>
+              <span className={`text-xs font-black ${styles.text} leading-tight ml-8`}>Cross-Device Sync</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
-                <PiggyBank className="w-4 h-4" />
+            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex flex-col justify-center gap-1.5 h-full relative overflow-hidden">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 shrink-0">
+                  <PiggyBank className="w-3.5 h-3.5" />
+                </div>
+                <span className={`text-[10px] font-bold font-sans ${styles.textMuted} uppercase leading-tight`}>MONEY SKILLS</span>
               </div>
-              <div>
-                <span className={`block text-[9px] font-bold font-sans ${styles.textMuted} uppercase`}>MONEY SKILLS</span>
-                <span className={`text-[11px] font-bold ${styles.text}`}>Savings & Earning</span>
+              <span className={`text-xs font-black ${styles.text} leading-tight ml-8`}>Savings & Earning</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm flex flex-col justify-center gap-1.5 h-full relative overflow-hidden col-span-2 md:col-span-1">
+              <div className="absolute -top-3 -right-3 w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2 relative">
+                <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                  <Printer className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[10px] font-bold font-sans ${styles.textMuted} uppercase leading-tight`}>AI CHARTS</span>
+                  <span className="px-1.5 py-0.5 text-[7px] uppercase tracking-wider font-black bg-indigo-500 text-white rounded-full leading-none">PRO</span>
+                </div>
               </div>
+              <span className={`text-xs font-black ${styles.text} leading-tight ml-8 relative`}>Print & Scan</span>
             </div>
           </div>
         </div>
@@ -236,8 +249,8 @@ export default function LandingPage({ onEnterArcade, onSignIn, onJoinCode }: Lan
                   </span>
                 )}
                 
-                {/* Floating energy star */}
-                <div className="absolute top-2 right-2 text-yellow-300 animate-pulse text-lg">⭐</div>
+                {/* Floating energy sparkle */}
+                <div className="absolute top-2 right-2 text-yellow-300 animate-pulse text-lg">✨</div>
               </motion.div>
               <span className={`mt-3 text-xs font-bold font-sans tracking-widest uppercase px-3 py-1 rounded-full ${styles.tagCategory}`}>
                 CLASS: {activeChar.type}
