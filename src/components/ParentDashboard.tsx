@@ -176,13 +176,12 @@ export default function ParentDashboard({
 }: ParentDashboardProps) {
   const [activeTab, setActiveTab] = useState<'home' | 'chart' | 'children' | 'tasks' | 'rewards' | 'compliance' | 'settings' | 'paper_charts' | 'help'>(initialTab);
   const { flags } = useFeatureFlags(parentProfile?.is_beta_tester || false);
-  const isBetaUser = Boolean(parentProfile?.is_beta_tester || flags.insights_tab);
 
   useEffect(() => {
-    if (!isBetaUser && activeTab === 'chart') {
+    if (!parentProfile?.has_special_logins && activeTab === 'chart') {
       setActiveTab('home');
     }
-  }, [isBetaUser, activeTab]);
+  }, [parentProfile?.has_special_logins, activeTab]);
 
   const { canAddChild, openPaywall, subscription } = useSubscription();
   const isPro = subscription?.isPro ?? false;
@@ -282,7 +281,7 @@ export default function ParentDashboard({
       },
     ];
 
-    if (isBetaUser) {
+    if (parentProfile?.has_special_logins) {
       steps.push(
         {
           target: '.joyride-target-chart',
@@ -440,7 +439,7 @@ export default function ParentDashboard({
     );
 
     return steps;
-  }, [isBetaUser, onUpdateParentProfile, parentProfile?.has_special_logins]);
+  }, [parentProfile?.has_special_logins, onUpdateParentProfile]);
 
   // Called by Walkthrough when advancing to the NEXT or PREV step index
   const handleTourStepChange = (nextStepIndex: number) => {
@@ -1273,7 +1272,7 @@ export default function ParentDashboard({
           <nav className="flex flex-col gap-2" id="parent-sidebar-nav">
             {[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
+              ...(parentProfile?.has_special_logins ? [{ id: 'chart', label: 'Chart', icon: TrendingUp }] : []),
               { id: 'children', label: 'Children', icon: Users, count: children.length },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2, count: tasks.filter(t => t.is_template).length },
               { id: 'rewards', label: 'Rewards', icon: Gift, count: rewards.filter(r => r.is_template !== false && r.child_id === 'directory').length },
@@ -1296,11 +1295,6 @@ export default function ParentDashboard({
                   <span className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-stone-400'}`} strokeWidth={isSelected ? 2.5 : 2} />
                     <span>{tab.label}</span>
-                    {(tab as any).isBeta && (
-                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
-                        BETA
-                      </span>
-                    )}
                   </span>
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span className={`${isSelected ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'} text-[10px] font-sans px-2 py-0.5 rounded-full font-bold shadow-sm`}>
@@ -1519,8 +1513,7 @@ export default function ParentDashboard({
                 className="space-y-6 sm:space-y-8"
                 id="chart-view"
               >
-                {/* SUB-TABS FOR CHART & INSIGHTS (VISIBLE FOR BETA USERS) */}
-                {(flags.insights_tab || parentProfile?.is_beta_tester) ? (
+                {parentProfile?.has_special_logins ? (
                   <>
                     <div className="flex w-full sm:max-w-md gap-1.5 bg-stone-100 dark:bg-stone-800/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white shadow-xs">
                       <Button variant="none" size="none"
@@ -1532,9 +1525,6 @@ export default function ParentDashboard({
                           }`}
                       >
                         <span>WEEKLY CHART</span>
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
-                          BETA
-                        </span>
                       </Button>
                       <Button variant="none" size="none"
                         id="tour-chart-subtab-insights"
@@ -1545,9 +1535,6 @@ export default function ParentDashboard({
                           }`}
                       >
                         <span>INSIGHTS</span>
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-indigo-500 text-white shadow-2xs">
-                          BETA
-                        </span>
                       </Button>
                     </div>
 
@@ -3367,7 +3354,7 @@ export default function ParentDashboard({
           <BottomTabBar
             tabs={[
               { id: 'home', label: 'Home', icon: Home, badge: totalPending },
-              ...(isBetaUser ? [{ id: 'chart', label: 'Chart', icon: TrendingUp, isBeta: true }] : []),
+              ...(parentProfile?.has_special_logins ? [{ id: 'chart', label: 'Chart', icon: TrendingUp }] : []),
               { id: 'children', label: 'Children', icon: Users },
               { id: 'tasks', label: 'Tasks', icon: CheckCircle2 },
               { id: 'rewards', label: 'Rewards', icon: Gift },

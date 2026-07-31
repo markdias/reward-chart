@@ -473,29 +473,7 @@ export default function SettingsTab({
             />
           </SettingsBlock>
 
-          {flags.beta_opt_in && (
-            <SettingsBlock title="Beta Program">
-              <div className={`flex items-center justify-between p-4 bg-white dark:bg-stone-900 transition-colors`}>
-                <div className="flex gap-4 items-center">
-                  <div className={`p-2 rounded-xl shrink-0 ${isBetaTester ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400' : 'bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400'}`}>
-                    <FlaskConical className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className={`text-sm font-bold text-stone-700 dark:text-stone-200`}>Join Beta Program</h4>
-                    <p className={`text-xs text-stone-500 dark:text-stone-400 mt-0.5 pr-4`}>
-                      Get early access to experimental features like Chart Performance Insights before they are released to everyone.
-                    </p>
-                  </div>
-                </div>
-                <div 
-                  onClick={handleToggleBeta}
-                  className={`w-11 h-6 rounded-full transition-colors duration-300 ease-in-out shrink-0 cursor-pointer ${isBetaTester ? 'bg-indigo-500' : 'bg-stone-200 dark:bg-stone-700'}`}
-                >
-                  <div className={`w-5 h-5 bg-white dark:bg-stone-900 rounded-full mt-0.5 ml-0.5 transition-transform duration-300 shadow-sm ${isBetaTester ? 'translate-x-5' : 'translate-x-0'}`} />
-                </div>
-              </div>
-            </SettingsBlock>
-          )}
+
 
           <SettingsBlock title="Notifications">
             <SettingsRow 
